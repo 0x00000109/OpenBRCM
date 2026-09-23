@@ -12,7 +12,25 @@ Each milestone has a concrete, observable gate.
 | **M5** | AMPDU, power save, runtime PM, LED/rfkill | stable traffic; suspend/resume |
 | **M6** | second PHY family (nphy/htphy) | family module loads |
 
-## M2.5 (current) — power-up / OTP / SPROM / MAC
+## M2.5b — eliminate the BCM4352 power-up Oops (current)
+Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
+`bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.
+- **Root cause:** `bcma_core_pci_power_save()` only guards
+  `bus->hosttype != BCMA_HOSTTYPE_PCI`. On a PCIe **Gen2** bus `hosttype` is
+  still `BCMA_HOSTTYPE_PCI`, but the legacy per-core state
+  **`bus->drv_pci[0].core` is NULL** (Gen2 uses `bus->drv_pcie2`), so
+  `pc->core->id.rev` faults at offset `0xc`.
+- **Fix:** the legacy call is **removed**. Host bring-up now uses the public
+  host abstraction **`bcma_host_pci_up(bus)`**, which checks `hosttype` and
+  dispatches on `bus->host_is_pcie2` to `bcma_core_pcie2_up()` — the correct
+  path for this bus (exported GPL; declared in `include/linux/bcma/bcma.h`).
+- **Instrumentation:** read-only topology dump (`hosttype`, `host_is_pcie2`,
+  `host_pci`, `drv_pci[0/1].core`, `drv_pcie2.core`, d11 `core_index/addr/wrap`)
+  and separately labelled stages A (host up), B (d11 enable/reset), C (HT clock),
+  D (OTP/SPROM). Bounded polling only.
+- This does **not** claim to fix the SPROM shadow; that is a separate item.
+
+## M2.5a — instrumented power-up (previous)
 Goal: obtain the real factory MAC and understand the HT capability value.
 - **Implemented (provenance-backed):** instrumented power-up in `ob_si_powerup()`
   logging initial PMU/clock/OTP/SPROM state; PCIe/core wake + core reset via

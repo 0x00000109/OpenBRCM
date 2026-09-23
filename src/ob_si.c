@@ -9,7 +9,7 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/etherdevice.h>
-#include <linux/bcma/bcma_driver_pci.h>
+#include <linux/bcma/bcma.h>
 #include "ob_si.h"
 
 /* CLKCTLST: HT clock available (matches BCMA_CLKCTLST_HAVEHT). */
@@ -82,6 +82,27 @@ void ob_si_dump(struct ob_hw *hw)
 		 !!(srom_ctl & OB_SROM_OTPSEL));
 }
 
+/*
+ * Read-only diagnostics of the bcma host/core topology. All of these are plain
+ * struct reads (no MMIO), used purely to prove the PCIe2 vs legacy-PCI topology
+ * before any power operation. Safe to call at any time.
+ */
+static void ob_si_dump_bus(struct ob_hw *hw)
+{
+	struct bcma_bus *bus = hw->bus;
+	struct bcma_device *d11 = hw->core;
+
+	dev_info(hw->dev,
+		 "bus: hosttype=%d host_is_pcie2=%d host_pci=%px\n",
+		 bus->hosttype, bus->host_is_pcie2, bus->host_pci);
+	dev_info(hw->dev,
+		 "bus: drv_pci[0].core=%px drv_pci[1].core=%px drv_pcie2.core=%px\n",
+		 bus->drv_pci[0].core, bus->drv_pci[1].core, bus->drv_pcie2.core);
+	dev_info(hw->dev,
+		 "d11: core_index=%u addr=0x%x wrap=0x%x rev=%u\n",
+		 d11->core_index, d11->addr, d11->wrap, d11->id.rev);
+}
+
 /* SPROM shadow base: 0x800 + (OTPL.GURGN_OFFSET >> 3). */
 static u32 ob_si_sprom_base(struct ob_hw *hw)
 {
@@ -127,21 +148,43 @@ int ob_si_powerup(struct ob_hw *hw)
 	dev_info(hw->dev, "powerup: d11 core enabled=%d\n",
 		 bcma_core_is_enabled(hw->core));
 
-	/* Stage: wake the PCIe/core out of power-save (bcma, authoritative) */
-	bcma_core_pci_power_save(hw->bus, false);
+	/* Stage 0: topology diagnostics (read-only) */
+	ob_si_dump_bus(hw);
 
-	/* Stage: core reset/enable (bcma implements the ai_core_reset sequence) */
+	/*
+	 * Stage A: host PCIe bring-up.
+	 *
+	 * bcma_core_pci_power_save() is the legacy PCI-core power-save path and
+	 * only guards bus->hosttype, NOT bus->host_is_pcie2. A modern BCM4352
+	 * board has no legacy PCI core, so bus->drv_pci[0].core is NULL and that
+	 * function dereferences NULL at pc->core->id.rev (fault address 0xc).
+	 *
+	 * Use the public host abstraction instead: bcma_host_pci_up() checks
+	 * hosttype and dispatches on host_is_pcie2 to bcma_core_pcie2_up() — the
+	 * correct path for this bus. The legacy call is removed entirely.
+	 */
+	dev_info(hw->dev, "powerup[A]: host up (host_is_pcie2=%d)\n",
+		 hw->bus->host_is_pcie2);
+	bcma_host_pci_up(hw->bus);
+	dev_info(hw->dev,
+		 "powerup[A]: host up done drv_pcie2.core=%px drv_pci[0].core=%px\n",
+		 hw->bus->drv_pcie2.core, hw->bus->drv_pci[0].core);
+
+	/* Stage B: D11 core enable/reset, separate from host bring-up */
+	dev_info(hw->dev, "powerup[B]: d11 enabled(before)=%d\n",
+		 bcma_core_is_enabled(hw->core));
 	if (!bcma_core_is_enabled(hw->core)) {
 		err = bcma_core_enable(hw->core, 0);
 		dev_info(hw->dev,
-			 "powerup: bcma_core_enable(d11) err=%d enabled=%d\n",
+			 "powerup[B]: bcma_core_enable(d11) err=%d enabled(after)=%d\n",
 			 err, bcma_core_is_enabled(hw->core));
 	}
 
-	/* Stage: force HT clock and wait for it (bounded inside bcma) */
+	/* Stage C: force HT clock and wait for it (bounded inside bcma) */
+	dev_info(hw->dev, "powerup[C]: set clockmode FAST\n");
 	bcma_core_set_clockmode(hw->core, BCMA_CLKMODE_FAST);
 	clk = ob_si_cc_read(hw, OB_CC_CLKCTLST);
-	dev_info(hw->dev, "powerup: clkctlst=0x%08x HAVEHT=%d\n",
+	dev_info(hw->dev, "powerup[C]: clkctlst=0x%08x HAVEHT=%d\n",
 		 clk, !!(clk & OB_CLKCTLST_HAVEHT));
 
 	/*
