@@ -9,10 +9,12 @@
 #include <linux/module.h>
 #include "ob_core.h"
 #include "ob_si.h"
+#include "ob_mac80211.h"
 
 int ob_probe(struct bcma_device *core)
 {
 	struct ob_hw *hw;
+	int ret;
 
 	if (core->id.manuf != BCMA_MANUF_BCM ||
 	    core->id.id != BCMA_CORE_80211)
@@ -34,14 +36,21 @@ int ob_probe(struct bcma_device *core)
 		 OB_DRV_NAME ": chip 0x%04x rev %u, d11 core rev %u\n",
 		 hw->chip_id, hw->chip_rev, core->id.rev);
 
-	return ob_si_probe(hw);
+	ret = ob_si_probe(hw);
+	if (ret)
+		return ret;
+
+	return ob_mac80211_register(hw);
 }
 
 void ob_remove(struct bcma_device *core)
 {
 	struct ob_hw *hw = bcma_get_drvdata(core);
 
-	if (hw)
-		dev_info(hw->dev, OB_DRV_NAME ": removed\n");
+	if (!hw)
+		return;
+
+	ob_mac80211_unregister(hw);
+	dev_info(hw->dev, OB_DRV_NAME ": removed\n");
 	bcma_set_drvdata(core, NULL);
 }

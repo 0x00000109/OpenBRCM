@@ -4,11 +4,15 @@ CFLAGS  ?= -O2 -Wall -Wextra -I. -I../../src
 SRC     := ../../src
 
 .PHONY: run clean
-run: ob_math_test
+run: ob_math_test ob_caps_test
 	./ob_math_test
+	./ob_caps_test
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
 
+ob_caps_test: ob_caps_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	rm -f ob_math_test
+	rm -f ob_math_test ob_caps_test

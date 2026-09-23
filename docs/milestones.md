@@ -14,8 +14,20 @@ Each milestone has a concrete, observable gate.
 
 ## Current state
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).
-- Pure math for M2 present and tested (`ob_channel.c`, `ob_rate.c`).
-- Builds against Linux 7.0; host unit tests pass.
+- **M2 present:** `src/ob_mac80211.c` registers with mac80211 and exposes the
+  **2.4 GHz** band (channels, legacy rates, HT 20/40 2×2). Interface bring-up is
+  intentionally disabled (`.start` returns `-EOPNOTSUPP`) until M3.
+- Pure math present and tested (`ob_channel.c`, `ob_rate.c`; host + KUnit).
+
+## M2 blockers / deliberately not exposed
+- **5 GHz band is NOT advertised.** The exact BCM4352/acphy 5 GHz channel table
+  has not been recovered/validated from the blob. The internal architecture is
+  ready (`ob_channel` supports 5 GHz), but we do not advertise guessed
+  capabilities. **TODO/blocker:** recover and validate the BCM4352/acphy 5 GHz
+  channel list (and DFS/NO-IR flags) before enabling `NL80211_BAND_5GHZ`.
+- **VHT / 80 MHz, LDPC, MAX_AMSDU, >2 spatial streams** are not advertised
+  (no provenance yet; VHT depends on 5 GHz).
+
 
 ## Mapping to the RE work
 - M1 ← RE Stages 4–5 (MMIO map, sequences/values).

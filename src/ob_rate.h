@@ -31,4 +31,13 @@
 /* Returns the MCS data rate in kbps, or 0 for an out-of-range request. */
 u32 ob_mcs_to_rate_kbps(u8 mcs, u8 bw_mhz, u8 nss, bool sgi);
 
+/* Legacy 2.4 GHz rate set (provenance: RE Stage 6 rate tables). */
+struct ob_rate {
+	u16 rate500;	/* value in 500 kbps units (low 7 bits) */
+	bool basic;	/* mandatory/basic rate */
+};
+
+#define OB_N_2GHZ_RATES	12
+extern const struct ob_rate ob_2ghz_rates[OB_N_2GHZ_RATES];
+
 #endif /* _OB_RATE_H_ */

@@ -15,6 +15,8 @@
 
 #define OB_DRV_NAME	"openbrcm"
 
+struct ieee80211_hw;
+
 /**
  * struct ob_hw - per-device state
  * @core:	the D11 (80211) bcma core
@@ -23,6 +25,7 @@
  * @chip_id:	chip id (e.g. 0x4352)
  * @chip_rev:	chip revision
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
+ * @ieee:	mac80211 hw, once registered
  */
 struct ob_hw {
 	struct bcma_device	*core;
@@ -31,6 +34,7 @@ struct ob_hw {
 	u16			chip_id;
 	u8			chip_rev;
 	struct bcma_device	*cc;
+	struct ieee80211_hw	*ieee;
 };
 
 int ob_probe(struct bcma_device *core);

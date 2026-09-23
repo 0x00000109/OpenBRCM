@@ -8,6 +8,10 @@
 #include <linux/types.h>
 #include "ob_channel.h"
 
+const u16 ob_2ghz_channels[OB_N_2GHZ_CHANNELS] = {
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+};
+
 int ob_channel_to_freq(u16 ch, u8 band)
 {
 	if (band == OB_BAND_2GHZ) {

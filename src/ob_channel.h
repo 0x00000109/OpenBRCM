@@ -14,6 +14,17 @@
 #define OB_BAND_2GHZ	0
 #define OB_BAND_5GHZ	1
 
+/*
+ * 2.4 GHz channel list (provenance: RE Stage 6, the channel<->frequency rules
+ * were verified at instruction level; channels 1..14 are the standard 2.4 GHz
+ * set the formula is defined over).
+ *
+ * NOTE: the exact per-chip 5 GHz channel set has NOT been recovered yet. Do not
+ * advertise 5 GHz until it is (see docs/milestones.md, M2 blocker).
+ */
+#define OB_N_2GHZ_CHANNELS	14
+extern const u16 ob_2ghz_channels[OB_N_2GHZ_CHANNELS];
+
 /* Returns center frequency in MHz, or -1 if the channel is invalid. */
 int ob_channel_to_freq(u16 ch, u8 band);
 

@@ -9,14 +9,14 @@ ifneq ($(KERNELRELEASE),)
 
 obj-m		:= openbrcm.o
 openbrcm-y	:= src/ob_main.o src/ob_core.o src/ob_si.o \
-		   src/ob_channel.o src/ob_rate.o
+		   src/ob_channel.o src/ob_rate.o src/ob_mac80211.o
 
 else
 
 KDIR	?= /lib/modules/$(shell uname -r)/build
 PWD	:= $(shell pwd)
 
-.PHONY: all modules clean install kunit hosttest
+.PHONY: all modules clean install kunit hosttest signed sign
 
 all: modules
 
@@ -29,6 +29,13 @@ clean:
 
 install:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
+
+# Build, then sign the final openbrcm.ko as the last artifact-producing step.
+# Do not rebuild afterwards unless you sign again.
+signed: modules
+	./scripts/sign.sh
+
+sign: signed
 
 # Host-side unit tests for the pure math (no kernel needed).
 hosttest:

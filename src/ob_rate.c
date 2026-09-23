@@ -13,6 +13,25 @@ static const u8 ob_mcs_coeff[10][3] = {
 	{6, 2, 3}, {6, 3, 4}, {6, 5, 6}, {8, 3, 4}, {8, 5, 6},
 };
 
+/*
+ * 2.4 GHz legacy rates. Values are the blob's own rate constants (ob_rate.h);
+ * the bitrate presented to mac80211 is derived as (rate500 & 0x7f) * 5.
+ */
+const struct ob_rate ob_2ghz_rates[OB_N_2GHZ_RATES] = {
+	{ OB_RATE_1M,	true  },	/* 1   Mbps */
+	{ OB_RATE_2M,	true  },	/* 2   Mbps */
+	{ OB_RATE_5_5M,	true  },	/* 5.5 Mbps */
+	{ OB_RATE_11M,	true  },	/* 11  Mbps */
+	{ OB_RATE_6M,	true  },	/* 6   Mbps */
+	{ OB_RATE_9M,	false },	/* 9   Mbps */
+	{ OB_RATE_12M,	true  },	/* 12  Mbps */
+	{ OB_RATE_18M,	false },	/* 18  Mbps */
+	{ OB_RATE_24M,	true  },	/* 24  Mbps */
+	{ OB_RATE_36M,	false },	/* 36  Mbps */
+	{ OB_RATE_48M,	false },	/* 48  Mbps */
+	{ OB_RATE_54M,	false },	/* 54  Mbps */
+};
+
 static u16 ob_nsd(u8 bw_mhz)
 {
 	switch (bw_mhz) {
