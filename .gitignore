@@ -15,8 +15,8 @@ modules.order
 *.o.d
 build/
 
-# host tests binary
-tests/host/ob_math_test
+# host tests binaries
+tests/host/ob_*_test
 
 # editor
 *.swp
