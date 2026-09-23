@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: GPL-2.0-only
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  host-tests:
+    name: host math tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run pure-math tests
+        run: make hosttest
+
+  build-matrix:
+    name: build vs ${{ matrix.kernel }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kernel: [ "6.12", "7.0", "7.2" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc flex bison libssl-dev libelf-dev
+      - name: Fetch kernel (tarball)
+        run: |
+          set -e
+          MAJOR=$(echo "${{ matrix.kernel }}" | cut -d. -f1)
+          URL="https://cdn.kernel.org/pub/linux/kernel/v${MAJOR}.x/linux-${{ matrix.kernel }}.tar.xz"
+          curl -fsSL "$URL" -o /tmp/k.tar.xz || curl -fsSL "https://cdn.kernel.org/pub/linux/kernel/v${MAJOR}.x/linux-${{ matrix.kernel }}.tar.gz" -o /tmp/k.tar.gz
+          mkdir -p /tmp/k && (tar -xf /tmp/k.tar.xz -C /tmp/k || tar -xf /tmp/k.tar.gz -C /tmp/k)
+          mv /tmp/k/linux-${{ matrix.kernel }} /tmp/linux
+      - name: Configure minimal kernel headers
+        run: |
+          cd /tmp/linux
+          make defconfig
+          scripts/config --enable BCMA --enable BCMA_POSSIBLE --enable MAC80211 --enable CFG80211 --enable FW_LOADER
+          make olddefconfig
+          make modules_prepare -j"$(nproc)"
+      - name: Build module
+        run: make KDIR=/tmp/linux
+      - name: checkpatch
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl -o /tmp/checkpatch.pl
+          for f in $(git ls-files 'src/*.c' 'src/*.h'); do
+            perl /tmp/checkpatch.pl --no-tree --terse -f "$f" || true
+          done

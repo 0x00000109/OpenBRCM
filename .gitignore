@@ -1,0 +1,23 @@
+# build artefacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+.*.cmd
+.*.d
+*.symvers
+*.order
+Module.symvers
+modules.order
+.tmp_versions/
+*.ko.*
+*.o.d
+build/
+
+# host tests binary
+tests/host/ob_math_test
+
+# editor
+*.swp
+*~

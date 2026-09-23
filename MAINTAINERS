@@ -1,0 +1,18 @@
+OpenBRCM
+========
+
+M:  OpenBRCM maintainers <openbrcm@example.invalid>
+L:  https://github.com/<your-org>/OpenBRCM
+S:  Maintained
+F:  Documentation/driver-api/80211/
+
+Files:
+  src/ob_main.c        bus probe / bcma driver registration
+  src/ob_core.c        core lifecycle
+  src/ob_si.c          silicon backplane (PMU/PLL/clock/OTP/SPROM)
+  src/ob_channel.c     channel/frequency math
+  src/ob_rate.c        802.11 legacy + MCS rate math
+  docs/                architecture, provenance, firmware, milestones
+
+Note: this is an early skeleton; entries will be split as modules appear
+(dma, d11, tx, rx, phy).
