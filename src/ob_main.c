@@ -13,10 +13,24 @@
 #include <linux/bcma/bcma.h>
 #include "ob_core.h"
 
+/*
+ * Recognized BCMA cores (D11 / 80211 core).
+ *
+ * Provenance for the BCM4352 (D11 core revision 0x2A = 42) entry:
+ *   Real hardware:  Broadcom BCM4352 [14e4:43b1] rev 03
+ *                   ASUS PCE-AC56 subsystem [1043:85ba]
+ *   Runtime device: /sys/bus/bcma/devices/bcma0:1
+ *   Observed:       manuf = 0x4BF, id = 0x812, rev = 0x2A
+ *   Exact modalias: bcma:m04BFid0812rev2Acl00
+ *
+ * Do not use BCMA_ANY_REV: bind only to explicitly validated revisions.
+ */
 static struct bcma_device_id ob_coreid_table[] = {
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 17, BCMA_ANY_CLASS),
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 23, BCMA_ANY_CLASS),
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 24, BCMA_ANY_CLASS),
+	/* BCM4352 (ASUS PCE-AC56): D11 core rev 0x2A */
+	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_80211, 42, BCMA_ANY_CLASS),
 	{},
 };
 MODULE_DEVICE_TABLE(bcma, ob_coreid_table);
