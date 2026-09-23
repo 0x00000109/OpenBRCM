@@ -35,8 +35,8 @@ static void ob_caps_rates_test(struct kunit *test)
 
 static void ob_caps_ht_test(struct kunit *test)
 {
-	/* advertised highest rate (144) derived from our MCS formula */
-	KUNIT_EXPECT_EQ(test, ob_mcs_to_rate_kbps(7, 20, 2, true) / 1000, 144);
+	/* advertised highest rate = MCS7 x 2ss x 40MHz x SGI = 300 Mbps */
+	KUNIT_EXPECT_EQ(test, ob_mcs_to_rate_kbps(7, 40, 2, true) / 1000, 300);
 	KUNIT_EXPECT_EQ(test, ob_mcs_to_rate_kbps(0, 20, 2, false), 13000);
 }
 

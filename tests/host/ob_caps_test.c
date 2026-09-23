@@ -44,9 +44,9 @@ int main(void)
 		}
 	}
 
-	/* HT: the advertised highest rate (144) is derived from our MCS formula */
-	chk("HT rx_highest is MCS7 20MHz 2ss SGI/1000",
-	    ob_mcs_to_rate_kbps(7, 20, 2, true) / 1000, 144);
+	/* HT: advertised rx_highest = MCS7 x 2ss x 40MHz x SGI = 300 Mbps */
+	chk("HT rx_highest (MCS7 40MHz 2ss SGI) /1000",
+	    ob_mcs_to_rate_kbps(7, 40, 2, true) / 1000, 300);
 	/* 2 streams are backed by the acphy 2x2 target */
 	chk("2ss supported", ob_mcs_to_rate_kbps(0, 20, 2, false), 13000);
 

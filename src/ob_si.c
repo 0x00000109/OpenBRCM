@@ -7,8 +7,17 @@
  * place that touches PMU/PLL/clock/OTP/SPROM directly.
  */
 #include <linux/kernel.h>
+#include <linux/delay.h>
 #include <linux/etherdevice.h>
+#include <linux/bcma/bcma_driver_pci.h>
 #include "ob_si.h"
+
+/* CLKCTLST: HT clock available (matches BCMA_CLKCTLST_HAVEHT). */
+#define OB_CLKCTLST_HAVEHT	0x00020000
+
+/* Bounded polling: 50 * 10 ms = 500 ms. No infinite waits. */
+#define OB_SHADOW_POLLS		50
+#define OB_SHADOW_POLL_MS	10
 
 /* ChipCommon is a fixed-function core; access it through bcma's window. */
 u32 ob_si_cc_read(struct ob_hw *hw, u16 off)
@@ -73,6 +82,98 @@ void ob_si_dump(struct ob_hw *hw)
 		 !!(srom_ctl & OB_SROM_OTPSEL));
 }
 
+/* SPROM shadow base: 0x800 + (OTPL.GURGN_OFFSET >> 3). */
+static u32 ob_si_sprom_base(struct ob_hw *hw)
+{
+	u32 otpl = ob_si_cc_read(hw, OB_CC_OTPL);
+
+	return OB_CC_SPROM + ((otpl & 0xfff) >> 3);
+}
+
+static void ob_si_dump_shadow(struct ob_hw *hw, const char *tag)
+{
+	u32 base = ob_si_sprom_base(hw);
+
+	dev_info(hw->dev,
+		 "powerup[%s]: shadow@0x%x rev=%08x mac=%08x %08x %08x\n",
+		 tag, base,
+		 ob_si_cc_read(hw, base),
+		 ob_si_cc_read(hw, base + OB_SPROM_MAC_OFFSET),
+		 ob_si_cc_read(hw, base + OB_SPROM_MAC_OFFSET + 4),
+		 ob_si_cc_read(hw, base + OB_SPROM_MAC_OFFSET + 8));
+}
+
+/*
+ * M2.5 — instrumented power-up for the BCM4352.
+ *
+ * Steps that are delegated to the in-kernel bcma bus driver (authoritative,
+ * GPL-exported) are used directly: core enable/reset (bcma_core_enable is the
+ * kernel implementation of the recovered ai_core_reset semantics) and HT clock
+ * forcing (bcma_core_set_clockmode implements FORCEHT + HAVEHT polling with a
+ * timeout). Steps whose values are not provenance-backed for 0x4352 are NOT
+ * guessed; they are reported as UNKNOWN.
+ */
+int ob_si_powerup(struct ob_hw *hw)
+{
+	u32 clk;
+	int i, err;
+
+	dev_info(hw->dev, "powerup: chip 0x%04x rev %u\n",
+		 hw->chip_id, hw->chip_rev);
+
+	/* Stage: initial state */
+	ob_si_dump(hw);
+	ob_si_dump_shadow(hw, "before");
+	dev_info(hw->dev, "powerup: d11 core enabled=%d\n",
+		 bcma_core_is_enabled(hw->core));
+
+	/* Stage: wake the PCIe/core out of power-save (bcma, authoritative) */
+	bcma_core_pci_power_save(hw->bus, false);
+
+	/* Stage: core reset/enable (bcma implements the ai_core_reset sequence) */
+	if (!bcma_core_is_enabled(hw->core)) {
+		err = bcma_core_enable(hw->core, 0);
+		dev_info(hw->dev,
+			 "powerup: bcma_core_enable(d11) err=%d enabled=%d\n",
+			 err, bcma_core_is_enabled(hw->core));
+	}
+
+	/* Stage: force HT clock and wait for it (bounded inside bcma) */
+	bcma_core_set_clockmode(hw->core, BCMA_CLKMODE_FAST);
+	clk = ob_si_cc_read(hw, OB_CC_CLKCTLST);
+	dev_info(hw->dev, "powerup: clkctlst=0x%08x HAVEHT=%d\n",
+		 clk, !!(clk & OB_CLKCTLST_HAVEHT));
+
+	/*
+	 * Stage: OTP power. On this chip si_pmu_otp_power is a no-op (OTP is
+	 * always powered) — provenance: RE Stage 4/5. No register write needed.
+	 */
+	dev_info(hw->dev, "powerup: OTP power no-op for 0x4352 (provenance C2)\n");
+
+	/*
+	 * Stage: OTP -> SPROM-shadow activation.
+	 *
+	 * UNKNOWN: the exact ChipCommon OTP read FSM (otp_read_word variants) and
+	 * the 0x4352-specific PLL branch were not fully recovered, and prior
+	 * exhaustive probing found no single register/clock toggle that populates
+	 * the shadow. Per project policy we do not guess register values here.
+	 * We only wait (bounded) for the shadow to become valid and report.
+	 */
+	for (i = 0; i < OB_SHADOW_POLLS; i++) {
+		u32 w0 = ob_si_cc_read(hw, ob_si_sprom_base(hw) + OB_SPROM_MAC_OFFSET);
+
+		if (w0 != 0 && w0 != 0xffffffff)
+			break;
+		msleep(OB_SHADOW_POLL_MS);
+	}
+
+	ob_si_dump_shadow(hw, "after");
+	dev_warn(hw->dev,
+		 "powerup: UNKNOWN - BCM4352 OTP->SPROM activation not provenance-backed; no guessed writes performed (docs/milestones.md)\n");
+
+	return 0;
+}
+
 int ob_si_probe(struct ob_hw *hw)
 {
 	u8 mac[6];
@@ -84,10 +185,12 @@ int ob_si_probe(struct ob_hw *hw)
 		return -ENODEV;
 	}
 
-	ob_si_dump(hw);
+	ob_si_powerup(hw);
 
 	if (!ob_si_read_mac(hw, mac))
 		dev_info(hw->dev, "SROM MAC %pM\n", mac);
+	else
+		dev_warn(hw->dev, "MAC not available from SPROM shadow\n");
 
 	return 0;
 }

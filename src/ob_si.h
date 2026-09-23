@@ -45,6 +45,7 @@
 #define OB_SPROM_MAC_OFFSET	0x4c
 
 int  ob_si_probe(struct ob_hw *hw);
+int  ob_si_powerup(struct ob_hw *hw);
 void ob_si_dump(struct ob_hw *hw);
 u32  ob_si_cc_read(struct ob_hw *hw, u16 off);
 void ob_si_cc_write(struct ob_hw *hw, u16 off, u32 val);

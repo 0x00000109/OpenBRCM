@@ -12,7 +12,29 @@ Each milestone has a concrete, observable gate.
 | **M5** | AMPDU, power save, runtime PM, LED/rfkill | stable traffic; suspend/resume |
 | **M6** | second PHY family (nphy/htphy) | family module loads |
 
+## M2.5 (current) — power-up / OTP / SPROM / MAC
+Goal: obtain the real factory MAC and understand the HT capability value.
+- **Implemented (provenance-backed):** instrumented power-up in `ob_si_powerup()`
+  logging initial PMU/clock/OTP/SPROM state; PCIe/core wake + core reset via
+  **bcma** (`bcma_core_pci_power_save`, `bcma_core_enable` — the kernel
+  implementation of the recovered `ai_core_reset`); HT clock via
+  `bcma_core_set_clockmode` (FORCEHT + HAVEHT poll); bounded shadow polling
+  (500 ms, no infinite waits); raw MAC words + decoded MAC.
+- **HT fix:** `rx_highest` corrected from 144 to **300 Mbps** — derived from our
+  recovered formula (MCS7 × 2 streams × 40 MHz × SGI), consistent with the
+  advertised MCS 0-15 / 2 streams / HT40. (Runtime previously reported 144.)
+- **UNKNOWN / blocker:** the exact BCM4352 ChipCommon **OTP read FSM**
+  (`otp_read_word` variants) and the 0x4352-specific PLL branch are not fully
+  recovered. No guessed register writes are performed. See the project rule:
+  "if a required bit/sequence is not provenance-backed, stop and mark UNKNOWN".
+  Consequence: if the SPROM shadow is not populated by the chip's own power-on
+  reset, the MAC is unavailable and remains `00:00:00:00:00:00`.
+
 ## Current state
+M0/M1/M2 complete on hardware (bcma binds, PHY registers). M2.5 instrumented;
+MAC recovery pending the OTP-FSM provenance item above.
+
+## Previously
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).
 - **M2 present:** `src/ob_mac80211.c` registers with mac80211 and exposes the
   **2.4 GHz** band (channels, legacy rates, HT 20/40 2×2). Interface bring-up is

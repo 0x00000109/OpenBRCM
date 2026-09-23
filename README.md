@@ -8,8 +8,9 @@ specification and publicly documented silicon behaviour — it contains no code
 from the proprietary `wlc_hybrid.o_shipped` blob and no code copied from other
 drivers. See [`docs/provenance.md`](docs/provenance.md).
 
-> Status: **early** — M0 (bus probe) / M1 (silicon bring-up, MAC read) /
-> **M2 (mac80211 registration, 2.4 GHz capabilities)**.
+> Status: **early** — M0 (bus probe) / M1 (silicon bring-up) /
+> M2 (mac80211 registration, 2.4 GHz capabilities) /
+> **M2.5 (instrumented power-up; MAC recovery blocked on OTP-FSM provenance)**.
 > 5 GHz and interface bring-up are not enabled yet (see `docs/milestones.md`).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **6.12 LTS + 7.x**.
 

@@ -82,7 +82,15 @@ static void ob_fill_2ghz(void)
 	ob_band_2ghz.ht_cap.ampdu_density = 0;
 	ob_band_2ghz.ht_cap.mcs.rx_mask[0] = 0xff;	/* MCS 0-7  */
 	ob_band_2ghz.ht_cap.mcs.rx_mask[1] = 0xff;	/* 2 streams */
-	ob_band_2ghz.ht_cap.mcs.rx_highest = cpu_to_le16(144);
+	/*
+	 * Highest supported data rate (Mbps) must be consistent with the
+	 * advertised MCS set (MCS 0-15, 2 streams) and HT40 + SGI. Derived from
+	 * our recovered formula: MCS7 x 2 streams x 40 MHz x short-GI = 300 Mbps
+	 * (ob_rate.c). Using the 20 MHz-only value (144) would misreport the max
+	 * rate for a 2x2 HT40 radio.
+	 */
+	ob_band_2ghz.ht_cap.mcs.rx_highest =
+		cpu_to_le16(ob_mcs_to_rate_kbps(7, 40, 2, true) / 1000);
 	ob_band_2ghz.ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED |
 		((2 - 1) << IEEE80211_HT_MCS_TX_MAX_STREAMS_SHIFT);
 
