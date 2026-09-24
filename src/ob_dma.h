@@ -52,17 +52,37 @@ struct ob_dma_desc {
 _Static_assert(sizeof(struct ob_dma_desc) == OB_DMA_DESC_SIZE,
 	       "ob_dma_desc must be exactly 16 bytes");
 
-/* ---- ring geometry ---- */
-#define OB_DMA_RING_DESC_COUNT	512
-#define OB_DMA_RING_BYTES	(OB_DMA_RING_DESC_COUNT * OB_DMA_DESC_SIZE)
+/* ---- ring geometry (asymmetric: blob-proven RX 256 / TX 512) ---- */
+#define OB_DMA_RING_DESC_COUNT_RX	256
+#define OB_DMA_RING_DESC_COUNT_TX	512
+#define OB_DMA_RING_ACTIVE_BYTES_RX	(OB_DMA_RING_DESC_COUNT_RX * OB_DMA_DESC_SIZE)
+#define OB_DMA_RING_ACTIVE_BYTES_TX	(OB_DMA_RING_DESC_COUNT_TX * OB_DMA_DESC_SIZE)
+/*
+ * The coherent allocation block and the required descriptor-table base
+ * alignment remain 8 KiB for BOTH rings (C3: dmadesc_align = 13 whenever any
+ * FIFO uses >= D64MAXDD/2 descriptors). The RX ring only activates the first
+ * 256 descriptors (4096 B) of its 8 KiB block; see docs/rx_path.md.
+ */
+#define OB_DMA_RING_BYTES	OB_DMA_RING_ACTIVE_BYTES_TX	/* 8192 */
 #define OB_DMA_RING_ALIGN	8192
+#define OB_DMA_RX_POST_INIT	64	/* blob nrxpost */
+#define OB_DMA_RX_BUFSZ		2048	/* blob rxbufsize (no extra headroom) */
 
-_Static_assert(OB_DMA_RING_DESC_COUNT == 512,
-	       "descriptor ring must hold 512 descriptors");
+/* Blob: PCIe descriptor/ring high word is dataoffsethigh (0x80000000). */
+#define OB_DMA_PCIE_H32		0x80000000u
+
+_Static_assert(OB_DMA_RING_DESC_COUNT_RX == 256,
+	       "RX ring must hold 256 descriptors");
+_Static_assert(OB_DMA_RING_DESC_COUNT_TX == 512,
+	       "TX ring must hold 512 descriptors");
+_Static_assert(OB_DMA_RING_ACTIVE_BYTES_RX == 4096,
+	       "RX active descriptor table must be 4096 bytes");
+_Static_assert(OB_DMA_RING_ACTIVE_BYTES_TX == 8192,
+	       "TX active descriptor table must be 8192 bytes");
 _Static_assert(OB_DMA_RING_BYTES == 8192,
-	       "descriptor ring must be exactly 8 KiB");
+	       "descriptor allocation block must be exactly 8 KiB");
 _Static_assert(OB_DMA_RING_BYTES == OB_DMA_RING_ALIGN,
-	       "descriptor ring size must equal the 8 KiB alignment requirement");
+	       "descriptor block size must equal the 8 KiB alignment requirement");
 _Static_assert((OB_DMA_RING_ALIGN & (OB_DMA_RING_ALIGN - 1)) == 0,
 	       "ring alignment must be a power of two");
 
@@ -74,6 +94,19 @@ enum ob_dma_ring_role {
 	OB_DMA_RING_RX = 0,	/* future D11 FIFO0 RX @ 0x220 */
 	OB_DMA_RING_TX,		/* future D11 FIFO3 TX @ 0x2c0 */
 };
+
+/* Independent descriptor capacity per role. */
+static inline u16 ob_dma_ring_count(enum ob_dma_ring_role role)
+{
+	return role == OB_DMA_RING_RX ? OB_DMA_RING_DESC_COUNT_RX
+				      : OB_DMA_RING_DESC_COUNT_TX;
+}
+
+static inline u16 ob_dma_ring_active_bytes(enum ob_dma_ring_role role)
+{
+	return role == OB_DMA_RING_RX ? OB_DMA_RING_ACTIVE_BYTES_RX
+				      : OB_DMA_RING_ACTIVE_BYTES_TX;
+}
 
 /*
  * Per-slot ownership metadata. A slot owns at most one buffer mapping at a
@@ -103,7 +136,8 @@ struct ob_dma {
 	struct dma_pool	*pool;		/* 8 KiB-aligned coherent pool */
 	struct ob_dma_ring rx;		/* future FIFO0 RX */
 	struct ob_dma_ring tx;		/* future FIFO3 TX */
-	bool		mask64;		/* 64-bit DMA mask accepted */
+	u32		h32;		/* PCIe descriptor/ring high word */
+	bool		mask_ok;	/* coherent/streaming DMA mask set */
 };
 
 /* ---- pure descriptor helpers (host-testable) ---- */
@@ -116,13 +150,19 @@ static inline void ob_dma_desc_zero(struct ob_dma_desc *d)
 	d->addrhigh = 0;
 }
 
+/*
+ * Encode a descriptor with an EXPLICIT high word. On BCM4352 PCIe the blob
+ * discards the DMA address high dword and writes addrhigh = dataoffsethigh =
+ * OB_DMA_PCIE_H32, with addrlow = (u32)addr. addr must therefore fit in 32
+ * bits (see docs/rx_path.md).
+ */
 static inline void ob_dma_desc_encode(struct ob_dma_desc *d, dma_addr_t addr,
-				      u32 ctrl1, u32 len)
+				      u32 addrhigh, u32 ctrl1, u32 len)
 {
 	d->ctrl1 = cpu_to_le32(ctrl1);
 	d->ctrl2 = cpu_to_le32(len & OB_DMA_CTRL2_BC_MASK);
 	d->addrlow = cpu_to_le32((u32)(addr & 0xffffffffu));
-	d->addrhigh = cpu_to_le32((u32)((u64)addr >> 32));
+	d->addrhigh = cpu_to_le32(addrhigh);
 }
 
 static inline u32 ob_dma_desc_ctrl1(const struct ob_dma_desc *d)
@@ -139,6 +179,16 @@ static inline dma_addr_t ob_dma_desc_addr(const struct ob_dma_desc *d)
 {
 	return (dma_addr_t)le32_to_cpu(d->addrlow) |
 	       ((dma_addr_t)le32_to_cpu(d->addrhigh) << 32);
+}
+
+static inline u32 ob_dma_desc_addrhigh(const struct ob_dma_desc *d)
+{
+	return le32_to_cpu(d->addrhigh);
+}
+
+static inline u32 ob_dma_desc_addrlow(const struct ob_dma_desc *d)
+{
+	return le32_to_cpu(d->addrlow);
 }
 
 static inline void ob_dma_slot_init(struct ob_dma_slot *s)

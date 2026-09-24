@@ -150,15 +150,21 @@ status1 0x14` (corrects the earlier "STATUS=0x04" artifact); 16-byte descriptor
 Implemented `src/ob_dma.{h,c}`. Software only: no D11 DMA register is touched,
 no ring base is published, no engine is enabled and no IRQ is taken.
 - Validates the real device capability with
-  `dma_set_mask_and_coherent(core->dma_dev, DMA_BIT_MASK(64))` and fails probe
-  cleanly (no silent DMA32 fallback) if 64-bit DMA is not accepted.
+  `dma_set_mask_and_coherent(core->dma_dev, DMA_BIT_MASK(32))`. M3.4A proved the
+  blob discards the DMA address high dword (writes `addrhigh=0x80000000`), so
+  the device can only address a 32-bit host window; a 64-bit mask would allow
+  addresses the device cannot represent. (M3.2 originally used 64-bit; corrected
+  in M3.4A.)
 - Allocates one RX and one TX/control ring (future FIFO0 RX @0x220 / FIFO3 TX
   @0x2c0) from a `dma_pool` of 8 KiB blocks with 8 KiB alignment/boundary, and
   validates the recovered 8 KiB constraint on the **DMA address** only. The CPU
   virtual address is unrelated to the hardware and is only required to meet the
   natural alignment of `struct ob_dma_desc` for safe CPU access.
 - Descriptor = 16 bytes `{ctrl1, ctrl2, addrlow, addrhigh}` with explicit
-  masks/shifts (no bitfields); rings = 512 descriptors = 8192 bytes.
+  masks/shifts (no bitfields). M3.4A corrected the capacities to the blob's
+  asymmetric values: **RX 256 descriptors (4096 B), TX 512 (8192 B)**, both from
+  an 8 KiB `dma_pool` block with EOT on the last active descriptor (RX 255, TX
+  511).
 - Separate RX/TX index and per-slot ownership metadata (skb/dma/mapped) so a
   later mapping is unmapped and freed exactly once.
 - Full unwind on every failure stage and in `ob_remove()`; no hardware reset is

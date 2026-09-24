@@ -34,7 +34,7 @@ static void ob_dma_dump_ring(struct ob_hw *hw, const struct ob_dma_ring *ring)
 	dev_info(hw->dev,
 		 "dma: %s ring cpu=%px dma=%pad descriptors=%u bytes=%u dma_aligned_8k=%s cpu_desc_aligned=%s\n",
 		 ob_dma_role_name(ring->role), ring->desc_cpu, &ring->desc_dma,
-		 ring->n, OB_DMA_RING_BYTES,
+		 ring->n, ob_dma_ring_active_bytes(ring->role),
 		 IS_ALIGNED((unsigned long)ring->desc_dma, OB_DMA_RING_ALIGN) ?
 			"yes" : "no",
 		 IS_ALIGNED((unsigned long)ring->desc_cpu,
@@ -70,7 +70,7 @@ static int ob_dma_ring_alloc(struct ob_hw *hw, struct ob_dma_ring *ring,
 
 	memset(ring, 0, sizeof(*ring));
 	ring->role = role;
-	ring->n = OB_DMA_RING_DESC_COUNT;
+	ring->n = ob_dma_ring_count(role);
 
 	ring->alloc_cpu = dma_pool_alloc(pool, GFP_KERNEL, &ring->alloc_dma);
 	if (!ring->alloc_cpu)
@@ -133,18 +133,25 @@ int ob_dma_init(struct ob_hw *hw)
 		return -ENODEV;
 	}
 
-	/* Validate the real device capability, not the ChipCommon bits. */
-	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
+	/*
+	 * The blob's descriptor/ring writer discards the DMA address high dword
+	 * and writes addrhigh = dataoffsethigh = 0x80000000, so the device can
+	 * only address a 32-bit host window. Constrain the DMA mask to 32 bits
+	 * so every coherent/streaming address stays below 4 GiB (a 64-bit mask
+	 * would allow allocations the device cannot represent).
+	 */
+	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
 	if (ret) {
 		dev_err(hw->dev,
-			"dma: 64-bit coherent/streaming mask rejected: %d\n",
+			"dma: 32-bit coherent/streaming mask rejected: %d\n",
 			ret);
 		return ret;
 	}
-	hw->dma.mask64 = true;
+	hw->dma.mask_ok = true;
+	hw->dma.h32 = OB_DMA_PCIE_H32;
 	dev_info(hw->dev,
-		 "dma: 64-bit coherent/streaming mask accepted (%s)\n",
-		 dev_name(dev));
+		 "dma: 32-bit coherent/streaming mask accepted (%s), h32=%08x\n",
+		 dev_name(dev), hw->dma.h32);
 
 	/*
 	 * A dma_pool with size == align == boundary == 8 KiB guarantees each
@@ -190,5 +197,6 @@ void ob_dma_free(struct ob_hw *hw)
 
 	dma_pool_destroy(hw->dma.pool);
 	hw->dma.pool = NULL;
-	hw->dma.mask64 = false;
+	hw->dma.h32 = 0;
+	hw->dma.mask_ok = false;
 }

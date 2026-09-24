@@ -170,3 +170,129 @@ address. Per the project rule "no guessed writes / provenance first", M3.4B is
 
 **End of M3.4A. No register written, no engine enabled. STOP for acceptance of
 the two deviations above before M3.4B.**
+
+---
+
+# M3.4A addendum — final proof obligations
+
+## 1. Exact DMA64 addrhigh formula — **A: `addrhigh = dataoffsethigh`**
+
+`dma64_dd_upd` (blob `0xdcf8`), descriptor buffer address:
+
+```
+dcf9  mov  0xfc(%rdi),%r10d    ; r10d = dataoffsetlow
+dd0a  test %r10d,%r10d
+dd0d  je   dd19                ; dataoffsetlow==0 -> fast path (BCM4352)
+dd1b  lea  (%r10,%rdx,1),%edx  ; addrlow = (u32)(dataoffsetlow + (u32)pa)
+dd4d  mov  0x100(%rdi),%edx    ; edx = dataoffsethigh
+dd53  mov  %edx,0xc(%rax)      ; desc.addrhigh = dataoffsethigh
+```
+
+No instruction reads pa bits [63:32]; the 32-bit `lea`/`mov` discard them.
+
+`_dma_ddtable_init` (blob `~0xe69f`), ring base:
+
+```
+e6d2  add  %edx,%edi          ; edi = ddoffsetlow + (u32)pa   -> addrlow
+e6dd  mov  0x50(%rbx),%rsi
+e6e1  add  $0xc,%rsi
+e6e5  mov  0xf8(%rbx),%edi    ; edi = ddoffsethigh
+e6eb  jmp  writel             ; write(rx+0xC, ddoffsethigh)  -> addrhigh
+```
+
+`dma_attach` (`0x10645`) sets `ddoffsethigh = dataoffsethigh = 0x80000000` for
+`buscoretype ∈ {0x83C,0x820} && dma64`. Therefore:
+
+| address | expr |
+|---|---|
+| descriptor buffer | `addrlow = (u32)(dataoffsetlow + (u32)pa)`, `addrhigh = dataoffsethigh = 0x80000000` |
+| RX ring base | `addrlow = (u32)(ddoffsetlow + (u32)ring)`, `addrhigh = ddoffsethigh = 0x80000000` |
+| TX ring base | same as RX (TX regs) |
+
+**The DMA address high dword is discarded.** The device addresses a 32-bit host
+window at `0x80000000_<low32>`, so every DMA address must be < 4 GiB.
+Implementation (M3.2 correction): `dma_set_mask_and_coherent(dev,
+DMA_BIT_MASK(32))` was set so the DMA API cannot hand out >4 GiB addresses;
+`hw->dma.h32 = OB_DMA_PCIE_H32` (0x80000000) is the descriptor/ring high word.
+
+## 2. RX ring alignment — **8192 bytes required**
+
+C3 `dma64_alloc`/`dma_attach`: when `aligndesc_4k` holds,
+`dmadesc_align = D64RINGALIGN_BITS (13)` **unless** `(ntxd < D64MAXDD/2) &&
+(nrxd < D64MAXDD/2)`; `D64MAXDD = 8192/16 = 512`, half = 256. FIFO0 has
+`ntxd=512, nrxd=256`, so the condition is false → **align 13 = 8192**.
+The blob's `sub_1010c` uses the same probe-derived alignment (`0x2000`).
+
+- RX active descriptors = **256**
+- RX active bytes = **4096**
+- RX allocation bytes = **8192** (8 KiB `dma_pool` block; only 0..255 used)
+- RX required alignment = **8192**
+- TX active = 512 / 8192 (unchanged)
+
+## 3. Corrected asymmetric software model (implemented, no hardware)
+
+`src/ob_dma.h`: `OB_DMA_RING_DESC_COUNT_RX = 256`, `..._TX = 512`,
+`OB_DMA_RING_ACTIVE_BYTES_RX = 4096`, `..._TX = 8192`, `OB_DMA_RING_BYTES =
+8192`, `OB_DMA_RING_ALIGN = 8192`, `OB_DMA_RX_POST_INIT = 64`,
+`OB_DMA_RX_BUFSZ = 2048`, `OB_DMA_PCIE_H32 = 0x80000000`; helpers
+`ob_dma_ring_count()` / `ob_dma_ring_active_bytes()`; descriptor encode takes an
+explicit high word. `src/ob_dma.c` uses the per-role count; the 8 KiB pool is
+retained. Host tests assert `RX next(255)==0`, `TX next(511)==0`, RX offset max
+`255*16=4080`, TX `511*16=8176`, `OB_DMA_RX_POST_INIT==64`, PTR offset
+`64*16==0x400`, and RX EOT@255 / TX EOT@511.
+
+## 4. Example RX descriptors
+
+With `pa = 0x00000000fe0e6000`, `rxbufsize = 2048`, `h32 = 0x80000000`:
+
+| idx | ctrl1 | ctrl2 | addrlow | addrhigh |
+|---|---|---|---|---|
+| 0 | `0x00000000` | `0x00000800` | `0xfe0e6000` | `0x80000000` |
+| 255 | `0x10000000` (EOT) | `0x00000800` | `0xfe0e6000` | `0x80000000` |
+
+Only descriptor 255 carries EOT. Not programmed to hardware yet.
+
+## 5. Host IRQ routing enable ordering
+
+`bcma` does not request the D11 IRQ; `brcmsmac` calls
+`bcma_host_pci_irq_ctl(bus, d11core, true)` from the MAC bring-up
+(`main.c:4904`) while `request_irq()` was already done at attach
+(`mac80211_if.c:1172`). Ordering for M3.4B (handler always installed first, and
+no route/source active before the ring is fully programmed):
+
+1. `request_irq(irq, ..., IRQF_SHARED, ...)` — already done in M3.3.
+2. Allocate/map RX buffers; program RX ring base + descriptors + PTR.
+3. Enable RX DMA (`control = 0x84D`); read back.
+4. `bcma_host_pci_irq_ctl(bus, d11core, true)`.
+5. FIFO0 `intmask |= I_RI`.
+6. `macintmask |= MI_DMAINT`.
+
+Teardown is the reverse: mask `I_RI` + `MI_DMAINT` → disable RX (`control = 0`,
+bounded poll `D64_RS0_RS_DISABLED`) → `tasklet_kill` → `synchronize_irq` →
+`free_irq` → `bcma_host_pci_irq_ctl(bus, d11core, false)` → unmap/free buffers.
+
+## 6. Revised M3.4B register-write sequence (proposed, NOT executed)
+
+```
+/* descriptors (memory, coherent): idx 0..63 posted, EOT only at 255 */
+ctrl1 = (idx==255) ? 0x10000000 : 0
+ctrl2 = 0x00000800
+addrlow = (u32)pa ; addrhigh = 0x80000000
+dma_wmb(); wmb();
+
+write(D11+0x228, (u32)ring_dma)      /* RX addrlow  */
+write(D11+0x22C, 0x80000000)         /* RX addrhigh */
+write(D11+0x224, (u32)ring_dma + 64*16)  /* RX PTR = ring + 0x400 */
+write(D11+0x220, 0x0000084D)         /* RX control  */
+read back control/ptr/status0/status1; abort+disable on mismatch
+
+bcma_host_pci_irq_ctl(bus, d11core, true)
+write(D11+0x24,  read(D11+0x24)  | (1<<16))   /* FIFO0 intmask |= I_RI */
+write(D11+0x12C, read(D11+0x12C) | (1<<15))   /* macintmask |= MI_DMAINT */
+```
+
+ISR: read `D11+0x128`; if `MI_DMAINT`, read `D11+0x20`, ack `I_RI`, ack owned
+`macintstatus` bits, schedule the bounded tasklet. Teardown masks both,
+disables the engine (bounded poll), kills the tasklet, then frees the IRQ.
+
+**End of addendum. No DMA register written, no engine enabled.**
