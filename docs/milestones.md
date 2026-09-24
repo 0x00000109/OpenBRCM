@@ -297,8 +297,9 @@ Canonical status (exact):
   (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
   normal unload + DMA teardown + STOP boundary proven)
 - M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
-  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: CONDITIONAL` (one open
-  item: band-0 MHF values)
+  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: NO` — blocked on the
+  band-0 MHF runtime inputs (initial value and write expressions proven; the
+  SPROM/NVRAM + opaque `wlc_info` inputs are not available)
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated

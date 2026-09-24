@@ -157,8 +157,8 @@ Stated exactly:
   `sub_6656c`; candidate `42d74b8`, module `6ba2d853…`; normal unload + DMA
   teardown proven)
 - M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
-  / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`;
-  `D3B IMPLEMENTATION GO: CONDITIONAL` — one open item: band-0 MHF values)
+  / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; `D3B
+  IMPLEMENTATION GO: NO` — blocked on the band-0 MHF runtime inputs)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
@@ -427,17 +427,19 @@ verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
 `sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
-**Next action — D3B, then D4.** M3.4D3B (band init / `d11ac1bsinitvals42`) is
-now analyzed in [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary =
-`sub_6656c` entry (0x6656c) through the `sub_60f67` applier return (0x669c2),
-STOP before `wlc_phy_init` (0x669df). Newly pinned: the pre-bs helper
-`sub_62766` is `wlc_bmac_write_mhf` (writes MHF1..5 to SHM
-`0x5e/0x60/0x62/0x78/0xd4` from `band-0 mhfs[0..4]`). `D3B IMPLEMENTATION GO:
-CONDITIONAL` on the single open value item — the band-0 MHF values (§3.1);
-resolve via the SPROM boardflags/C3 mapping or a documented default, then
-implement the isolated `bsinitvals_test_only=1` mode. D4 (AC PHY bring-up:
-`wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO) follows. Neither
-D3B nor D4 has code or hardware proof yet.
+**Next action — D3B blocked on MHF inputs; D4 after.** M3.4D3B (band init /
+`d11ac1bsinitvals42`) is analyzed in
+[`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
+entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
+`wlc_phy_init` (0x669df). Newly pinned: the pre-bs helper `sub_62766` is
+`wlc_bmac_write_mhf` (writes MHF1..5 to SHM `0x5e/0x60/0x62/0x78/0xd4` from
+`band-0 mhfs[0..4]`). The MHF init call graph and every value expression are
+proven, but the runtime inputs (`antsel_type` from SPROM/NVRAM; opaque
+`wlc_info` gates) are not available, so `D3B IMPLEMENTATION GO: NO` — do not
+invent a default. Unblock via a read-only SPROM/NVRAM probe + field mapping,
+the `wl`-layer initializer, or an explicit logged-probe decision (§3.2). D4 (AC
+PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO)
+follows. Neither D3B nor D4 has code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
