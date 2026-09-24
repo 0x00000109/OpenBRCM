@@ -219,6 +219,31 @@ vendor stages that precede `dma_txinit`/`dma_rxinit` but are not pinned:
 Normal-driver integration (D3A1) MUST restore them, in vendor order, before band
 init/bsinitvals/PHY bring-up.
 
+### 4.2 Fatal state and manual sysfs unbind (operator rule)
+
+The module pin set by `ob_d3a0_latch_fatal()` blocks `rmmod`, but it cannot block
+a manual `echo <bdf> > /sys/.../unbind` (or driver-core removal). If the BCMA
+device is unbound while the fatal latch is set:
+
+- `ob_remove()` → `ob_d3a0_remove()` runs, sees `lc.fatal`, logs the retained
+  ring addresses, sets drvdata to NULL and returns **without freeing**.
+- the `devm`-allocated `@hw` is then released, so the in-`@hw` ring pointers are
+  gone, but the **raw** `dma_pool` pages and RX skbs are not `devm`-managed and
+  remain allocated (leaked). The mappings remain valid and are never unmapped.
+- because the device is no longer bound, another driver could subsequently bind
+  the D11 core; any driver that resets/reprograms the core would also stop the
+  engines, and the retained (leaked) memory keeps any late PCIe transaction
+  harmless.
+
+There is **no simple repository-supported BCMA mechanism** to suppress manual
+bind/unbind for just the isolated test mode without touching normal
+architecture, so none is added. The exact operator rule is therefore:
+
+> **FATAL DMA STATE → DO NOT UNBIND / DO NOT REBIND / REBOOT ONLY.**
+
+The module pin enforces "no `rmmod`"; the operator must not bypass it with sysfs
+unbind/rebind. A reboot is the only correct recovery.
+
 ## 5. Deterministic D3A0 postconditions
 
 TX0..TX3: `control` XE=1 (capability bits = attach-time read); `addrlow` = ring
