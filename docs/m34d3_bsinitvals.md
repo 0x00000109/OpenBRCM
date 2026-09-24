@@ -537,9 +537,13 @@ Still unknown:
 
 ## 20. Analysis commit hash
 
-`ef4be46` — `m34d3: analyze rev42 band-switch initvals and PHY boundary`
-(DCO signed; script + docs on `m34d3-bsinitvals-analysis`). It contains no
-driver code and no hardware interaction.
+- `ef4be46` — `m34d3: analyze rev42 band-switch initvals and PHY boundary`
+  (initial report + classifier).
+- `b7d4376` — `m34d3: resolve switch_radio ordering; correct PHY/RF boundary`
+  (this correction: §0, Appendix A, revised §16/§17/§18/§19).
+
+Both DCO signed, on `m34d3-bsinitvals-analysis`; no driver code and no hardware
+interaction.
 
 ## 21. Draft PR
 
