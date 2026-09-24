@@ -210,11 +210,13 @@ else
 fi
 if [ -f docs/m34d3b_band_init.md ] && \
    grep -q 'ANALYSIS ONLY' docs/m34d3b_band_init.md && \
-   grep -q 'D3B IMPLEMENTATION GO:.*CONDITIONAL' docs/m34d3b_band_init.md && \
-   grep -q 'wlc_bmac_write_mhf' docs/m34d3b_band_init.md; then
-	ok "D3B analysis record present (ANALYSIS ONLY / CONDITIONAL GO)"
+   grep -q 'D3B IMPLEMENTATION GO:.*NO' docs/m34d3b_band_init.md && \
+   grep -q 'wlc_bmac_write_mhf' docs/m34d3b_band_init.md && \
+   grep -q 'si_pci_war16165' docs/m34d3b_band_init.md && \
+   grep -q 'VALUE PARTIALLY PROVEN' docs/m34d3b_band_init.md; then
+	ok "D3B analysis record present (ANALYSIS ONLY / blocked GO / MHF provenance)"
 else
-	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / CONDITIONAL GO / wlc_bmac_write_mhf)"
+	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / blocked GO / wlc_bmac_write_mhf / si_pci_war16165 / VALUE PARTIALLY PROVEN)"
 fi
 
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.

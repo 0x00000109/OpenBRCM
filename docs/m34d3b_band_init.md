@@ -103,32 +103,220 @@ words** to SHM `0x5e/0x60/0x62/0x78/0xd4` (u16, low halves). This is the
 `wlc_bmac_write_mhf` that is **not** the same as the D3A1 `btc_flags` MHF
 applier (`sub_62b79`), which is skipped because `btc_flags` is absent.
 
-### 3.1 The band-0 MHF values — the one open VALUE item
+### 3.1 The band-0 MHF values — origin of every input
 
-`band->mhfs[0..4]` is host-side state set during attach by the (not present in
-the blob) `wl` layer via `wlapi_bmac_mhf` -> `wlc_bmac_mhf` (`0x62995`). The
-blob contains only the setter, never an initializer, and `wlc_bmac_mhf` has no
-in-image caller.
+`band->mhfs[0..4]` is a host-side `u16[5]` array at `band+8`. It is **not**
+initialized in the blob: the band structs are allocated zeroed by
+`wlc_hw_attach` (`0x798ff`, `wlc_calloc`, `dev+0xf0` size `0x70`,
+`dev+0xf8 = 0xf0+0x38`), so the array starts at `0`. The blob **does** contain
+in-image `wlc_bmac_mhf` callers (contrary to the earlier assumption); no
+`wl`-layer `wlapi_bmac_mhf` caller exists in the blob, but the internal callers
+fully drive the array before the D3B read.
 
-C3 default (`brcms_c_mhfdef`, `main.c:1042`): `memset(mhfs,0,...)` then
-`mhfs[MHF2] |= pio_mhf2` (0 for this board) plus, conditionally,
-`MHF1_FORCEFASTCLK` (if `BFL_NOPLLDOWN`) and the NPHY-only
-`MHF2_NPHY40MHZ_WAR`/`MHF1_IQSWAP_WAR` (not applicable to AC). For a plain AC
-board this is **all-zero**, but the exact closed-driver `wl`-layer values are
-**not proven**.
+`wlc_bmac_mhf(dev, idx, mask, val, band)` (`0x62995`) is
+`band->mhfs[idx] = (band->mhfs[idx] & ~mask) | val` (`band` 0/1/2/all). The
+SHM writer `sub_62766` maps `idx 0..4` -> `M_HOST_FLAGS1..5`
+(`0x5e/0x60/0x62/0x78/0xd4`).
 
-Resolution options (choose before implementation):
+#### 3.1.1 Complete MHF write call graph (initial up)
 
-1. Derive the values from the device SPROM `boardflags`/`boardtype` using the C3
-   `brcms_c_mhfdef` mapping (read-only `ob_si` path already exists) and freeze
-   them as documented board defaults.
-2. Freeze `mhfs[5] = {0,0,0,0,0}` as the documented default, gated on a
-   read-only SPROM boardflags check, with the write logged.
-3. Treat the 5 words as a `UNKNOWN` value and defer D3B (not recommended: it is
-   the only remaining item, and `MHF1_EDCF` is set only later in `up`).
+`wl_open` -> `wl_up` -> `wlc_up` (`0x3aac3`) -> `wl_init` -> `wlc_init`
+(`0x3c46f`) -> `wlc_bmac_init` (`0x6828a`) -> `sub_6656c` -> `sub_62766`. The
+`wlc_up` writes execute **before** `wl_init`/`wlc_bmac_init`; the D3B read is
+last.
 
-This document recommends (1) if a boardflag source is accepted, else (2), and
-requires the decision to be recorded before D3B implementation.
+| # | site | idx (MHF) | mask | value | exact condition | class |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1a | `wlc_up 0x3ab49` | 3 (MHF4) | `0x4000` | `0x4000` | `!(boardflags & 0x400000)` path | 4313-era |
+| 1b | `wlc_up 0x3ab6b` | 4 (MHF5) | `0x1` | `0x1` | `(boardflags & 0x400000)` path | 4313-era |
+| 2 | `wlc_up 0x3abb5` | 4 (MHF5) | `0x80` | `0x80`/`0` | `*(wlc->stf + 0x59) >= 1` | resolved §3.2 |
+| 3 | `wlc_up 0x3ac88` | 0 (MHF1) | `0x100` (EDCF) | `0x100`/`0` | `*(pub + 0x54) != 0` | resolved §3.2 |
+| 4 | `wlc_up 0x3acbc` | 1 (MHF2) | `0x8` | `0x8`/`0` | `*(pub->sih + 4) == 1 && *(wlc + 0x60) != 0` | resolved §3.2 |
+| 5 | `wlc_bmac_init 0x6855b` | 2 (MHF3) | `0x1` (ANTSEL_EN) | `0x1` | `antsel_type ∈ {2,3,6}` | board/NVRAM §3.3 |
+| 6 | `wlc_bmac_init 0x68578` | 2 (MHF3) | `0x2` (ANTSEL_MODE) | `0x2` | `antsel_type ∈ {2,3,6}` | board/NVRAM §3.3 |
+| 7 | `wlc_bmac_init 0x685f7` | 2 (MHF3) | `0x1` | `0x1` | `antsel_type == 1` | board/NVRAM §3.3 |
+| 8 | `wlc_bmac_init 0x68611` | 2 (MHF3) | `0x2` | `0x0` | `antsel_type == 1` | board/NVRAM §3.3 |
+| 9 | `wlc_bmac_init 0x688a8` | 4 (MHF5) | `0x800` | `0x800` | LCN/PHY-rev path | **not rev42 AC** |
+| 10 | `sub_62b79` via `0x69461` | 0..4 | varied | `btc_flags`-driven | `btc_flags` present | **absent -> skip** |
+
+Site 1 is reached only on chip `0x4313` (the preceding `wlc_bmac_4331_epa_init`
+gate); it does **not** run for `0x4352`. `wlc_antsel_attach` (`0x5970a`) sets
+`antsel_type` (via `wlc_bmac_antsel_type_set`, which stores the byte at
+`dev+0x1a1`) but writes no MHF itself. `sub_62b79`
+(`wlc_bmac_btc_flags_idx_set`) writes MHFs only under the `btc_flags` gate,
+absent on the ASUS PCE-AC56 (D3A1 §15.6).
+
+### 3.2 Semantic resolution of the formerly-opaque gates
+
+All four gate fields are now resolved to named origins (not "opaque offsets").
+
+**`wlc + 0x550` = `wlc->stf`** (`stf_info`, 0x120 B, `wlc_calloc` in
+`wlc_attach_malloc 0x4ee97`). Proof: `wlc_stf_attach` (`0x173d74`) is the only
+initial-up function that dereferences `*(wlc+0x550)` and writes its fields
+(`+0x7/+0x8` in `wlc_info_init 0x24dd6/0x24de1`; `+0x2a/+0x3c/+0x56/+0x6c/
++0x80/+0x88/+0x59` in `wlc_stf_attach`).
+
+**`*(wlc->stf + 0x59)`** (gate 2) — written by `wlc_stf_attach 0x173f15` to
+`1` iff `*(wlc->band + 8) != 7`. `wlc + 0x40 = wlc->band` (the current band):
+`wlc_stf_ss_update` (`0x173cb5`) and `wlc_stf_attach` (`0x173e42`) load
+`*(wlc+0x40)` and then `band + 0x10` as the `wlc_phy_t` pointer passed to
+`wlc_phy_cap_get`/`wlc_phy_txpower_hw_ctrl_get`. `band + 8` is the band
+**phytype** (`u16`), compared to `7` (HT/N) and `4`. For this board
+`phytype == 0xB` (AC, the same value that selects `d11ac1bsinitvals42`), so
+`0xB != 7` -> **`stf+0x59 == 1`**. The only other writer is
+`wlc_stf_txchain_set` (`0x175246`), a runtime iovar not on the initial-up path.
+
+**`pub = *(wlc)`; `pub + 0x100 = si_t *sih`** (gate 4, first half). Proof:
+`wlc_attach 0x37de7` stores the `wlc_bmac_si_attach`/`si_attach` return at
+`pub+0x100`; `pub+0x108` is the synthesized NVRAM text buffer (it is the first
+arg to `getvar`, which scans `name=value`) and `pub+0x110` is its size.
+`si_pub`/`si_t` begins `socitype` then `bustype` (`+4`), `buscoretype` (`+8`),
+`buscorerev` (`+0xc`): `si_pci_war16165` (`0x1e1e1`) tests exactly
+`bustype==PCI(1)`, `buscoretype==0x804`, `buscorerev<=0xA`, and
+`wlc_bmac_attach 0x69ce8` tests `*(sih+4)==1` before calling it. For BCM4352
+(PCIe) `*(sih+4) == 1` is **true**.
+
+**`wlc + 0x60`** (gate 4, second half) — a byte flag set to `1` only in
+`wlc_bmac_attach 0x69cf7`, iff `*(sih+4)==1 && si_pci_war16165(sih)`. It is `0`
+from the `wlc_calloc`, so the gate is `1` iff the PCIe core is
+`buscoretype==0x804 && buscorerev<=10` (the PCIe WAR 16165). The BCM4352 PCIe
+core revision is **not yet recovered from repository evidence** (it is a
+hardware constant, not a SPROM field) -> this half stays UNKNOWN.
+
+**`pub + 0x54`** (gate 3) — `wlc_info_init 0x24e99` sets it to `0xffffffff`
+(non-zero) at attach. Other `+0x54` stores exist (`wlc_set_gmode`,
+`wlc_set_nmode`, `wlc_statsupd`, ...) but none is proven to run on the
+initial-up path; the known writers that touch the **bandstate** structs
+(`wlc_attach 0x3945c` = `*(wlc+0x50)+0x59`, `wlc_set_nmode 0x36874` =
+`*(wlc+0x50)+0x54`) are a different base. So `pub+0x54` is most likely still
+`0xffffffff` -> **MHF1_EDCF set**, but this is not yet a hard proof.
+
+### 3.3 `antsel_type` reconstruction (`wlc_antsel_attach` 0x5970a)
+
+Inputs: `boardtype = pub+0x94` (byte), `boardflags = pub+0x9c` (`u32`),
+`antswitch = getintvar("antswitch")`, `aa2g = getintvar("aa2g")`,
+`aa5g = getintvar("aa5g")`. `asi->antsel_type` is `asi+0x10`,
+`asi->antsel_avail` is `asi+0x12`; then `wlc_bmac_antsel_type_set(hw,
+antsel_type)` stores it at `dev+0x1a1` and calls
+`wlc_phy_antsel_type_set(band->phy, antsel_type)`.
+
+```
+if boardtype <= 3 -> L_bf
+else if antswitch == 0 -> L_bt0
+else if antswitch > 7 -> END (type 0)
+else bit = 1 << antswitch
+  switch group of antswitch:
+    {1,2,3} -> type 2 ; {5} -> type 4   ; then avail iff (aa2g==7||aa5g==7)
+    {4}     -> type 3 ; {6} -> type 5 ; {7} -> type 6 ; avail iff (aa2g==6||aa5g==6)
+    (other -> END type 0)
+L_bt0: if boardtype == 4 and aa2g == 7 and aa5g == 0 -> type 2, avail 1
+L_bf : if boardflags & 0x8 -> type 1, avail 1 ; else type 0, avail 0
+```
+
+Consequences for the D3B MHF3 gate:
+- `antswitch == 0` (typical when the NVRAM var is absent) reduces to:
+  `type = 2` iff `(boardtype==4 && aa2g==7 && aa5g==0)`, else `type = 1` iff
+  `boardflags & 0x8` (`BFL_RFANTS`), else `type = 0`.
+- `wlc_bmac_init` sets MHF3 `0x1|0x2` for `type ∈ {2,3,6}`, MHF3 `0x1` for
+  `type == 1`, and nothing for `{0,4,5}`.
+
+### 3.4 SPROM / NVRAM provenance for the `antsel` inputs
+
+The textual vars come from the closed `bcmsrom` synthesis, not from an external
+file:
+- `srom_var_init` (`0x9704`) builds the NVRAM text and `getvar`/`getintvar`
+  only *scan* it (`getvar 0xb807` matches `name=` in a text buffer;
+  `pub+0x108` is that buffer). The synthesis format strings are in
+  `.rodata.str1.1`: `"%s=%u"` `0x5a1`, `"%s=0x%x"` `0x593`, `"%s%d=%s"`
+  `0x5a7`, `"%s%d=0x%x"` `0x5af`, `"ccode="` `0x578`, `"sromrev=%d"` `0x559`.
+- The rev11 raw-field -> name mapping lives in the closed `srom_parsecis`
+  (`0x46a3`, ~19 KiB) and `srom_var_init`/helper `0x4523`; the CIS signature is
+  `0x0634` at `+0x80`. **The exact rev11 byte/word offsets for `boardflags`,
+  `boardtype`, `ant_available_bg/a`, `antswitch` are NOT recovered from any
+  available open source or from the repository**, and are therefore recorded as
+  UNKNOWN rather than guessed.
+- C3 `bcm47xx_sprom` (`drivers/firmware/broadcom/bcm47xx_sprom.c`) maps the
+  *parsed `ssb_sprom` fields* (`ant_available_bg/a`, `antswitch`, `boardflags`)
+  to names; `bcma/sprom.c` extracts them only for **rev 8**
+  (`SSB_SPROM8_TXRXC`, ...). These validate the *semantics* but not the rev11
+  raw offsets.
+- The repository preserves **only** the rev11 MAC words (`2cfd a161 4025` at
+  SPROM `0x90`); it does **not** preserve a full SPROM image. Consequently
+  `boardtype`/`boardflags`/`aa2g`/`aa5g`/`antswitch` cannot be decoded offline
+  today.
+
+### 3.5 Symbolic replay of the band-0 MHF vector
+
+Start `mhfs[0..4] = {0,0,0,0,0}`; apply the executed sites in order:
+
+| word | expression | status |
+| :--- | :--- | :--- |
+| MHF1 (`mhfs[0]`) | `pub+0x54 ? 0x100 : 0` | likely `0x100`, not hard-proven |
+| MHF2 (`mhfs[1]`) | `(bustype==PCI && si_pci_war16165) ? 0x8 : 0` | UNKNOWN (PCIe core rev) |
+| MHF3 (`mhfs[2]`) | `antsel_type∈{2,3,6}` -> `0x3`; `==1` -> `0x1`; else `0x0` | UNKNOWN (board/NVRAM) |
+| MHF4 (`mhfs[3]`) | `0x0` (site 1 is 4313-only) | PROVEN `0` |
+| MHF5 (`mhfs[4]`) | `(band phytype != 7) ? 0x80 : 0` | likely `0x80` (AC `0xB`) |
+
+No default-zero substitution is permitted for MHF1/MHF2/MHF3/MHF5.
+
+### 3.6 C3 (`brcmsmac`) consistency check
+
+| bit | C3 constant | C3 behavior | this path | verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| MHF1 `0x100` | `MHF1_EDCF` | set unconditionally (`main.c:5020`) | set iff `pub+0x54!=0` (init `0xffffffff`) | MATCH (likely) |
+| MHF2 `0x8` | none | absent | PCIe WAR16165 only | DIFFERENCE (C3 has no such bit) |
+| MHF3 `0x1/0x2` | `MHF3_ANTSEL_EN/MODE` | set iff `wlc_hw->antsel_type` antdiv | same masks/order | MATCH (mechanism) |
+| MHF4 `0x4000` | `MHF4_EXTPA_ENABLE` | 4313/extPA path | 4313-only, skipped | MATCH (skip) |
+| MHF5 `0x800` | `MHF5_4313_GPIOCTRL`? no | — | LCN path only, skipped | MATCH (skip) |
+| MHF5 `0x80` | none | absent | set iff phytype != HT | DIFFERENCE (AC-era bit) |
+
+The two DIFFERENCE rows are exactly the AC-era bits absent from C3; C3 cannot
+supply their provenance.
+
+### 3.7 Verdict, GO/NO-GO, and the smallest read-only probe
+
+```
+BAND-0 MHF INITIAL VALUE (zero)                                PROVEN
+MHF WRITE SITES + VALUE EXPRESSIONS                            PROVEN
+stf / sih / bustype / buscoretype / buscorerev field mapping   PROVEN
+wlc->stf+0x59 (MHF5) for AC (phytype 0xB != HT 7)              PROVEN (mechanism)
+pub+0x54 != 0 (MHF1 EDCF)                                      LIKELY (init 0xffffffff)
+wlc+0x60 = si_pci_war16165 (MHF2)                              UNKNOWN (PCIe core rev)
+antsel_type (MHF3)                                             UNKNOWN (board/NVRAM)
+rev11 raw offsets for boardtype/boardflags/aa2g/aa5g/antswitch  UNKNOWN
+D3B IMPLEMENTATION GO:                                         NO (blocked)
+```
+
+This is case **B — VALUE PARTIALLY PROVEN**: every write expression and every
+gate's semantic origin is now known, but three concrete *input values* are
+missing and cannot be guessed:
+
+1. `antsel_type` <- `boardtype`, `boardflags & 0x8`, and NVRAM
+   `antswitch`/`aa2g`/`aa5g` (the last two/three from the closed rev11
+   synthesis);
+2. `si_pci_war16165` -> `wlc+0x60` <- the PCIe core `buscorerev` (<= 10?);
+3. final `pub+0x54` (EDCF) on the initial-up path.
+
+Smallest **read-only** probe (design only; not implemented or run here) — no
+D11/PHY/radio writes, no DMA, no IRQ, no MAC enable, no firmware upload,
+external-SPROM/struct reads only, bounded:
+
+- dump the already-validated external rev11 SPROM (234 words) raw, exactly as
+  the existing read-only `sprom_diag` path (`ob_si`, `CC+0x800`, 16-bit reads);
+- log the in-memory SI fields `bustype`/`buscoretype`/`buscorerev` and the
+  `si_pci_war16165(sih)` result (pure struct reads; the core enumeration is
+  already done read-only during bring-up);
+- log the raw `boardtype`/`boardflags` candidate words from the dump (decode
+  offline once the rev11 offsets are recovered), plus the SPROM `sromrev`/CRC;
+- no verdict is asserted by the probe; it only captures the missing inputs.
+
+Unblock paths, in preference order: (a) run the read-only probe above and
+recover the rev11 offsets from `srom_parsecis`, then re-evaluate §3.5; (b) the
+`wl`-layer MHF initializer/trace for BCM4352 rev42; (c) an explicit decision to
+make D3B a logged runtime probe whose MHF gate is validated, not reproduced.
+
+Until then D3B stops at this boundary. The D3B analysis (boundary, table,
+postconditions, policy) is otherwise complete.
 
 ## 4. The `d11ac1bsinitvals42` table (73 records)
 
@@ -204,23 +392,30 @@ postcondition mismatch, do not retry in the same boot.
 
 ## 8. Open items
 
-1. **Band-0 MHF values** (`mhfs[0..4]`) — §3.1; the only value item. Blocks a
-   vendor-exact implementation until decided.
-3. Symbolic names of the 5 direct IHR fields (`0x680/0x682/0x684/0x686` IFS,
+1. **Band-0 MHF values** (`mhfs[0..4]`) — §3.1/§3.2; the blocking value item.
+   Initial value (`0`) and all write expressions are proven, but the runtime
+   inputs (`antsel_type` from SPROM/NVRAM; opaque `wlc_info` gates) are not
+   available. **D3B is blocked on this.**
+2. Symbolic names of the 5 direct IHR fields (`0x680/0x682/0x684/0x686` IFS,
    `0x700` NAV) — values proven, names UNKNOWN (non-blocking).
-4. Exact initial band / chanspec used by the initial bring-up (`dev+0x84`,
+3. Exact initial band / chanspec used by the initial bring-up (`dev+0x84`,
    `band+0x1c` are proven; the chanspec datum passed to `wlc_phy_init` is D4).
-5. `sub_6656c`'s `osl_readw(D11+0x3e0)` result is unused in the rev42 path
+4. `sub_6656c`'s `osl_readw(D11+0x3e0)` result is unused in the rev42 path
    (non-blocking).
 
 ## 9. D3B implementation gate
 
 ```
+BAND-0 MHF INITIAL VALUE AND WRITE EXPRESSIONS                      PROVEN
+BAND-0 MHF RUNTIME INPUTS (antsel_type, wlc_info gates)             NOT AVAILABLE
 D3B BAND INIT + BSINITVALS ISOLATABLE FROM THE PROVEN D3A1 EXIT?   YES
 D3B STOPS BEFORE REAL PHY/RF?                                      YES
-D3B HAS ANY VALUE-UNKNOWN BLOCKER?                                 ONE (MHF, §3.1)
-D3B IMPLEMENTATION GO:        CONDITIONAL — resolve §3.1, then YES
+D3B IMPLEMENTATION GO:        NO — blocked on the MHF inputs (§3.2)
 ```
+
+D3B must **not** be implemented with an invented MHF default. Unblock by
+providing the SPROM/NVRAM inputs + field mapping, the `wl`-layer initializer, or
+an explicit decision to make the MHF gate a logged runtime probe (see §3.2).
 
 After §3.1 is resolved, implementation follows the D3A1 pattern: a new isolated
 mode (`bsinitvals_test_only=1`), the proven D3A1 prefix, the §2/§3/§4 sequence,
