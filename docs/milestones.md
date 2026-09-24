@@ -167,6 +167,80 @@ Implementation notes (unchanged):
 - **HARDWARE RUNTIME PROVEN** on BCM4352 (see the runtime evidence above); the
   isolated test is **ONE SHOT** and must not be repeated.
 
+## M3.4D3 — band-switch initvals + PHY boundary (`ANALYSIS ONLY`)
+
+Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+Last hardware-proven milestone remains **M3.4D2B**. Full report:
+`docs/m34d3_bsinitvals.md`; machine-generated classification:
+`docs/m34d3/bsinitvals_classification.{md,json}`
+(`scripts/analyze_bsinitvals.py`, read-only, deterministic).
+
+- Exact post-common vendor path re-proven in `wlc_bmac_init` (`0x6828a`):
+  common applier `0x68b98` -> D11 setup tail (`0x68bab..0x695cb`) -> band-init
+  helper `sub_6656c` (`0x695d8`) -> `d11ac1bsinitvals42` -> `wlc_phy_init`
+  (`0x669df`).
+- Consumer: `sub_60f67` (8-byte records, terminator `0xffff`, width2 ->
+  `osl_writew`, width4 -> `osl_writel` at `D11 base + offset`). Table
+  `d11ac1bsinitvals42` referenced at `0x66613`; selected when
+  `[dev+0x84]==0x2A` (PHY rev 42) and `[[dev+0xE8]+0x1C]==0xB` (AC PHY type).
+- Shape reconfirmed: 592 B, **73** records, terminator 73, **39 x 16-bit /
+  34 x 32-bit**. All 73 are D11/MAC-side: 68 SHM (`OBJADDR 0x0001xxxx`, no
+  auto-inc) + 5 direct IHR (`0x680/0x682/0x684/0x686` IFS, `0x700` NAV).
+  Side-effect accounting reconciles to 73 (SHM state 34, selector 34, timing 4,
+  NAV 1). `IRQ ENABLE EFFECT = NONE`; `DMA ENABLE EFFECT = NONE`; no PHY/radio.
+- C3 (`brcmsmac/main.c brcms_c_ucode_bsinit`): band-switch initvals are the
+  "band-specific ucode IHR, SHM, and SCR inits", applied with the band's MHF
+  host flags immediately before `wlc_phy_init`; called on initial bring-up and
+  on band switch (same table for 2.4/5 GHz; band values written separately).
+- Common vs band-switch: SHM-only for bs; no direct-offset overlap; **3 shared
+  SHM bytes overridden** by bs (`0x0010=0x14`, `0x001c=0x183`,
+  `0x0094=0x1f4`).
+- Real PHY boundary (corrected): `wlc_phy_init` (`0xbabf5`) ->
+  `wlc_phy_anacore` (`0xbac84`, first PHY indirect write via `D11+0x3fc/0x3fe`)
+  -> `wlc_phy_switch_radio` (`0xbad44`) -> `wlc_phy_switch_radio_acphy`
+  (`0xaa782`, first radio-window writes via `D11+0x3d8/0x3da`) ->
+  `call *[pi+0x28]` = `wlc_phy_init_aphy` (`0x8c3f9`, installed at `0x899dd`).
+  **The earlier claim that the full vendor path calls `wlc_phy_switch_radio` at
+  `0x69594` before band init was wrong for AC:** that call is inside
+  `if ([[dev+0xE8]+0x1C] == 7)` (NPHY/HT only) and `wlc_bmac_mute` `0x6957b` is
+  skipped (`wlc_bmac_init` arg#3 = 0).
+- **Formal PHY/RF decision: `CAN A VENDOR-ORDERED BSINITVALS TEST STOP BEFORE
+  REAL PHY/RF WRITES? YES`** for BCM4352/AC (no PHY-indirect/radio writes before
+  bsinitvals). The isolated unit is the full vendor prefix, not the 73 records
+  alone.
+- **SECOND CORRECTION (Appendix B): the post-common tail is NOT D11-only.**
+  For rev42 the legacy `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped**
+  (`phyrev <= 0x27`; the rev42 FIFO stage is `sub_67efd`, safe), but the tail
+  also writes interrupt-source config (`intrcvlazy[0]`,
+  `intctrlregs[0].intmask=I_RI`) and initializes DMA engines.
+- **THIRD CORRECTION (Appendix C): the DMA/IRQ stage fully reversed.** Only
+  **4** TX channels exist (`dma_txinit` x4, di[0..3]); TX enabled but **idle**
+  (no descriptors posted). FIFO0 RX enabled (`control=0x84D`) with 64 buffers
+  posted (idle). Host IRQ delivery **not possible** here (`macintmask=0`,
+  `wl_intrsoff` active; `wl_intrson` only in `wlc_bmac_up_finish` after
+  `wlc_phy_init`). Vendor quiesce = `wlc_coredisable` before freeing.
+- **Formal decomposition A/B/C/D = YES** (report §C.18): D3A0 (vendor DMA/
+  IRQ-source, host route off) -> D3A1 (remaining tail) -> D3B (band init + 73
+  bsinitvals) -> D4 (PHY). PHY/RF boundary = YES.
+- **D3A0 blocker closure (Appendix D):** 4-TX map (BK/BE/VI/VO @ 0x200/0x240/
+  0x280/0x2C0); TX CONTROL = RMW `read(control) | XE | (PD?)`; `ddoffsethigh =
+  dataoffsethigh = 0x80000000`; `intrcvlazy[0] = 0x01000000`; `dma_txreset
+  0xf64a` / `dma_rxreset 0xf5ef`. **Vendor order: IRQ-source config
+  (`intrcvlazy`→`macintstatus`→`intctrlregs[0].intmask=I_RI`) BEFORE DMA init.**
+  Quiesce = per-channel reset **with verification** (`macintmask=0`, clear
+  `I_RI`, `dma_rxreset`, `dma_txreset` per initialized channel); core reset is
+  containment fallback and never authorizes a free after unverified reset.
+  **`D3A0 IMPLEMENTATION GO: YES`** (report §D.19), still NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN.
+- Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
+  `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
+  `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
+  writes D11 `0x62e/0x630` (TSF clock frac) from the PMU BB VCO.
+- Smallest faithful boundary (design only, do not implement): D3A0 DMA/IRQ-source
+  -> D3A1 tail -> `sub_6656c` through the 73 bsinitvals records, STOP before
+  `wlc_phy_init`. OpenBRCM gaps: `ob_dma_quiesce`, 4-channel TX programming,
+  out-of-band IRQ route. See report §17/§18 and Appendix C.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

@@ -15,21 +15,21 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `main` = `65d61ce` — **PR #2 merged** (`85d3013`) and **PR #5 merged**
-  (`Merge pull request #5 from 0x00000109/m34d2b-initvals-analysis`, merge
-  commit `65d61ce`, parents `85d3013` + `0bdec35`; normal merge commit, not
-  squashed/rebase). `main` contains M3.4D1 (`2029292`), the isolated modes
-  `fw_validate_only=1` / `ucode_test_only=1`, `src/ob_ucode.{c,h}`,
-  `docs/ucode_test.md`, the M3.4D2A hardware record, and the M3.4D2B analysis
-  (`137e290`, `ae25c68`, `0bdec35` all reachable from `main`). The
+- `main` = `4146cd8` — **PR #2 merged** (`85d3013`), **PR #5 merged**
+  (`65d61ce`, normal merge commit, not squashed/rebase), and **PR #6 merged**
+  (`4146cd8`, parents `65d61ce` + `21107ef`). `main` contains M3.4D1
+  (`2029292`), the isolated modes `fw_validate_only=1` / `ucode_test_only=1`,
+  `src/ob_ucode.{c,h}`, `docs/ucode_test.md`, the M3.4D2A hardware record, the
+  M3.4D2B analysis (`137e290`, `ae25c68`, `0bdec35`), and **M3.4D2B**
+  (`initvals_test_only=1`, `src/ob_initvals.{c,h}`, shared
+  `ob_ucode_run_d2a()`), HARDWARE RUNTIME PROVEN on BCM4352 (candidate
+  `f27286f`, module SHA256
+  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`). The
   hardware-tested candidate `7265f9d` and implementation `47e0883` are
   reachable from `main`.
-- Active branch `m34d2b-initvals-test` (from `main` @ `65d61ce`) — holds the
-  **M3.4D2B isolated common-initvals test** (`initvals_test_only=1`):
-  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **HARDWARE RUNTIME PROVEN on
-  BCM4352** (tested candidate `f27286f`, module SHA256
-  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; PR #6).
-  Merge pending; `main` does not yet contain the D2B implementation.
+- Active branch `m34d3-bsinitvals-analysis` (from `main` @ `4146cd8`) — M3.4D3
+  **analysis only** (`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN):
+  `d11ac1bsinitvals42` + entry into AC PHY init. Draft PR; not merged.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -71,6 +71,19 @@ source of truth; this file records the live working-tree state on top of HEAD.
 ## Analysis-only facts (not hardware proven here)
 - M3.4C/C.1: exact vendor rev42 images recovered from `wlc_hybrid.o_shipped`;
   vendor 8-byte IV record format (terminator `0xffff`), **not** b43 IV.
+- **M3.4D3 (current):** band-switch initvals (`d11ac1bsinitvals42`, 73 records)
+  + PHY boundary. Report `docs/m34d3_bsinitvals.md`; classification
+  `docs/m34d3/bsinitvals_classification.{md,json}` via
+  `scripts/analyze_bsinitvals.py`. Decisions (corrected, Appendix B):
+  `wlc_phy_switch_radio` does **not** precede bsinitvals on the BCM4352/AC path
+  (the `0x69594` call is NPHY/HT-gated; `wlc_bmac_mute` is skipped), so a
+  vendor-ordered test can stop before real PHY/RF writes: **YES**. The
+  post-common tail is **not D11-only** (it inits 4 TX DMA engines + FIFO0 RX and
+  writes interrupt-source masks); Appendix C reverses it and yields **A/B/C/D =
+  YES** (D3A0 DMA/IRQ-source → D3A1 remaining tail → D3B), conditional on host
+  IRQ route off and a core-reset/reboot quiesce; Appendix D closes the D3A0
+  blockers and returns **`D3A0 IMPLEMENTATION GO: YES`**. The isolated unit is
+  the full vendor prefix, not the 73 records alone.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -79,9 +92,59 @@ Stated exactly:
 - M3.4D2B = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
 - M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
+- M3.4D3 = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN
 
-Both are hardware-proven only for their own narrow scope (see below); the later
+The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
+
+## M3.4D3 — band-switch initvals + PHY boundary (ANALYSIS ONLY)
+Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+- Consumer: `sub_60f67(dev, d11ac1bsinitvals42)` at `sub_6656c` `0x669bd`,
+  selected when `[dev+0x84]==0x2A` (PHY rev 42) and
+  `[[dev+0xE8]+0x1C]==0xB` (AC phy type); `sub_6656c` is called from
+  `wlc_bmac_init` `0x695d8` (initial up) and `wlc_bmac_set_chanspec` `0x67bd0`.
+- Table: 592 B, **73** records (34 x OBJADDR w4 + 15 x OBJDATA-lo w2 +
+  19 x OBJDATA-hi w2 + 5 x direct IHR w2); 68 SHM + 5 direct IHR; `IRQ ENABLE
+  EFFECT = NONE`, `DMA ENABLE EFFECT = NONE`, no PHY/radio (for the table
+  itself). C3: "band-specific ucode IHR, SHM, and SCR inits", applied before
+  `wlc_phy_init`; called on up and band switch; same table for 2.4/5 GHz.
+- Common vs bs: SHM-only for bs; no direct-offset overlap; 3 SHM bytes
+  overridden (`0x0010=0x14`, `0x001c=0x183`, `0x0094=0x1f4`).
+- PHY boundary (corrected): `wlc_phy_init (0xbabf5)` -> `wlc_phy_anacore
+  (0xbac84)` (first PHY indirect write, `D11+0x3fc/0x3fe`) ->
+  `wlc_phy_switch_radio (0xbad44)` -> `wlc_phy_switch_radio_acphy (0xaa782)`
+  (first radio-window writes, `D11+0x3d8/0x3da`) -> `wlc_phy_init_aphy
+  (0x8c3f9)` via `call *[pi+0x28]`. The `wlc_bmac_init` `0x69594`
+  `wlc_phy_switch_radio` is `phy_type==7` (NPHY/HT) gated and **not taken for
+  AC**; `wlc_bmac_mute` `0x6957b` is skipped (`wlc_bmac_init` arg#3=0).
+- Tail reversal (Appendix B): for rev42 the legacy
+  `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped** (`phyrev <= 0x27`
+  gate); the rev42 FIFO stage is `sub_67efd` (TXE0 fixup, safe). The tail also
+  writes `intrcvlazy[0]`/`intctrlregs[0].intmask=I_RI` and inits DMA engines.
+- DMA/IRQ reversal (Appendix C, NEW): **4** TX channels only (`dma_txinit` x4,
+  di[0..3]; FIFO0 RX `0x220`, BK `0x200`, BE `0x240`, VI `0x280`, VO/CTL
+  `0x2C0`). TX engines enabled but **idle** (no descriptors posted → no
+  transmission). FIFO0 RX enabled (`control=0x84D`) with 64 buffers posted
+  (idle). Host IRQ delivery **not possible** (`macintmask=0`, `wl_intrsoff`
+  active; `wl_intrson` only in `wlc_bmac_up_finish` after `wlc_phy_init`).
+  Vendor quiesce = `wlc_coredisable` before `dma_detach` frees memory.
+- Decisions: PHY/RF boundary **YES**; formal decomposition **A YES (D3A0),
+  B YES, C YES, D YES** (§C.18). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
+  `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
+  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendices B/C.
+- D3A0 blocker closure (Appendix D): 4-TX map (BK/BE/VI/VO @ 0x200/0x240/0x280/
+  0x2C0); TX CONTROL is RMW `read(control) | XE | (PD?)` (per-FIFO cap bits
+  re-asserted, not a constant); `ddoffsethigh=dataoffsethigh=0x80000000`
+  (bus core 0x83C + dma64); `intrcvlazy[0]=0x01000000` (constant, set in attach
+  0x69faf);   `dma_txreset 0xf64a`, `dma_rxreset 0xf5ef` (bounded 10 ms polls);
+  vendor order is **IRQ-source config before DMA init**
+  (`intrcvlazy`→`macintstatus`→`intctrlregs[0].intmask=I_RI`, then
+  `dma_txinit x4`→`dma_rxinit`→`dma_rxfill`). Quiesce = per-channel reset
+  **with verification** (`macintmask=0`, clear `I_RI`, `dma_rxreset`,
+  `dma_txreset` per initialized channel); `bcma_core_disable` is containment
+  fallback only and never authorizes a free after unverified reset. **`D3A0
+  IMPLEMENTATION GO: YES`** (§D.19), still NOT IMPLEMENTED / NOT HARDWARE
+  PROVEN.
 
 ## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**
@@ -155,14 +218,21 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D2B is **HARDWARE RUNTIME PROVEN** (candidate `f27286f`; PR #6) and its
-implementation is merged. Next milestone is **ANALYSIS ONLY**, on a fresh branch
-from new `main`: the vendor boundary after common initvals — band initialization
-plus `d11ac1bsinitvals42` plus the entry into real AC PHY initialization. Until
-that analysis is reviewed, perform **no** hardware action: no `insmod`, no
-initvals/bsinitvals write, no PHY/radio/channel/DMA/IRQ/mac80211. See
-`docs/m34d2b_initvals_test.md` for the D2B runtime evidence and the
-failure/residual-state matrix.
+M3.4D3 analysis is recorded (Appendix A ordering, Appendix B tail, Appendix C
+DMA/IRQ reversal of `docs/m34d3_bsinitvals.md`). The DMA/IRQ content of the
+rev42 tail is now fully reversed: **4** TX channels (not 6), TX enabled/idle,
+FIFO0 RX enabled with 64 buffers, host IRQ route off, vendor quiesce = core
+reset/disable. Formal decomposition **A/B/C/D = YES**: D3A0 (vendor DMA/
+IRQ-source, host route off) → D3A1 (remaining tail) → D3B (band init + 73
+bsinitvals) → D4 (PHY). Appendix D closes the D3A0 blockers and returns
+**`D3A0 IMPLEMENTATION GO: YES`** (4-TX map; TX CONTROL RMW; `0x80000000` high
+word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
+quiesce = per-channel reset + `bcma_core_disable`). Next (analysis/design to
+code): implement D3A0 as a new isolated mode with same-run teardown via the D.17
+helper split. M3.4D3 stays ANALYSIS ONLY until then. **No
+hardware action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/
+channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime
+evidence, `docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
