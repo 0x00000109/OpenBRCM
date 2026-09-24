@@ -10,13 +10,14 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 
 > Status: **early** — M0–M2.5 (bus/silicon/mac80211) and M3.1–M3.4D1
 > (DMA64 model, IRQ plumbing, FIFO0 RX bring-up, exact rev42 firmware
-> acquisition + validation) are present. FIFO0 RX is DMA Level-1 proven; no
-> RX frame completion yet. 5 GHz and interface bring-up are not enabled.
-> The isolated `fw_validate_only` runtime PASS and the `ucode_test_only`
-> (M3.4D2A) **BCM4352 runtime PASS** live on the `m34d2a-ucode-upload` branch
-> (draft PR #2); D2A proves ucode upload + PSM start **only** — initvals, PHY,
-> radio, channel, RX and TX remain unproven. See `docs/agent-state.md`. Agent
-> rules: [`AGENTS.md`](AGENTS.md).
+> acquisition + validation) are present on `main`. FIFO0 RX is DMA Level-1
+> proven; no RX frame completion yet. 5 GHz and interface bring-up are not
+> enabled. The isolated `fw_validate_only` runtime PASS and the `ucode_test_only`
+> (M3.4D2A) **BCM4352 runtime PASS** are merged (PR #2, `main` @ `85d3013`);
+> D2A proves ucode upload + PSM start **only** — initvals, PHY, radio, channel,
+> RX and TX remain unproven. M3.4D2B (rev42 common-initvals sequencing) is
+> **analysis only** on `m34d2b-initvals-analysis` (Draft PR); NOT implemented.
+> See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in
 > [#3](https://github.com/0x00000109/OpenBRCM/issues/3)).

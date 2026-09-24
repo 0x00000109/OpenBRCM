@@ -15,13 +15,14 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `main` = `854e398` (governance + docs-check CI + GitHub workflow). Its M3.4D1
-  commit `2029292` adds `ob_fw.{c,h}` and calls `ob_fw_probe()` from **normal**
-  probe (after `ob_si_probe`); `main` has **no** isolated mode.
-- Branch `m34d2a-ucode-upload` (this branch, **draft PR, not merged**) adds the
-  isolated modes `fw_validate_only=1` and `ucode_test_only=1`, plus
-  `src/ob_ucode.{c,h}`, `docs/ucode_test.md` and the `docs/milestones.md` D2A
-  section. `main` is unchanged until review/merge.
+- `main` = `85d3013` — **PR #2 merged** (`Merge pull request #2 from
+  0x00000109/m34d2a-ucode-upload`, merge commit `85d3013` with parents
+  `854e398` + `f544af8`). `main` now contains M3.4D1 (`2029292`), the isolated
+  modes `fw_validate_only=1` / `ucode_test_only=1`, `src/ob_ucode.{c,h}`,
+  `docs/ucode_test.md`, and the M3.4D2A hardware record. The hardware-tested
+  candidate `7265f9d` and implementation `47e0883` are reachable from `main`.
+- Active branch `m34d2b-initvals-analysis` (from `main` @ `85d3013`) — M3.4D2B
+  **analysis only**, Draft PR, not merged.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -56,12 +57,27 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - M3.4D2A: see "Current milestone".
 
 ## Current milestone
+**M3.4D2B — rev42 common initvals sequencing.**
+Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+- Branch `m34d2b-initvals-analysis` (Draft PR, not merged).
+- Full report `docs/m34d2b_common_initvals.md`; machine-generated 610/73-record
+  classification `docs/m34d2b/initvals_classification.{md,json}` via
+  `scripts/analyze_initvals.py` (verifies vendor size + sha256, no hardware).
+- Re-proven call order: ucode -> PSM start -> common `d11ac1initvals42`
+  (`wlc_bmac_init` `0x68b98`, rev42+AC `0x687c9`) -> post setup -> band init
+  `sub_6656c` (`d11ac1bsinitvals42` `0x66612` -> `wlc_phy_init` `0x669df`).
+- Common table: 610 records (194 direct + 76 OBJADDR selectors + 340 OBJDATA
+  data); windows SHM(56 auto-inc)+SCR(20) only; **no** `MACCONTROL`, **no** DMA,
+  **no** PHY/radio, **no** interrupt-source enable (`MACINTMASK=0`); applied
+  with `PSM_RUN=1`, `EN_MAC=0` (the D2A exit state).
+- Last hardware-proven milestone remains **M3.4D2A** (see below).
+
+## Last hardware-proven milestone
 **M3.4D2A — D11 rev42 ucode upload + PSM start only.**
 Status: **`HARDWARE PROVEN` — HARDWARE RUNTIME PROVEN on BCM4352** (tested
-candidate `7265f9d`, implementation `47e0883`, base `854e398`). This proves the
-ucode upload + PSM start **only**; initvals/PHY/radio/channel/RX/TX remain
-**unproven**.
-- Branch `m34d2a-ucode-upload` (draft PR, not merged to `main`).
+candidate `7265f9d`, implementation `47e0883`, base `854e398`), now merged to
+`main` (`85d3013`). This proves the ucode upload + PSM start **only**;
+initvals/PHY/radio/channel/RX/TX remain **unproven**.
 - Isolated mode `ucode_test_only=1`; mutually exclusive with `fw_validate_only=1`
   (conflict -> `-EINVAL`, no hardware access).
 - Minimum prep (`bcma_host_pci_up` + D11 `bcma_core_enable` + FAST clock) ->
@@ -103,12 +119,13 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D2B — common initvals application: **recovery/analysis only, NOT
-implemented**. Recover and verify the exact vendor ordering after PSM start, the
-relationship between common initvals and band init, the registers/SHM/object
-regions the 610 records touch, whether records assume a running PSM, expected
-before/after state, and a safe bounded test boundary. **No PHY/radio/channel.**
-Do not run another `ucode_test_only=1` load and do not implement D2B yet.
+M3.4D2B analysis is recorded (see "Current milestone"). Next: review the open
+UNKNOWNs in `docs/m34d2b_common_initvals.md` §14 (PHY `cal_init` ordering,
+skipped pre-steps, `MCTL_SHM_EN`, field/SCR semantics, PSM consumption) and
+either resolve them or choose the isolated boundary from §13. **No hardware
+action now:** do not run `insmod`, do not repeat D2A, do not implement D2B
+hardware writes, and do not apply `d11ac1initvals42`/`d11ac1bsinitvals42`.
+No PHY/radio/channel work.
 
 ## Post-test hardware state (risk)
 After the successful D2A run the chip is intentionally left partial: `PSM_RUN=1`,
@@ -117,9 +134,12 @@ D11 core enabled, `EN_MAC=0`. No cleanup/recovery register writes are performed
 image. Do **not** repeat the test automatically and do not invent cleanup writes.
 
 ## Exact STOP boundary
-After the bounded `MI_MACSSPNDD` poll and the read-only SHM diagnostic, the
-D2A path returns. It must not apply initvals/bsinitvals and must not touch
-PHY/radio/channel/DMA/IRQ/mac80211.
+Analysis task: STOP after committing/pushing the M3.4D2B analysis document and
+artifacts and opening a Draft PR. No `insmod`, no D2A repeat, no initvals write.
+
+Last hardware STOP (M3.4D2A): after the bounded `MI_MACSSPNDD` poll and the
+read-only SHM diagnostic, the D2A path returns. It must not apply
+initvals/bsinitvals and must not touch PHY/radio/channel/DMA/IRQ/mac80211.
 
 ## Do NOT change blindly
 - `src/ob_rx.c` / `ob_rx.h`: RX PTR model (`rcvptrbase=0`, `PTR=rxout*16`),
@@ -129,9 +149,8 @@ PHY/radio/channel/DMA/IRQ/mac80211.
 - `src/ob_ucode.{c,h}`: recovered MACCONTROL/OBJADDR/poll constants.
 - `MOC/` signing material (outside this repo): never modify/read the private key.
 
-## Branch contents (`m34d2a-ucode-upload`, draft PR, not merged)
-`src/ob_ucode.{c,h}`, `src/ob_core.{c,h}`, `src/ob_fw.{c,h}`, `Makefile`,
-`tests/host/Makefile`, `tests/host/ob_ucode_test.c`,
-`tests/kunit/ob_ucode_kunit.c`, `docs/ucode_test.md`, `docs/milestones.md`,
-`docs/agent-state.md`. Note: `scripts/runtime-test.sh` and `.opencode/` remain
-untracked local tooling.
+## Branch contents (`m34d2b-initvals-analysis`, Draft PR, not merged)
+`docs/m34d2b_common_initvals.md`, `docs/m34d2b/initvals_classification.{md,json}`,
+`scripts/analyze_initvals.py`, `docs/milestones.md`, `docs/agent-state.md`,
+`README.md`. No `src/` or `tests/` change (analysis only).
+Note: `scripts/runtime-test.sh` and `.opencode/` remain untracked local tooling.

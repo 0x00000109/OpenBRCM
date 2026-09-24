@@ -60,15 +60,36 @@ after the common-initvals applier, which D2A does not run); final
 no DMA/IRQ/PHY/radio/channel init. Post-test state is intentionally partial
 (`PSM_RUN=1`, D11 enabled, `EN_MAC=0`) with no cleanup writes.
 
-## M3.4D2B — common initvals application (analysis only; NOT implemented)
-Conceptual next milestone. Before any implementation, recover and verify:
-- exact vendor ordering after a successful PSM start;
-- the exact relationship between common initvals and band init;
-- which registers/SHM/object-memory regions the 610 records touch;
-- whether any records assume an already-running PSM;
-- expected state before and after application;
-- a safe bounded test boundary.
-No PHY/radio/channel work in this milestone.
+## M3.4D2B — rev42 common initvals sequencing (`ANALYSIS ONLY`; NOT implemented)
+
+Full analysis: `docs/m34d2b_common_initvals.md`; machine-generated 610/73-record
+classification in `docs/m34d2b/initvals_classification.{md,json}`
+(`scripts/analyze_initvals.py`, verifies vendor size + sha256 first).
+- Call order re-proven from the blob: ucode -> PSM start -> **common
+  `d11ac1initvals42`** at `wlc_bmac_init` `0x68b98` (rev42+AC, `0x687c9`) ->
+  post setup -> **band init `sub_6656c`** (`d11ac1bsinitvals42` `0x66612` ->
+  `wlc_phy_init` `0x669df`).
+- Consumer `sub_60f67` (`wlc_bmac_write_inits` `0x60fce`): 8-byte records
+  `{u16 offset,u16 width,u32 value}`, terminator `0xffff`, base `*(dev+0xd0)`,
+  width2 -> `writew`, width4 -> `writel`, straight-line, order-preserving.
+- 610 records = 194 direct + 76 OBJADDR selectors + 340 OBJDATA data.
+  Windows: 56 SHM auto-inc (320 writes) + 20 SCR (20 writes); **no** UCM/IHR/
+  RCMTA windows. Categories: OBJ 416, TEMPLATE 77, IHR 80, SHM(direct) 33,
+  MACINT 3, MAC_CORE 1.
+- **No** `MACCONTROL` (`0x120`), **no** DMA (`0x200-0x3d7`), **no** PHY
+  (`0x3e0-0x3fe`), **no** radio (`0x3d8-0x3db`), **no** interrupt-source
+  enable (`MACINTMASK=0`). Applied with `PSM_RUN=1`, `EN_MAC=0` (exactly the
+  D2A exit state); the table changes no MACCONTROL bit.
+- All 610 applied unconditionally once selected (single call, constant symbol,
+  no branch/patch inside the applier).
+- Proven read-back gates for a future D2B test: `M_FIFOSIZE0..3` =
+  `01c4/0000/0000/079e`, `MACINTMASK=0`, `MACINTSTATUS=0`.
+- Proposed isolated boundary: D2A prep + ucode + PSM start -> common initvals ->
+  read-only gates -> **STOP before `sub_6656c`** (no bsinitvals/PHY). Not safe
+  to implement until the open UNKNOWNs (PHY `cal_init` ordering, skipped
+  pre-steps, `SHM_EN`) are resolved.
+- No PHY/radio/channel work in this milestone. Status vocabulary: analysis
+  documented; **NOT IMPLEMENTED**, **NOT HARDWARE PROVEN**.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
