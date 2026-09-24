@@ -5,7 +5,7 @@ SRC     := ../../src
 
 .PHONY: run clean
 run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
-     ob_fw_test ob_ucode_test
+     ob_fw_test ob_ucode_test ob_initvals_test
 	./ob_math_test
 	./ob_caps_test
 	./ob_dma_test
@@ -13,6 +13,7 @@ run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
 	./ob_rx_test
 	./ob_fw_test
 	./ob_ucode_test
+	./ob_initvals_test
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -35,6 +36,10 @@ ob_fw_test: ob_fw_test.c $(SRC)/ob_fw.h
 ob_ucode_test: ob_ucode_test.c $(SRC)/ob_ucode.h $(SRC)/ob_irq.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+ob_initvals_test: ob_initvals_test.c $(SRC)/ob_initvals.h $(SRC)/ob_fw.h \
+		$(SRC)/ob_ucode.h $(SRC)/ob_irq.h
+	$(CC) $(CFLAGS) -o $@ $<
+
 clean:
 	rm -f ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
-	      ob_fw_test ob_ucode_test
+	      ob_fw_test ob_ucode_test ob_initvals_test

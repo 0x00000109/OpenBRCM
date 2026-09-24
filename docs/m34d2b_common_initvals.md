@@ -1,16 +1,23 @@
 # M3.4D2B — rev42 common initvals analysis
 
-**Status: `ANALYSIS ONLY` — NOT IMPLEMENTED — NOT HARDWARE PROVEN.**
+**Status: analysis `COMPLETE`; implementation `IMPLEMENTED` / `STATIC TESTED` /
+`SIGNED`; `HARDWARE RUNTIME PROVEN` on BCM4352.** The analysis below is
+complete; the isolated test that implements it lives in
+`docs/m34d2b_initvals_test.md` (mode `initvals_test_only=1`) and passed on real
+hardware (candidate `f27286f`; module SHA256
+`1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`). This
+proves common initvals only: bsinitvals, band init, AC PHY, radio, calibration,
+channel, RX and TX remain **unproven**.
 
 Canonical status (exact):
 - M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
-- M3.4D2B implementation = NOT IMPLEMENTED
-- M3.4D2B hardware status = NOT HARDWARE PROVEN
+- M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
 
-The formal decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe
-to design/implement an isolated D2B test**; it is **not** permission to run
-hardware and **not** a hardware proof.
+The formal decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` cleared the
+design and the isolated test was then validated on hardware (see the runtime
+evidence doc); it is a hardware proof for the common-initvals sequence only.
 
 No hardware write, no `insmod`/`rmmod`/`modprobe`, no second D2A run. The last
 hardware-proven milestone remains **M3.4D2A** (ucode upload + PSM start only;

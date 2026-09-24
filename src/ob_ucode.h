@@ -95,13 +95,65 @@
 /* ---- pure helpers (host-testable, no kernel API) ---- */
 
 /*
- * Explicit mode policy: the two hardware-avoiding/hardware-test modes are
- * mutually exclusive and must never be combined.
+ * Explicit isolated-mode policy. Every isolated mode bypasses normal bring-up;
+ * at most one may be selected, and any combination fails before hardware access
+ * (M3.4D2B requirement 2). Selection is a pure function so it is host-testable
+ * and the call-graph test can assert that only the initvals mode applies the
+ * common table.
  */
-static inline bool ob_ucode_mode_conflict(bool fw_validate_only,
-					  bool ucode_test_only)
+enum ob_isolated_mode {
+	OB_ISOLATED_NONE = 0,
+	OB_ISOLATED_FW_VALIDATE,
+	OB_ISOLATED_UCODE_TEST,
+	OB_ISOLATED_INITVALS_TEST,
+	OB_ISOLATED_CONFLICT,
+};
+
+static inline unsigned int ob_isolated_mode_count(bool fw_validate_only,
+						  bool ucode_test_only,
+						  bool initvals_test_only)
 {
-	return fw_validate_only && ucode_test_only;
+	return (fw_validate_only ? 1u : 0u) + (ucode_test_only ? 1u : 0u) +
+	       (initvals_test_only ? 1u : 0u);
+}
+
+static inline enum ob_isolated_mode
+ob_isolated_mode_select(bool fw_validate_only, bool ucode_test_only,
+			bool initvals_test_only)
+{
+	if (ob_isolated_mode_count(fw_validate_only, ucode_test_only,
+				   initvals_test_only) > 1)
+		return OB_ISOLATED_CONFLICT;
+	if (fw_validate_only)
+		return OB_ISOLATED_FW_VALIDATE;
+	if (ucode_test_only)
+		return OB_ISOLATED_UCODE_TEST;
+	if (initvals_test_only)
+		return OB_ISOLATED_INITVALS_TEST;
+	return OB_ISOLATED_NONE;
+}
+
+static inline bool ob_isolated_mode_conflict(enum ob_isolated_mode mode)
+{
+	return mode == OB_ISOLATED_CONFLICT;
+}
+
+/*
+ * Only the D2B initvals mode applies the common table; ucode_test_only must
+ * never issue a common-initvals write (M3.4D2B requirement 15).
+ */
+static inline bool ob_isolated_mode_applies_initvals(enum ob_isolated_mode mode)
+{
+	return mode == OB_ISOLATED_INITVALS_TEST;
+}
+
+/*
+ * Every isolated mode bypasses normal bring-up, so remove() must skip all
+ * mac80211/RX/IRQ/DMA teardown; only the normal path needs it.
+ */
+static inline bool ob_isolated_mode_skips_teardown(enum ob_isolated_mode mode)
+{
+	return mode != OB_ISOLATED_NONE;
 }
 
 /* A validated flat ucode image is exactly size/4 32-bit words. */
@@ -161,6 +213,37 @@ ob_ucode_teardown_plan(bool ucode_test_only)
 
 #ifdef __KERNEL__
 struct ob_hw;
+struct firmware;
+
+/*
+ * Shared result of the hardware-proven D2A core (prep -> upload -> PSM start ->
+ * MI_MACSSPNDD poll). D2A and D2B both run this exact sequence; only the code
+ * after it differs, so ucode_test_only cannot silently diverge (M3.4D2B
+ * requirement 3).
+ */
+struct ob_ucode_run {
+	const char	*name;		/* ucode image name actually used */
+	u32		words;		/* ucode words written (10850) */
+	u32		written;	/* OBJDATA writes counted */
+	u32		psm_iterations;	/* poll iterations before MI_MACSSPNDD */
+	u32		psm_status;	/* macintstatus that satisfied the poll */
+};
+
+/*
+ * Run the proven D2A core with the given log @tag ("ucode-test" /
+ * "initvals-test"). On success the PSM is paused after auto-init and the
+ * returned @run describes the upload/poll. On failure it logs the failing
+ * @stage. It acquires and releases its own ucode image; no initvals are
+ * applied. No cleanup register writes are performed on any path.
+ */
+int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag,
+		     struct ob_ucode_run *run);
+
+/*
+ * Vendor SHM 16-bit read (OBJADDR SHM window + OBJDATA half). Read-only and
+ * reused by the D2B postcondition gate.
+ */
+u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off);
 
 int ob_ucode_test(struct ob_hw *hw);
 #endif /* __KERNEL__ */

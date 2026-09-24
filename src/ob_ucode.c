@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * OpenBRCM — D11 rev42 ucode upload + PSM start only (M3.4D2A).
+ * OpenBRCM — D11 rev42 ucode upload + PSM start (M3.4D2A), shared by the
+ * isolated ucode_test_only and initvals_test_only (M3.4D2B) paths.
  *
- * Isolated hardware test mode (module param ucode_test_only=1). It performs the
- * minimum recovered sequence to make the D11 accept the rev42 ucode and start
- * the PSM, then STOPS before common initvals, PHY, radio, channel, DMA, IRQ and
- * mac80211. Nothing else in OpenBRCM is reachable from here.
- *
- * Sequence (exact vendor order, see ob_ucode.h for per-step provenance):
+ * The recovered sequence (exact vendor order, see ob_ucode.h for per-step
+ * provenance) is implemented once in ob_ucode_run_d2a():
  *   1. minimal core prep: bcma_host_pci_up + D11 core enable/reset + FAST clock
  *   2. pre-upload MACCONTROL  = 0x04000404 (IHR_EN | PSM_JMP0 | WAKE), masked RMW
  *   3. ucode upload via OBJADDR=0x03000000 (auto-inc) + 10850 OBJDATA writes
  *   4. macintstatus = 0xffffffff, then PSM start MACCONTROL = 0x04020402
  *   5. bounded poll of macintstatus & MI_MACSSPNDD (10 us, <=100000 iters)
- *   6. read-only SHM FIFO-size diagnostic (no equality test)
  *
- * No initvals are applied, no EN_MAC, no request_irq, no DMA, no mac80211.
- * No cleanup register writes are performed on any failure path (see the
+ * ucode_test_only (M3.4D2A) then reads the SHM FIFO-size diagnostic and STOPS.
+ * initvals_test_only (M3.4D2B, ob_initvals.c) then applies the common table and
+ * verifies the deterministic postconditions. Both share this file so the
+ * proven D2A register sequence cannot silently diverge.
+ *
+ * Neither path applies bsinitvals, EN_MAC, request_irq, DMA or mac80211. No
+ * cleanup register writes are performed on any failure path (see the
  * failure/unwind matrix in docs/milestones.md).
  */
 #include <linux/kernel.h>
@@ -67,7 +68,7 @@ static int ob_ucode_prepare(struct ob_hw *hw)
  * SHM window in OBJADDR, read it back (barrier), then read the 16-bit half
  * selected by offset bit1 from OBJDATA. offset is a byte offset.
  */
-static u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off)
+u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off)
 {
 	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_SHM_SEL | ((u32)off >> 2));
@@ -85,33 +86,46 @@ static u32 ob_ucode_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 	return bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
 }
 
-int ob_ucode_test(struct ob_hw *hw)
+/*
+ * Hardware-proven D2A core, shared by ucode_test_only (M3.4D2A) and
+ * initvals_test_only (M3.4D2B). It stops with the PSM paused after auto-init
+ * and applies no initvals; @tag only selects the log prefix. The register
+ * sequence is identical to the M3.4D2A hardware-proven implementation. No
+ * cleanup writes on any failure path.
+ */
+int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag, struct ob_ucode_run *run)
 {
 	const struct firmware *ucode = NULL;
 	const char *name = NULL;
 	const char *stage = "request";
-	u32 words, i, written = 0, status = 0, remaining, iterations = 0;
+	u32 words = 0, i, written = 0, status = 0, remaining, iterations = 0;
 	int ret = 0;
 
-	dev_info(hw->dev, "ucode-test: BEGIN\n");
+	run->name = NULL;
+	run->words = 0;
+	run->written = 0;
+	run->psm_iterations = 0;
+	run->psm_status = 0;
+
+	dev_info(hw->dev, "%s: BEGIN\n", tag);
 
 	/* Acquire + hash + size-validate the exact vendor rev42 ucode first. */
 	ret = ob_fw_request_ucode(hw, &ucode, &name);
 	if (ret) {
-		dev_err(hw->dev, "ucode-test: ucode unavailable/invalid: %d\n",
+		dev_err(hw->dev, "%s: ucode unavailable/invalid: %d\n", tag,
 			ret);
 		goto out;
 	}
 	words = ob_ucode_words_from_size(ucode->size);
-	dev_info(hw->dev, "ucode-test: image %s size=%zu words=%u\n",
-		 name ? name : "?", ucode->size, words);
+	dev_info(hw->dev, "%s: image %s size=%zu words=%u\n",
+		 tag, name ? name : "?", ucode->size, words);
 
 	/* 1. minimum core preparation. */
 	stage = "core-prep";
 	ret = ob_ucode_prepare(hw);
 	if (ret)
 		goto out;
-	dev_info(hw->dev, "ucode-test: core prepared\n");
+	dev_info(hw->dev, "%s: core prepared\n", tag);
 
 	/* 2. pre-upload MACCONTROL (masked update, mask = ~0). */
 	stage = "maccontrol-upload";
@@ -128,46 +142,44 @@ int ob_ucode_test(struct ob_hw *hw)
 		    OB_UCODE_UPLOAD_EXPECTED ||
 		    (after & OB_UCODE_UPLOAD_FORBIDDEN)) {
 			dev_err(hw->dev,
-				"ucode-test: maccontrol upload state invalid\n");
+				"%s: maccontrol upload state invalid\n", tag);
 			ret = -EIO;
 			goto out;
 		}
 	}
-	dev_info(hw->dev, "ucode-test: MAC upload state ready\n");
+	dev_info(hw->dev, "%s: MAC upload state ready\n", tag);
 
 	/* 3. ucode upload (raw LE 32-bit words, one write each, auto-increment). */
 	stage = "upload";
 	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_AUTO_INC | OB_UCODE_OBJADDR_UCM_SEL);
 	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);	/* vendor readback */
-	dev_info(hw->dev, "ucode-test: OBJADDR=30000000\n");
-	dev_info(hw->dev, "ucode-test: upload start words=%u\n", words);
+	dev_info(hw->dev, "%s: OBJADDR=30000000\n", tag);
+	dev_info(hw->dev, "%s: upload start words=%u\n", tag, words);
 	for (i = 0; i < words; i++) {
 		bcma_write32(hw->core, OB_UCODE_REG_OBJDATA,
 			     ob_fw_le32(ucode->data + (size_t)i * 4));
 		written++;
 	}
 	if (words >= 4) {
-		dev_info(hw->dev,
-			 "ucode-test: first %08x %08x %08x %08x\n",
+		dev_info(hw->dev, "%s: first %08x %08x %08x %08x\n", tag,
 			 ob_fw_le32(ucode->data), ob_fw_le32(ucode->data + 4),
 			 ob_fw_le32(ucode->data + 8),
 			 ob_fw_le32(ucode->data + 12));
 		i = words - 4;
-		dev_info(hw->dev,
-			 "ucode-test: last  %08x %08x %08x %08x\n",
+		dev_info(hw->dev, "%s: last  %08x %08x %08x %08x\n", tag,
 			 ob_fw_le32(ucode->data + (size_t)i * 4),
 			 ob_fw_le32(ucode->data + ((size_t)i + 1) * 4),
 			 ob_fw_le32(ucode->data + ((size_t)i + 2) * 4),
 			 ob_fw_le32(ucode->data + ((size_t)i + 3) * 4));
 	}
-	dev_info(hw->dev, "ucode-test: upload complete writes=%u\n", written);
+	dev_info(hw->dev, "%s: upload complete writes=%u\n", tag, written);
 
-	/* 6. write-count invariant: never start PSM after a short upload. */
+	/* write-count invariant: never start PSM after a short upload. */
 	if (!ob_ucode_writes_ok(written, words)) {
 		dev_err(hw->dev,
-			"ucode-test: write count %u != %u; PSM not started\n",
-			written, words);
+			"%s: write count %u != %u; PSM not started\n",
+			tag, written, words);
 		ret = -EIO;
 		goto out;
 	}
@@ -183,18 +195,18 @@ int ob_ucode_test(struct ob_hw *hw)
 		if ((after & OB_UCODE_PSM_EXPECTED) != OB_UCODE_PSM_EXPECTED ||
 		    (after & OB_UCODE_PSM_FORBIDDEN)) {
 			dev_err(hw->dev,
-				"ucode-test: PSM start maccontrol invalid\n");
+				"%s: PSM start maccontrol invalid\n", tag);
 			ret = -EIO;
 			goto out;
 		}
 	}
-	dev_info(hw->dev, "ucode-test: PSM start\n");
+	dev_info(hw->dev, "%s: PSM start\n", tag);
 
 	/* 5. bounded poll for MI_MACSSPNDD (no IRQ, no handler). */
 	stage = "psm-poll";
 	dev_info(hw->dev,
-		 "ucode-test: poll start delay=%uus step=%u max_iter=%u max_total_us=%u\n",
-		 OB_UCODE_POLL_DELAY_US, OB_UCODE_POLL_STEP,
+		 "%s: poll start delay=%uus step=%u max_iter=%u max_total_us=%u\n",
+		 tag, OB_UCODE_POLL_DELAY_US, OB_UCODE_POLL_STEP,
 		 ob_ucode_poll_max_iterations(OB_UCODE_POLL_TIMEOUT,
 					      OB_UCODE_POLL_STEP),
 		 ob_ucode_poll_max_iterations(OB_UCODE_POLL_TIMEOUT,
@@ -207,8 +219,8 @@ int ob_ucode_test(struct ob_hw *hw)
 			break;
 		if (ob_ucode_poll_expired(remaining, OB_UCODE_POLL_STEP)) {
 			dev_err(hw->dev,
-				"ucode-test: PSM poll TIMEOUT iterations=%u status=%08x\n",
-				iterations, status);
+				"%s: PSM poll TIMEOUT iterations=%u status=%08x\n",
+				tag, iterations, status);
 			ret = -ETIMEDOUT;
 			goto out;
 		}
@@ -216,15 +228,36 @@ int ob_ucode_test(struct ob_hw *hw)
 		remaining -= OB_UCODE_POLL_STEP;
 		iterations++;
 	}
-	dev_info(hw->dev, "ucode-test: PSM poll PASS iterations=%u status=%08x\n",
-		 iterations, status);
+	dev_info(hw->dev, "%s: PSM poll PASS iterations=%u status=%08x\n",
+		 tag, iterations, status);
+
+	run->name = name;
+	run->words = words;
+	run->written = written;
+	run->psm_iterations = iterations;
+	run->psm_status = status;
+
+out:
+	if (ret)
+		dev_err(hw->dev, "%s: FAIL stage=%s ret=%d (no cleanup writes)\n",
+			tag, stage, ret);
+	release_firmware(ucode);
+	return ret;
+}
+
+int ob_ucode_test(struct ob_hw *hw)
+{
+	struct ob_ucode_run run;
+	int ret = ob_ucode_run_d2a(hw, "ucode-test", &run);
+
+	if (ret)
+		return ret;
 
 	/*
-	 * 7. read-only SHM FIFO-size diagnostic. The vendor reads these after the
+	 * Read-only SHM FIFO-size diagnostic. The vendor reads these after the
 	 * common-initvals applier (0x68f88 > 0x68b98); D2A logs them without an
 	 * equality test and does not treat them as a pass/fail condition.
 	 */
-	stage = "shm";
 	dev_info(hw->dev,
 		 "ucode-test: SHM M_FIFOSIZE0..3=%04x %04x %04x %04x (read-only)\n",
 		 ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0),
@@ -234,13 +267,5 @@ int ob_ucode_test(struct ob_hw *hw)
 
 	dev_info(hw->dev,
 		 "ucode-test: PASS - stopped before initvals/PHY/radio/DMA\n");
-	ret = 0;
-
-out:
-	if (ret)
-		dev_err(hw->dev,
-			"ucode-test: FAIL stage=%s ret=%d (no cleanup writes)\n",
-			stage, ret);
-	release_firmware(ucode);
-	return ret;
+	return 0;
 }
