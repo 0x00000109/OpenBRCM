@@ -608,6 +608,8 @@ Still unknown / open decisions:
   (third correction: Appendix C, §0/§16/§17/§18/§19).
 - `802e01f` — `m34d3: close D3A0 blockers; implementation GO YES (analysis only)`
   (Appendix D; §18/§19).
+- `45677cb` — `m34d3: correct D3A0 vendor ordering and clarify DMA quiesce
+  contract` (Appendix D.7-D.10/D.15-D.17; §18).
 
 All DCO signed, on `m34d3-bsinitvals-analysis`; no driver code and no hardware
 interaction.
