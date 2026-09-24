@@ -77,10 +77,12 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `scripts/analyze_bsinitvals.py`. Decisions (corrected, Appendix B):
   `wlc_phy_switch_radio` does **not** precede bsinitvals on the BCM4352/AC path
   (the `0x69594` call is NPHY/HT-gated; `wlc_bmac_mute` is skipped), so a
-  vendor-ordered test can stop before real PHY/RF writes: **YES**. But the
-  post-common tail is **not D11-only** (it inits DMA engines and writes
-  interrupt-source masks), so **D3A and D3B are NOT YET**. The isolated unit is
-  the full vendor prefix, not the 73 records alone.
+  vendor-ordered test can stop before real PHY/RF writes: **YES**. The
+  post-common tail is **not D11-only** (it inits 4 TX DMA engines + FIFO0 RX and
+  writes interrupt-source masks); Appendix C reverses it and yields **A/B/C/D =
+  YES** (D3A0 DMA/IRQ-source → D3A1 remaining tail → D3B), conditional on host
+  IRQ route off and a core-reset/reboot quiesce. The isolated unit is the full
+  vendor prefix, not the 73 records alone.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -114,17 +116,22 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   (0x8c3f9)` via `call *[pi+0x28]`. The `wlc_bmac_init` `0x69594`
   `wlc_phy_switch_radio` is `phy_type==7` (NPHY/HT) gated and **not taken for
   AC**; `wlc_bmac_mute` `0x6957b` is skipped (`wlc_bmac_init` arg#3=0).
-- Tail reversal (Appendix B, NEW): for rev42 the legacy
+- Tail reversal (Appendix B): for rev42 the legacy
   `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped** (`phyrev <= 0x27`
   gate); the rev42 FIFO stage is `sub_67efd` (TXE0 fixup, safe). The tail also
-  writes `intrcvlazy[0]`/`intctrlregs[0].intmask=I_RI` and **inits DMA engines**
-  (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill`) at `0x6921c` — so it is **not**
-  D11/SHM-only.
-- Decisions: PHY/RF boundary **YES** (no PHY/radio writes before bsinitvals);
-  **D3A = NOT YET, D3B = NOT YET** (DMA-engine init / IRQ-source masks exceed
-  the D2B envelope). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
+  writes `intrcvlazy[0]`/`intctrlregs[0].intmask=I_RI` and inits DMA engines.
+- DMA/IRQ reversal (Appendix C, NEW): **4** TX channels only (`dma_txinit` x4,
+  di[0..3]; FIFO0 RX `0x220`, BK `0x200`, BE `0x240`, VI `0x280`, VO/CTL
+  `0x2C0`). TX engines enabled but **idle** (no descriptors posted → no
+  transmission). FIFO0 RX enabled (`control=0x84D`) with 64 buffers posted
+  (idle). Host IRQ delivery **not possible** (`macintmask=0`, `wl_intrsoff`
+  active; `wl_intrson` only in `wlc_bmac_up_finish` after `wlc_phy_init`).
+  Vendor quiesce = `wlc_coredisable` before `dma_detach` frees memory.
+- Decisions: PHY/RF boundary **YES**; formal decomposition **A YES (D3A0),
+  B YES, C YES, D YES** (§C.18), conditional on host IRQ route disabled and an
+  `ob_dma_quiesce`/reboot policy. `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
   `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
-  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendix B. No
+  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendices B/C. No
   implementation.
 
 ## Current milestone (just proven)
@@ -199,17 +206,18 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D3 analysis is recorded (Appendix A ordering + Appendix B tail reversal of
-`docs/m34d3_bsinitvals.md`). The PHY/RF ordering is resolved: the HA/AC path has
-no PHY/radio writes before bsinitvals (**YES** for the PHY/RF boundary). But the
-rev42 post-common tail also initializes the DMA engines and writes
-interrupt-source masks, so **D3A and D3B are NOT YET**. Next: resolve the open
-**D3A0** decision — how the driver's DMA bring-up (M3.2/M3.3/M3.4B) maps onto
-the vendor tail's `dma_txinit`/`dma_rxinit`/`dma_rxfill`, and whether
-`intrcvlazy`/`intctrlregs` are acceptable with `macintmask=0`. **No hardware
-action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/channel/DMA/
-IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime evidence,
-`docs/m34d2b_initvals_test.md`.
+M3.4D3 analysis is recorded (Appendix A ordering, Appendix B tail, Appendix C
+DMA/IRQ reversal of `docs/m34d3_bsinitvals.md`). The DMA/IRQ content of the
+rev42 tail is now fully reversed: **4** TX channels (not 6), TX enabled/idle,
+FIFO0 RX enabled with 64 buffers, host IRQ route off, vendor quiesce = core
+reset/disable. Formal decomposition **A/B/C/D = YES**: D3A0 (vendor DMA/
+IRQ-source, host route off) → D3A1 (remaining tail) → D3B (band init + 73
+bsinitvals) → D4 (PHY). Next (analysis/design only): design `ob_dma_alloc/
+desc_init/program/post_rx`, an out-of-band `ob_irq_route`, and `ob_dma_quiesce`
+(core reset/disable); until the quiesce exists D3A0 is reboot-required. **No
+hardware action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/
+channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime
+evidence, `docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

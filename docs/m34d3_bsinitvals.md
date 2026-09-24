@@ -70,13 +70,25 @@ rev42 tail (Appendix B) shows that, for BCM4352 rev42:
 - the rev42 FIFO stage is `sub_67efd` (TXE0 FIFO fixup; no DMA/IRQ/PHY; §B.1);
 - the tail also writes interrupt source config (`intrcvlazy[0]`,
   `intctrlregs[0].intmask = I_RI`) and **initializes the DMA engines**
-  (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill`, posting RX buffers) before band
+  (`dma_txinit` x4, `dma_rxinit`, `dma_rxfill`, posting RX buffers) before band
   init (§B.4/§B.7).
 
 Consequently the D3A/D3B milestones are **NOT YET** (they are PHY/RF-clean but
 DMA/IRQ-active), while the "stop before real PHY/RF" boundary remains **YES**.
 See §B.11. The earlier "D11/MAC/SHM only" phrasing above and in §A.2/§A.8 is
 superseded by Appendix B.
+
+**THIRD CORRECTION — the vendor DMA/IRQ stage is now fully reversed
+(Appendix C).** Findings: only **4** TX channels are attached (di[0..3];
+`dma_txinit` x4, not x6), the TX engines are enabled but idle (no descriptors
+posted, no transmission possible), FIFO0 RX is enabled with 64 buffers posted
+(idle), and host IRQ delivery is **not** possible at this point
+(`macintmask=0`, `wl_intrsoff` active; `wl_intrson` only in
+`wlc_bmac_up_finish` after `wlc_phy_init`). The vendor quiesce is core
+reset/disable before freeing. Formal decomposition (Appendix C.18):
+**A YES (D3A0), B YES, C YES, D YES**, subject to keeping the host IRQ route
+disabled and providing a core-reset quiesce. The earlier "dma_txinit x6" is
+corrected to **x4**.
 
 ## 1. Post-common-initvals vendor call graph
 
@@ -452,23 +464,24 @@ YES
 YES for the BCM4352/AC path regarding PHY/RF: no PHY-indirect write and no
 radio write occurs before bsinitvals.
 
-**But the stricter D3A/D3B isolation is NOT YET** (Appendix B, §B.11): the
-vendor prefix is **not** D11/SHM-only. The rev42 tail also (a) initializes the
-DMA engines and posts RX buffers (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill`)
-and (b) writes interrupt-source config (`intrcvlazy[0]`,
-`intctrlregs[0].intmask = I_RI`). Those exceed the proven D2B envelope and
-violate the no-DMA/no-IRQ criteria. `macintmask` (0x12C) stays 0 and
-`EN_MAC` stays 0, so host IRQ delivery and MAC RX/TX remain off, but the DMA
-engines are no longer untouched.
+The vendor prefix is **not** D11/SHM-only: the rev42 tail also initializes the
+DMA engines / posts RX buffers (`dma_txinit` x4, `dma_rxinit`, `dma_rxfill`) and
+writes interrupt-source config (`intrcvlazy[0]`,
+`intctrlregs[0].intmask = I_RI`). Appendix C reverses this fully and shows:
+- the TX engines are enabled but **idle** (no descriptors posted → no
+  transmission possible); FIFO0 RX is enabled with 64 buffers posted (idle);
+- `macintmask` (0x12C) stays 0 and `wl_intrsoff` is active, so **host IRQ
+  delivery is not possible** at this point (`wl_intrson` only in
+  `wlc_bmac_up_finish`, after `wlc_phy_init`);
+- formal decomposition A/B/C/D = **YES** (§C.18), conditional on keeping the
+  host IRQ route disabled and providing a core-reset/reboot quiesce.
 
-Blocking caveats:
+Remaining caveats:
 
-1. **DMA engine init** in the tail (`0x6921c`): needs an explicit decision to
-   include / reuse the driver DMA layer (§B.7/§B.15).
-2. **Interrupt-source masks** set by the tail (`0x100`, `0x24`); host mask
-   stays 0 (§B.4/B.7).
-3. Band/MHF dependency and config-derived initial band/chanspec (§A.7).
-4. Postconditions not yet hardware-validated.
+1. **`ob_dma_quiesce`** not yet implemented/proven → D3A0 reboot-required until
+   then (§C.17/C.20).
+2. Band/MHF dependency and config-derived initial band/chanspec (§A.7).
+3. Postconditions not yet hardware-validated.
 
 ## 17. Smallest faithful vendor-ordered boundary
 
@@ -488,7 +501,7 @@ bsinitvals write**, then STOP before `wlc_phy_init`. Concretely:
 - **NEW (Appendix B) — the tail is NOT D11/SHM-only.** For rev42 the legacy
   `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is skipped (phyrev gate, §B.0); the
   rev42 FIFO stage is `sub_67efd` (§B.1, safe); but the tail also runs
-  `dma_txinit` x6 + `dma_rxinit` + `dma_rxfill` (§B.7) and writes interrupt
+  `dma_txinit` x4 + `dma_rxinit` + `dma_rxfill` (§B.7) and writes interrupt
   source config `intrcvlazy[0]`/`intctrlregs[0].intmask` (§B.4).
 - **Stages intentionally included although not PHY:** `MACCONTROL` update
   (`0x69047`), `wlc_bmac_macphyclk_set(1)` (`0x690b1`),
@@ -507,23 +520,27 @@ bsinitvals write**, then STOP before `wlc_phy_init`. Concretely:
 - **Residual state:** `MACCONTROL = 0x44020402`, PSM_RUN=1, EN_MAC=0,
   `macintmask=0`, MAC-PHY clock on, D11 core on, DMA engines initialized / RX
   buffers posted, common + tail + bsinitvals applied; **no PHY/radio**.
-- **Decision:** D3A and D3B are **NOT YET** (§B.11) pending a DMA/IRQ decision;
-  this remains a **design proposal only** and must not be implemented as-is.
+- **Decision:** the DMA/IRQ content is now fully reversed (Appendix C); the
+  vendor-faithful split is D3A0 (DMA/IRQ-source, host route off) → D3A1
+  (remaining tail) → D3B, all **YES** isolatable (§C.18), conditional on
+  `ob_dma_quiesce`/reboot policy. This remains a **design proposal only** and
+  must not be implemented as-is.
 
 ## 18. AC PHY follow-on roadmap (revised, no implementation)
 
 Keep these separate; do not collapse (vendor order preserved):
 
-- **D3A0 — analysis/design** (new): decide how the driver's own DMA bring-up
-  (M3.2/M3.3/M3.4B) maps onto the vendor tail's `dma_txinit`/`dma_rxinit`/
-  `dma_rxfill` and whether `intrcvlazy`/`intctrlregs` are acceptable with
-  `macintmask=0`. Blocks D3A/D3B.
-- **D3A — post-common rev42 tail** (`sub_67efd` + `0x68fe2..0x695d8`): FIFO
-  fixup, SHM tables, `MACCONTROL` `0x69047`, `macphyclk_set` `0x690b1`,
-  `switch_macfreq` `0x695cb`, **DMA engine init** `0x6921c`. No PHY/radio.
-  Status: **NOT YET** (DMA/IRQ).
+- **D3A0 — vendor DMA/IRQ-source bring-up** (Appendix C): program the **4** TX
+  channels (BK/BE/VI/VO) and FIFO0 RX (64 buffers posted) exactly as the vendor,
+  with the **host IRQ route kept disabled** (`macintmask=0`,
+  `bcma_host_pci_irq_ctl=false`, no `I_RI`/`MI_DMAINT`); read-only
+  postconditions. Status: **YES isolatable** (§C.18), conditional on an
+  `ob_dma_quiesce` (core reset/disable) or reboot-only policy.
+- **D3A1 — remaining rev42 tail** (`0x6930e..0x695d8`): NVRAM/BTC SHM tables,
+  `tsf`, `MACCONTROL`, `macphyclk_set`, `switch_macfreq`. D11/SHM only.
+  Status: **YES** (§C.18).
 - **D3B — band init + bsinitvals** (`sub_6656c` through `0x669bd`): apply the 73
-  records; STOP before `wlc_phy_init`. Status: **NOT YET** (depends on D3A).
+  records; STOP before `wlc_phy_init`. Status: **YES** (§C.18).
 - **D4 — AC PHY register init** (`wlc_phy_init`: `wlc_phy_chanspec_shm_set` ->
   `wlc_phy_anacore` -> `wlc_phy_switch_radio_acphy` -> `wlc_phy_init_aphy`).
 - **D5 — PHY table loading** (`phy_reg_write_array` aphy tables).
@@ -554,11 +571,17 @@ Resolved by this revision:
 - ~~Is the tail D11/SHM-only?~~ -> **NO**; it also inits DMA engines and writes
   interrupt-source masks. See §B.4/§B.7.
 
+Resolved by Appendix C (DMA reversal):
+- ~~"dma_txinit x6"~~ -> **x4** (only di[0..3] attached; §C.0).
+- ~~DMA/IRQ blocks D3A/D3B?~~ -> DMA init is **isolatable as D3A0**; host IRQ
+  delivery is **not** possible there (`macintmask=0`, `wl_intrsoff`);
+  formal A/B/C/D = **YES** (§C.18). OpenBRCM needs `ob_dma_quiesce`,
+  4-channel TX programming and an out-of-band IRQ route (§C.12/C.17).
+
 Still unknown / open decisions:
-1. **DMA/IRQ decision (blocks D3A/D3B).** The tail runs `dma_txinit` x6,
-   `dma_rxinit`, `dma_rxfill` and sets `intrcvlazy[0]`/`intctrlregs[0].intmask`.
-   Decide whether to include/reuse the driver DMA layer and whether the
-   interrupt-source masks are acceptable with `macintmask=0`. See §B.7/§B.11.
+1. **`ob_dma_quiesce` (core reset/disable around armed DMA)** not yet
+   implemented/proven in OpenBRCM → D3A0 is reboot-required until then
+   (§C.17/C.20).
 2. Meaning of the 5 direct IHR fields (`0x680/0x682/0x684/0x686` IFS,
    `0x700` NAV) — values proven, field names UNKNOWN.
 3. The exact band/MHF state used during the initial BCM4352 bring-up (not
@@ -1044,7 +1067,7 @@ Rationale:
 - PHY/RF: **none** of the tail or bsinitvals writes any PHY-indirect or radio
   register; the first such writes are inside `wlc_phy_init` after bsinitvals.
   So the PHY/RF boundary holds (YES).
-- DMA/IRQ: the tail contains `dma_txinit` x6, `dma_rxinit`, `dma_rxfill`
+- DMA/IRQ: the tail contains `dma_txinit` x4, `dma_rxinit`, `dma_rxfill`
   (§B.7) and interrupt-source writes (`intrcvlazy[0]`, `intctrlregs[0].intmask
   = I_RI`) (§B.4 items 3/8). These exceed the D2B envelope and violate the
   "no uncontrolled DMA start / no IRQ enable" criteria, so D3A/D3B are NOT YET
@@ -1152,3 +1175,346 @@ vendor tail (not PHY/RF), the recommended decomposition is:
 If D3A/D3B cannot be separated, run one combined D3 test that includes the DMA
 init; but that test is **not** hardware-safe under the current no-DMA policy and
 must not be attempted without resolving D3A0.
+
+---
+
+# Appendix C — vendor DMA/IRQ reversal (D3A0)
+
+Read-only RE of `wlc_hybrid.o_shipped` (sha256 `352a6e349f…`) plus inspection of
+the current OpenBRCM `src/ob_dma.*`, `src/ob_irq.*`, `src/ob_rx.*` and
+`docs/dma_architecture.md` / `docs/rx_path.md`. No hardware, no MMIO, no
+implementation. This supersedes the "dma_txinit x6" wording of §B.7/B.11.
+
+## C.0 Correction: four TX DMA channels, not six
+
+`wlc_bmac_attach` has exactly **4** `dma_attach` calls (`0x6a3d7`, `0x6a4c7`,
+`0x6a566`, `0x6a65e`) and exactly **4** `wlc_hw_set_di` stores with
+`fifo = 0,1,2,3` (`0x6a459`, `0x6a4f8`, `0x6a597`, `0x6a69d`). `di[4]` and
+`di[5]` stay NULL. The init loop `wlc_bmac_init 0x6921c` iterates 6 slots with
+`if (di[i])`, so on the BCM4352 initial path it executes **4 x `dma_txinit`**
+(not 6), then `dma_rxinit(di[0])` (`0x69236`) and `dma_rxfill(di[0])`
+(`0x69243`).
+
+Vendor FIFO mapping (C3 `brcms_b_attach_dmapio` + attachment order):
+
+| di | role | TX reg base | RX reg base |
+|---|---|---|---|
+| 0 | `TX_AC_BK_FIFO` + `RX_FIFO` | `0x200` | `0x220` |
+| 1 | `TX_AC_BE_FIFO` | `0x240` | – |
+| 2 | `TX_AC_VI_FIFO` | `0x280` | – |
+| 3 | `TX_AC_VO`/`TX_CTL_FIFO` | `0x2C0` | – |
+| 4,5 | not attached | – | – |
+
+(Older `corerev <= 0xA` use 0x20 spacing 0x200/0x220/0x240/0x260; BCM4352
+`phyrev 0x2A > 0xA` uses the 0x40 spacing above. The attach code selects by
+`[dev+0x84] > 0xA`.)
+
+## C.1 Exact vendor DMA/IRQ ordering in the rev42 tail
+
+```
+0x68b98  sub_60f67(dev, d11ac1initvals42)              [D2B]
+0x68bab  sub_67efd(dev)                                 TXE0 FIFO fixup
+0x68fe2  wlc_bmac_write_shm(0x80, 8); (0x5c, 0xa)
+0x69006  osl_writel(D11+0x100, *(dev+0x1ac))            intrcvlazy[0]
+0x69047  wlc_bmac_mctrl(mask=0x40060000, val=0x40020000)
+0x6904c  osl_writel(D11+0x188, 0x80000000)              tsf_cfprep
+0x6905e  osl_writel(D11+0x18c, 0x02000000)              tsf_cfpstart
+0x69070  osl_writel(D11+0x128, 0x4000)                  macintstatus W1C (MI_GP1)
+0x69082  osl_writel(D11+0x24, 0x10000)                  intctrlregs[0].intmask = I_RI
+0x690b1  wlc_bmac_macphyclk_set(dev, 1)                 SICF_MPCLKE
+0x690b6  si_clkctl_fast_pwrup_delay -> D11+0x6a8
+0x690e2  mhf_get -> dev+0x192
+0x690fa  write_shm(0x16, phyrev); (0xc0, ..); (0xc2, ..)
+0x6913f  copyto_objmem x3 (SCR retry / rate)
+0x691d6  ifs_ctl RMW; 0x691ff ifs_aifsn <- 1
+0x6921c  for i in 0..5: if (di[i]) dma_txinit(di[i])   -> 4 calls
+0x69236  dma_rxinit(di[0])
+0x69243  dma_rxfill(di[0])                              posts RX buffers
+0x6930e  read_shm(0x92) + NVRAM "btc_params%d" x119 -> write_shm
+0x69466  write_shm(0x78c/0x78e/0x790)
+0x694d8  read_shm(0x8e)
+0x6955b  wlc_bmac_mute                                 SKIPPED (arg#3=0)
+0x69580  wlc_phy_switch_radio                          SKIPPED (phy_type!=7)
+0x695cb  wlc_bmac_switch_macfreq(dev, 0)               D11 0x62e/0x630
+0x695d8  sub_6656c -> bsinitvals (0x669bd) -> wlc_phy_init (0x669df)
+```
+
+`wl_intrsoff` is called at `wlc_bmac_init 0x682d6` (before all of the above) and
+`wl_intrsrestore` at `0x695ee` (after `wlc_phy_init`). So MAC aggregate
+interrupts are masked across the whole DMA init / bsinitvals window.
+
+## C.2 The four TX DMA channels (`dma64_txinit` @ `0xf947`)
+
+Object (`dma_info`, 0x130 B): `+0x48` TX reg base, `+0x50` RX reg base,
+`+0x58` TX ring ptr, `+0x60` RX ring ptr, `+0x6a` `ntxd`, `+0xa4` `nrxd`,
+`+0xe4` `rxbufsize`, `+0xe8` extra headroom, `+0xec` `nrxpost`,
+`+0xf0` `rxoffset`, `+0x104` `aligndesc_4k`, `+0xf4/0xf8` `ddoffsetlow/high`.
+
+`dma64_txinit(di)`:
+1. if `ntxd == 0` return.
+2. `di->txin = di->txout = 0`; `txavail = ntxd - 1`; `obj+0x8 = ntxd-1`.
+3. `memset(tx-ring, 0, ntxd*16)` (descriptor = 16 B).
+4. RMW `control` (`regbase+0x00`) with capability fields extracted from
+   `obj+0x106/107/108/109`, then `OR 0x1` (`XE`, transmit enable) `[| 0x800`
+   (`PD`) when parity not supported]`.
+5. `_dma_ddtable_init(di, TX, ring_pa)` (`0xe66f`): `addrlow = pa + ddoffsetlow`
+   (`regbase+0x08`), `addrhigh = ddoffsethigh` (`regbase+0x0C`), and address
+   extension bits into `control AE`.
+6. `ptr` (`regbase+0x04`) set to the ring base; **no descriptor is posted**.
+
+Per-FIFO TX register set is identical (same dma64 layout, different base):
+`control`/`ptr`/`addrlow`/`addrhigh`/`status0`/`status1` at `base+0x00/0x04/
+0x08/0x0C/0x10/0x14`. Ring size `ntxd`, ring bytes `ntxd*16`, alignment is
+governed by `aligndesc_4k` (`obj+0x104`; BCM4352 takes the aligned path).
+
+## C.3 Vendor TX DMA vs current OpenBRCM TX model
+
+| property | vendor | OpenBRCM (`ob_dma.h`) | status |
+|---|---|---|---|
+| descriptor format | DMA64 16 B (`dma64desc`) | 16 B `ob_dma_desc` | MATCH |
+| TX ring count | `ntxd` (runtime; C3 NTXD=512) | 512 | MATCH |
+| ring bytes | `ntxd*16` (8192) | 8192 | MATCH |
+| ring alignment | 8 KiB (aligned path) | 8192 | MATCH |
+| addrhigh semantics | `ddoffsethigh` (0x80000000) | `OB_DMA_PCIE_H32=0x80000000` | MATCH (M3.4B) |
+| 32-bit DMA window | yes | yes | MATCH |
+| **number of TX channels** | **4** (BK/BE/VI/VO) | **1** | DIFFERENT |
+| TX control programming | XE + capability fields (enabled) | not implemented | NOT IMPLEMENTED |
+| TX ring base published | yes (`addrlow/high`, `ptr`) | no | NOT IMPLEMENTED |
+| TX descriptors posted | no (empty ring) | no | MATCH |
+
+Current OpenBRCM `ob_dma_init` **cannot** be used directly for the vendor-faithful
+pre-PHY stage: it allocates only ONE TX ring and does no hardware programming.
+
+## C.4 RX `dma64_rxinit` / `dma64_rxfill`
+
+`dma64_rxinit(di)` @ `0xf897`: if `nrxd==0` return; `rxin=rxout=0`;
+`memset(rx-ring, 0, nrxd*16)`; `_dma_ddtable_init(di, RX, ring_pa)`;
+`_dma_rxenable(di)`.
+`_dma_rxenable` @ `0xe5f0`: `control = RE(0x1) | (read(control) & AE) |
+[PD=0x800] | (rxoffset << 1)` written to `regbase+0x00`.
+`dma64_rxfill(di)` @ `0xf14d`: for `i < nrxpost`: allocate skb of `rxbufsize`,
+`osl_pktget`, program descriptor (`ctrl2 = size`, EOT on last slot),
+`addrlow/high`; then `ptr = rcvptrbase + rxout*16` (`regbase+0x04`).
+
+## C.5 Vendor RX vs OpenBRCM M3.4B
+
+| field | vendor (derived) | OpenBRCM / M3.4B (proven) | status |
+|---|---|---|---|
+| FIFO/reg block | FIFO0 RX `0x220` | `0x220..0x22C` | MATCH |
+| ring descriptor count | `nrxd` (C3 NRXD=256) | 256 | MATCH |
+| descriptor size | 16 B | 16 B | MATCH |
+| ring alignment | 8 KiB | 8192 | MATCH |
+| posted buffers | `nrxpost` (C3 NRXBUFPOST=64) | 64 | MATCH |
+| buffer size | `rxbufsize` | 2048 | MATCH |
+| rxoffset | `di+0xf0` | 38 | MATCH |
+| CONTROL | `RE \| PD \| (rxoffset<<1)` | `0x0000084D` | MATCH |
+| ADDRLOW | ring base | ring base | MATCH |
+| ADDRHIGH | `ddoffsethigh` | `0x80000000` | MATCH (M3.4B) |
+| initial PTR | `rxout*16` (rcvptrbase=0) | `0x400` | MATCH |
+| DMA high32 | 0 (32-bit window) | 0 | MATCH |
+| completion-index basis | `status0.CD` bits | `status0` (RS/CD) | MATCH |
+
+No discrepancy found; the M3.4B RX model matches the vendor FIFO0 RX
+programming. The vendor additionally programs 4 TX channels (not present in
+M3.4B).
+
+## C.6 TX post-init activity state
+
+After `dma64_txinit`: engine **enabled** (`XE=1`), descriptor ring zeroed and
+its base published (`addrlow/high`, `ptr = base`), `txin == txout` (ring empty),
+no descriptors posted, no data path. `EN_MAC=0` and PSM idle.
+
+```
+TX PHYSICAL TRANSMISSION POSSIBLE BEFORE EN_MAC/PHY?   NO
+```
+(The engine is enabled but the ring is empty and the MAC cannot fetch/transmit
+either.)
+
+## C.7 RX post-init activity state
+
+After `dma64_rxinit` + `dma64_rxfill`: RX engine **enabled** (`RE=1`, control
+`0x84D`), ring armed, `nrxpost` buffers mapped and posted, `PTR = rxout*16`.
+The engine is idle (STATUS0 RS=IDLE per M3.4B) and no RF data exists because the
+PHY is not initialized and `EN_MAC=0`.
+
+```
+RX DMA ASYNC ACTIVITY POSSIBLE BEFORE PHY/EN_MAC?
+  Engine enabled + rings armed + buffers posted = YES
+  Actual DMA/data advance without EN_MAC/PHY    = NO
+```
+Relation to M3.4B: M3.4B observed exactly this idle enabled state
+(STATUS0=0x2000e000, RS=IDLE) with `EN_MAC=0`; no RX completion occurred.
+
+## C.8 Exact interrupt configuration
+
+| # | register | offset | width | value | ordered |
+|---|---|---|---|---|---|
+| 1 | `intrcvlazy[0]` | `0x100` | 32 | `*(dev+0x1ac)` (runtime) | before MACCONTROL |
+| 2 | `macintstatus` | `0x128` | 32 | `MI_GP1=0x4000` (W1C ack) | after MACCONTROL |
+| 3 | `intctrlregs[0].intmask` | `0x24` | 32 | `I_RI=0x10000` | after #2 |
+| 4 | `macintmask` | `0x12C` | 32 | **not written here** (held 0 by `wl_intrsoff`) | – |
+
+Distinctions: `I_RI` (per-FIFO RX interrupt, `d11.h:449`) is the per-source bit
+written at `0x24`; `MI_DMAINT=1<<15` is the MAC aggregate summary bit and is
+**not** set here; `macintmask` (`0x12C`) is the aggregate enable and stays 0;
+the BCMA/PCI route is controlled by `bcma_host_pci_irq_ctl`, which the vendor
+bring-up toggles via `wl_intrsoff`/`wl_intrson` (host callbacks), not in this
+tail.
+
+## C.9 Is CPU IRQ delivery possible at this point? — NO
+
+```
+D11 SOURCE ARMED            = intctrlregs[0].intmask = I_RI (0x24)
+MAC AGGREGATE ROUTE ENABLED = NO  (macintmask 0x12C = 0)
+BCMA/PCI ROUTE ENABLED      = NO  (wl_intrsoff active since 0x682d6)
+HOST HANDLER PRESENT        = host-driver responsibility (outside blob)
+CPU INTERRUPT POSSIBLE      = NO
+```
+
+## C.10 Location of the vendor host IRQ enable
+
+`wl_intrsoff` @ `wlc_bmac_init 0x682d6`; `wl_intrsrestore` @ `0x695ee` (after
+`wlc_phy_init`); `wl_intrson` @ `wlc_bmac_up_finish 0x66446`. `wlc_intrsoff`
+(`0x7a6b5`) zeroes `D11+0x12C` (MACINTMASK); `wlc_intrson` (`0x7a720`) restores
+`wlc+0x9c` and calls `wlc_ol_enable_intrs`; `wlc_intrsrestore` (`0x7a684`)
+restores the saved mask. Therefore **host interrupt delivery is enabled only
+after `wlc_bmac_init` returns** (i.e. after DMA init, band init, bsinitvals and
+`wlc_phy_init`). DMA init pre-PHY without host interrupt delivery is
+vendor-consistent.
+
+## C.11 Current `ob_dma_init` compatibility
+
+`ob_dma_init` (`src/ob_dma.c:132`) allocates exactly two 8 KiB-aligned coherent
+rings (RX 256-active-of-4096 B, TX 512) and sets a 32-bit mask; it programs no
+D11 DMA register, posts no buffer and touches no IRQ. `ob_irq_init` installs the
+handler (`request_irq`, `src/ob_irq.c:150`) with no source. The hardware RX
+programming lives in `ob_rx_init` (M3.4B), which also does
+`bcma_host_pci_irq_ctl(true)` + `I_RI` + `MI_DMAINT`. There is **no TX channel
+programming** anywhere.
+
+```
+CURRENT ob_dma_init CAN SATISFY VENDOR PRE-PHY DMA REQUIREMENT?   NO (alone);
+   the codebase can with a refactor (ob_dma_init + ob_rx_init)
+```
+
+## C.12 Software-vs-hardware DMA helper decomposition (proposed)
+
+Split the future vendor-faithful DMA stage into explicit helpers so it does not
+depend on mac80211 or normal probe state:
+
+1. `ob_dma_alloc(hw)` — coherent ring/descriptor memory + 32-bit mask
+   (= today's `ob_dma_init`, already implemented).
+2. `ob_dma_desc_init(hw, ch)` — zero/prepare descriptors and bookkeeping.
+3. `ob_dma_map_buffers(hw, ch)` — `dma_map_single` RX buffers (not for TX).
+4. `ob_dma_program(hw, ch)` — publish `addrlow/addrhigh/ptr` and write
+   `control` (enable) per channel; no IRQ, no mac80211.
+5. `ob_dma_post_rx(hw, ch)` — post buffers and update `ptr`.
+6. `ob_irq_route(enable)` — `bcma_host_pci_irq_ctl` and `macintmask`/`I_RI`
+   (kept separate; **not** part of the pre-PHY DMA stage).
+7. `ob_dma_quiesce(hw)` — core reset/disable (C.17) before any free.
+
+## C.13 Precise M3.4B proven / not-proven scope
+
+PROVEN (hardware): DMA API 32-bit window; RX ring alignment/address semantics;
+`ADDRHIGH=0x80000000`; RX `CONTROL=0x84D`; `PTR=0x400`; RX engine accepted
+programming; RX engine reached IDLE; IRQ 33 / host route mechanics separately
+tested.
+NOT PROVEN: actual receive completion; TX DMA hardware programming or
+completion; all four TX FIFOs; firmware-driven RX traffic; vendor-order
+integration after common initvals.
+
+## C.14 Recommended IRQ strategy for an isolated pre-PHY DMA stage
+
+Option **A** (program DMA, keep host IRQ route disabled) is the vendor-faithful
+choice: at this point the vendor has `macintmask=0` and `wl_intrsoff` active.
+`request_irq` may remain installed (M3.3 handler) but `bcma_host_pci_irq_ctl`
+must stay `false`, `macintmask=0`, and `I_RI`/`MI_DMAINT` must not be enabled.
+Do not choose **B/C** (route/handler enable) unless Linux integration proves it
+necessary for safety.
+
+## C.15 Linux DMA lifetime requirements
+
+Before DMA is armed: coherent rings via `dma_alloc_coherent`/`dma_pool`;
+`dma_map_single(DMA_FROM_DEVICE)` for RX buffers; `dma_wmb()`/`wmb()` before
+publishing descriptors; descriptor visibility. On stop/failure: disable the
+engine (bounded poll) or core-reset, `synchronize_irq` if a handler could run,
+`tasklet_kill` if deferred work exists, then unmap (`dma_unmap_single`) and free.
+If no handler is installed and the route is disabled, `synchronize_irq` is not
+required but `dma_unmap_single` for every posted buffer is. Distinguish the
+**hardware-faithful sequence** (C.1) from these **Linux resource-lifetime
+obligations**, which apply regardless of what the vendor firmware would do.
+
+## C.16 Deterministic postconditions (read-only)
+
+| item | expected | class |
+|---|---|---|
+| TX[i].control bit0 (XE) | 1 | CONSTANT |
+| TX[i].addrlow | ring base (`dma_addr_t` low) | DERIVED |
+| TX[i].addrhigh | `0x80000000` | CONSTANT |
+| TX[i].status0 | not DISABLED | DERIVED |
+| RX.control | `0x0000084D` | CONSTANT |
+| RX.addrlow | RX ring base | DERIVED |
+| RX.addrhigh | `0x80000000` | CONSTANT |
+| RX.ptr | `0x400` (64 x 16, rcvptrbase 0) | CONSTANT |
+| RX.status0 | RS=IDLE (`0x2`) | CONSTANT |
+| RX.status1 error bits | 0 | CONSTANT |
+| MACINTMASK (0x12C) | 0 | CONSTANT |
+| intctrlregs[0].intmask (0x24) | `0x10000` | CONSTANT |
+| MACCONTROL (0x120) | `0x44020402` | DERIVED |
+
+## C.17 Vendor DMA stop/reset path and unload policy
+
+Vendor quiesce (`wlc_bmac_down_prep 0x66108` -> `wl_intrsoff`, `wlc_phy_down`;
+`wlc_bmac_down_finish 0x66338` -> `wlc_bmac_suspend_mac_and_wait`, `wl_reset`,
+**`wlc_coredisable 0x6378d`**, `wlc_bmac_hw_down`) runs **before**
+`dma_detach` (`dma64_detach` @ `0xfecf`) frees ring memory. `wlc_coredisable`
+resets/disables the D11 core (and switches the radio off), which guarantees the
+DMA engines can no longer consume ring/buffer addresses.
+
+C3 counterpart: `dma_txreset` (write `SE=0x2`, bounded poll, write `0`, bounded
+poll, +300 us) and `dma_rxreset` (write `0`, bounded poll to `RS_DISABLED`).
+Per-channel reset functions exist in the vendor vtable but their exact addresses
+were not pinned in this pass (UNKNOWN).
+
+CRITICAL: the current OpenBRCM `ob_dma_free` frees rings without disabling any
+engine. If a future pre-PHY DMA test arms engines, then on unload it **must**
+core-reset/disable (or keep the module loaded until reboot) before freeing, or
+the hardware may DMA from freed memory. Because an exact OpenBRCM quiesce for
+armed DMA is not yet implemented/proven, a D3A0 hardware test must use a
+**one-shot / reboot-required** policy until `ob_dma_quiesce` is proven.
+
+## C.18 Formal A/B/C/D decomposition decisions
+
+```
+A. CAN DMA INIT BE ITS OWN ISOLATED MILESTONE AFTER D2B?          YES (D3A0)
+B. CAN THE REMAINDER OF THE D3A TAIL BE ISOLATED AFTER DMA INIT?  YES (D3A1)
+C. CAN D3B BAND INIT + BSINITVALS THEN BE ISOLATED?               YES
+D. CAN FULL PREFIX THROUGH BSINITVALS STOP BEFORE PHY/RF?         YES
+```
+Conditions for A: host IRQ route stays disabled (`macintmask=0`,
+`bcma_host_pci_irq_ctl=false`, no `I_RI`/`MI_DMAINT`), and unload uses
+core-reset/disable or a reboot-only policy. All four remain ANALYSIS ONLY.
+
+## C.19 Corrected roadmap
+
+```
+D3A0  vendor DMA/IRQ-source bring-up (4 TX channels + FIFO0 RX + post 64
+      buffers), host IRQ route DISABLED, then read-only postconditions
+D3A1  remaining post-common D11 tail (SHM/NVRAM/TSF/MACCONTROL/macphyclk/
+      switch_macfreq), no PHY/radio
+D3B   sub_6656c pre-bs + 73 bsinitvals, STOP before wlc_phy_init
+D4    wlc_phy_init -> wlc_phy_anacore (first PHY indirect MMIO)
+D5    PHY tables; D6 radio/channel/synth; D7 calibration; D8 RX integration
+```
+Prerequisite for A: implement `ob_dma_alloc/desc_init/program/post_rx` and
+`ob_dma_quiesce` (core reset/disable) and keep `ob_irq_route` out of D3A0.
+
+## C.20 Remaining blockers
+
+1. OpenBRCM `ob_dma_quiesce` (core reset/disable around armed DMA) is not
+   implemented/proven → until then D3A0 is reboot-required.
+2. TX channel programming (4 FIFOs) is absent from OpenBRCM.
+3. Exact vendor per-channel `txreset`/`rxreset` vtable addresses not pinned.
+4. `intrcvlazy[0]` source value (`*(dev+0x1ac)`) is runtime-derived.
+5. `ddoffsethigh` static initialization not pinned (value `0x80000000` is
+   M3.4B-proven but its blob source was not re-derived here).

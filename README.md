@@ -24,9 +24,11 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > **analysis only** on `m34d3-bsinitvals-analysis` (Draft PR). On the
 > BCM4352/AC path `wlc_phy_switch_radio` does **not** run before bsinitvals (the
 > `0x69594` call is NPHY/HT-gated and mute is skipped), so a vendor-ordered test
-> can stop before real PHY/RF writes. However, the post-common tail is not
-> D11-only: it also initializes the DMA engines and writes interrupt-source
-> masks, so the D3A/D3B milestones are not yet isolatable.
+> can stop before real PHY/RF writes. The post-common tail is not D11-only: it
+> initializes 4 TX DMA channels (idle) and FIFO0 RX (64 buffers), with the host
+> IRQ route off. The DMA/IRQ stage is fully reversed and yields the isolatable
+> split D3A0 (DMA/IRQ-source) -> D3A1 -> D3B, conditional on a core-reset
+> quiesce or a reboot-only policy.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

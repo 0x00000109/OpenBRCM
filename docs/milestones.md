@@ -212,19 +212,25 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   For rev42 the legacy `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped**
   (`phyrev <= 0x27`; the rev42 FIFO stage is `sub_67efd`, safe), but the tail
   also writes interrupt-source config (`intrcvlazy[0]`,
-  `intctrlregs[0].intmask=I_RI`) and **initializes the DMA engines**
-  (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill` at `0x6921c`).
-- **D3A = NOT YET, D3B = NOT YET** (DMA-engine init / IRQ-source masks exceed
-  the D2B envelope). PHY/RF boundary = YES. See report §0, §16/§17, Appendix B.
+  `intctrlregs[0].intmask=I_RI`) and initializes DMA engines.
+- **THIRD CORRECTION (Appendix C): the DMA/IRQ stage fully reversed.** Only
+  **4** TX channels exist (`dma_txinit` x4, di[0..3]); TX enabled but **idle**
+  (no descriptors posted). FIFO0 RX enabled (`control=0x84D`) with 64 buffers
+  posted (idle). Host IRQ delivery **not possible** here (`macintmask=0`,
+  `wl_intrsoff` active; `wl_intrson` only in `wlc_bmac_up_finish` after
+  `wlc_phy_init`). Vendor quiesce = `wlc_coredisable` before freeing.
+- **Formal decomposition A/B/C/D = YES** (report §C.18): D3A0 (vendor DMA/
+  IRQ-source, host route off) -> D3A1 (remaining tail) -> D3B (band init + 73
+  bsinitvals) -> D4 (PHY). Conditional on host IRQ route off and an
+  `ob_dma_quiesce`/reboot policy. PHY/RF boundary = YES.
 - Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
   `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
   `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
-  writes D11 `0x62e/0x630` (TSF clock frac) from the PMU BB VCO. See report §0,
-  §A.3/§A.4/§A.6, §B.5/§B.6/§B.8.
-- Smallest faithful boundary (design only, do not implement): full rev42
-  `wlc_bmac_init` prefix (`sub_67efd` + `0x68fe2..0x695d8`, incl. DMA init) ->
-  `sub_6656c` through the 73 bsinitvals records, STOP before `wlc_phy_init`.
-  Must first resolve the **D3A0** DMA/IRQ decision. See report §17 and §18.
+  writes D11 `0x62e/0x630` (TSF clock frac) from the PMU BB VCO.
+- Smallest faithful boundary (design only, do not implement): D3A0 DMA/IRQ-source
+  -> D3A1 tail -> `sub_6656c` through the 73 bsinitvals records, STOP before
+  `wlc_phy_init`. OpenBRCM gaps: `ob_dma_quiesce`, 4-channel TX programming,
+  out-of-band IRQ route. See report §17/§18 and Appendix C.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
