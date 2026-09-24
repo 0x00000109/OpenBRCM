@@ -18,6 +18,10 @@ build/
 # host tests binaries
 tests/host/ob_*_test
 
+# python analysis tooling
+__pycache__/
+*.pyc
+
 # editor
 *.swp
 *~
