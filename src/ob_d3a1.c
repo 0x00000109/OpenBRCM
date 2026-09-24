@@ -156,8 +156,8 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 	if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, true,
 			   &st->fifo_poll540_iters, &last)) {
 		dev_err(hw->dev,
-			"d3a1-test: sub_67efd FAIL 0x540 xmtfifocmd poll TIMEOUT iters=%u last=%04x\n",
-			st->fifo_poll540_iters, last);
+			"d3a1-test: sub_67efd FAIL 0x540 programmed=%04x last=%04x reads=%u xmtfifocmd poll TIMEOUT\n",
+			5, last, st->fifo_poll540_iters);
 		return -ETIMEDOUT;
 	}
 
@@ -199,8 +199,8 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 				   &iters, &last)) {
 			st->fifo_fail_index = (int)i;
 			dev_err(hw->dev,
-				"d3a1-test: sub_67efd FAIL 0x530 index=%u value=%04x poll TIMEOUT iters=%u\n",
-				i, ob_d3a1_fifo42_x530(i), iters);
+				"d3a1-test: sub_67efd FAIL 0x530 index=%u programmed=%04x last=%04x reads=%u poll TIMEOUT\n",
+				i, ob_d3a1_fifo42_x530(i), last, iters);
 			return -ETIMEDOUT;
 		}
 		st->fifo_poll_completed++;
@@ -376,27 +376,51 @@ static u32 ob_d3a1_pmu_pll_read(struct ob_hw *hw, u32 idx)
  *
  * Note: the vendor reads PLL3 into `ecx` without masking; the recovered value
  * is used directly by bcm_uint64_multiple_add.
+ *
+ * The raw inputs and the decoded PLL2 fields are returned for first-run
+ * observability; no extra PMU reads are performed for logging.
  */
-static u32 ob_d3a1_bb_vcofreq(struct ob_hw *hw)
+static u32 ob_d3a1_bb_vcofreq(struct ob_hw *hw, u32 *p2_out, u32 *p3_out,
+			      bool *p3_read_out, u32 *d_out, u32 *den_out)
 {
 	u32 p2 = ob_d3a1_pmu_pll_read(hw, 2);
 	u32 p3 = 0;
+	bool p3_read = false;
 
-	if (((p2 >> 4) & 0x7u) != 0)
+	if (((p2 >> 4) & 0x7u) != 0) {
 		p3 = ob_d3a1_pmu_pll_read(hw, 3);
+		p3_read = true;
+	}
+
+	*p2_out = p2;
+	*p3_out = p3;
+	*p3_read_out = p3_read;
+	*d_out = (p2 >> 4) & 0x7u;
+	*den_out = p2 >> 7;
 	return ob_d3a1_bb_vcofreq_from_pll(p2, p3);
 }
 
 static int ob_d3a1_switch_macfreq(struct ob_hw *hw)
 {
-	u32 vco = ob_d3a1_bb_vcofreq(hw);
-	u32 frac;
+	struct ob_d3a1 *st = &hw->d3a1;
+	u32 p2, p3 = 0, d = 0, den = 0;
+	u32 vco, frac, frac_lo, frac_hi;
+	bool p3_read = false;
+	u16 rb_lo, rb_hi;
 
+	/*
+	 * Defensive entry check FIRST. ob_d3a1_bb_vcofreq() below dereferences
+	 * hw->cc through ob_si_cc_read/write; a check after the call would not
+	 * protect the dereference. ob_d3a1_test() also enforces this invariant
+	 * at entry, but keep the local guard.
+	 */
 	if (!hw->cc) {
 		dev_err(hw->dev,
 			"d3a1-test: no ChipCommon core; cannot derive BB VCO\n");
 		return -ENODEV;
 	}
+
+	vco = ob_d3a1_bb_vcofreq(hw, &p2, &p3, &p3_read, &d, &den);
 
 	/*
 	 * vco <= 1 is NOT a legitimate vendor skip: bcm_uint64_divide writes
@@ -406,28 +430,50 @@ static int ob_d3a1_switch_macfreq(struct ob_hw *hw)
 	 */
 	if (vco <= 1u) {
 		dev_err(hw->dev,
-			"d3a1-test: switch_macfreq cannot derive a valid BB VCO (vco=%u); D3A1 FAIL\n",
+			"d3a1-test: switch_macfreq cannot derive a valid BB VCO (vco=%u p2=%08x p3=%08x d=%u den=%u); D3A1 FAIL\n",
+			vco, p2, p3, d, den);
+		return -EIO;
+	}
+
+	frac = ob_d3a1_tsf_frac(vco);
+	if (frac == OB_D3A1_DIV_NO_WRITE) {
+		dev_err(hw->dev,
+			"d3a1-test: switch_macfreq divide produced no write (vco=%u)\n",
 			vco);
 		return -EIO;
 	}
 
-	hw->d3a1.bb_vcofreq = vco;
-	frac = ob_d3a1_tsf_frac(vco);
-	if (frac == OB_D3A1_DIV_NO_WRITE) {
-		dev_err(hw->dev,
-			"d3a1-test: switch_macfreq divide produced no write\n");
-		return -EIO;
-	}
-	hw->d3a1.tsf_frac = frac;
+	/* First-run observability: record exactly what the algorithm read. */
+	st->bb_vcofreq = vco;
+	st->pll2_raw = p2;
+	st->pll3_raw = p3;
+	st->pll3_read = p3_read;
+	st->bb_d = d;
+	st->bb_den = den;
+	st->tsf_frac = frac;
+	st->tsf_frac_lo = ob_d3a1_tsf_frac_lo(frac);
+	st->tsf_frac_hi = ob_d3a1_tsf_frac_hi(frac);
 
-	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_L,
-		     ob_d3a1_tsf_frac_lo(frac));
-	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_H,
-		     ob_d3a1_tsf_frac_hi(frac));
+	frac_lo = st->tsf_frac_lo;
+	frac_hi = st->tsf_frac_hi;
+	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_L, frac_lo);
+	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_H, frac_hi);
+
+	/*
+	 * Stable readback of D11 0x62e/0x630 is NOT vendor-proven, so this is
+	 * observability only: record the readback and classify it as unproven.
+	 * Do NOT invent an equality gate.
+	 */
+	rb_lo = bcma_read16(hw->core, OB_D3A1_REG_TSF_FRAC_L);
+	rb_hi = bcma_read16(hw->core, OB_D3A1_REG_TSF_FRAC_H);
+	st->tsf_frac_lo_rb = rb_lo;
+	st->tsf_frac_hi_rb = rb_hi;
+	st->tsf_frac_rb_proven = false;
+
 	dev_info(hw->dev,
-		 "d3a1-test: switch_macfreq vco=%u frac=%08x -> 0x62e=%04x 0x630=%04x\n",
-		 vco, frac, ob_d3a1_tsf_frac_lo(frac),
-		 ob_d3a1_tsf_frac_hi(frac));
+		 "d3a1-test: switch_macfreq p2=%08x p3=%08x pll3_read=%d d=%u den=%u vco=%u frac=%08x -> 0x62e=%04x 0x630=%04x rb_lo=%04x rb_hi=%04x (readback UNPROVEN)\n",
+		 p2, p3, p3_read, d, den, vco, frac, frac_lo, frac_hi,
+		 rb_lo, rb_hi);
 	return 0;
 }
 

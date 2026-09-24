@@ -819,14 +819,29 @@ static int ob_si_sprom_diag(struct ob_hw *hw)
  */
 int ob_si_prepare_board_data_for_d3a1(struct ob_hw *hw)
 {
+	int ret;
+
 	hw->cc = hw->bus->drv_cc.core;
 	if (!hw->cc) {
 		dev_err(hw->dev, "d3a1-test: no ChipCommon core\n");
 		return -ENODEV;
 	}
 
-	/* Read-only external-SPROM MAC (reuses the proven parser). */
-	hw->mac_valid = (ob_si_read_mac(hw, hw->mac) == 0);
+	/*
+	 * Read-only external-SPROM MAC (reuses the proven parser). Preserve the
+	 * exact errno: a bad CRC, an invalid MAC or an allocation failure must
+	 * fail board-data preparation BEFORE any D2A/D2B work, not be flattened
+	 * into mac_valid=false with a success return.
+	 */
+	ret = ob_si_read_mac(hw, hw->mac);
+	hw->mac_valid = (ret == 0);
+	if (ret) {
+		dev_err(hw->dev,
+			"d3a1-test: board-data MAC read failed ret=%d (mac_valid=0)\n",
+			ret);
+		return ret;
+	}
+
 	dev_info(hw->dev,
 		 "d3a1-test: board data prepared (cc=%p mac_valid=%d mac=%pM)\n",
 		 hw->cc, hw->mac_valid, hw->mac);

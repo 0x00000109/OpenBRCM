@@ -327,13 +327,18 @@ Module built + MOK-signed, **never loaded** (no hardware execution).
   `btc_params`/`btc_flags` ⇒ skip; MAC into `0x78c/0x78e/0x790` only inside the
   `btc_base != 0` gate), `switch_macfreq`, deterministic postconditions,
   fail-closed quiesce; `STOPPED BEFORE sub_6656c / bsinitvals / PHY`.
-- Build/sign: `make` + `make signed` OK; module `c3e51aa4…` signed
+- Build/sign: `make` + `make signed` OK; module `ce9b7cc5…` signed
   (`Broadcom Driver MOK`), vermagic `7.0.0-34-generic`. Host tests 10/10 PASS.
 - Audit corrections: the isolated dispatch prepares `hw->cc` + the validated
   external-SPROM MAC (`ob_si_prepare_board_data_for_d3a1`) before
   `ob_d3a1_test`; `sub_67efd` polls are fail-closed (`-ETIMEDOUT` aborts); the
   `switch_macfreq` BB-VCO / 64-bit divide are exact verbatim ports (no
   best-effort), and an un-derivable VCO is an error, never a PASS.
+- Pre-freeze corrections: `switch_macfreq` checks `hw->cc` *before* the PLL
+  read; `ob_si_read_mac()`'s errno is preserved by board-data preparation; the
+  FIFO timeout logs include the final readback; and the first run records raw
+  PLL2/PLL3, `d`, `den`, VCO, TSF fraction and `0x62e`/`0x630` (readback
+  classified UNPROVEN, no equality gate).
 - Only the symbolic name of the `0x78c/0x78e/0x790` SHM slots remains UNKNOWN
   (value/source proven; microcode-only consumer).
 

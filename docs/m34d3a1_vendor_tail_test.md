@@ -49,6 +49,28 @@ mac80211 initialization. The only PMU PLL accesses remain inside the exact
 `switch_macfreq`. `ob_d3a1_test()` additionally refuses with `-ENODEV`
 (no ChipCommon) or `-EINVAL` (no validated MAC) before any D3A1 write.
 
+The helper preserves the exact `ob_si_read_mac()` errno: a bad CRC, an invalid
+MAC or an allocation failure returns the original error from board-data
+preparation **before** D2A/D2B, rather than flattening it into
+`mac_valid=false` with a success return.
+
+## 1.2 Final pre-freeze corrections
+
+- **`switch_macfreq` entry guard** — the `!hw->cc` check now precedes
+  `ob_d3a1_bb_vcofreq()` (which dereferences `hw->cc` via
+  `ob_si_cc_read/write`). The `ob_d3a1_test()` entry invariant is kept as well.
+- **`ob_si_read_mac()` error preserved** — see §1.1.
+- **FIFO timeout diagnostics** — the `0x530` log now reports
+  `index`, `programmed`, `last` (the final hardware readback) and `reads`; the
+  `0x540` log reports `programmed`, `last` and `reads`.
+- **PLL/VCO observability** — the first run records `pll2_raw`, `pll3_raw`
+  (only when actually read), `pll3_read`, `bb_d=(PLL2>>4)&7`, `bb_den=PLL2>>7`,
+  the derived VCO, the derived TSF fraction and the programmed `0x62e`/`0x630`
+  values. No extra PMU reads are made for logging (the values come from the
+  algorithm itself). `0x62e`/`0x630` are read back for diagnostics only and
+  classified **UNPROVEN** (`tsf_frac_rb_proven=false`); no equality gate is
+  invented because stable readback semantics are not vendor-proven.
+
 ## 2. Exact D3A1 call graph (implemented)
 
 ```
@@ -276,10 +298,10 @@ normal driver path is untouched; all pre-existing host tests still pass.
 | field | value |
 | :--- | :--- |
 | module | `openbrcm.ko` |
-| size | 4153449 B |
-| sha256 | `c3e51aa4e9f39e2b45cd85707ef0642d5fcb23ada649df8ba5499d0f31dd0b1e` |
+| size | 4164217 B |
+| sha256 | `ce9b7cc5e7ed3564f402a3af37f4eda99eb41620c191ad309a5e0687233f27a0` |
 | vermagic | `7.0.0-34-generic SMP preempt mod_unload modversions` |
-| srcversion | `83F53416D9F05124B671570` |
+| srcversion | `445CB436C3E3107F6C39A64` |
 | signer | `Broadcom Driver MOK` |
 | depends | `mac80211,bcma` |
 
@@ -297,6 +319,10 @@ The TSF postcondition (`tsf_cfprep`/`tsf_cfpstart` equality) assumes those
 registers read back the programmed value; if the first hardware run shows them
 to be force/command registers that auto-clear, they will be downgraded to
 diagnostic-only. All other postconditions are static.
+
+D11 `0x62e`/`0x630` stable readback is **not** vendor-proven; the first run
+logs the readback and classifies it as unproven (`tsf_frac_rb_proven=false`).
+No equality postcondition is placed on them.
 
 ## 15.1 Failure matrix
 

@@ -533,7 +533,17 @@ struct ob_hw;
  * @fastpwrup_dly:     value written to D11+0x6a8
  * @fastpwrup_dly_sw:  vendor software copy (dev+0x192) incl. sub_5fdca delta
  * @bb_vcofreq:        PMU-derived BB VCO frequency (0 => cannot derive)
+ * @pll2_raw:          raw PMU PLL2 value read by switch_macfreq
+ * @pll3_raw:          raw PMU PLL3 value (valid only when pll3_read)
+ * @pll3_read:         true when PLL3 was actually read (PLL2 bits 4..6 != 0)
+ * @bb_d:              (PLL2 >> 4) & 7
+ * @bb_den:            PLL2 >> 7
  * @tsf_frac:          derived TSF clock fraction
+ * @tsf_frac_lo:       value programmed into D11 0x62e
+ * @tsf_frac_hi:       value programmed into D11 0x630
+ * @tsf_frac_lo_rb:    D11 0x62e read back after programming
+ * @tsf_frac_hi_rb:    D11 0x630 read back after programming
+ * @tsf_frac_rb_proven: true only if 0x62e/0x630 stable readback is proven
  * @btc_shm92:         raw SHM[0x92] value
  * @btc_base:          2 * SHM[0x92]
  * @btc_block_ran:     true when btc_base != 0 (BTC T2 block executed)
@@ -553,7 +563,17 @@ struct ob_d3a1 {
 	u16	fastpwrup_dly;
 	u16	fastpwrup_dly_sw;
 	u32	bb_vcofreq;
+	u32	pll2_raw;
+	u32	pll3_raw;
+	bool	pll3_read;
+	u32	bb_d;
+	u32	bb_den;
 	u32	tsf_frac;
+	u16	tsf_frac_lo;
+	u16	tsf_frac_hi;
+	u16	tsf_frac_lo_rb;
+	u16	tsf_frac_hi_rb;
+	bool	tsf_frac_rb_proven;
 	u16	btc_shm92;
 	u32	btc_base;
 	bool	btc_block_ran;
