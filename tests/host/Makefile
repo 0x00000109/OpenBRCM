@@ -4,12 +4,14 @@ CFLAGS  ?= -O2 -Wall -Wextra -I. -I../../src
 SRC     := ../../src
 
 .PHONY: run clean
-run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test
+run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
+     ob_fw_test
 	./ob_math_test
 	./ob_caps_test
 	./ob_dma_test
 	./ob_irq_test
 	./ob_rx_test
+	./ob_fw_test
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -26,5 +28,9 @@ ob_irq_test: ob_irq_test.c $(SRC)/ob_irq.h
 ob_rx_test: ob_rx_test.c $(SRC)/ob_rx.h $(SRC)/ob_dma.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+ob_fw_test: ob_fw_test.c $(SRC)/ob_fw.h
+	$(CC) $(CFLAGS) -o $@ $<
+
 clean:
-	rm -f ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test
+	rm -f ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
+	      ob_fw_test

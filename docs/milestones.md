@@ -12,6 +12,21 @@ Each milestone has a concrete, observable gate.
 | **M5** | AMPDU, power save, runtime PM, LED/rfkill | stable traffic; suspend/resume |
 | **M6** | second PHY family (nphy/htphy) | family module loads |
 
+## M3.4D1 — rev42 firmware acquisition + validation (DONE)
+Gate: `insmod` logs `fw … validated` for `d11ucode42`, `ac1initvals42`,
+`ac1bsinitvals42` and `all rev42 firmware validated; hardware untouched`; no
+hardware writes.
+- Source: exact vendor-blob images (provenance A) — see
+  `docs/firmware_reconciliation.md`. No b43 IV conversion, no substitution.
+- `src/ob_fw.{c,h}`: pure parser/iterator (vendor 8-byte records
+  `{u16 offset, u16 width, u32 value}`, terminator `0xffff`) + kernel
+  `ob_fw_probe()`; strict size + FNV-1a-64 + structure; dry run logs only the
+  first/last 10 records/words. Present-but-invalid firmware fails probe.
+- Recovered vendor order for D2: `MACCONTROL=0x04000404` (IHR_EN|PSM_JMP0|WAKE)
+  → objaddr/objdata ucode upload → `macintstatus=-1`,
+  `MACCONTROL=0x04020402` (PSM_RUN), poll `MI_MACSSPNDD` → common initvals →
+  STOP before band init/PHY. bsinitvals deferred (applied with `wlc_phy_init`).
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

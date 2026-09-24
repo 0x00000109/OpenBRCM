@@ -41,6 +41,16 @@ int ob_probe(struct bcma_device *core)
 		return ret;
 
 	/*
+	 * M3.4D1: acquire and validate the exact vendor rev42 firmware through
+	 * request_firmware(). Acquisition + dry-run only — no hardware writes.
+	 * Present-but-invalid firmware fails probe; absent firmware is reported
+	 * but does not disturb the validated SPROM/MAC/DMA/IRQ paths.
+	 */
+	ret = ob_fw_probe(hw);
+	if (ret)
+		return ret;
+
+	/*
 	 * M3.2: allocate the DMA64 descriptor rings (software model only). The
 	 * D11 DMA register blocks are left untouched and no engine is enabled.
 	 */

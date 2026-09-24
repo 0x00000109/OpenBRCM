@@ -224,3 +224,85 @@ This is an explicit deviation from the b43 algorithm to preserve provenance A.
   requires it. No RX DMA, no TX.
 
 **End of M3.4C.1 — analysis only; no hardware writes performed.**
+
+---
+
+# M3.4D1 — acquisition + validation implemented (no hardware writes)
+
+## Verification of byte-exactness (re-confirmed)
+
+| image | blob slice (file off) | size | blob==file | SHA256 |
+|---|---|---|---|---|
+| `d11ucode42` | 0x2327E0 | 43400 | yes | `22cf38bc…d1a73` |
+| `d11ac1initvals42` | 0x219280 | 4888 | yes | `b5a2735d…983d938` |
+| `d11ac1bsinitvals42` | 0x21A5A0 | 592 | yes | `e81a645c…d014da` |
+
+Installed names used: `brcm/bcm4352-d11ucode42.bin` (primary) with documented
+fallback `brcm/bcm43xx-ucode.fw`; `brcm/bcm4352-d11ac1initvals42.bin`;
+`brcm/bcm4352-d11ac1bsinitvals42.bin`. FNV-1a-64 guards: `0x7d364f6207b3298b`,
+`0xa7cfdfdbcc9d58f1`, `0xfa86a2510d2e0e3e`.
+
+## Recovered vendor sequences (C2, brcmsmac C3 corroboration)
+
+1. **Ucode upload registers** — applier `wlc_bmac_ucode_write` blob 0x60744
+   (dispatch 0x607b0). `D11+0x160 = OBJADDR`, `D11+0x164 = OBJDATA`
+   (brcmsmac d11.h:147-148). It writes `OBJADDR = 0x03000000` =
+   `OBJADDR_AUTO_INC (0x03000000) | OBJADDR_UCM_SEL (0x0)`, **reads OBJADDR
+   back** (barrier), then writes each 32-bit word to OBJDATA; auto-increment
+   advances UCM (microcode) memory. Exact match: brcmsmac `brcms_ucode_write`
+   (main.c:2214-2228). No byte swap — raw LE words (`le32_to_cpu` is identity).
+   One write per word; final OBJADDR points past the image.
+2. **Pre-upload MACCONTROL** — `wlc_bmac_init` @0x68353 calls
+   `wlc_bmac_mctrl(dev, ~0, 0x04000404)` =
+   `IHR_EN(0x400) | PSM_JMP_0(0x4) | WAKE(0x04000000)`; `PSM_RUN=0`,
+   `EN_MAC=0`, `SHM_EN=0`. Exact match brcmsmac `brcms_b_coreinit`
+   (main.c:3141).
+3. **Scratch / SHM zeroing** — NOT performed by the vendor. The only
+   64-iteration loop (0x686ef) calls `wlc_bmac_write_amt(dev, i, 0, 0)`,
+   zeroing the 64-entry address-match table, not SHM/UCODE/SCRATCH. D2 must
+   **not** add b43-style SHM zeroing.
+4. **PSM start + validation** — blob fn 0x63828 (sym
+   `wlc_bmac_wowlucode_start`, called from `wlc_bmac_init` @0x68501):
+   `W(D11+0x128 macintstatus, 0xffffffff)`; then
+   `wlc_bmac_mctrl(dev, ~0, 0x04020402)` =
+   `IHR_EN | INFRA | PSM_RUN(0x2) | WAKE`; then polls
+   `macintstatus & MI_MACSSPNDD(1<<0)` with 10 µs delays, timeout `0xF4249`
+   (~1e6); success iff bit0 set. Exact match brcmsmac (main.c:3148-3157).
+   b43's `GEN_IRQ_REASON` is the same register (0x128) and `MAC_SUSPENDED`
+   the same bit (0x1). **No ucode revision string is read**; the run is
+   verified by MI_MACSSPNDD self-suspend and by reading `M_FIFOSIZE0..3`
+   (SHM 0x98/0x9a/0x9c/0x9e) for FIFO-size consistency (blob 0x68f88-0x68fae).
+5. **initvals ordering** — common `d11ac1initvals42` applied in
+   `wlc_bmac_init` @0x68b98, **after** ucode download (0x684c4) and PSM start
+   (0x68501). bandswitch `d11ac1bsinitvals42` applied in discovered fn
+   `sub_6656c` @0x669bd, which **immediately calls `wlc_phy_init` @0x669df**;
+   `sub_6656c` is called from `wlc_bmac_init` @0x695d8 (initial 2.4 GHz path)
+   and from `wlc_bmac_set_chanspec` @0x67bd0. Both tables are consumed at
+   initial bring-up; order = **common then bandswitch**. bsinitvals belong to
+   the band-init stage that is intertwined with PHY init.
+6. **Open issue for D2** — the vendor calls `wlc_phy_cal_init` (0x6834c)
+   *before* the ucode upload. The user's "stop before PHY/calibration" boundary
+   therefore is not clean; D2 planning must decide whether that one-time cal
+   call is required for ucode/initvals to take effect. Flagged, not guessed.
+
+## D1 code
+
+`src/ob_fw.{c,h}`: pure host-testable parser/iterator + kernel
+`ob_fw_probe()`; called from `ob_probe()` right after `ob_si_probe()`.
+Strict validation: exact size + FNV-1a-64 + structural parse; a present-but-
+different file fails probe (`-EINVAL`/`-EILSEQ`). Absent files are logged and
+do not disturb the validated SPROM/MAC/DMA/IRQ paths. Dry run logs only the
+first/last 10 ucode words and IV records (`fw_dryrun` param, default on).
+`MODULE_FIRMWARE()` now declares only the rev42 files. No register/SHM/IHR/
+PSM/PHY/radio/RX/TX access anywhere in D1.
+
+## Refined M3.4D2 boundary (define only, not implemented)
+
+Apply, in vendor order: pre-ucode `MACCONTROL=0x04000404` → upload ucode via
+OBJADDR/OBJDATA (raw words) → `W(macintstatus,-1)` + `MACCONTROL=0x04020402`
+(PSM_RUN) + poll `MI_MACSSPNDD` → common `ac1initvals42` via the vendor 8-byte
+applier → verify `MI_MACSSPNDD` and FIFO-size SHM (0x98..0x9e) → **STOP before
+`sub_6656c`** (band init + `wlc_phy_init`), so **bsinitvals are NOT applied in
+D2**. No EN_MAC, no RX/TX DMA, no mac80211 RX/TX. Resolve the `wlc_phy_cal_init`
+ordering question first.
+
