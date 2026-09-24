@@ -289,11 +289,12 @@ Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
 - STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
   radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail (`ANALYSIS ONLY`)
+## M3.4D3A1 — vendor post-common / pre-PHY tail (`ANALYSIS COMPLETE`)
 
 Canonical status (exact):
 - M3.4D3A0 = HARDWARE RUNTIME PROVEN
-- M3.4D3A1 = ANALYSIS ONLY
+- M3.4D3A1 = ANALYSIS COMPLETE / NOT IMPLEMENTED / NOT HARDWARE PROVEN
+- D3A1 IMPLEMENTATION GO = YES (analysis decision only)
 
 Report: `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`; no hardware/MMIO/implementation). Scope: recover the exact

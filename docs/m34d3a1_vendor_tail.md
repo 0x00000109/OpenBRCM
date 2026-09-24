@@ -1,16 +1,17 @@
-# M3.4D3A1 — vendor post-common-init / pre-PHY tail recovery (ANALYSIS ONLY)
+# M3.4D3A1 — vendor post-common-init / pre-PHY tail recovery (ANALYSIS COMPLETE)
 
-Status: **`M3.4D3A1 = ANALYSIS ONLY`**. This document is read-only
-reverse-engineering of `wlc_hybrid.o_shipped` plus a read-only comparison with
-upstream `brcmsmac`. **No hardware, no MMIO, no `insmod`, no implementation.**
-Canonical status is unchanged: `M3.4D3A0 = HARDWARE RUNTIME PROVEN`,
-`M3.4D3A1 = ANALYSIS ONLY`.
+Status: **`M3.4D3A1 = ANALYSIS COMPLETE`** / `NOT IMPLEMENTED` /
+`NOT HARDWARE PROVEN`. This document is read-only reverse-engineering of
+`wlc_hybrid.o_shipped` plus a read-only comparison with upstream `brcmsmac`
+(performed under the `ANALYSIS ONLY` rule). **No hardware, no MMIO, no
+`insmod`, no implementation.** Canonical status: `M3.4D3A0 = HARDWARE RUNTIME
+PROVEN`, `M3.4D3A1 = ANALYSIS COMPLETE`.
 
 Blocker-closure follow-up: §15 resolves all remaining value-source /
 struct-field blockers (`wlc_info`/`wlc_pub` model, the MAC six bytes, the SCR
 `0x24` read-modify-write + first-init gate, `getvar`/NVRAM origin,
-`btc_params`/`btc_flags` absent behavior, `M_MAX_ANTCNT`). §16 now returns
-`D3A1 IMPLEMENTATION GO: YES` (still NOT implemented / NOT hardware proven).
+`btc_params`/`btc_flags` absent behavior, `M_MAX_ANTCNT`). §16 returns
+`D3A1 IMPLEMENTATION GO: YES` (still NOT IMPLEMENTED / NOT HARDWARE PROVEN).
 
 Primary provenance: `wlc_hybrid.o_shipped`, sha256
 `352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743`.

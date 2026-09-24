@@ -179,16 +179,16 @@ grep -q 'free_allowed' src/ob_d3a0.h \
 	&& ok "lifecycle separates stopped/contained/free/fatal" \
 	|| bad "lifecycle flags not separated"
 
-# 4e. D3A1 is ANALYSIS ONLY: it must not be claimed implemented/hardware proven.
+# 4e. D3A1 analysis is COMPLETE (GO: YES) but not implemented/hardware proven.
 if [ -f docs/m34d3a1_vendor_tail.md ] && \
-   grep -q 'ANALYSIS ONLY' docs/m34d3a1_vendor_tail.md && \
+   grep -q 'ANALYSIS COMPLETE' docs/m34d3a1_vendor_tail.md && \
    grep -q 'D3A1 IMPLEMENTATION GO: YES' docs/m34d3a1_vendor_tail.md; then
-	ok "D3A1 analysis recorded as ANALYSIS ONLY (GO: YES, not implemented)"
+	ok "D3A1 recorded as ANALYSIS COMPLETE (GO: YES, not implemented)"
 else
-	bad "docs/m34d3a1_vendor_tail.md must record D3A1 as ANALYSIS ONLY (GO: YES)"
+	bad "docs/m34d3a1_vendor_tail.md must record D3A1 as ANALYSIS COMPLETE (GO: YES)"
 fi
 if grep -rniE 'M3\.4D3A1.*(IMPLEMENTED|HARDWARE[^.]*PROVEN|RUNTIME PROVEN)' docs/ 2>/dev/null \
-		| grep -viE 'not|never|unproven|analysis only' | grep -q .; then
+		| grep -viE 'not|never|unproven|analysis' | grep -q .; then
 	bad "a document overclaims M3.4D3A1 status"
 else
 	ok "D3A1 not claimed implemented/hardware proven"

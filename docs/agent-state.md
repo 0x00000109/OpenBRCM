@@ -31,9 +31,11 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `docs/m34d3a0_dma_test.md`; PR #8 merged to `main` via a normal merge commit
   `3bdef76`, so `main == origin/main == 3bdef76` and `4fa1b57`/`7e68fe24`/
   `5b1b0e8` are ancestors.
-- Active analysis branch `m34d3a1-vendor-tail-analysis` (from `3bdef76`) —
-  **M3.4D3A1 vendor-tail recovery, `ANALYSIS ONLY`**; report
-  `docs/m34d3a1_vendor_tail.md`. No runtime-code change, no hardware.
+- Analysis branch `m34d3a1-vendor-tail-analysis` (from `3bdef76`) —
+  **M3.4D3A1 vendor-tail recovery, `ANALYSIS COMPLETE` / NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN**, `D3A1 IMPLEMENTATION GO: YES`; report
+  `docs/m34d3a1_vendor_tail.md`. Docs/tooling only, no runtime code, no
+  hardware; merged to `main` via a normal merge commit.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -120,9 +122,9 @@ Stated exactly:
 - M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
 - M3.4D3A0 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated DMA lifecycle only; candidate `4fa1b57`)
-- M3.4D3A1 = `ANALYSIS ONLY` (vendor post-common / pre-PHY tail; NOT IMPLEMENTED /
-  NOT HARDWARE PROVEN; value-source/struct-field blockers closed;
-  `D3A1 IMPLEMENTATION GO: YES` — analysis decision only, not implemented)
+- M3.4D3A1 = `ANALYSIS COMPLETE` (vendor post-common / pre-PHY tail; NOT
+  IMPLEMENTED / NOT HARDWARE PROVEN; value-source/struct-field blockers closed;
+  `D3A1 IMPLEMENTATION GO: YES` — analysis decision only)
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
@@ -180,8 +182,8 @@ conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail (ANALYSIS ONLY)
-Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+## M3.4D3A1 — vendor post-common / pre-PHY tail (ANALYSIS COMPLETE)
+Status: **`M3.4D3A1 = ANALYSIS COMPLETE` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
 `D3A1 IMPLEMENTATION GO: YES` (all value-source / struct-field blockers closed by
 the follow-up in §15: MAC six bytes = `cur_etheraddr`; SCR `0x24` is a
 read-modify-write skipped on the first init; `btc_params`/`btc_flags` absent ⇒
@@ -363,8 +365,9 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-**M3.4D3A1 vendor-tail analysis is now recorded** (ANALYSIS ONLY) on
-`m34d3a1-vendor-tail-analysis`; report `docs/m34d3a1_vendor_tail.md`. It
+**M3.4D3A1 vendor-tail analysis is now COMPLETE** (ANALYSIS COMPLETE / NOT
+IMPLEMENTED / NOT HARDWARE PROVEN) on `m34d3a1-vendor-tail-analysis`; report
+`docs/m34d3a1_vendor_tail.md`. It
 re-proves `sub_67efd` for rev42, recovers the omitted SHM/NVRAM/BTC groups, and
 establishes that the vendor order is **T1 → DMA → T2** (DMA is interleaved, not
 a separate pre- or post-tail stage), with the D3A1 STOP immediately before

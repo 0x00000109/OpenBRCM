@@ -38,7 +38,7 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > integration before PHY bring-up. It STOPS before band
 > init/bsinitvals/PHY/radio/channel/mac80211. Evidence:
 > [`docs/m34d3a0_dma_test.md`](docs/m34d3a0_dma_test.md).
-> M3.4D3A1 (vendor post-common / pre-PHY tail) is **`ANALYSIS ONLY`** /
+> M3.4D3A1 (vendor post-common / pre-PHY tail) is **`ANALYSIS COMPLETE`** /
 > NOT IMPLEMENTED / NOT HARDWARE PROVEN; `D3A1 IMPLEMENTATION GO: YES` (analysis
 > decision only). It re-proves `sub_67efd` for rev42, recovers the omitted
 > SHM/NVRAM/BTC groups, establishes the vendor order **T1 → DMA → T2** (DMA is
