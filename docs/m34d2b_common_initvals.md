@@ -330,6 +330,22 @@ These are **written by the table itself**, so they are legitimate read-back
 gates (no invented validation register). They are the recommended D2B runtime
 observables.
 
+### Overwrite caveat (C2)
+
+In the **full vendor path**, the values are not read straight after the table:
+at `wlc_bmac_init` `0x68d84…0x68df2` the vendor **re-writes** `M_FIFOSIZE0..3`
+(and the TX FIFO control registers) from its in-memory `xmtfifo_sz[]` array
+(`[dev+0x150]`) and only then reads them back at `0x68f87…0x68fae`. An isolated
+D2B test that applies only the 610-record table and stops does **not** run that
+host block, so the table's own values remain in SHM and are a valid,
+deterministic postcondition. See the follow-up section "Postcondition
+validation" for the exact argument.
+
+Additional deterministic read-backs (written by the table, untouched in the
+isolated path): SHM `0x0014 = 0x000000b4` (last of two writes) and
+`MACINTMASK == 0`. `MACINTSTATUS` is cleared to `0` by rec 3 but may be
+re-asserted by the suspended PSM and is therefore **informational only**.
+
 ---
 
 ## 13. Proposed smallest D2B hardware boundary (ANALYSIS ONLY)
@@ -411,3 +427,334 @@ mismatch. It performs no hardware access.
 **M3.4D2B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
 The last hardware-proven milestone remains **M3.4D2A** (ucode upload + PSM
 start only).
+
+---
+
+# M3.4D2B follow-up — blocker resolution and GO/NO-GO
+
+Continues the analysis above. Still `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT
+HARDWARE PROVEN. No hardware access.
+
+## F1. The pre-ucode `wlc_phy_cal_init` call (resolved)
+
+- Symbol `wlc_phy_cal_init` (`0xb19f7`, C2) is called from `wlc_bmac_init`
+  `0x6834b` with `rdi = [[rbx+0xe8]+0x28]` (the PHY software object), the same
+  argument as the preceding `wlc_phy_chanspec_radio_set`.
+- Its body (`re fn wlc_phy_cal_init --asm`) performs **0 MMIO accesses**. All
+  stores are to *software structure fields* of the PHY object (`+0x160`,
+  `+0x164`, `+0x187`, `+0x488…`, `+0x3e8…`, `+0x2e4…`, `+0x300`, `+0x408…`).
+  These are the PHY's calibration *bookkeeping* (per-chain cal timers / values)
+  and the PHY type/revision mirrors, not BCM4352 registers.
+- The only possible hardware path is a conditional indirect call
+  (`call rax` at `0x0b1bc9`) taken only when `[phy+0x30] != 0`. At this point in
+  bring-up `wlc_phy_init` (`0xbabf5`) has **not** run; the target of `+0x30`
+  (a PHY-ops slot) is not resolved here and is deliberately not part of any D2B
+  boundary.
+- Conclusion: the name is misleading. `wlc_phy_cal_init` here initializes PHY
+  **software calibration state**; it does **not** perform RF/PHY calibration and
+  touches **no** D11/PHY/radio MMIO directly.
+- Mandatory before common initvals? **No.** Common initvals is a pure D11
+  register/RAM write path with no read of PHY software state. M3.4D2A succeeded
+  without this call because D2A never invokes any PHY-object code.
+- Documentation correction applied: this report no longer treats `0x6834b` as a
+  hardware calibration step.
+
+## F2. Omitted vendor pre-steps — classification
+
+Order is ascending in `wlc_bmac_init`; any step after the common applier
+(`0x68b98`) is irrelevant to D2B by construction.
+
+| site | step | MPIO? | needed for rev42/4352? | for D2B | class |
+|---|---|---|---|---|---|
+| `0x682c6` | `sub_64887` (clkctl/mhf/wake override) | yes (CC/clock) | clock housekeeping | already done by D2A prep (FAST clock) | ALREADY SATISFIED |
+| `0x682d6` | `wl_intrsoff` | no (OSL) | host IRQ off | no MAC IRQ used | NOT REQUIRED FOR D2B |
+| `0x68305` | `si_pmu_rfldo(1)` | PMU | chip 4352 matches; RF LDO | analog/RF power; not a MAC-side table dependency | NOT REQUIRED FOR D2B |
+| `0x68328` | `wlc_setxband` | no (sw) | band sw state | not read by table | NOT REQUIRED FOR D2B |
+| `0x6833b` | `wlc_phy_chanspec_radio_set` | no (sw) | radio sw state | not read by table | NOT REQUIRED FOR D2B |
+| `0x6834b` | `wlc_phy_cal_init` | **no** | PHY sw state | not read by table | NOT REQUIRED FOR D2B |
+| `0x6837d` | `wlc_bmac_btc_mode_set` | ? (BTC) | BT coex | board/BT-specific | NOT REQUIRED FOR D2B |
+| `0x683ae/0x683e0` | `si_btc_enable_chipcontrol` | CC | BT coex | BT-specific | NOT REQUIRED FOR D2B |
+| `0x683fb` | `si_pmu_chipcontrol` | PMU | analog | not table-dependent | NOT REQUIRED FOR D2B |
+| `0x6842e` | `wlc_phy_btclock_war` | ? | BT coex WAR | BT-specific | NOT REQUIRED FOR D2B |
+| `0x68485` | `si_eci_init` | coex | conditional (chip caps) | coex | NOT REQUIRED FOR D2B |
+| `0x684a8` | `si_seci_init` | coex | conditional (chip caps) | coex | NOT REQUIRED FOR D2B |
+| `0x684bc` | `si_gci_init` | coex | conditional (chip caps) | coex | NOT REQUIRED FOR D2B |
+| `0x684c4` | `sub_607b0` ucode upload | D11 | yes | **REQUIRED FOR D2B** | (D2A) |
+| `0x68500` | `wlc_bmac_wowlucode_start` | D11 | yes | **REQUIRED FOR D2B** | (D2A) |
+| `0x68516` | `wlc_bmac_mctrl(0xC000,0)` | D11 | GPOUT_SEL clear | runs in D2A path; keep | REQUIRED FOR D2B (cheap) |
+| **`0x68b98`** | **common initvals applier** | D11 | yes | **the D2B step** | — |
+| `0x68bab` | `sub_67efd` (RXE/FIFO config) | D11 | post-initvals | not needed for the table | NOT REQUIRED FOR D2B |
+| `0x68d84…` | host `xmtfifo_sz` -> `M_FIFOSIZE*` | D11 obj | post-initvals | not needed (isolated path) | NOT REQUIRED FOR D2B |
+| `0x69047` | `wlc_bmac_mctrl(0x40060000,0x40020000)` | D11 | post-initvals | after D2B stop | NOT REQUIRED FOR D2B |
+| `0x695d8` | `sub_6656c` band init + `wlc_phy_init` | PHY | later stage | must NOT run | out of scope |
+
+`si_eci_init`/`si_seci_init`/`si_gci_init` are conditional (corerev `> 0x0e`
+plus chip-core capability bits `sih+0x1b/0x1c` and `dev+0xa7`), i.e. they are
+not driven by the initvals table. They are coexistence interfaces, orthogonal
+to the MAC-side table.
+
+Verdict: **no omitted pre-step is required to apply the common table**, other
+than the D11 clock/core state already proven in D2A. The only previously open
+item was SHM access (F3).
+
+## F3. SHM_EN semantics — HARD BLOCKER RESOLVED
+
+- Vendor: pre-upload `MACCONTROL=0x04000404` and PSM-start
+  `MACCONTROL=0x04020402` both leave `SHM_EN (1<<8) = 0`; the common applier
+  writes SHM through `OBJADDR/OBJDATA` in exactly that state.
+- Upstream corroboration (C3, `brcmsmac/main.c brcms_b_coreinit`):
+  - `brcms_b_mctrl(~0, MCTL_IHR_EN | MCTL_PSM_JMP_0 | MCTL_WAKE)` (reset PSM),
+  - `brcms_ucode_download()`,
+  - `macintstatus = -1`, `brcms_b_mctrl(~0, MCTL_IHR_EN | MCTL_INFRA | MCTL_PSM_RUN | MCTL_WAKE)`,
+  - `SPINWAIT(MI_MACSSPNDD)` — comment: *"let the PSM run to the suspended
+    state"* / *"wait for ucode to self-suspend after auto-init"*,
+  - `brcms_c_write_inits(...)` (initvals),
+  - `brcms_b_write_shm(M_FIFOSIZE0..3, ...)`.
+  `MCTL_SHM_EN` is **defined but never set** anywhere in brcmsmac
+  (`grep MCTL_SHM_EN` finds only the `#define`). Its SHM writes use the same
+  `OBJADDR_SHM_SEL` object window with `SHM_EN=0`.
+
+Conclusion: `MCTL_SHM_EN` is **not** required for CPU/object-window SHM
+accesses; common initvals are intentionally applied with `SHM_EN=0`. The SHM_EN
+bit gates a different (in-MAC/PSM) SHM behavior, not the host object window.
+This is now proven from both the vendor blob and upstream, and is no longer a
+blocker.
+
+MACCONTROL state immediately before / during / after the common applier:
+- immediately before (`0x68516` result): `0x04020402`
+  (`IHR_EN|INFRA|PSM_RUN|WAKE`, `EN_MAC=0`, `SHM_EN=0`);
+- during: unchanged (the table writes no `0x120`);
+- immediately after: unchanged `0x04020402`; the next change is `0x69047`
+  (`0x40020000`-valued RMW) **after** the applier.
+
+## F4. Disposition of the direct-offset records (side-effect safety)
+
+The classifier now assigns a side-effect class to every record; the full
+per-record table and the `direct_offsets` summary are in
+`docs/m34d2b/initvals_classification.{md,json}`. Common-table side-effect
+counts reconcile to 610 (F11).
+
+Of the 194 direct writes, 74 distinct offsets have UNKNOWN *field* semantics.
+All 74 fall into one of these provably-bounded regions, none of which is
+`MACCONTROL`, the DMA/PIO block (`0x200-0x3d7`), the PHY window
+(`0x3e0-0x3fe`) or the radio window (`0x3d8-0x3db`):
+
+- `IHR/RXE` (`0x402/0x404/0x406/0x40c/0x428/0x450/0x452`) — receive-engine /
+  RCM config; no descriptor pointer or engine-enable bit is in the table.
+- `IHR/PSM` (`0x490-0x4bc`, `0x4e4`) — PSM block (backoff/BRC/postcard/base);
+  configuration only.
+- `IHR/TXE0/TXE1` (`0x500/0x502/0x504/0x510/0x554`, `0x580-0x5a6`) — TXE and
+  TX-FIFO configuration. `0x500 = 0x4000` and `0x554 = 0xafff`
+  (`smpl_clct_stpptr`) have no bit-level name in the C3 reference, so their
+  fields are marked **UNKNOWN**, but they are FIFO pointers/control, not
+  `EN_MAC`/DMA/IRQ.
+- `IHR/TSF` (`0x600/0x612/0x62e/0x630`) and `IHR/IFS`
+  (`0x688/0x696/0x69a/0x69c/0x69e`) — timers/IFS timing config.
+- `SHM direct window` (`0x800-0xa40`) — shared-memory state.
+
+No direct write can **enable MAC** (no `0x120`), **enable DMA** (no
+`0x200-0x3d7`), **unmask IRQ** (`MACINTMASK=0`), **start PHY/radio** (no
+`0x3d8-0x3fe`), **reset the core** (no BCMA agent window), or start a MAC
+state machine (MAC suspended; `EN_MAC=0`). The remaining low-level UNKNOWNs
+(`0x500` bit14, `0x554`, `MACCOMMAND` bit2) are neutralised by the absent
+enabling prerequisites (no EN_MAC, no DMA, no descriptor rings published,
+MAC suspended). They are recorded as residual UNKNOWNs (F14), not as
+engine-start hazards.
+
+## F5. The 20 SCR transactions — meaning
+
+`SCR` = `OBJADDR_SCR_SEL (0x00020000)`, the PSM **scratch-pad** object space
+(C3, `brcmsmac d11.h enum _ePsmScratchPadRegDefinitions`). The selector's low
+16 bits are the scratch *index* directly (`OBJADDR = SCR_SEL | index`; the
+index is confirmed because the C3 reference ORs the enum value without a `>>2`
+shift). All 20 common SCR windows are single 32-bit writes, no auto-inc:
+
+| rec | selector | index | name | value |
+|---|---|---|---|---|
+| 570/571 | `0x00020003` | 3 | `S_DOT11_CWMIN` | `0x1f` |
+| 572/573 | `0x00020004` | 4 | `S_DOT11_CWMAX` | `0x3ff` |
+| 574/575 | `0x00020005` | 5 | `S_DOT11_CWCUR` | `0x1f` |
+| 576/577 | `0x00020006` | 6 | `S_DOT11_SRC_LMT` | `7` |
+| 578/579 | `0x00020007` | 7 | `S_DOT11_LRC_LMT` | `4` |
+| 580/581 | `0x00020008` | 8 | `S_DOT11_DTIMCOUNT` | `0xffff` |
+| 582/583 | `0x00020018` | 24 | `S_THIS_AGG` | `7` |
+| 584/585 | `0x00020009` | 9 | `S_SEQ_NUM` | `0` |
+| 586/587 | `0x0002000a` | 10 | `S_SEQ_NUM_FRAG` | `0` |
+| 588/589 | `0x0002000b` | 11 | `S_FRMRETX_CNT` | `0` |
+| 590/591 | `0x0002000c` | 12 | `S_SSRC` | `0` |
+| 592/593 | `0x0002000d` | 13 | `S_SLRC` | `0` |
+| 594/595 | `0x0002000e` | 14 | `S_EXP_RSP` | `0` |
+| 596/597 | `0x0002000f` | 15 | `S_OLD_BREM` | `0` |
+| 598/599 | `0x00020010` | 16 | `S_OLD_CWWIN` | `0x1f` |
+| 600/601 | `0x00020011` | 17 | `S_TXECTL` | `0` |
+| 602/603 | `0x00020012` | 18 | `S_CTXTST` | `0` |
+| 604/605 | `0x00020013` | 19 | `S_RXTST` | `0` |
+| 606/607 | `0x00020015` | 21 | `S_TXPWR_SUM` | `0` |
+| 608/609 | `0x00020016` | 22 | `S_TXPWR_ITER` | `0` |
+
+The values are exactly the 802.11 DCF defaults (`CWmin=31`, `CWmax=1023`,
+`SRC=7`, `LRC=4`, `DTIM=0xffff`), confirming SCR is the PSM's per-BSS scratch
+state. Consumer: the PSM microcode (and host via scratch read/write); writing
+it does not start anything. PSM reads it when it resumes with `EN_MAC` later.
+
+## F6. PSM concurrency / suspension semantics
+
+- `PSM_RUN=1` means the PSM microcode is **loaded and running**.
+- `MI_MACSSPNDD` (bit 0 of `MACINTSTATUS`, observed in D2A) means the PSM has
+  **self-suspended** after auto-init. Upstream's own wording: *"let the PSM run
+  to the suspended state"* and *"wait for ucode to self-suspend after
+  auto-init"* (`brcms_b_coreinit`).
+- Therefore, at the common applier the PSM is loaded but parked in its idle /
+  suspended state, and `EN_MAC=0`. The vendor does **not** pre-suspend it
+  further; it relies on `MAC_SUSPENDED`, writes SHM/SCR in that state, and only
+  later (after the post-initvals setup) changes `MACCONTROL`.
+- There is **no** explicit barrier/sync around the table other than the bounded
+  `MI_MACSSPNDD` poll before it. This is the exact state our D2A run reproduces,
+  so the ordering is safe to reproduce.
+
+## F7. Interrupt effect
+
+```
+IRQ ENABLE EFFECT = NONE
+```
+Checked across all 610 records: no write to `intctrlregs[0..7]` (`0x20-0x5f`), to per-FIFO
+`intmask`/`intstatus` in the DMA block (`0x200-0x37f`), to PSM interrupt mirror
+registers (`0x484/0x486/0x488/0x48a`), to BCMA/PCI IRQ routing, or to any
+alternate D11 interrupt-enable register. The only interrupt-related writes are
+`MACINTSTATUS=0` (status; write-0, no effect on mask), `MACINTMASK=0` (masks
+everything), and `INTRCVLAZY0=0x01000000` (lazy coalescing config, not an
+enable).
+
+## F8. DMA effect
+
+```
+DMA ENABLE EFFECT = NONE
+```
+Checked both direct offsets and every indirect SHM/SCR target: no `0x200-0x3d7`
+write, no descriptor ring pointer/control published, no FIFO DMA enable, no
+UCM/RCMTA window. `M_FIFOSIZE*`, TXE/FIFO sizing and PSM scratch are
+config/state, not DMA activation. The proven M3.4B FIFO0 RX model is untouched.
+
+## F9. Postcondition validation
+
+| SHM byte | access | value | note |
+|---|---|---|---|
+| `0x98` | 16-bit write (part of a 32-bit `0x164` window write at SHM `0x98`) | `M_FIFOSIZE0 = 0x01c4` | written by rec 225 |
+| `0x9a` | high half | `M_FIFOSIZE1 = 0x0000` | rec 225 |
+| `0x9c` | 16-bit (window write at SHM `0x9c`) | `M_FIFOSIZE2 = 0x0000` | rec 226 |
+| `0x9e` | high half | `M_FIFOSIZE3 = 0x079e` | rec 226 |
+
+- Exact offsets `0x98/0x9a/0x9c/0x9e` (C3: `M_FIFOSIZE0..3 = 0x4c..0x4f * 2`).
+- The table writes these as two 32-bit OBJDATA words inside the window based at
+  SHM `0x90`; read-back is 16-bit per `wlc_bmac_read_shm`.
+- **Overwrite:** in the full vendor path the host block at `0x68d84…0x68df2`
+  rewrites `M_FIFOSIZE0..3` from `xmtfifo_sz[]` before the `0x68f87` read. In
+  the isolated D2B path (table only, then stop) that block does not run, so the
+  table values remain. Reading them immediately after the applier is a
+  read-only SHM access (proven safe in D2A) and directly tests the SHM_EN
+  question: if SHM writes were gated, the read would be `0`.
+- Recommended strong gates (2–5): (1) `M_FIFOSIZE0..3 =
+  01c4/0000/0000/079e`; (2) `MACINTMASK == 0`; (3) `MACCONTROL ==
+  0x04020402`; (4) SHM `0x0014 == 0x000000b4`. `MACINTSTATUS` is informational
+  only (the suspended PSM may re-assert `MI_MACSSPNDD`).
+
+## F10. Idempotence / retry
+
+- The table is applied exactly **once per core init** (`wlc_bmac_init` ->
+  `0x68b98`); it is not applied per channel or per reset in the vendor path.
+- Re-applying the same 610 records after a fresh ucode load re-writes the same
+  values: all writes are plain configuration/state. No `W1C`-with-1 and no
+  self-triggering/self-decrementing counter is written. `MACINTSTATUS=0` is a
+  write-0 to a `W1C` register (no effect on any set bit).
+- Therefore a failed D2B application can be retried by reloading (ucode rewrite
+  + table re-apply) with no cumulative state change. Residual unknown: bit-level
+  effects of `txe_ctl (0x500)` and `MACCOMMAND (0x124)` are not proven, but the
+  values are constants applied identically on every attempt.
+
+## F11. Complete side-effect accounting (common, must sum to 610)
+
+| side effect | count |
+|---|---|
+| SHM state (config) — 33 direct + 320 window | 353 |
+| object-memory selector (`OBJADDR`, SHM+SCR) | 76 |
+| template/object-memory (`0x130/0x134`) | 77 |
+| FIFO configuration (RXE/TXE0/TXE1) | 44 |
+| PSM configuration (IHR/PSM) | 20 |
+| PSM scratch config (SCR window data) | 20 |
+| timing/IFS configuration | 12 |
+| timer/TSF | 4 |
+| interrupt control (`INTRCVLAZY0`,`MACINTMASK`) | 2 |
+| status clear (`MACINTSTATUS`) | 1 |
+| MAC control (command `0x124`) | 1 |
+| **TOTAL** | **610** |
+
+Band-switch table (`73`): SHM state 34, object selector 34, IFS 4, NAV 1 →
+**73**. No record is unaccounted for.
+
+## F12. Formal decision
+
+```
+CAN COMMON INITVALS BE ISOLATED SAFELY?  YES
+```
+
+All required conditions are proven:
+- entry MACCONTROL/PSM state known: `0x04020402`, `PSM_RUN=1`, `EN_MAC=0`,
+  `SHM_EN=0`, `MI_MACSSPNDD` observed (D2A exit state);
+- `SHM_EN` semantics resolved (F3): not required for the object window;
+- no PHY/radio activation (F4/F9);
+- no DMA enable (F8);
+- no IRQ enable (F7);
+- no `EN_MAC` activation (F3/F6);
+- no unresolved write that can start an uncontrolled engine **given** the
+  absent enabling prerequisites (no EN_MAC, no DMA, no IRQ, no reset, MAC
+  suspended) — see F4/F14 for the residual bit-level UNKNOWNs;
+- table loop bounded (610 straight-line writes, no wait);
+- deterministic postconditions available (F9);
+- failure boundary understood (D2A STOP before the applier).
+
+This is a GO for **designing** an isolated D2B test. It is not an
+implementation: the test still requires explicit human approval and must not be
+run by an agent.
+
+## F13. Future isolated D2B test (DESIGN ONLY — do NOT implement)
+
+1. Preparation: exactly the proven D2A subset — `bcma_host_pci_up`,
+   D11 `bcma_core_enable`, `bcma_core_set_clockmode(FAST)` (no SPROM/DMA/IRQ).
+2. `MACCONTROL = 0x04000404` (masked RMW).
+3. `OBJADDR = 0x03000000`; upload 10850 ucode words (count gate); read back
+   `OBJADDR`.
+4. `MACINTSTATUS = 0xffffffff`; `MACCONTROL = 0x04020402`; bounded
+   `MI_MACSSPNDD` poll (10 us x <= 100000).
+5. Apply `d11ac1initvals42` via the vendor 8-byte applier (width2 -> `writew`,
+   width4 -> `writel`; strictly in order; no de-duplication).
+6. Read-only gates: `M_FIFOSIZE0..3 = 01c4/0000/0000/079e`; `MACINTMASK == 0`;
+   `MACCONTROL == 0x04020402`; SHM `0x0014 == 0x000000b4`. Optionally read back
+   the 20 SCR values.
+7. `psm` success invariant: `MACINTSTATUS & MI_MACSSPNDD` (informational).
+8. **STOP** before `sub_6656c`: no bsinitvals, no `wlc_phy_init`, no
+   PHY/radio/calibration/channel, no EN_MAC, no DMA/IRQ, no `sub_67efd`, no host
+   `xmtfifo_sz` write.
+
+Bounds and policy:
+
+| item | bound |
+|---|---|
+| MMIO writes | 610 (194 direct + 76 selector + 340 data) plus the D2A subset (~10850 OBJDATA + <=10 control writes) |
+| indirect transactions | 76 selector + 340 data = 416 |
+| loops | ucode 10850 (count), PSM poll <= 100000, table 610 — all bounded |
+| expected runtime | PSM poll dominates (D2A: 11 iterations); table = microseconds |
+| failure policy | same as D2A: no cleanup register writes, no reset; return `-ETIMEDOUT`/`-EIO`; retry by reload |
+| post-success residual state | `PSM_RUN=1`, `EN_MAC=0`, D11 core enabled, common initvals applied; MAC suspended; no DMA/IRQ/PHY |
+
+## F14. Remaining UNKNOWNs (non-blocking, recorded)
+
+1. Bit-level semantics of `txe_ctl (0x500 = 0x4000)`, `smpl_clct_stpptr
+   (0x554 = 0xafff)`, `MACCOMMAND (0x124 = DIRFRMQVAL)`, and several RXE/PSM
+   fields — names unknown in the C3 reference.
+2. Meaning of the `0x8ec/0x8ee` SHM write pairs (`0x4004..0x400e`/`0xffff`).
+3. Whether the PSM reads any SHM/SCR between the applier and the next
+   `MACCONTROL` update (vendor does no explicit wait).
+4. The optional indirect `call rax` inside `wlc_phy_cal_init` (`phy+0x30`) when
+   non-null; not invoked by any D2B path.
+5. Exact host `xmtfifo_sz[]` default that the full vendor path later writes over
+   `M_FIFOSIZE*` (irrelevant to the isolated path).

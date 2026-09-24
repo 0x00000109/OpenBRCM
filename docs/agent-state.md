@@ -70,6 +70,15 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   data); windows SHM(56 auto-inc)+SCR(20) only; **no** `MACCONTROL`, **no** DMA,
   **no** PHY/radio, **no** interrupt-source enable (`MACINTMASK=0`); applied
   with `PSM_RUN=1`, `EN_MAC=0` (the D2A exit state).
+- Follow-up blocker resolution + GO/NO-GO in `docs/m34d2b_common_initvals.md`
+  (§F1–F14): `wlc_phy_cal_init` (`0x6834b`) is PHY **software-state only, 0
+  MMIO**; omitted pre-steps classified (none required for the table); the
+  **`SHM_EN` hard blocker is resolved** (not required for the `OBJADDR` object
+  window; vendor applies with `SHM_EN=0`, upstream never sets it); SCR = PSM
+  scratch pad; `IRQ ENABLE EFFECT = NONE`, `DMA ENABLE EFFECT = NONE`; formal
+  decision **"CAN COMMON INITVALS BE ISOLATED SAFELY? YES"** (design only).
+- Still **ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN**: the D2B test
+  design (§F13) must not be implemented or run without explicit human approval.
 - Last hardware-proven milestone remains **M3.4D2A** (see below).
 
 ## Last hardware-proven milestone
@@ -119,13 +128,12 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D2B analysis is recorded (see "Current milestone"). Next: review the open
-UNKNOWNs in `docs/m34d2b_common_initvals.md` §14 (PHY `cal_init` ordering,
-skipped pre-steps, `MCTL_SHM_EN`, field/SCR semantics, PSM consumption) and
-either resolve them or choose the isolated boundary from §13. **No hardware
-action now:** do not run `insmod`, do not repeat D2A, do not implement D2B
-hardware writes, and do not apply `d11ac1initvals42`/`d11ac1bsinitvals42`.
-No PHY/radio/channel work.
+M3.4D2B follow-up analysis is recorded and returns **GO for *designing* an
+isolated test** (see `docs/m34d2b_common_initvals.md` §F12–F13); the `SHM_EN`
+hard blocker is resolved. Next: present the D2B test design for explicit human
+approval, or close the residual UNKNOWNs (§F14). **No hardware action now:** do
+not run `insmod`, do not repeat D2A, do not implement D2B hardware writes, and
+do not apply `d11ac1initvals42`/`d11ac1bsinitvals42`. No PHY/radio/channel work.
 
 ## Post-test hardware state (risk)
 After the successful D2A run the chip is intentionally left partial: `PSM_RUN=1`,

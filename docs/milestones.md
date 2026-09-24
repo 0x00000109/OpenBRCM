@@ -91,6 +91,28 @@ classification in `docs/m34d2b/initvals_classification.{md,json}`
 - No PHY/radio/channel work in this milestone. Status vocabulary: analysis
   documented; **NOT IMPLEMENTED**, **NOT HARDWARE PROVEN**.
 
+### M3.4D2B follow-up — blocker resolution + GO/NO-GO (still ANALYSIS ONLY)
+
+See `docs/m34d2b_common_initvals.md` (§F1–F14).
+- `wlc_phy_cal_init` (`0x6834b`) resolved: **0 MMIO**, PHY *software* state only
+  (misleading name); not mandatory for common initvals; D2A succeeded without it.
+- Omitted pre-steps classified: none required for the table besides the proven
+  D11 clock/core state (coex/BTC/RF-LDO/PHY-sw steps are NOT REQUIRED FOR D2B).
+- **`SHM_EN` HARD BLOCKER RESOLVED:** not required for the `OBJADDR` object
+  window; vendor applies with `SHM_EN=0` and upstream brcmsmac never sets
+  `MCTL_SHM_EN`. Entry state `MACCONTROL=0x04020402`, `PSM_RUN=1`, `EN_MAC=0`.
+- Side-effect inventory reconciles exactly to 610; SCR transactions are the PSM
+  scratch pad (`S_DOT11_CWMIN=0x1f`, `CWMAX=0x3ff`, `SRC=7`, `LRC=4`,
+  `DTIM=0xffff`, ...).
+- `IRQ ENABLE EFFECT = NONE`; `DMA ENABLE EFFECT = NONE`; no PHY/radio.
+- Postconditions: `M_FIFOSIZE0..3 = 01c4/0000/0000/079e`, `MACINTMASK=0`,
+  `MACCONTROL=0x04020402`, SHM `0x14=0xb4` (host `xmtfifo_sz` overwrite noted
+  for the full path; isolated path keeps table values).
+- Formal decision: **CAN COMMON INITVALS BE ISOLATED SAFELY? YES** — for
+  *designing* an isolated test only. Test design in §F13; still requires
+  explicit human approval. Status remains **ANALYSIS ONLY / NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN**.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

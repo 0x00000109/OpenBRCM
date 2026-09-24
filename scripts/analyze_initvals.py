@@ -32,6 +32,7 @@ import json
 import os
 import struct
 import sys
+from collections import Counter
 
 # --- exact vendor images (staged names; hashes from M3.4C.1) -----------------
 IMAGES = {
@@ -79,6 +80,20 @@ KNOWN = {
     0x0160: "OBJADDR",
     0x0164: "OBJDATA",
     0x0166: "OBJDATA+2",
+}
+
+# PSM scratch-pad register names by OBJADDR_SCR_SEL index (C3, brcmsmac d11.h
+# `enum _ePsmScratchPadRegDefinitions`). The index is the low 16 bits of the
+# SCR selector (no >>2 shift for SCR).
+SCR_NAMES = {
+    0: "S_RSV0", 1: "S_RSV1", 2: "S_RSV2", 3: "S_DOT11_CWMIN",
+    4: "S_DOT11_CWMAX", 5: "S_DOT11_CWCUR", 6: "S_DOT11_SRC_LMT",
+    7: "S_DOT11_LRC_LMT", 8: "S_DOT11_DTIMCOUNT", 9: "S_SEQ_NUM",
+    10: "S_SEQ_NUM_FRAG", 11: "S_FRMRETX_CNT", 12: "S_SSRC", 13: "S_SLRC",
+    14: "S_EXP_RSP", 15: "S_OLD_BREM", 16: "S_OLD_CWWIN", 17: "S_TXECTL",
+    18: "S_CTXTST", 19: "S_RXTST", 20: "S_STREG", 21: "S_TXPWR_SUM",
+    22: "S_TXPWR_ITER", 23: "S_RX_FRMTYPE", 24: "S_THIS_AGG",
+    25: "S_KEYINDX", 26: "S_RXFRMLEN",
 }
 
 # Region map (C3, structural). Ordered, first match wins.
@@ -150,6 +165,34 @@ def classify_direct(off):
     return "UNKNOWN", "UNKNOWN"
 
 
+def side_effect(rec):
+    off, kind, space, cat = (rec["offset"], rec["kind"], rec["space"],
+                             rec["category"])
+    if kind == "obj_sel":
+        return "object-memory selector"
+    if kind == "obj_data":
+        return "PSM scratch config" if space == "SCR" else "SHM state (config)"
+    if cat == "MAC_CORE":
+        return "MAC control (command)"
+    if cat == "MACINT":
+        return "status clear" if off == 0x128 else "interrupt control"
+    if cat == "TEMPLATE":
+        return "template/object-memory"
+    if space == "SHM (direct window)":
+        return "SHM state (config)"
+    if space == "IHR/PSM":
+        return "PSM configuration"
+    if space in ("IHR/TXE0", "IHR/TXE1", "IHR/RXE"):
+        return "FIFO configuration"
+    if space == "IHR/TSF":
+        return "timer/TSF"
+    if space == "IHR/IFS":
+        return "timing/IFS configuration"
+    if cat in ("DMA", "PHY", "RADIO"):
+        return "DMA" if cat == "DMA" else "PHY/radio"
+    return "unknown side effect"
+
+
 def classify_records(records):
     out = []
     window = None
@@ -197,6 +240,10 @@ def classify_records(records):
                 window["space"], tgt, "high" if off == 0x0166 else "low")
             rec["category"] = "OBJ"
             rec["name"] = "OBJDATA" if off == 0x0164 else "OBJDATA+2"
+            if window["space"] == "SCR":
+                idx = window["base"]
+                rec["name"] = "SCR[%d] %s" % (idx, SCR_NAMES.get(idx, "UNKNOWN"))
+                rec["target"] = "SCR index %d (byte 0x%04x)" % (idx, idx * 4)
         else:
             region, category = classify_direct(off)
             rec["space"] = region
@@ -209,6 +256,12 @@ def classify_records(records):
             else:
                 rec["confidence"] = "C2/C3"
         out.append(rec)
+
+    direct_counts = Counter(r["offset"] for r in out if r["kind"] == "direct")
+    for r in out:
+        r["side_effect"] = side_effect(r)
+        r["repeat"] = direct_counts.get(r["offset"], 0) \
+            if r["kind"] == "direct" else 0
     return out
 
 
@@ -216,17 +269,37 @@ def summarise(recs):
     by_kind = {}
     by_category = {}
     by_space = {}
+    by_side_effect = {}
     for r in recs:
         by_kind[r["kind"]] = by_kind.get(r["kind"], 0) + 1
         by_category[r["category"]] = by_category.get(r["category"], 0) + 1
         key = r["space"] if r["kind"] != "direct" else r["space"]
         by_space[key] = by_space.get(key, 0) + 1
+        by_side_effect[r["side_effect"]] = \
+            by_side_effect.get(r["side_effect"], 0) + 1
     return {
         "records": len(recs),
         "by_kind": by_kind,
         "by_category": by_category,
         "by_space": by_space,
+        "by_side_effect": by_side_effect,
     }
+
+
+def direct_offset_summary(recs):
+    groups = {}
+    for r in recs:
+        if r["kind"] != "direct":
+            continue
+        g = groups.setdefault(r["offset"], {
+            "offset": r["offset"], "width": r["width"], "region": r["space"],
+            "name": r["name"], "side_effect": r["side_effect"],
+            "count": 0, "values": [],
+        })
+        g["count"] += 1
+        if r["value"] not in g["values"]:
+            g["values"].append(r["value"])
+    return [groups[k] for k in sorted(groups)]
 
 
 def compare(common, bs):
@@ -293,15 +366,26 @@ def render_markdown(name, recs, summary, image):
     for k in sorted(summary["by_space"]):
         L.append("| %s | %d |" % (k, summary["by_space"][k]))
     L.append("")
+    L.append("## Summary by side-effect class")
+    L.append("")
+    L.append("| side effect | count |")
+    L.append("|---|---|")
+    total = 0
+    for k in sorted(summary["by_side_effect"]):
+        L.append("| %s | %d |" % (k, summary["by_side_effect"][k]))
+        total += summary["by_side_effect"][k]
+    L.append("| **TOTAL** | **%d** |" % total)
+    L.append("")
     L.append("## Full per-record classification")
     L.append("")
-    L.append("| # | offset | w | value | kind | space | target | category | name | conf |")
-    L.append("|---|---|---|---|---|---|---|---|---|---|")
+    L.append("| # | offset | w | value | kind | space | target | category | name | side effect | conf |")
+    L.append("|---|---|---|---|---|---|---|---|---|---|---|")
     for r in recs:
         tgt = r["target"] or "-"
-        L.append("| %d | 0x%04x | %d | 0x%08x | %s | %s | %s | %s | %s | %s |" % (
+        L.append("| %d | 0x%04x | %d | 0x%08x | %s | %s | %s | %s | %s | %s | %s |" % (
             r["index"], r["offset"], r["width"], r["value"], r["kind"],
-            r["space"], tgt, r["category"], r["name"] or "-", r["confidence"]))
+            r["space"], tgt, r["category"], r["name"] or "-",
+            r["side_effect"], r["confidence"]))
     L.append("")
     return "\n".join(L)
 
@@ -353,11 +437,15 @@ def main():
             "common": {
                 "image": result["common"]["image"],
                 "summary": result["common"]["summary"],
+                "direct_offsets": direct_offset_summary(
+                    result["common"]["records"]),
                 "records": result["common"]["records"],
             },
             "bs": {
                 "image": result["bs"]["image"],
                 "summary": result["bs"]["summary"],
+                "direct_offsets": direct_offset_summary(
+                    result["bs"]["records"]),
                 "records": result["bs"]["records"],
             },
             "comparison": cmp,
@@ -375,8 +463,9 @@ def main():
     for key in ("common", "bs"):
         s = result[key]["summary"]
         print("%s: %d records; kind=%s" % (key, s["records"], s["by_kind"]))
-        print("  category: %s" % s["by_category"])
-        print("  space:    %s" % s["by_space"])
+        print("  category:    %s" % s["by_category"])
+        print("  space:       %s" % s["by_space"])
+        print("  side-effect: %s" % s["by_side_effect"])
     print("comparison: %s" % cmp)
     print("wrote %s" % os.path.join(outdir, "initvals_classification.{json,md}"))
     return 0
