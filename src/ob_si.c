@@ -39,6 +39,69 @@ MODULE_PARM_DESC(srom_diag, "Alias for sprom_diag");
 /* CLKCTLST: HT clock available (matches BCMA_CLKCTLST_HAVEHT). */
 #define OB_CLKCTLST_HAVEHT	0x00020000
 
+/*
+ * D11 host-interface registers used by the M3.4C read-only bring-up
+ * diagnostic. Offsets are C3 (brcmsmac d11.h `struct d11regs`):
+ *   maccontrol 0x120, maccommand 0x124, macintstatus 0x128, macintmask 0x12C,
+ *   phydebug 0x158 (32-bit), psmdebug 0x154, tsf_timerlow/high 0x180/0x184,
+ *   phyversion 0x3E0 (16-bit).
+ */
+#define OB_D11_MACCONTROL	0x0120
+#define OB_D11_MACCOMMAND	0x0124
+#define OB_D11_MACINTSTATUS	0x0128
+#define OB_D11_MACINTMASK	0x012c
+#define OB_D11_PSMDEBUG		0x0154
+#define OB_D11_PHYDEBUG		0x0158
+#define OB_D11_TSF_LOW		0x0180
+#define OB_D11_TSF_HIGH		0x0184
+#define OB_D11_PHYVERSION	0x03e0
+
+/* maccontrol bits (C3 d11.h MCTL_*). */
+#define OB_MCTL_EN_MAC		0x00000001
+#define OB_MCTL_PSM_RUN		0x00000002
+#define OB_MCTL_IHR_EN		0x00000400
+#define OB_MCTL_INFRA		0x00020000
+#define OB_MCTL_PROMISC		0x01000000
+#define OB_MCTL_WAKE		0x04000000
+
+/*
+ * M3.4C read-only bring-up diagnostic. Logs the D11 host-interface state that
+ * determines whether the MAC/ucode/PHY are running, so it can be compared with
+ * the recovered vendor pre-RX state. No register is written.
+ */
+static void ob_si_d11_diag(struct ob_hw *hw)
+{
+	u32 mc = bcma_read32(hw->core, OB_D11_MACCONTROL);
+	u32 cmd = bcma_read32(hw->core, OB_D11_MACCOMMAND);
+	u32 ist = bcma_read32(hw->core, OB_D11_MACINTSTATUS);
+	u32 im = bcma_read32(hw->core, OB_D11_MACINTMASK);
+	u32 psm = bcma_read32(hw->core, OB_D11_PSMDEBUG);
+	u32 phyd = bcma_read32(hw->core, OB_D11_PHYDEBUG);
+	u32 tlo = bcma_read32(hw->core, OB_D11_TSF_LOW);
+	u32 thi = bcma_read32(hw->core, OB_D11_TSF_HIGH);
+	u16 phyver = bcma_read16(hw->core, OB_D11_PHYVERSION);
+
+	dev_info(hw->dev,
+		 "bringup: maccontrol=%08x maccommand=%08x macintstatus=%08x macintmask=%08x\n",
+		 mc, cmd, ist, im);
+	dev_info(hw->dev,
+		 "bringup: psmdebug=%08x phydebug=%08x phyversion=%04x tsf=%08x%08x\n",
+		 psm, phyd, phyver, thi, tlo);
+	dev_info(hw->dev,
+		 "bringup: en_mac=%d psm_run=%d ihr_en=%d infra=%d promisc=%d wake=%d\n",
+		 !!(mc & OB_MCTL_EN_MAC), !!(mc & OB_MCTL_PSM_RUN),
+		 !!(mc & OB_MCTL_IHR_EN), !!(mc & OB_MCTL_INFRA),
+		 !!(mc & OB_MCTL_PROMISC), !!(mc & OB_MCTL_WAKE));
+	/*
+	 * Derived, not a separate register: the ucode PSM is running when
+	 * PSM_RUN and IHR_EN are set, and the MAC is enabled by EN_MAC.
+	 */
+	dev_info(hw->dev,
+		 "bringup: ucode_running=%d mac_enabled=%d (derived)\n",
+		 !!((mc & OB_MCTL_PSM_RUN) && (mc & OB_MCTL_IHR_EN)),
+		 !!(mc & OB_MCTL_EN_MAC));
+}
+
 /* ChipCommon is a fixed-function core; access it through bcma's window. */
 u32 ob_si_cc_read(struct ob_hw *hw, u16 off)
 {
@@ -748,6 +811,9 @@ int ob_si_probe(struct ob_hw *hw)
 	}
 
 	ob_si_powerup(hw);
+
+	/* M3.4C: read-only D11 host-interface/MAC state (no writes). */
+	ob_si_d11_diag(hw);
 
 	/* Read-only: what bcma already parsed from the SPROM at bus scan time. */
 	ob_si_dump_bus_sprom(hw);
