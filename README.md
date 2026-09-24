@@ -40,11 +40,13 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > IMPLEMENTED / NOT HARDWARE PROVEN**; design
 > [`docs/m34d3b_band_init.md`](docs/m34d3b_band_init.md). Its
 > `D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY PROVEN`: the band-0 MHF write
-> expressions/gates are resolved, but the concrete `mhfs[0..4]` input values
-> (`antsel_type` from rev11 SPROM/NVRAM, the PCIe core revision, the EDCF flag)
-> are unproven, so D3B must not be implemented with an invented default. The
+> expressions/gates are resolved and four of the five values are now **PROVEN
+> statically** — `mhfs[0..4] = {0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`. Only
+> **MHF3** (`antsel_type`, from the rev11 SPROM `boardtype`/`boardflags` and the
+> SPROM-synthesized `aa2g`/`aa5g`/`antswitch`) remains unproven, so D3B must not
+> be implemented with an invented default. D3B analysis merged via PR #11; the
 > tool-first RE bootstrap + OpenCode integration are merged (PR #12, `main` @
-> `6eff1ea`). Band init, bsinitvals, AC PHY, radio, calibration, channel, RX
+> `06bbd60`). Band init, bsinitvals, AC PHY, radio, calibration, channel, RX
 > and TX remain unproven.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
