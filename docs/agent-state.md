@@ -27,14 +27,16 @@ source of truth; this file records the live working-tree state on top of HEAD.
   (`AGENTS.md` §7).
 
 ## Commit state (IMPORTANT)
-- `main` = `6eff1eaa9517fac0135fdfc55c4c2fe7a6d81525` (**PR #12**, branch
-  `scripts/re-tooling-bootstrap`); `main == origin/main`.
+- `main` = `06bbd60ef69aefe4d4c5f53f2371e92cf0fb48c1` (**PR #11 merged**,
+  branch `m34d3b-band-init-analysis`); `main == origin/main`. Prior: PR #12
+  (`6eff1ea`, tool-first RE bootstrap + OpenCode integration).
 - Merged PR history (oldest → newest): **#2** `85d3013` (M3.4D2A), **#5**
   `65d61ce` (M3.4D2B analysis), **#6** `4146cd8` (M3.4D2B test), **#7**
   `2a7ba1d` (M3.4D3 analysis), **#8** `3bdef76` (M3.4D3A0 test), **#9**
   `12c3e7a` (M3.4D3A1 vendor-tail analysis), **#10** `839f007` (M3.4D3A1
-  isolated test + the first D3B analysis), **#12** `6eff1ea` (tool-first RE
-  bootstrap + OpenCode integration). `main` contains M3.4D1 (`2029292`), the
+  isolated test + the first D3B analysis), **#11** `06bbd60` (M3.4D3B band-init
+  / MHF provenance analysis), **#12** `6eff1ea` (tool-first RE bootstrap +
+  OpenCode integration). `main` contains M3.4D1 (`2029292`), the
   isolated modes `fw_validate_only=1` / `ucode_test_only=1` /
   `initvals_test_only=1` / `dma_test_only=1` / `d11_tail_test_only=1`,
   `src/ob_ucode.{c,h}`, `src/ob_initvals.{c,h}`, `src/ob_d3a0.{c,h}`,
@@ -49,11 +51,13 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`) and
   **M3.4D3A1** (`d11_tail_test_only=1`, candidate `42d74b8`, module
   `6ba2d853…`) are all `HARDWARE RUNTIME PROVEN` on BCM4352.
-- **Active D3B analysis branch** `m34d3b-band-init-analysis` (rebased onto
-  `main` @ `6eff1ea`): carries the completed band-0 MHF provenance analysis and
-  sets `D3B IMPLEMENTATION GO: NO` (`VALUE PARTIALLY PROVEN`). Docs/tooling
-  only — no `src/`, `tests/`, `Makefile` or runtime-driver change. Draft PR
-  pending owner review; not merged.
+- **D3B analysis merged** via PR #11 (`06bbd60`): the band-0 MHF provenance
+  analysis with `D3B IMPLEMENTATION GO: NO` (`VALUE PARTIALLY PROVEN`).
+- **Active D3B value-closure branch** `m34d3b-mhf-value-closure` (from `main`
+  @ `06bbd60`): closes four of the five band-0 MHF words (MHF1/MHF2/MHF4/MHF5
+  PROVEN), leaves **MHF3** UNKNOWN, and corrects `aa2g`/`aa5g`/`antswitch` to
+  SPROM-synthesized (not NVRAM-only). Docs/tooling only — no `src/`, `tests/`,
+  `Makefile` or runtime-driver change.
 - Analysis branch `m34d3a1-vendor-tail-analysis` — **M3.4D3A1 vendor-tail
   recovery, `ANALYSIS COMPLETE`**, `D3A1 IMPLEMENTATION GO: YES`; report
   `docs/m34d3a1_vendor_tail.md`; merged via PR #9.
@@ -161,7 +165,7 @@ Stated exactly:
   teardown proven)
 - M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
   / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; `D3B
-  IMPLEMENTATION GO: NO` — blocked on the band-0 MHF runtime inputs)
+  IMPLEMENTATION GO: NO` — blocked only on **MHF3**; MHF1/MHF2/MHF4/MHF5 PROVEN)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
@@ -328,8 +332,10 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
 ## Current milestone
 **M3.4D3B — band init / `d11ac1bsinitvals42` (analysis/design).**
 Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN**;
-`D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY PROVEN`, blocked on the band-0
-MHF runtime input values (see "Current next action"). The last hardware-proven
+`D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY PROVEN`, blocked on **MHF3**
+(`antsel_type`) only. The band-0 MHF vector is now
+`{0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`: MHF1/MHF2/MHF4/MHF5 are PROVEN
+statically (`docs/m34d3b_band_init.md` §3.8). The last hardware-proven
 milestone is **M3.4D3A1** (see "Last completed hardware test"); the D2B detail
 below is retained as the historical common-initvals result.
 
@@ -448,24 +454,28 @@ verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
 `sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
-**Next action — D3B blocked on MHF input values; D4 after.** M3.4D3B (band
-init / `d11ac1bsinitvals42`) is analyzed in
+**Next action — D3B blocked on MHF3 only; D4 after.** M3.4D3B (band init /
+`d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
 `wlc_bmac_write_mhf` (writes MHF1..5 to SHM `0x5e/0x60/0x62/0x78/0xd4` from
-`band-0 mhfs[0..4]`). All write expressions and formerly-opaque gate fields are
-now resolved: `wlc+0x550` = `wlc->stf` (`stf+0x59` = phytype != HT -> 1 for AC);
-`pub+0x100` = `si_t *sih` with `bustype`/`buscoretype`/`buscorerev`;
-`wlc+0x60` = `si_pci_war16165` (PCIe core WAR 16165); `pub+0x54` = EDCF flag
-(init `0xffffffff`). The MHF vector is `VALUE PARTIALLY PROVEN`: the three
-missing input values are `antsel_type` (rev11 SPROM `boardtype`/`boardflags` +
-NVRAM `antswitch`/`aa2g`/`aa5g`), the PCIe core revision, and the final EDCF
-flag, so `D3B IMPLEMENTATION GO: NO` — do not invent a default. A smallest
-read-only probe (raw rev11 SPROM dump + SI struct fields; no D11/PHY/DMA/IRQ)
-is designed but not implemented or run. D4 (AC PHY bring-up: `wlc_phy_init` ->
-`wlc_phy_anacore`, first PHY-indirect MMIO) follows. Neither D3B nor D4 has
-code or hardware proof yet.
+`band-0 mhfs[0..4]`). Value closure (§3.8): `mhfs[0..4] = {0x0100, 0x0000,
+UNKNOWN, 0x0000, 0x0080}` —
+MHF1 `0x0100` (pub+0x54 init `0xffffffff`, no initial-up zeroer; the only
+zeroer is the runtime iovar `wlc_doiovar`);
+MHF2 `0x0000` (BCM4352 `bustype==1`, `buscoretype==0x83c`, so
+`si_pci_war16165=0` => `wlc+0x60=0`);
+MHF4 `0x0000` (4313-only site skipped);
+MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
+Only **MHF3** remains: `antsel_type` needs the rev11 SPROM
+`boardtype`/`boardflags` and the **SPROM-synthesized** `aa2g`/`aa5g`/
+`antswitch` (corrected: not NVRAM-only). No new hardware mode is required — the
+existing read-only `ob_si_read_mac`/`sprom_diag=1` path already reads and
+CRC-validates all 234 words; only their emission and the rev11 raw-offset
+recovery are missing. `D3B IMPLEMENTATION GO: NO` — do not invent an MHF3
+default. D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first
+PHY-indirect MMIO) follows. Neither D3B nor D4 has code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -497,8 +507,8 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B state reconciliation, analysis-only): STOP after the docs
-reconciliation commit and branch update; **no D3B implementation**, no
+Current (D3B value-closure, analysis-only): STOP after the docs/evidence
+closure commit and branch update; **no D3B implementation**, no
 `insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path

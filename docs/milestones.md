@@ -298,11 +298,15 @@ Canonical status (exact):
   normal unload + DMA teardown + STOP boundary proven)
 - M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
   `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY
-  PROVEN`: all MHF write expressions and gate semantics are resolved
-  (`wlc->stf`, `pub->sih`/`bustype`/`buscorerev`, `si_pci_war16165`, EDCF
-  flag); missing input values are `antsel_type` (rev11 SPROM + NVRAM
-  `antswitch`/`aa2g`/`aa5g`), the PCIe core rev, and the final EDCF flag; a
-  read-only raw-SPROM + SI-field probe is designed (not run)
+  PROVEN`: all MHF write expressions and gate semantics are resolved, and four
+  of the five band-0 MHF values are now **PROVEN statically** —
+  `mhfs[0..4] = {0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`
+  (MHF1/MHF2/MHF4/MHF5 closed; `docs/m34d3b_band_init.md` §3.8). The single
+  remaining blocker is **MHF3**: `antsel_type` needs the rev11 SPROM
+  `boardtype`/`boardflags` and the **SPROM-synthesized** `aa2g`/`aa5g`/
+  `antswitch` (corrected: not NVRAM-only). No new hardware mode is required —
+  the existing read-only `ob_si_read_mac`/`sprom_diag=1` path already reads all
+  234 words; only their emission and the rev11 offset recovery are missing.
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
