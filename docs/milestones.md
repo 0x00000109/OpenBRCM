@@ -172,6 +172,18 @@ no ring base is published, no engine is enabled and no IRQ is taken.
 - Host + KUnit tests cover descriptor encoding, ring arithmetic/wraparound,
   index bounds, descriptor offsets/aliasing and the EOT helper.
 
+## M3.2.1 — 32-bit DMA window validation
+
+Validates the corrected DMA address model without touching any DMA engine
+register. Keeps `dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32))`. Both
+coherent rings are additionally required to satisfy
+`upper_32_bits(desc_dma) == 0` (`ob_dma_addr_in_window()`), failing probe with
+`-ERANGE` otherwise — a defensive check independent of the mask. Diagnostics
+report `dma: window = 32-bit` and per ring
+`dma=<...> high32=<n> window=32-bit ... dma_aligned_8k=yes`. Host tests cover
+the window helpers. Runtime: 5× insmod/rmmod, all addresses < 4 GiB, MAC
+`2c:fd:a1:61:40:25`, no DMA-API/BUG/Oops/WARNING.
+
 ## M3.3 — interrupt infrastructure
 
 Implemented `src/ob_irq.{h,c}`. Establishes and proves a safe IRQ path without

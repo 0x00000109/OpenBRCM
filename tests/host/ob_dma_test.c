@@ -82,6 +82,17 @@ int main(void)
 	chk("RX post init", OB_DMA_RX_POST_INIT, 64);
 	chk("RX initial PTR offset", OB_DMA_RX_POST_INIT * 16, 0x400);
 
+	/* ---- 32-bit host DMA window helpers ---- */
+	chk("window zero", (long)ob_dma_addr_in_window(0), 1);
+	chk("window low", (long)ob_dma_addr_in_window(0x00000000fe0e6000ULL), 1);
+	chk("window 4G boundary",
+	    (long)ob_dma_addr_in_window(0x00000000ffffffffULL), 1);
+	chk("window above 4G",
+	    (long)ob_dma_addr_in_window(0x0000000100000000ULL), 0);
+	chk("high32 low", ob_dma_addr_high32(0x00000000fe0e6000ULL), 0);
+	chk("high32 high",
+	    (long)ob_dma_addr_high32(0x00000001fe0e6000ULL), 1);
+
 	/* ---- descriptor field encoding (explicit high word) ---- */
 	ob_dma_desc_zero(&d);
 	chk("zero ctrl1", (long)d.ctrl1, 0);

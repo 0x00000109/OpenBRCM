@@ -71,6 +71,24 @@ _Static_assert(sizeof(struct ob_dma_desc) == OB_DMA_DESC_SIZE,
 /* Blob: PCIe descriptor/ring high word is dataoffsethigh (0x80000000). */
 #define OB_DMA_PCIE_H32		0x80000000u
 
+/*
+ * The recovered BCM4352 model discards the DMA address high dword, so the
+ * device can only address a 32-bit host window. Every coherent/streaming DMA
+ * address must therefore have a zero high dword; the code re-checks this
+ * defensively before encoding a descriptor even though the 32-bit DMA mask
+ * should already enforce it.
+ */
+static inline u32 ob_dma_addr_high32(dma_addr_t addr)
+{
+	return (u32)(((u64)addr) >> 32);
+}
+
+static inline bool ob_dma_addr_in_window(dma_addr_t addr)
+{
+	return ob_dma_addr_high32(addr) == 0;
+}
+
+
 _Static_assert(OB_DMA_RING_DESC_COUNT_RX == 256,
 	       "RX ring must hold 256 descriptors");
 _Static_assert(OB_DMA_RING_DESC_COUNT_TX == 512,

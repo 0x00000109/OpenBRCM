@@ -22,6 +22,17 @@ static void ob_dma_geometry_test(struct kunit *test)
 	KUNIT_EXPECT_EQ(test, ob_dma_ring_active_bytes(OB_DMA_RING_TX), 8192);
 	KUNIT_EXPECT_EQ(test, OB_DMA_RX_POST_INIT, 64);
 	KUNIT_EXPECT_EQ(test, OB_DMA_RX_POST_INIT * 16, 0x400);
+
+	/* 32-bit host DMA window helpers */
+	KUNIT_EXPECT_TRUE(test, ob_dma_addr_in_window(0));
+	KUNIT_EXPECT_TRUE(test,
+			  ob_dma_addr_in_window(0x00000000fe0e6000ULL));
+	KUNIT_EXPECT_TRUE(test,
+			  ob_dma_addr_in_window(0x00000000ffffffffULL));
+	KUNIT_EXPECT_FALSE(test,
+			   ob_dma_addr_in_window(0x0000000100000000ULL));
+	KUNIT_EXPECT_EQ(test, ob_dma_addr_high32(0x00000000fe0e6000ULL), 0u);
+	KUNIT_EXPECT_EQ(test, ob_dma_addr_high32(0x00000001fe0e6000ULL), 1u);
 }
 
 static void ob_dma_desc_test(struct kunit *test)

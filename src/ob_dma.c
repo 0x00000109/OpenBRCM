@@ -32,9 +32,10 @@ static const char *ob_dma_role_name(enum ob_dma_ring_role role)
 static void ob_dma_dump_ring(struct ob_hw *hw, const struct ob_dma_ring *ring)
 {
 	dev_info(hw->dev,
-		 "dma: %s ring cpu=%px dma=%pad descriptors=%u bytes=%u dma_aligned_8k=%s cpu_desc_aligned=%s\n",
+		 "dma: %s ring cpu=%px dma=%pad high32=%08x window=32-bit descriptors=%u bytes=%u dma_aligned_8k=%s cpu_desc_aligned=%s\n",
 		 ob_dma_role_name(ring->role), ring->desc_cpu, &ring->desc_dma,
-		 ring->n, ob_dma_ring_active_bytes(ring->role),
+		 ob_dma_addr_high32(ring->desc_dma), ring->n,
+		 ob_dma_ring_active_bytes(ring->role),
 		 IS_ALIGNED((unsigned long)ring->desc_dma, OB_DMA_RING_ALIGN) ?
 			"yes" : "no",
 		 IS_ALIGNED((unsigned long)ring->desc_cpu,
@@ -101,6 +102,14 @@ static int ob_dma_ring_alloc(struct ob_hw *hw, struct ob_dma_ring *ring,
 		ob_dma_ring_free(hw, ring);
 		return -EINVAL;
 	}
+	if (!ob_dma_addr_in_window(ring->desc_dma)) {
+		dev_err(hw->dev,
+			"dma: %s ring dma=%pad outside 32-bit window (high32=%08x)\n",
+			ob_dma_role_name(role), &ring->desc_dma,
+			ob_dma_addr_high32(ring->desc_dma));
+		ob_dma_ring_free(hw, ring);
+		return -ERANGE;
+	}
 
 	/* Known software-safe initial state: every descriptor zeroed. */
 	memset(ring->desc_cpu, 0, OB_DMA_RING_BYTES);
@@ -152,6 +161,8 @@ int ob_dma_init(struct ob_hw *hw)
 	dev_info(hw->dev,
 		 "dma: 32-bit coherent/streaming mask accepted (%s), h32=%08x\n",
 		 dev_name(dev), hw->dma.h32);
+	dev_info(hw->dev,
+		 "dma: window = 32-bit (DMA addresses must have high32=0)\n");
 
 	/*
 	 * A dma_pool with size == align == boundary == 8 KiB guarantees each
