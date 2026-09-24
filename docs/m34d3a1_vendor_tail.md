@@ -1,0 +1,503 @@
+# M3.4D3A1 — vendor post-common-init / pre-PHY tail recovery (ANALYSIS ONLY)
+
+Status: **`M3.4D3A1 = ANALYSIS ONLY`**. This document is read-only
+reverse-engineering of `wlc_hybrid.o_shipped` plus a read-only comparison with
+upstream `brcmsmac`. **No hardware, no MMIO, no `insmod`, no implementation.**
+Canonical status is unchanged: `M3.4D3A0 = HARDWARE RUNTIME PROVEN`,
+`M3.4D3A1 = ANALYSIS ONLY`.
+
+Primary provenance: `wlc_hybrid.o_shipped`, sha256
+`352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743`.
+Upstream C3 (`/usr/src/linux-7.2.2-build/.../brcmsmac/`) is secondary
+corroboration only. Addresses are `.text` offsets. Prior analysis is in
+`docs/m34d3_bsinitvals.md` (Appendices A–D); this document **re-proves** the
+D3A1-relevant parts directly from the blob and corrects two §B.4 details.
+
+---
+
+## 0. Starting state (proven input — not re-derived here)
+
+- **D2A**: rev42 ucode uploaded (10850 writes), PSM running,
+  `MI_MACSSPNDD` observed.
+- **D2B**: all 610 common initvals applied (113 × 16-bit, 497 × 32-bit); known
+  state `MACCONTROL=0x04020402`, `MACINTMASK=0`, `M_FIFOSIZE0..3 =
+  01c4/0000/0000/079e`, `SHM[0x14]=0x00b4`.
+- **D3A0 (hardware proven)**: four TX DMA engines and FIFO0 RX programmed,
+  64 RX mappings, `RX CONTROL=0x84d`, programmed PTR `0x400`,
+  `ADDRHIGH=0x80000000`, host IRQ route disabled, full lifecycle teardown
+  proven.
+
+The isolated D3A0 ordering is **not** assumed to be the vendor order. The
+question this document answers is where the vendor actually puts DMA init
+relative to the rest of the post-common tail.
+
+---
+
+## 1. Exact vendor post-common call graph
+
+`wlc_bmac_init` (`0x6828a`, size 5071). The first D11 write is `wl_intrsoff`
+(`0x682d6`). The post-common portion (proven from direct linear control flow in
+`re fn wlc_bmac_init`, disassembly cross-checked with `objdump`):
+
+```
+0x68b98  sub_60f67(dev, d11ac1initvals42)          [M3.4D2B]
+0x68b9d  if (phyrev > 0x27)                        ; BCM4352 0x2a -> taken
+0x68bab      sub_67efd(dev)                        ; TXE0 FIFO fixup
+0x68bb0      jmp 0x68fe2                            ; legacy FIFO block skipped
+         else 0x68bb5..0x68fdf: xmtfifo_sz[]/host M_FIFOSIZE/TX-flush
+             (NOT executed on BCM4352 rev42)
+
+--- T1: pre-DMA D11/MAC tail (0x68fe2..0x69211) ---
+0x68fef  wlc_bmac_write_shm(0x80, 8)               M_MBURST_SIZE
+0x69001  wlc_bmac_write_shm(0x5c, 0x0a)            M_MAX_ANTCNT
+0x6901a  osl_writel(D11+0x100, *(u32)(dev+0x1ac))  intrcvlazy[0]
+0x6901f  if (phyrev==4) writel(D11+0x10c, 1<<24)   [SKIP rev42]
+0x69047  wlc_bmac_mctrl(dev, 0x40060000, 0x40020000)
+0x69059  osl_writel(D11+0x188, 0x80000000)         tsf_cfprep
+0x6906b  osl_writel(D11+0x18c, 0x02000000)         tsf_cfpstart
+0x6907d  osl_writel(D11+0x128, 0x4000)             macintstatus W1C (MI_GP1)
+0x6908c  osl_writel(D11+0x24, 0x10000)             intctrlregs[0].intmask = I_RI
+0x69091  if (phyrev==4) writel(D11+0x3c, 0x10000)  [SKIP rev42]
+0x690b1  wlc_bmac_macphyclk_set(dev, 1)            SICF_MPCLKE
+0x690b6  if (phyrev>4) { dly=si_clkctl_fast_pwrup_delay();
+                         *(u16)(dev+0x192)=dly;
+                         writew(D11+0x6a8, dly) }  scc_fastpwrup_dly   [rev42]
+0x690e2  if (phyrev>0x28) *(u16)(dev+0x192) += sub_5fdca(dev)           [rev42]
+0x690fa  write_shm(0x16, phyrev)                   M_MACHW_VER
+0x6910e  if (phyrev>0x0c) { write_shm(0xc0, *(u16)(dev+0xa4));
+                            write_shm(0xc2, *(u16)(dev+0xa6)); }
+                                                   M_MACHW_CAP_L / _H
+0x6913f  copyto_objmem(0x18, (dev+0x104), 2)       S_DOT11_SRC_LMT (SRL)
+0x6915e  copyto_objmem(0x1c, (dev+0x106), 2)       S_DOT11_LRC_LMT (LRL)
+0x6917d  if ([r13+0x718]==0) copyto_objmem(0x24, [r13+0x20], 4)
+0x691ae  write_shm(0x44, *(u16)(dev+0x108))        M_SFRMTXCNTFBRTHSD (SFBL)
+0x691c2  write_shm(0x46, *(u16)(dev+0x10a))        M_LFRMTXCNTFBRTHSD (LFBL)
+0x691d6  if (phyrev>0x0f) { D11+0x688 &= 0xfff;
+                            writew(D11+0x69c, 1) } ifs_ctl / ifs_aifsn   [rev42]
+0x69211  [r13+0x68]=0
+
+--- DMA (0x6921c..0x6924a) ---
+0x6921c  for i in 0..5: if (dev->di[i]) di[i]->vfn[+0x08]()   ; 4x dma_txinit
+0x69236  dev->di[0]->vfn[+0xa0]()                             ; dma_rxinit
+0x69243  dev->di[0]->vfn[+0xd8]()                             ; dma_rxfill
+
+--- T2: post-DMA D11/MAC tail (0x69250..0x695d8) ---
+0x69250  if (phyrev==4) { di[3]->rxinit(); di[3]->rxfill(); }  [SKIP rev42]
+0x69273  chip-TSF-clock switch; BCM4352 (0x4352) -> none       [SKIP]
+0x6930e  btc_base = read_shm(0x92)*2
+         if (btc_base) for i in 0..0x76: getvar("btc_params%d",i) ->
+             write_shm(btc_base + 2*i)
+0x693a2  if (chipid==0x4352 || 0xa8dc) 4 extra write_shm:
+             btc_base+2=0x7530, +0x10=0x4e20, +0x12=0x7530, +0x2c=0x753
+0x69426  getvar("btc_flags") -> *(u16)(dev+0xb0+8); sub_62b79 (wlc_bmac_mhf x5)
+0x69466  if (phyrev>0x27) { write_shm(0x78c, wlc+8/9);
+                            write_shm(0x78e, wlc+0xa/0xb);
+                            write_shm(0x790, wlc+0xc/0xd); }    [rev42]
+0x694d8  read_shm(0x8e); if (phyrev==0x21) {...}                [SKIP rev42]
+0x6955b  if (arg#3) wlc_bmac_mute(dev,1,1)                      [SKIP: arg#3=0]
+0x69562  *(u32)(dev+0x16c)=1
+0x69580  if ([[dev+0xE8]+0x1C]==7) wlc_phy_switch_radio(...)    [SKIP: phytype=0xB]
+0x69599  if (chipid in {0xa9c4,0x4360,0xaa06,0x4352,0x4350})
+             wlc_bmac_switch_macfreq(dev, 0)                    [TAKEN 0x4352]
+0x695d8  sub_6656c(dev, chanspec, band=0)          *** band init -> PHY ***
+0x695ee  wl_intrsrestore
+```
+
+`sub_6656c` (`0x6656c`, band-init helper; two callers: `wlc_bmac_init 0x695d8`
+and `wlc_bmac_set_chanspec 0x67bd0`) leads to the real PHY entry:
+
+```
+0x665d6  sub_62766                 ; 5 x write_shm (0x5e/0x60/0x62/0x78/0xd4)
+0x6692c  si_core_sflags
+0x66983  si_core_sflags
+0x669bd  sub_60f67(dev, d11ac1bsinitvals42)        ; 73 records (D3B)
+0x669df  wlc_phy_init(pi, chanspec)                *** real PHY entry ***
+           -> 0xbac31 wlc_phy_chanspec_shm_set
+           -> 0xbac44 osl_readl(D11+0x120)         ; maccontrol read only
+           -> 0xbac84 wlc_phy_anacore             *** first PHY indirect MMIO ***
+0x669e7  sub_62684
+0x669fa/0x66a0d wlc_bmac_set_cwmin / set_cwmax
+0x66a2d  sub_62716
+0x66a45/0x66a5d write_shm
+0x66a65  sub_62403
+0x66a8e  write_shm
+0x66a96  sub_627c9
+0x66ac9  wlc_bmac_mhf
+0x66ad1  sub_6106b                 ; GPIO
+0x66b28  sub_62766
+0x66b30  wlc_bmac_set_extlna_pwrsave_shmem
+```
+
+**First real PHY/RF operation** = `wlc_phy_anacore` (`0xbac84`) inside
+`wlc_phy_init`, reached only after the bsinitvals applier.
+
+### 1.1 Corrections to prior text
+
+- §B.4 item 4 (`0x69035`, `writel 0x01000000`) is **gated `phyrev==4`** and
+  wrote `D11+0x10c`, not an unconditional `intrcvlazy` sibling. Not executed on
+  rev42.
+- §B.4 item 8 implied a single `intctrlregs` write; the blob writes
+  `D11+0x24 = I_RI` unconditionally and a second `D11+0x3c = 0x10000` gated
+  `phyrev==4` (SKIP rev42).
+
+---
+
+## 2. `sub_67efd` fully reversed (BCM4352/rev42)
+
+`sub_67efd` (`0x67efd`, size 909). This is the real rev42 FIFO stage; the C3
+equivalent is `brcms_b_corerev_fifofixup()`. Entry `rdi = dev`.
+
+### 2.1 Operations in execution order
+
+1. `machwcap = osl_readl(D11+0x15c)`; `v = (machwcap >> 1) & 0xffc`; stored to
+   driver globals `.bss+0xb34` and `.data+0x16c`. **read-only.**
+2. `phyrev = dev->[0x84]` (`0x67f2d`/`0x67f53`).
+3. **RXE gate** (`0x67f59`): `if (phyrev == 0x2c || phyrev <= 0x2a)` skip the
+   RXE block; else run it. **rev42 (0x2a) skips it.**
+   - RXE (not rev42): `writew(0x42c,0x1500)`, `writew(0x42e,0x28ff)`,
+     `writew(0x43a,0x2900)`, `writew(0x43c,0x3cff)`, `writew(0x406,0x101)`,
+     `writew(0x406,0x1)`.
+4. `writew(0x542, <machwcap-derived>)` (`xmtfifoflush`);
+   `writew(0x540, 5)` (`xmtfifocmd`);
+   poll `readw(0x540) & 1` until 0, bound `0xd1` decrement 10 (~20 iters).
+5. **7-entry loop** over table `.rodata+0x284740` = `{7,0,1,2,3,4,5}`. Per entry:
+   - if entry == 7: `di = cx = def = 0x2a`;
+   - else: `di = <machwcap global>`, `cx = <per-phyrev table word>`,
+     `def = (phyrev in {0x2c,0x29,0x2d,0x2e,0x2f}) ? 6 : 0xb` (rev42 → `0xb`);
+   - `writew(0x54a, di)` `xmtfiforqpri`,
+     `writew(0x54c, cx)` `xmttplatetxptr`,
+     `writew(0x520, def)` `xmtfifodef`,
+     `writew(0x54e, ((edx-4)<<8)|edx)`,
+     `writew(0x550, 0x740c)` `xmttplateptr`,
+     `writew(0x548, entry|0x10)` `xmtfifoprirdy`.
+     ⇒ 7 × 6 = 42 writes.
+6. **42-entry loop** `idx = 0..41`. Per entry:
+   `writew(0x534, idx)`, `writew(0x536, min(idx+2,0x29))`,
+   `writew(0x532, min(idx+2,0x29) + (idx==0 ? 1 : 0))`,
+   `writew(0x530, (idx<<4)|0x8007)`;
+   poll `readw(0x530) == 0`, bound `0xd1` decrement 10.
+   ⇒ 42 × 4 = 168 writes.
+
+Total on rev42: **1 readl, 2 + 42 + 168 = 212 writew**, two bounded polls, and
+no other access. Per-rev parameter tables: `.rodata+0x284740` (entry list) and
+`.rodata+0x2846e0` (per-fifo parameter words).
+
+### 2.2 Side-effect classification
+
+| class | present? | detail |
+| :--- | :--- | :--- |
+| PASSIVE CONFIGURATION | yes | `machwcap` read; FIFO parameter writes |
+| FIFO RESET/CONTROL | yes | `0x540/0x542` flush/cmd; `0x520/0x548/0x54a/0x54c/0x54e/0x550`; `0x530..0x536` |
+| DMA-AFFECTING | **no** | no access to `0x200..0x37F` |
+| IRQ-AFFECTING | **no** | no `intctrlregs`/`macintstatus`/`macintmask` |
+| PHY/RADIO-AFFECTING | **no** | no `0x3fc/0x3fe`, no radio window |
+| ASYNC/SELF-TRIGGERING | **no** | two synchronous FIFO-ack polls, both bounded |
+
+### 2.3 Direct answers
+
+- Mandatory for rev42? **Yes** — taken unconditionally for `phyrev > 0x27`
+  (`0x68b9d`); C3 calls the equivalent when `fifosz_fixup=true`.
+- Required before DMA initialization? **Yes** (vendor places it before the DMA
+  loop; it defines/reset the TX FIFO allocation the TX engines later use).
+- Required before bsinitvals? It precedes bsinitvals in vendor order. The
+  bsinitvals writes are D11 SHM/IHR and do not read the TXE0 FIFO block, so it
+  is not a data dependency, but it is a fixed vendor ordering requirement.
+- Required before PHY init? It precedes band init/PHY; no PHY dependency.
+- Safe to execute in an isolated no-PHY test? **Yes** (no DMA armed, no IRQ,
+  no PHY/radio, `EN_MAC=0`, bounded polls). It does mutate TXE0 FIFO state, so
+  the enclosing test must be one-shot/vendor-ordered, not a free-form probe.
+
+---
+
+## 3. Omitted runtime SHM / NVRAM / rate / power tail
+
+Groups omitted from D3A0's prefix, in vendor order. Cross-checked against C3
+`d11.h` names where an equivalent exists.
+
+| # | write | SHM off | value source | class | NVRAM? | pre-PHY consumed | DMA impact | fw impact |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `M_MBURST_SIZE` | `0x80` | const `8` | constant | no (C3 const) | yes (ucode) | no | frameburst |
+| 2 | `M_MAX_ANTCNT` | `0x5c` | const `0x0a` | constant | no | yes | no | antenna swap |
+| 3 | `M_MACHW_VER` | `0x16` | `phyrev` | runtime | no | yes | no | ucode MAC version |
+| 4 | `M_MACHW_CAP_L/_H` | `0xc0/0xc2` | `machwcap` lo/hi | runtime | no | yes | no | ucode MAC caps |
+| 5 | SCR SRL/LRL | objmem `0x18/0x1c` | `dev+0x104/0x106` | runtime/config | yes (derived) | yes | no | retry limits |
+| 6 | SCR 4-byte | objmem `0x24` | `[r13+0x20]` | runtime | maybe | yes | no | rate/tpc |
+| 7 | `M_SFRMTXCNTFBRTHSD` | `0x44` | `dev+0x108` | config | yes | yes | no | rate fallback |
+| 8 | `M_LFRMTXCNTFBRTHSD` | `0x46` | `dev+0x10a` | config | yes | yes | no | rate fallback |
+| 9 | BTC params | `btc_base+2i` | NVRAM `btc_params%d` (119) | NVRAM/board | **yes** | yes | no | coexistence |
+| 10 | BTC extras | `btc_base+2/0x10/0x12/0x2c` | const `0x7530/0x4e20/0x7530/0x753` | const (4352) | no | yes | no | coexistence |
+| 11 | BTC flags | MHF (SHM) | NVRAM `btc_flags` → `sub_62b79` (`wlc_bmac_mhf` ×5) | NVRAM/board | **yes** | yes | no | coexistence/MHF |
+| 12 | unk. 6 bytes | `0x78c/0x78e/0x790` | `wlc+8..wlc+0xd` | runtime | UNKNOWN | yes | no | UNKNOWN name |
+
+Notes:
+
+- `btc_base = read_shm(0x92) * 2` (`0x6930e`); if zero the 119-write loop is
+  skipped. The 4 extra writes (row 10) are unconditional for chip `0x4352`.
+- Row 5/7/8 (`SRL/LRL`, `SFBL/LFBL`) are the NVRAM-derived retry limits; C3
+  names them and writes them from `wlc_hw->SRL/LRL/SFBL/LFBL`.
+- Row 12 source is six bytes at `wlc+8..+0xd`; no C3 `d11.h` SHM macro at
+  `0x3c6/0x3c7/0x3c8` exists, so the semantic name is **UNKNOWN**. The value is
+  runtime `wlc` state, not a direct NVRAM read. This is the only group whose
+  meaning is not pinned.
+- **Values OpenBRCM can already obtain:** `phyrev`, `machwcap`, SRL/LRL/SFBL/
+  LFBL analogues, and (via bcma/SPROM) the NVRAM `btc_params`/`btc_flags` —
+  **provided the NVRAM parsers exist**. **No source yet in OpenBRCM:**
+  `btc_params%d` (119 keys) and `btc_flags` NVRAM parsing, and the `wlc+8..+0xd`
+  six bytes.
+- None of these writes touch the DMA register block, PHY, or radio.
+
+---
+
+## 4. Exact DMA ordering (canonical BCM4352 rev42)
+
+Vendor linear sequence (single function, no branch reorders it on rev42):
+
+```
+common initvals (D2B)
+  -> sub_67efd
+  -> M_MBURST_SIZE / M_MAX_ANTCNT
+  -> intrcvlazy[0]
+  -> MACCONTROL transition
+  -> tsf_cfprep / tsf_cfpstart / macintstatus / intctrlregs[0].intmask
+  -> macphyclk_set
+  -> fast_pwrup_delay / sub_5fdca
+  -> M_MACHW_VER / M_MACHW_CAP_L/H
+  -> SCR SRL/LRL/rate + SFBL/LFBL
+  -> ifs_ctl / ifs_aifsn
+  -> 4x dma_txinit + dma_rxinit + dma_rxfill          <-- DMA
+  -> BTC params/flags (NVRAM) + 0x78c/0x78e/0x790
+  -> switch_macfreq
+  -> sub_6656c -> bsinitvals -> wlc_phy_init (first PHY op)
+```
+
+Answers:
+
+| Q | answer | evidence |
+| :--- | :--- | :--- |
+| A. DMA before/after `sub_67efd`? | **after** | `0x68bab` < `0x6921c` |
+| B. DMA before/after runtime SHM tail? | **before** the BTC/NVRAM tail (`0x6921c` < `0x6930e`); **after** the SHM writes in T1 | direct order |
+| C. DMA before/after MACCONTROL `0x…` transition? | **after** | `0x69047` < `0x6921c` |
+| D. DMA before/after `macphyclk_set`? | **after** | `0x690b1` < `0x6921c` |
+| E. DMA before `bsinitvals`? | **before** | `0x6921c` < `0x669bd` (via `0x695d8`) |
+| F. DMA before `wl_phy_init`? | **before** | `0x6921c` < `0x669df` |
+| G. Proven vs inferred? | **all proven from direct control flow** | linear body, only gated sub-blocks are conditional; their position is fixed |
+
+**The vendor interleaves the DMA init inside the tail: `T1 → DMA → T2`.**
+
+---
+
+## 5. IRQ-source ordering
+
+| order | addr | register | value | width |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | `0x6901a` | `D11+0x100 intrcvlazy[0]` | `0x01000000` (`1<<IRL_FC_SHIFT`, 24) | 32 |
+| 2 | `0x6907d` | `D11+0x128 macintstatus` | `0x4000` (W1C `MI_GP1`) | 32 |
+| 3 | `0x6908c` | `D11+0x24 intctrlregs[0].intmask` | `I_RI=0x10000` | 32 |
+| – | never | `D11+0x12c macintmask` | held 0 by `wl_intrsoff` (`0x682d6`) | 32 |
+
+- `intrcvlazy[0]` is written **before** the MACCONTROL transition and **before**
+  DMA init.
+- `I_RI` (per-FIFO RX source, `1<<16`) is armed before the RX engine is enabled.
+- `MI_DMAINT` (`1<<15`, MAC aggregate) is **not** written.
+- BCMA/PCI host route is controlled by `bcma_host_pci_irq_ctl` via
+  `wl_intrsoff`/`wl_intrsrestore`; it is **off** across the whole window.
+
+Pre-PHY vendor state: source armed? **yes**. Aggregate MAC interrupt enabled?
+**no**. BCMA host route enabled? **no**. CPU delivery possible? **no**.
+
+---
+
+## 6. MACCONTROL state machine (D2B exit → before `wl_phy_init`)
+
+`wlc_bmac_mctrl` (`0x6066d`) is shadow-cached at `dev+0x168`; write to
+`D11+0x120` only when changed. Exactly one transition in the tail:
+
+- at `0x69047`: `old = 0x04020402`, `mask = 0x40060000`,
+  `val = 0x40020000`, `new = (old & ~mask) | val = **0x44020402**`.
+- semantic bits: `MCTL_DISCARD_PMQ(1<<30)` set; `MCTL_AP(1<<18)` cleared;
+  `MCTL_INFRA(1<<17)` set; `MCTL_PSM_RUN(1<<1)` kept; `MCTL_EN_MAC(1<<0)` 0;
+  SHM_EN bit8 0.
+- Persistence: `macphyclk_set` writes core cflags; `switch_macfreq` writes
+  `0x62e/0x630`; the bsinitvals applier writes `0x160/0x164/0x166/0x680..0x700`.
+  **MACCONTROL stays `0x44020402` from `0x69047` until `wlc_phy_init`** (which
+  only reads it at `0xbac44`). Bit30 semantics: `MCTL_DISCARD_PMQ`; MCTL_AP is
+  cleared for the initial BSS-STA station role. Unknown bits remain UNKNOWN by
+  name; operation and safety are known.
+
+---
+
+## 7. `wlc_bmac_macphyclk_set`
+
+`wlc_bmac_macphyclk_set(dev,on)` (`0x65006`) =
+`si_core_cflags(D11 si, SICF_MPCLKE=0x10, on?0x10:0)` (`0x65024`). It is a D11
+**core cflags** gate, fully reversible; **no PHY/radio MMIO, no PLL/synth, no
+asynchronous activity**. It only lets the MAC dynamically gate the PHY clock.
+Vendor calls it ON at `0x690b1`. Belongs in the **D3A1 pre-PHY tail** (already
+present in D3A0).
+
+## 8. `wlc_bmac_switch_macfreq`
+
+`wlc_bmac_switch_macfreq` (`0x64cbf`), spurmode `0`. For BCM4352 (`0x64f14`):
+
+```
+eax = si_pmu_get_bb_vcofreq(si, 0x28)          ; PMU read
+bcm_uint64_divide(&out, eax, 0x80000000, 0x3a9)
+writew(D11+0x62e, out.lo)                      ; tsf_clk_frac_l
+writew(D11+0x630, out.hi)                      ; tsf_clk_frac_h
+```
+
+No PHY/radio write, no PLL/synth write, no state-machine start; values are
+runtime PMU-VCO-derived, not band/channel dependent. Readback equality is
+meaningful only if the driver derives the same PMU value; otherwise treat as
+`DERIVED/runtime`. Belongs in the **D3A1 pre-PHY tail** (it is the last call
+before `sub_6656c`).
+
+---
+
+## 9. D3A1 boundary
+
+Requirements: no PHY indirect writes, no radio, no channel, no calibration, no
+`EN_MAC`, no host IRQ delivery, no TX payload, no mac80211; DMA only with proven
+D3A0 semantics; vendor ordering preserved.
+
+- **first included instruction/call:** `sub_67efd` at `0x68bab`.
+- **last included instruction/call:** `wlc_bmac_switch_macfreq` at `0x695cb`.
+- **exact STOP point:** immediately before the call at `0x695d8`.
+- **first forbidden next call:** `sub_6656c` (`0x695d8`), which runs
+  `bsinitvals` (`0x669bd`) and then `wlc_phy_init` (`0x669df`,
+  first PHY op `wlc_phy_anacore 0xbac84`).
+
+D3A1 therefore includes the vendor DMA init **in its vendor position** (reusing
+the D3A0-proven DMA lifecycle), not as a separate post-hoc stage.
+
+---
+
+## 10. Design A vs Design B
+
+- **Design A** (tail → DMA): **NOT vendor-faithful** — it would move the
+  post-DMA tail (BTC/NVRAM, `0x78c..`, `switch_macfreq`) before DMA.
+- **Design B** (DMA → tail): **NOT vendor-faithful** — it would move
+  `sub_67efd`, MBURST/MAXANTCNT, MACCONTROL, macphyclk and the SCR/SFBL SHM
+  writes after DMA.
+- **Correct design:** preserve the vendor **interleaving**:
+  `T1 → DMA (reuse D3A0) → T2 → STOP before sub_6656c`.
+  D3A0 remains the isolated proof of the DMA sub-lifecycle; D3A1 is the full
+  vendor-ordered post-common tail with that sub-lifecycle embedded.
+
+---
+
+## 11. Deterministic postconditions (proposed D3A1)
+
+| item | expected | class |
+| :--- | :--- | :--- |
+| `MACCONTROL` (`0x120`) | `0x44020402` | exact (derived from D2B) |
+| `MACINTMASK` (`0x12c`) | `0` | exact |
+| `INTRCVLAZY[0]` (`0x100`) | `0x01000000` | exact |
+| `intctrlregs[0].intmask` (`0x24`) | `0x10000` (masked `& I_RI`) | masked |
+| `tsf_cfprep` (`0x188`) | `0x80000000` | exact |
+| `tsf_cfpstart` (`0x18c`) | `0x02000000` | exact |
+| `M_FIFOSIZE0..3` | `01c4/0000/0000/079e` | exact (unchanged) |
+| SHM `M_MBURST_SIZE` (`0x80`) | `0x0008` | exact |
+| SHM `M_MAX_ANTCNT` (`0x5c`) | `0x000a` | exact |
+| SHM `M_MACHW_VER` (`0x16`) | `phyrev` | exact |
+| SHM `M_MACHW_CAP_L/H` (`0xc0/0xc2`) | `machwcap` lo/hi | exact |
+| `tsf_clk_frac_l/h` (`0x62e/0x630`) | PMU-VCO-derived | state/diagnostic |
+| TX0..3 `control` bit0 (XE) | `1` | exact |
+| TX0..3 `control` cap bits | equal to attach-time read | derived (RMW) |
+| TX0..3 `addrhigh` | `0x80000000` | exact |
+| TX0..3 `addrlow` | ring base | derived |
+| TX0..3 `status0` state | not DISABLED | state |
+| RX `control` | `0x0000084d` | exact |
+| RX `addrhigh` | `0x80000000` | exact |
+| RX programmed PTR | `0x400` | exact (programmed value only) |
+| RX `status0` | RS=IDLE (`0x2`) | state |
+| RX `status1` error bits | `0` | exact |
+| PSM state | `MI_MACSSPNDD`/PSM_RUN as inherited | state |
+| `EN_MAC` | `0` | exact |
+| D11 core cflags `SICF_MPCLKE` (bit4) | `1` | exact |
+| host IRQ route | disabled (`macintmask=0`, no `bcma_host_pci_irq_ctl`) | exact |
+
+Do **not** require equality on hardware-current pointer/status fields (raw RX
+`ptr`/`status0` field bits); use state fields and the programmed PTR value.
+
+---
+
+## 12. Failure / teardown model
+
+D3A1 reuses the proven D3A0 quiesce lifecycle. Per-stage matrix:
+
+| stage | failure return | DMA started? | teardown | per-channel reset sufficient? | containment | retry safe? | reboot? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `sub_67efd` | error | no | none | n/a | n/a | not proven | no |
+| T1 SHM/MACCONTROL/macphyclk | error | no | none | n/a | n/a | unknown | no |
+| DMA `dma_txinit/rxinit/rxfill` | error | **yes** | required | yes (verified) | fallback only | **no** | if reset unverified |
+| T2 BTC/NVRAM/SHM | error | yes | required | yes (verified) | fallback only | **no** | if reset unverified |
+| `switch_macfreq` | error | yes | required | yes (verified) | fallback only | **no** | if reset unverified |
+| validation mismatch | error | yes | required | yes (verified) | fallback only | **no** | if reset unverified |
+
+Rules (locked to D3A0/D.7/D.8): free/unmap **only** after every initialized
+engine is verified stopped (`status0` state 0); `bcma_core_disable` is
+containment only and never authorizes a free; on unverified reset, latch fatal,
+retain memory, keep probe bound, require reboot. No DMA-backed memory is freed
+while a hardware engine may reference it.
+
+---
+
+## 13. Vendor vs upstream brcmsmac (secondary)
+
+| vendor behavior | upstream equivalent | verdict | reason |
+| :--- | :--- | :--- | :--- |
+| `sub_67efd` TXE0 FIFO fixup | `brcms_b_corerev_fifofixup` (`main.c:2036`) | **PARTIAL** | same purpose/reset; C3 uses `xmtfifo_sz[]`; vendor uses `machwcap` + per-rev tables + 7/42 loops |
+| MBURST/MAXANTCNT/intrcvlazy/mctrl/tsf/macintstatus/intctrlregs/macphyclk/fastpwrup | `brcms_b_coreinit` (`main.c:3127`) | **MATCH** | same constants/offsets and order |
+| `M_MACHW_VER`/`M_MACHW_CAP_L/H`, SCR SRL/LRL, SFBL/LFBL, ifs | `brcms_b_coreinit` | **MATCH** | same SHM/objmem semantics |
+| 4x `dma_txinit` + `dma_rxinit` + `dma_rxfill` | `brcms_b_coreinit:3288-3296` | **MATCH** | same order and channel count (D3A0-proven) |
+| BTC params/flags NVRAM, `0x78c..0x790` | not in C3 `brcms_b_coreinit` | **DIFFERENT** | vendor-specific/newer tail; C3 lacks it |
+| `wlc_bmac_switch_macfreq` 0x4352 path | `brcms_b_switch_macfreq` (`main.c:2096`) | **PARTIAL/DIFFERENT** | C3 handles only 43224/43225/LCN; vendor 0x4352 uses PMU-VCO-derived frac |
+| bsinitvals then `wlc_phy_init` then cwmin/cwmax/timing/phytype | `brcms_b_bsinit` (`main.c:1659`) + `brcms_c_ucode_bsinit` (`main.c:680`) | **MATCH** | same shape |
+
+Upstream is used only to corroborate blob-derived behavior; blob remains
+primary and is never replaced by upstream.
+
+---
+
+## 14. D3A1 implementation plan (NOT implemented)
+
+Reuse: `ob_d3a0_*` DMA allocate/program/post/validate/quiesce/free (proven),
+`ob_dma` rings, `ob_initvals_run_d2b()`, the D3A0 fatal/quiesce model.
+
+New (decomposition suggestion, names non-binding):
+
+1. `ob_d11_fifo_fixup()` — `sub_67efd` equivalent (the 7/42 loops + machwcap).
+2. `ob_d11_mac_tail_pre_dma()` — T1: MBURST/MAXANTCNT, intrcvlazy, mctrl,
+   tsf, macintstatus, intctrlregs, macphyclk, fastpwrup, machwver/cap, SCR
+   retry, SFBL/LFBL, ifs. (D3A0's prefix is a subset; refactor it into this
+   helper and call from D3A0 to avoid duplication.)
+3. `ob_dma_*` — reuse D3A0.
+4. `ob_d11_mac_tail_post_dma()` — T2: BTC params/flags (needs NVRAM parsing),
+   `0x78c/0x78e/0x790`, `switch_macfreq`.
+5. `ob_d3a1_validate()` — §11 postconditions.
+6. `ob_d3a1_quiesce()` — reuse D3A0 quiesce.
+7. new isolated mode `d11_tail_test_only=1` (mutually exclusive with the others).
+
+New prerequisites: NVRAM `btc_params%d` / `btc_flags` parsing; a source for the
+`wlc+8..+0xd` six bytes or an explicit `UNKNOWN` skip with documented reasoning.
+
+## 15. Unresolved unknowns
+
+1. Semantic name/source of the `0x78c/0x78e/0x790` six-byte group.
+2. Exact `wlc+8..+0xd` field identity.
+3. The `[r13+0x20]` 4-byte SCR write (`0x24`) source and its `[r13+0x718]` gate.
+4. Whether OpenBRCM will implement `btc_params` NVRAM parsing or defer with a
+   documented constant.
+5. `M_MAX_ANTCNT` value `0x0a` is constant here but is a driver policy constant
+   (C3 `ANTCNT`); confirm desired policy value.
+
+## 16. GO decision
+
+```
+D3A1 IMPLEMENTATION GO: NO (analysis only)
+```
+Reason: the boundary and ordering are resolved, but the T2 NVRAM/BTC group and
+two SHM groups still lack OpenBRCM value sources / semantics. A follow-up may
+raise this to YES once those are resolved or explicitly deferred. No code was
+changed by this task.

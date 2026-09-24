@@ -289,6 +289,31 @@ Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
 - STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
   radio / channel / mac80211.
 
+## M3.4D3A1 — vendor post-common / pre-PHY tail (`ANALYSIS ONLY`)
+
+Canonical status (exact):
+- M3.4D3A0 = HARDWARE RUNTIME PROVEN
+- M3.4D3A1 = ANALYSIS ONLY
+
+Report: `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
+`352a6e349f…`; no hardware/MMIO/implementation). Scope: recover the exact
+rev42 vendor sequence after the common initvals and before real PHY init.
+- **Ordering:** the vendor **interleaves** DMA inside the tail —
+  `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
+  intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →
+  DMA (4× txinit + rxinit + rxfill) → T2 (BTC/NVRAM SHM → 0x78c/0x78e/0x790 →
+  switch_macfreq) → STOP before sub_6656c`. Design A (tail→DMA) and Design B
+  (DMA→tail) are both non-vendor-faithful.
+- `sub_67efd` re-proven for rev42: RXE block gated `phyrev>0x2a` (not executed);
+  flush/cmd + 7-entry (42 writes) + 42-entry (168 writes) loops; no DMA/IRQ/PHY.
+- `MACCONTROL` one transition `0x04020402 → 0x44020402`; IRQ source
+  `INTRCVLAZY=0x01000000`, `MI_GP1` W1C, `intctrlregs[0].intmask=I_RI`,
+  `macintmask` stays 0; first PHY op `wlc_phy_anacore` (`0xbac84`).
+- D3A1 boundary: `sub_67efd` (`0x68bab`) … `wlc_bmac_switch_macfreq`
+  (`0x695cb`), STOP before `sub_6656c` (`0x695d8`).
+- `D3A1 IMPLEMENTATION GO: NO` (unresolved `0x78c/0x78e/0x790` semantics and
+  NVRAM BTC value sources). NOT IMPLEMENTED / NOT HARDWARE PROVEN.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.
