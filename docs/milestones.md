@@ -153,7 +153,9 @@ no ring base is published, no engine is enabled and no IRQ is taken.
   cleanly (no silent DMA32 fallback) if 64-bit DMA is not accepted.
 - Allocates one RX and one TX/control ring (future FIFO0 RX @0x220 / FIFO3 TX
   @0x2c0) from a `dma_pool` of 8 KiB blocks with 8 KiB alignment/boundary, and
-  verifies `IS_ALIGNED(..., 8192)` for both CPU and DMA addresses.
+  validates the recovered 8 KiB constraint on the **DMA address** only. The CPU
+  virtual address is unrelated to the hardware and is only required to meet the
+  natural alignment of `struct ob_dma_desc` for safe CPU access.
 - Descriptor = 16 bytes `{ctrl1, ctrl2, addrlow, addrhigh}` with explicit
   masks/shifts (no bitfields); rings = 512 descriptors = 8192 bytes.
 - Separate RX/TX index and per-slot ownership metadata (skb/dma/mapped) so a

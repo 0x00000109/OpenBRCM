@@ -234,9 +234,13 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
   OB_DMA_RING_BYTES=8192, OB_DMA_RING_ALIGN=8192, 8192)`, then
   `dma_pool_alloc()` per ring. A pool with `size == align == boundary == 8192`
   carves each block on an 8 KiB boundary, which a plain
-  `dma_alloc_coherent(8192)` does not guarantee; `IS_ALIGNED(..., 8192)` is
-  still verified for CPU and DMA addresses and the allocation is rejected with
-  `-EINVAL` if it fails.
+  `dma_alloc_coherent(8192)` does not guarantee. The recovered 8 KiB constraint
+  is validated on the **DMA address** only (`IS_ALIGNED(desc_dma, 8192)`), since
+  that is what the hardware receives; the CPU virtual address only has to meet
+  the natural alignment of `struct ob_dma_desc`. An allocation is rejected with
+  `-EINVAL` if the DMA address is not 8 KiB aligned.
+- **Diagnostics** report the two address spaces separately:
+  `dma_aligned_8k=<yes|no> cpu_desc_aligned=<yes|no>`.
 - **Real DMA device:** `core->dma_dev`, which `bcma` sets to `bus->dev` (the
   PCIe device, `drivers/bcma/main.c:250`). The 64-bit capability is validated
   with `dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64))`; a rejection fails

@@ -32,11 +32,13 @@ static const char *ob_dma_role_name(enum ob_dma_ring_role role)
 static void ob_dma_dump_ring(struct ob_hw *hw, const struct ob_dma_ring *ring)
 {
 	dev_info(hw->dev,
-		 "dma: %s ring cpu=%px dma=%pad descriptors=%u bytes=%u aligned_8k=%s\n",
+		 "dma: %s ring cpu=%px dma=%pad descriptors=%u bytes=%u dma_aligned_8k=%s cpu_desc_aligned=%s\n",
 		 ob_dma_role_name(ring->role), ring->desc_cpu, &ring->desc_dma,
 		 ring->n, OB_DMA_RING_BYTES,
 		 IS_ALIGNED((unsigned long)ring->desc_dma, OB_DMA_RING_ALIGN) ?
-			"yes" : "no");
+			"yes" : "no",
+		 IS_ALIGNED((unsigned long)ring->desc_cpu,
+			    __alignof__(struct ob_dma_desc)) ? "yes" : "no");
 }
 
 /*
@@ -77,15 +79,25 @@ static int ob_dma_ring_alloc(struct ob_hw *hw, struct ob_dma_ring *ring,
 	ring->desc_dma = ring->alloc_dma;
 
 	/*
-	 * Do not assume dma_alloc_coherent()/dma_pool satisfy the recovered
-	 * 8 KiB ring alignment: verify it and fail cleanly if it does not.
+	 * The device only ever receives @desc_dma, so the recovered 8 KiB
+	 * constraint applies to the DMA address alone. The CPU virtual address
+	 * is unrelated to the hardware and only needs the natural alignment of
+	 * struct ob_dma_desc so the ring can be accessed safely from the CPU.
 	 */
-	if (!IS_ALIGNED((unsigned long)ring->desc_cpu, OB_DMA_RING_ALIGN) ||
-	    !IS_ALIGNED((unsigned long)ring->desc_dma, OB_DMA_RING_ALIGN)) {
+	if (!IS_ALIGNED((unsigned long)ring->desc_dma, OB_DMA_RING_ALIGN)) {
 		dev_err(hw->dev,
-			"dma: %s ring not %u-byte aligned (cpu=%px dma=%pad)\n",
+			"dma: %s ring DMA address not %u-byte aligned (dma=%pad)\n",
 			ob_dma_role_name(role), OB_DMA_RING_ALIGN,
-			ring->desc_cpu, &ring->desc_dma);
+			&ring->desc_dma);
+		ob_dma_ring_free(hw, ring);
+		return -EINVAL;
+	}
+	if (!IS_ALIGNED((unsigned long)ring->desc_cpu,
+			__alignof__(struct ob_dma_desc))) {
+		dev_err(hw->dev,
+			"dma: %s ring CPU address not descriptor-aligned (cpu=%px need=%u)\n",
+			ob_dma_role_name(role), ring->desc_cpu,
+			(unsigned int)__alignof__(struct ob_dma_desc));
 		ob_dma_ring_free(hw, ring);
 		return -EINVAL;
 	}
