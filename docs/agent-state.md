@@ -15,14 +15,17 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `main` = `85d3013` — **PR #2 merged** (`Merge pull request #2 from
-  0x00000109/m34d2a-ucode-upload`, merge commit `85d3013` with parents
-  `854e398` + `f544af8`). `main` now contains M3.4D1 (`2029292`), the isolated
-  modes `fw_validate_only=1` / `ucode_test_only=1`, `src/ob_ucode.{c,h}`,
-  `docs/ucode_test.md`, and the M3.4D2A hardware record. The hardware-tested
-  candidate `7265f9d` and implementation `47e0883` are reachable from `main`.
-- Active branch `m34d2b-initvals-analysis` (from `main` @ `85d3013`) — M3.4D2B
-  **analysis only**, Draft PR, not merged.
+- `main` = `65d61ce` — **PR #2 merged** (`85d3013`) and **PR #5 merged**
+  (`Merge pull request #5 from 0x00000109/m34d2b-initvals-analysis`, merge
+  commit `65d61ce`, parents `85d3013` + `0bdec35`; normal merge commit, not
+  squashed/rebase). `main` contains M3.4D1 (`2029292`), the isolated modes
+  `fw_validate_only=1` / `ucode_test_only=1`, `src/ob_ucode.{c,h}`,
+  `docs/ucode_test.md`, the M3.4D2A hardware record, and the M3.4D2B analysis
+  (`137e290`, `ae25c68`, `0bdec35` all reachable from `main`). The
+  hardware-tested candidate `7265f9d` and implementation `47e0883` are
+  reachable from `main`.
+- Active branch `m34d2b-initvals-test` (from `main` @ `65d61ce`) — reserved
+  for the **future isolated common-initvals test**; NOT implemented here.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -139,12 +142,30 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D2B follow-up analysis is recorded and returns **GO for *designing* an
-isolated test** (see `docs/m34d2b_common_initvals.md` §F12–F13); the `SHM_EN`
-hard blocker is resolved. Next: present the D2B test design for explicit human
-approval, or close the residual UNKNOWNs (§F14). **No hardware action now:** do
-not run `insmod`, do not repeat D2A, do not implement D2B hardware writes, and
-do not apply `d11ac1initvals42`/`d11ac1bsinitvals42`. No PHY/radio/channel work.
+M3.4D2B analysis is **COMPLETE** and merged (PR #5, `main` @ `65d61ce`). Next
+task: implement the isolated common-initvals test on `m34d2b-initvals-test`
+(from `main` @ `65d61ce`), **only after explicit human approval to run
+hardware**. Until then: no `insmod`, no D2A repeat, no initvals write, no
+PHY/radio/channel work.
+
+## M3.4D2B implementation boundary (next task)
+The future isolated test must be limited to exactly this sequence, then STOP:
+proven D2A preparation -> exact ucode upload -> proven PSM start /
+`MI_MACSSPNDD` -> apply exactly the **610** `d11ac1initvals42` records ->
+read deterministic postconditions -> STOP.
+
+Preserve these postconditions (provenance-backed only; invent no other
+equality check):
+- `M_FIFOSIZE0 = 0x01c4`, `M_FIFOSIZE1 = 0x0000`, `M_FIFOSIZE2 = 0x0000`,
+  `M_FIFOSIZE3 = 0x079e`;
+- `MACINTMASK = 0`;
+- `MACCONTROL = 0x04020402`;
+- SHM `0x0014 = 0x000000b4`.
+
+Must STOP before (do not move into D2B): `sub_6656c`, bsinitvals,
+`wlc_phy_init`, PHY register programming, radio programming, calibration,
+channel selection, RX DMA, TX DMA, `request_irq`, host IRQ routing,
+mac80211 registration. Full design: `docs/m34d2b_common_initvals.md` §F13.
 
 ## Post-test hardware state (risk)
 After the successful D2A run the chip is intentionally left partial: `PSM_RUN=1`,
