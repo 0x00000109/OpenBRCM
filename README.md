@@ -21,8 +21,11 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > (candidate `f27286f`; PR #6) — it proves the common-initvals sequence
 > **only**: bsinitvals, band init, AC PHY, radio, calibration, channel, RX and
 > TX remain unproven. M3.4D3 (band-switch initvals + PHY boundary) is
-> **analysis only** on `m34d3-bsinitvals-analysis` (Draft PR); decision so far:
-> bsinitvals cannot yet be isolated before real PHY init.
+> **analysis only** on `m34d3-bsinitvals-analysis` (Draft PR). The earlier
+> ordering ambiguity is resolved: on the BCM4352/AC path `wlc_phy_switch_radio`
+> does **not** run before bsinitvals (the `0x69594` call is NPHY/HT-gated and
+> mute is skipped), so a vendor-ordered bsinitvals test can stop before real
+> PHY/RF writes.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

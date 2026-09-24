@@ -74,8 +74,11 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - **M3.4D3 (current):** band-switch initvals (`d11ac1bsinitvals42`, 73 records)
   + PHY boundary. Report `docs/m34d3_bsinitvals.md`; classification
   `docs/m34d3/bsinitvals_classification.{md,json}` via
-  `scripts/analyze_bsinitvals.py`. Decision:
-  `CAN BSINITVALS BE ISOLATED SAFELY BEFORE REAL PHY INIT? NOT YET`.
+  `scripts/analyze_bsinitvals.py`. Decision (corrected): `wlc_phy_switch_radio`
+  does **not** precede bsinitvals on the BCM4352/AC path (the `0x69594` call is
+  NPHY/HT-gated, and `wlc_bmac_mute` is skipped), so a vendor-ordered
+  bsinitvals test can stop before real PHY/RF writes: **YES**. The isolated unit
+  is the full vendor prefix, not the 73 records alone.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -102,14 +105,18 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   same table for 2.4/5 GHz.
 - Common vs bs: SHM-only for bs; no direct-offset overlap; 3 SHM bytes
   overridden (`0x0010=0x14`, `0x001c=0x183`, `0x0094=0x1f4`).
-- PHY boundary: `wlc_phy_init (0xbabf5)` -> `wlc_phy_anacore (0xbac84)`
-  (first PHY indirect MMIO, `D11+0x3e0/0x3fc/0x3fe`) ->
-  `wlc_phy_switch_radio (0xbad44)` -> `wlc_phy_init_aphy (0x8c3f9)` via
-  `call *[pi+0x28]`. Full vendor path already calls `wlc_phy_switch_radio`
-  at `0x69594` before band init.
-- **Decision NOT YET** (blockers in report §16); smallest safe boundary
-  proposed in §17 (post-common D11 setup + bsinitvals, stop before
-  `wlc_phy_switch_radio`/`wlc_phy_init`). No implementation.
+- PHY boundary (corrected): `wlc_phy_init (0xbabf5)` -> `wlc_phy_anacore
+  (0xbac84)` (first PHY indirect write, `D11+0x3fc/0x3fe`) ->
+  `wlc_phy_switch_radio (0xbad44)` -> `wlc_phy_switch_radio_acphy (0xaa782)`
+  (first radio-window writes, `D11+0x3d8/0x3da`) -> `wlc_phy_init_aphy
+  (0x8c3f9)` via `call *[pi+0x28]`. The `wlc_bmac_init` `0x69594`
+  `wlc_phy_switch_radio` is `phy_type==7` (NPHY/HT) gated and **not taken for
+  AC**; `wlc_bmac_mute` `0x6957b` is skipped (`wlc_bmac_init` arg#3=0).
+- Corrected decision **YES** (vendor-ordered bsinitvals can stop before real
+  PHY/RF writes). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`; `macphyclk_set` =
+  D11 core cflags bit4; `switch_macfreq` writes D11 `0x62e/0x630` from PMU VCO.
+  Smallest faithful boundary in report §17/§A.8: full `wlc_bmac_init` prefix ->
+  bsinitvals, STOP before `wlc_phy_init`. No implementation.
 
 ## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**
@@ -183,15 +190,16 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D3 analysis is recorded (see "M3.4D3 — band-switch initvals + PHY boundary"):
-bsinitvals cannot yet be isolated before real PHY init (**NOT YET**). Next:
-review the M3.4D3 Draft PR and either (a) implement the proposed smallest
-boundary (post-common D11 setup + 73 bsinitvals, stop before
-`wlc_phy_switch_radio`/`wlc_phy_init`) as a new analysis/design step, or
-(b) close the §19 unknowns first. **No hardware action:** no `insmod`, no
-initvals/bsinitvals write, no PHY/radio/channel/DMA/IRQ/mac80211. See
-`docs/m34d3_bsinitvals.md` and, for D2B runtime evidence,
-`docs/m34d2b_initvals_test.md`.
+M3.4D3 analysis is recorded and the ordering contradiction is resolved (see
+"Ordering resolution" §0 and Appendix A of `docs/m34d3_bsinitvals.md`):
+`wlc_phy_switch_radio` does **not** precede bsinitvals on the AC path, so a
+vendor-ordered bsinitvals test can stop before real PHY/RF writes (**YES**).
+Next: review the M3.4D3 Draft PR and, if accepted, design the **D3A/D3B**
+vendor-ordered prefix (full `wlc_bmac_init` tail -> 73 bsinitvals, stop before
+`wlc_phy_init`) as a new analysis/design step, or close the remaining §19
+unknowns first. **No hardware action:** no `insmod`, no initvals/bsinitvals
+write, no PHY/radio/channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md`
+and, for D2B runtime evidence, `docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

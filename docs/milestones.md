@@ -195,19 +195,28 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
 - Common vs band-switch: SHM-only for bs; no direct-offset overlap; **3 shared
   SHM bytes overridden** by bs (`0x0010=0x14`, `0x001c=0x183`,
   `0x0094=0x1f4`).
-- Real PHY boundary: `wlc_phy_init` (`0xbabf5`) -> `wlc_phy_anacore`
-  (`0xbac84`, first PHY indirect MMIO via `D11+0x3e0/0x3fc/0x3fe`) ->
-  `wlc_phy_switch_radio` (`0xbad44`) -> `call *[pi+0x28]` = `wlc_phy_init_aphy`
-  (`0x8c3f9`, installed at `0x899dd`). Note the full vendor path already calls
-  `wlc_phy_switch_radio` at `0x69594` **before** band init.
-- **Formal decision: `CAN BSINITVALS BE ISOLATED SAFELY BEFORE REAL PHY INIT?
-  NOT YET.** Blockers: post-common entry state not isolated (incl. `MACCONTROL`
-  change at `0x69047`), band/MHF dependency, rev/type selection, no clean PHY
-  separation, unproven postconditions.
-- Proposed smallest safe boundary (design only, do not implement): reproduce
-  the post-common D11 setup tail through band init, stopping before
-  `wlc_phy_switch_radio`/`wlc_phy_init`. See report §17/§18 for the AC PHY
-  follow-on roadmap.
+- Real PHY boundary (corrected): `wlc_phy_init` (`0xbabf5`) ->
+  `wlc_phy_anacore` (`0xbac84`, first PHY indirect write via `D11+0x3fc/0x3fe`)
+  -> `wlc_phy_switch_radio` (`0xbad44`) -> `wlc_phy_switch_radio_acphy`
+  (`0xaa782`, first radio-window writes via `D11+0x3d8/0x3da`) ->
+  `call *[pi+0x28]` = `wlc_phy_init_aphy` (`0x8c3f9`, installed at `0x899dd`).
+  **The earlier claim that the full vendor path calls `wlc_phy_switch_radio` at
+  `0x69594` before band init was wrong for AC:** that call is inside
+  `if ([[dev+0xE8]+0x1C] == 7)` (NPHY/HT only) and `wlc_bmac_mute` `0x6957b` is
+  skipped (`wlc_bmac_init` arg#3 = 0).
+- **Formal decision (revised): `CAN A VENDOR-ORDERED BSINITVALS TEST STOP BEFORE
+  REAL PHY/RF WRITES? YES`** for BCM4352/AC: the vendor prefix
+  `wlc_init -> wlc_bmac_init -> sub_6656c -> bsinitvals` contains only
+  D11/MAC/SHM/si accesses (no PHY-indirect write, no radio write). The isolated
+  unit is the full vendor prefix, not the 73 records alone.
+- Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
+  `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
+  `macphyclk_set` = D11 core cflags bit4; `switch_macfreq` writes D11
+  `0x62e/0x630` from the PMU BB VCO. See report §0/§16/§17 and Appendix A.
+- Smallest faithful boundary (design only, do not implement): full
+  `wlc_bmac_init` D11 prefix (`0x68bab..0x695d8`) -> `sub_6656c` through the 73
+  bsinitvals records, STOP before `wlc_phy_init`. See report §17 and §18 for the
+  revised AC PHY roadmap.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
