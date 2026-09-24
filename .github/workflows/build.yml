@@ -7,12 +7,20 @@ on:
   pull_request:
 
 jobs:
-  host-tests:
-    name: host math tests
+  docs:
+    name: documentation consistency
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and run pure-math tests
+      - name: Run documentation checks
+        run: ./scripts/docs-check.sh
+
+  host-tests:
+    name: host tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run host tests
         run: make hosttest
 
   build-matrix:
