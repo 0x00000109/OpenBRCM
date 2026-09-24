@@ -136,9 +136,15 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   0x2C0); TX CONTROL is RMW `read(control) | XE | (PD?)` (per-FIFO cap bits
   re-asserted, not a constant); `ddoffsethigh=dataoffsethigh=0x80000000`
   (bus core 0x83C + dma64); `intrcvlazy[0]=0x01000000` (constant, set in attach
-  0x69faf); `dma_txreset 0xf64a`, `dma_rxreset 0xf5ef` (bounded 10 ms polls);
-  quiesce = per-channel reset + `bcma_core_disable`. **`D3A0 IMPLEMENTATION
-  GO: YES`** (§D.19), still NOT IMPLEMENTED / NOT HARDWARE PROVEN.
+  0x69faf);   `dma_txreset 0xf64a`, `dma_rxreset 0xf5ef` (bounded 10 ms polls);
+  vendor order is **IRQ-source config before DMA init**
+  (`intrcvlazy`→`macintstatus`→`intctrlregs[0].intmask=I_RI`, then
+  `dma_txinit x4`→`dma_rxinit`→`dma_rxfill`). Quiesce = per-channel reset
+  **with verification** (`macintmask=0`, clear `I_RI`, `dma_rxreset`,
+  `dma_txreset` per initialized channel); `bcma_core_disable` is containment
+  fallback only and never authorizes a free after unverified reset. **`D3A0
+  IMPLEMENTATION GO: YES`** (§D.19), still NOT IMPLEMENTED / NOT HARDWARE
+  PROVEN.
 
 ## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**

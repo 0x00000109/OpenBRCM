@@ -530,13 +530,15 @@ bsinitvals write**, then STOP before `wlc_phy_init`. Concretely:
 
 Keep these separate; do not collapse (vendor order preserved):
 
-- **D3A0 — vendor DMA/IRQ-source bring-up** (Appendices C/D): program the **4**
-  TX channels (BK/BE/VI/VO) and FIFO0 RX (64 buffers posted) exactly as the
-  vendor, with the **host IRQ route kept disabled** (`macintmask=0`,
-  `bcma_host_pci_irq_ctl=false`, no `I_RI`/`MI_DMAINT`); read-only
-  postconditions; then `ob_dma_quiesce` (per-channel reset + core disable) and
-  free. Status: **`D3A0 IMPLEMENTATION GO: YES`** with same-run teardown
-  (§D.19); still `NOT IMPLEMENTED` / `NOT HARDWARE PROVEN`.
+- **D3A0 — vendor DMA/IRQ-source bring-up** (Appendices C/D), **vendor order**:
+  `intrcvlazy[0]=0x01000000` -> `macintstatus` W1C `MI_GP1` ->
+  `intctrlregs[0].intmask=I_RI` (host route disabled, `macintmask` stays 0)
+  **before** DMA; then program the **4** TX channels (BK/BE/VI/VO) and FIFO0 RX
+  (64 buffers posted) exactly as the vendor; read-only postconditions; then
+  `ob_dma_quiesce` (per-channel reset **with verification**; core disable only
+  as verified fallback) before any free. Status: **`D3A0 IMPLEMENTATION GO:
+  YES`** with same-run teardown (§D.15/D.19); still `NOT IMPLEMENTED` /
+  `NOT HARDWARE PROVEN`.
 - **D3A1 — remaining rev42 tail** (`0x6930e..0x695d8`): NVRAM/BTC SHM tables,
   `tsf`, `MACCONTROL`, `macphyclk_set`, `switch_macfreq`. D11/SHM only.
   Status: **YES** (§C.18).
@@ -1655,52 +1657,63 @@ written here.
 Both match C3 `dma_txreset`/`dma_rxreset`. Vtable layout used: `+0x08` txinit,
 `+0x10` txreset, `+0xa0` rxinit, `+0xa8` rxreset, `+0xd8` rxfill.
 
-## D.7 Strongest DMA quiesce primitive
+## D.7 DMA quiesce contract (corrected)
 
-Comparison:
-- **A. per-channel reset** (`dma_rxreset` then `dma_txreset`): stops each engine
-  and verifies `status0` state field 0. Does not by itself guarantee no
-  in-flight host-memory transaction.
-- **B. D11 core reset/disable** (`bcma_core_disable`): asserts the core reset
-  line; `bcma_core_wait_value(RESET_ST, ~0, 0, 300)` first waits for the core to
-  become idle, then writes `RESET_CTL=RESET`, reads it back, writes `IOCTL`,
-  reads it back, `udelay(10)`. A core held in reset cannot issue new descriptor
-  fetches or buffer DMA.
-- **C. vendor `wlc_coredisable`** (`0x6378d`): radio off + `si_core_disable`
-  (+ `wlc_phy_anacore`, `wlc_bmac_core_phypll_ctl`), i.e. the C3/vendor wrapper
-  around B.
+The **normal** quiesce path is per-channel and must be **verified** before any
+Linux DMA resource is released:
 
-**SAFE DMA QUIESCE GUARANTEE:** `IRQ mask (macintmask=0, clear I_RI) →
-dma_rxreset → dma_txreset (both verified via status0 state==0) →
-bcma_core_disable(d11core, 0) with its RESET_ST wait and REG readbacks`. The
-core-disable step is the guarantee that the engines can no longer consume any
-Linux-owned ring/buffer address; the per-channel resets are the orderly
-per-engine stop. (Vendor normal bring-down uses core disable and does not call
-the per-channel resets; per-channel resets are the safer belt-and-suspenders
-because they are pinned and bounded.)
+```
+MACINTMASK (0x12C) = 0
+clear/disable relevant per-FIFO sources (intctrlregs[0].intmask &= ~I_RI;
+    ack owned macintstatus bits)
+  -> dma_rxreset(di0)                 (control=0; poll status0 & 0xf0000000 == 0)
+  -> dma_txreset(every initialized TX DMA channel)
+  -> VERIFY every DMA engine is stopped/disabled (status0 state field 0)
+```
+
+Only **after successful per-channel stop verification** may Linux-owned DMA
+mappings/rings/buffers be freed.
+
+`bcma_core_disable`/core-reset is a **containment/fallback** path. It asserts the
+core reset (`bcma_core_wait_value(RESET_ST,~0,0,300)` then `RESET_CTL=RESET`,
+readbacks, `IOCTL`, readbacks). It may be used to make freeing safe **only if
+its own postconditions are verified**; it must **not** be used as an excuse to
+free DMA memory after an unverified per-channel reset failure.
+
+If per-channel reset fails **and** core-reset postconditions cannot be verified,
+the implementation must **NOT** `dma_unmap_single`/free any DMA-owned memory or
+ring; it must keep the module loaded (or require reboot) and leave the DMA
+resources allocated. The code must **NEVER** free/unmap DMA-owned memory while
+hardware DMA access is still possible. Do not invent a PCIe flush mechanism.
+
+Honest caveat: neither BCMA nor the vendor adds an explicit "PCIe outstanding-DMA
+completion" flush beyond reset assertion + `RESET_ST` wait + register readbacks;
+those readbacks order the backplane writes. A D3A0 run must empirically confirm
+teardown.
 
 ## D.8 `ob_dma_quiesce()` contract
 
 Analysis only. Future helper:
 
-- **Preconditions:** D11 core powered; `ob_dma_*` resources allocated; IRQ
-  source may be armed but host route may or may not be enabled.
+- **Preconditions:** D11 core powered; `ob_dma_*` resources allocated; per-channel
+  initialization state tracked (initialized vs not).
 - **Steps (order fixed):**
   1. Disable interrupt sources: `macintmask` `0`, clear per-FIFO `I_RI`
      (`intctrlregs[0].intmask &= ~I_RI`), ack `macintstatus` owned bits.
-  2. `dma_rxreset(di0)` (control=0, bounded poll `status0 & 0xf0000000`==0);
-     verify.
-  3. `dma_txreset(di3), (di2), (di1), (di0)` (control=SE, poll, control=0,
-     poll); verify each.
-  4. `bcma_core_disable(hw->core, 0)` (waits `RESET_ST`, asserts reset,
-     readbacks).
-  5. `dma_wmb()`/readback as needed.
-- **Fallback:** if any per-channel reset times out, still proceed to
-  `bcma_core_disable`; the core-reset is the non-optional backstop. Do not free
-  if core-disable itself fails.
-- **Postcondition (required before any free/unmap):** hardware cannot DMA to any
-  Linux-owned ring/buffer address (all engines stopped or core in reset).
+  2. `dma_rxreset(di0)` **iff RX was initialized** (control=0; bounded poll
+     `status0 & 0xf0000000`==0); verify.
+  3. `dma_txreset` for **every initialized** TX channel (control=SE, poll,
+     control=0, poll); verify each. Skip uninitialized channels.
+  4. Verify all initialized engines show `status0` state field 0.
+- **Fallback (containment only):** if a per-channel reset times out, assert
+  `bcma_core_disable(hw->core, 0)` **and verify** its postconditions. Do not free
+  on an unverified reset.
+- **Postcondition (required before any free/unmap):** either every initialized
+  engine is verified stopped, **or** the core is verified held in reset.
+  Otherwise: do not free; keep resources; require reboot.
 - **Error return:** report which stage failed; never free on unproven quiesce.
+- **Partial-bring-up:** must handle every channel and never reset/free an
+  uninitialized resource nor miss an initialized one (per-channel init flags).
 
 Only after the postcondition may the caller `dma_unmap_single`, free skbs,
 `dma_pool_free`/`dma_free_coherent`, and free ring metadata.
@@ -1708,26 +1721,29 @@ Only after the postcondition may the caller `dma_unmap_single`, free skbs,
 ## D.9 Failure hierarchy
 
 ```
-try per-channel resets (bounded) -> verify status0 state==0
-  on any timeout/failure:
-      bcma_core_disable (assert reset, wait RESET_ST, readback)
-  after guaranteed quiesce (or core reset asserted):
+clear IRQ sources
+  -> per-channel reset (RX, then every initialized TX)
+  -> verify status0 state == 0 for each
+       if all verified: safe -> unmap/free
+       if any unverified:
+           bcma_core_disable + verify postconditions
+               if verified: safe -> unmap/free
+               else: DO NOT free/unmap; keep resources; require reboot
+  after proven quiesce only:
       synchronize_irq (if host route could deliver) / tasklet_kill
       dma_unmap_single each posted RX buffer
       free skbs, free descriptor rings
 ```
 No invented recovery beyond pinned per-channel resets and `bcma_core_disable`.
 
-## D.10 BCMA / core-reset DMA guarantee
+## D.10 BCMA / core-reset containment
 
 `bcma_core_disable` (Linux `drivers/bcma/core.c`): returns early if already in
 reset; otherwise `bcma_core_wait_value(RESET_ST, ~0, 0, 300)` (core idle),
 asserts `RESET_CTL=RESET`, reads back, `udelay(1)`, writes `IOCTL`, reads back,
-`udelay(10)`. Reset assertion stops the core's DMA. Caveat to record honestly:
-neither BCMA nor the vendor adds an explicit "PCIe outstanding-DMA completion"
-flush beyond the reset assertion + `RESET_ST` wait + register readbacks; the
-readbacks order the backplane writes. This is the standard and vendor-used
-guarantee; a D3A0 run must empirically confirm teardown.
+`udelay(10)`. Reset assertion stops the core's DMA. This is a **containment
+fallback**, not the primary free-permission gate; see D.7 for the corrected
+contract and the explicit "do not free while DMA access is possible" rule.
 
 ## D.11 Linux memory-ordering requirements
 
@@ -1784,21 +1800,35 @@ Do not require raw RX `ptr` equality (field/current bits); use the state fields.
 
 ## D.15 Proposed D3A0 runtime boundary (analysis)
 
+**Canonical vendor order (no convenience reordering).** The recovered vendor
+write order puts the interrupt-source configuration **before** DMA init
+(`0x69006` → `0x69070` → `0x69082` → … → `0x6921c` → `0x69236` → `0x69243`).
+The future implementation MUST keep that order:
+
 ```
 proven D2B prefix (ucode + common initvals)
-  -> allocate DMA resources (2..5 rings) + 8 KiB align + 32-bit mask
-  -> memset descriptors; map + post 64 RX buffers (DMA_FROM_DEVICE)
-  -> program TX0..TX3: addrlow/high + control RMW (XE[|PD]); no ptr/descriptors
+  -> [D3A1 D11 writes that precede it in vendor order, if that milestone is in scope]
+  -> INTRCVLAZY[0] (D11+0x100) = 0x01000000
+  -> MACINTSTATUS (D11+0x128) W1C = MI_GP1 (0x4000)
+  -> INTCONTROL[0].intmask (D11+0x24) = I_RI (0x10000)
+  -> MACINTMASK (D11+0x12C) remains 0
+  -> host BCMA/PCI IRQ route remains disabled
+  -> allocate / initialize DMA resources (8 KiB align; 32-bit mask)
+  -> memset descriptors; program TX0..TX3: addrlow/high + control RMW (XE[|PD]);
+     no ptr, no descriptors
   -> program RX: addrlow/high + ptr=0x400 + control=0x84D (enable)
-  -> interrupt source only: intrcvlazy[0]=0x01000000; intctrlregs[0].intmask|=I_RI
-     (HOST ROUTE DISABLED; macintmask stays 0)
-  -> validate D3A0 postconditions (D.14)
-  -> ob_dma_quiesce (per-channel reset -> verify -> bcma_core_disable)
-  -> verify engines stopped / core in reset
-  -> dma_unmap/free, free skbs/rings
+  -> map + post 64 RX buffers (DMA_FROM_DEVICE) via dma_rxfill-equivalent
+  -> validate deterministic DMA state (D.14)
+  -> ob_dma_quiesce: per-channel reset -> VERIFY every engine stopped
+  -> only after verified stop: dma_unmap/free, free skbs/rings
   -> STOP
 ```
-Bring-up and safe teardown must be proven **in the same run**.
+
+Rationale: this is the exact vendor writer order. IRQ-source programming is
+intentionally **before** DMA init; the DMA engines are enabled with their
+per-FIFO source already configured but the aggregate `macintmask` at 0 and the
+host route off, so no host interrupt can be delivered. Bring-up and safe
+teardown must be proven **in the same run**.
 
 ## D.16 Normal-unload vs reboot-only verdict
 
@@ -1806,9 +1836,12 @@ Bring-up and safe teardown must be proven **in the same run**.
 SAFE TO IMPLEMENT D3A0 WITH NORMAL QUIESCE/UNLOAD?   YES
 SAFE ONLY AS ONE-SHOT UNTIL REBOOT?                  YES (fallback, not the design)
 ```
-The quiesce sequence (D.7/D.8) is built only from pinned vendor/BCMA operations
-and makes normal unload possible; reboot-only remains an emergency fallback
-until the first D3A0 run empirically confirms teardown.
+Normal quiesce/unload is permitted: the per-channel resets are pinned and
+verified (D.7/D.8), and only a verified stop releases DMA memory. `bcma_core_disable`
+is containment only and does not by itself authorize a free. If per-channel stop
+verification fails and core-reset postconditions cannot be verified, the
+implementation must not free/unmap and must keep resources until reboot
+(D.7/D.9). Reboot-only is an emergency fallback, not the architecture.
 
 ## D.17 OpenBRCM refactor plan (analysis only)
 
@@ -1821,7 +1854,7 @@ until the first D3A0 run empirically confirms teardown.
 | `ob_dma_program_rx()` | `ob_rx_init` register writes | FIFO0 `0x220/0x224/0x228/0x22C`, control `0x84D` |
 | `ob_dma_post_rx()` | `ob_rx` post loop | 64 buffers, ptr `0x400` |
 | `ob_dma_config_irq_source()` | part of `ob_rx_init` | `intrcvlazy`/`I_RI` only; **no** `bcma_host_pci_irq_ctl`, no `MI_DMAINT` |
-| `ob_dma_quiesce()` | **new** | per-channel resets + core disable (D.7/D.8) |
+| `ob_dma_quiesce()` | **new** | per-channel resets **with verification**; `bcma_core_disable` only as verified containment fallback; never free while DMA possible (D.7/D.8) |
 | `ob_dma_free()` | `ob_dma_free` | call only after quiesce; free rings/skbs |
 | `ob_irq_route()` | `ob_rx.c` `bcma_host_pci_irq_ctl` | keep **out** of the D3A0 path (used by M3.4B/normal only) |
 

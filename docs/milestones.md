@@ -225,9 +225,13 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
 - **D3A0 blocker closure (Appendix D):** 4-TX map (BK/BE/VI/VO @ 0x200/0x240/
   0x280/0x2C0); TX CONTROL = RMW `read(control) | XE | (PD?)`; `ddoffsethigh =
   dataoffsethigh = 0x80000000`; `intrcvlazy[0] = 0x01000000`; `dma_txreset
-  0xf64a` / `dma_rxreset 0xf5ef`; quiesce = per-channel reset +
-  `bcma_core_disable`. **`D3A0 IMPLEMENTATION GO: YES`** (report §D.19), still
-  NOT IMPLEMENTED / NOT HARDWARE PROVEN.
+  0xf64a` / `dma_rxreset 0xf5ef`. **Vendor order: IRQ-source config
+  (`intrcvlazy`→`macintstatus`→`intctrlregs[0].intmask=I_RI`) BEFORE DMA init.**
+  Quiesce = per-channel reset **with verification** (`macintmask=0`, clear
+  `I_RI`, `dma_rxreset`, `dma_txreset` per initialized channel); core reset is
+  containment fallback and never authorizes a free after unverified reset.
+  **`D3A0 IMPLEMENTATION GO: YES`** (report §D.19), still NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN.
 - Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
   `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
   `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
