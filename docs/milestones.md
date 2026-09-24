@@ -101,9 +101,9 @@ enable, FAST clock/HAVEHT, and mac80211 registration all work.
 - Permanent MAC = **2c:fd:a1:61:40:25**, exposed by both `iw dev` and
   `/sys/class/net/wlp33s0b1/address`.
 - On-chip OTP is reachable only via the opt-in `otp_diag` (default off).
-Next: **M3**, staged — M3.1 (DMA architecture report), M3.2 (software-side ring
-allocation, runtime-validated) and M3.3 (interrupt infrastructure) are done;
-M3.4 (RX enable) awaits M3.3 runtime validation.
+Next: **M3**, staged — M3.1/M3.2/M3.3 done; M3.4A (RX proof) done and STOPPED
+pending acceptance of two corrections (`addrhigh=0x80000000`, RX ring=256)
+before M3.4B (safe RX enable).
 
 ## M2.5f — board-data source resolved: external SPROM
 Runtime `SROM_CONTROL=0x23` (PRESENT|SIZE_4K|OTP_PRESENT, OTPSEL=0) and
@@ -189,6 +189,25 @@ enabling any source, DMA or frame processing.
   mac80211 → IRQ → DMA.
 - Host + KUnit tests cover owned-mask subset, status validity, pending/ack,
   IRQ_NONE/HANDLED decisions, unknown-bit preservation and RMW masking.
+
+## M3.4A — RX path proof (report only)
+
+Recovered the exact BCM4352 / D11 rev42 RX DMA configuration from the blob; see
+`docs/rx_path.md`. **No DMA register written, no engine enabled.** Resolved:
+- RX control **`0x0000084D`** (`RE | PD | rxoffset<<1`, parity disabled, ROC
+  disabled, preserved core bits 0) — `_dma_rxenable` 0xe5f0.
+- `rxoffset = 38`, `rxbufsize = 2048`, no extra headroom; `nrxpost = 64`;
+  **RX ring = 256 descriptors** (TX = 512) — `wlc_attach_malloc`/`wlc_bmac_attach`.
+- Descriptor: `ctrl1 = EOT@255`, `ctrl2 = 0x0800`, `addrlow = (u32)pa`,
+  **`addrhigh = 0x80000000`**.
+- Ring base `addrlow = (u32)ring_dma`, `addrhigh = 0x80000000`;
+  initial `PTR = ring_dma + 0x400`.
+- Completion `index = (status0 & 0x1fff) >> 4`; RX header = 38 bytes, frame at
+  +38; RX FIFO0 intstatus/mask `0x20`/`0x24`, `I_RI = 1<<16`, `MI_DMAINT = 1<<15`.
+
+Two **corrections to the accepted M3.1/M3.2 model** (blocking M3.4B):
+`addrhigh = 0x80000000` (not 0), and RX ring = 256 (not 512). STOP for
+acceptance before enabling DMA.
 
 ## Previously
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).

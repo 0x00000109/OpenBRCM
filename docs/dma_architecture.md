@@ -165,8 +165,8 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
 2. **TX reset:** set `control = SE` (suspend), poll `status0.XS` until
    disabled/idle/stopped (bounded); `control = 0`; poll disabled; `udelay(~300)`.
 3. **RX reset:** `control = 0`; poll `status0.RS == disabled` (bounded).
-4. Program descriptor-ring base: `addrlow = ring_pa`; `addrhigh = ring_pa>>32`
-   (PCI host: no offset — see §11).
+4. Program descriptor-ring base: `addrlow = (u32)ring_pa`; `addrhigh = 0x80000000`
+   for `buscoretype 0x83C && dma64` (BCM4352) — see §11.
 5. Zero the descriptor ring **before** enabling (or after, if 4K-aligned);
    publish `ptr` only with valid descriptors.
 6. **TX enable:** `control |= XE` (`| PD` if parity disabled).
@@ -190,15 +190,18 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
 - `dma_attach` special-cases core ids `0x829`/`0x834` (other 802.11 cores) for
   address-extension; our D11 `0x812` takes the general path.
 
-## 11. Translation / PCIe DMA offset
-- PCI host: `ddoffsetlow = dataoffsetlow = 0` — program absolute DMA addresses;
-  the Linux DMA API performs any IOMMU/translation.
+## 11. Translation / PCIe DMA offset — corrected (M3.4A)
+- PCI host: `ddoffsetlow = dataoffsetlow = 0` but **`ddoffsethigh =
+  dataoffsethigh = 0x80000000`** for `buscoretype ∈ {0x83C,0x820} && dma64`
+  (BCM4352 is `0x83C`). Blob `dma_attach` (`0x10380`, `0x10645`) and the
+  descriptor/ring writers (`dma64_dd_upd` `0xdcf8`, `_dma_ddtable_init`
+  `~0xe69f`) prove `addrlow = (u32)pa` and **`addrhigh = 0x80000000`** for both
+  buffer descriptors and the ring base. This supersedes the earlier "no offset"
+  statement; see `docs/rx_path.md`.
 - The `AE` (address-extension) mechanism (`ctrl2` bits[17:16], control bits
   [17:16]) is only for **32-bit** engines placing buffers above 1 GiB. For a
   64-bit engine it is not required; M3.2 will still probe AE support as the blob
   does.
-- (SoC-only `SI_PCIE_DMA_H32` high-address offset does **not** apply to our PCI
-  host.)
 
 ## 12. Unresolved fields (do not guess; resolve in M3.2/M3.4)
 - Exact value of RX `control` `RO` (rxoffset) on this part (expected 38 = header).
@@ -241,7 +244,7 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
 | 6 | RX hw header 38 B + fields | C3 | `brcmsmac/d11.h` `d11rxhdr`, `BRCMS_HWRXOFF` |
 | 7 | IRQ/data plumbing via bcma `core->irq`/`core->dma_dev` | C2 | `drivers/bcma/main.c:257` |
 | 8 | reset/enable ordering | C3 | `brcmsmac/dma.c` `dma_txreset/rxreset/txinit/rxinit` |
-| 9 | PCI host: no DMA offset, use DMA API | C2 | `dma_attach` (hosttype PCI → offsets 0) |
+| 9 | PCI host: `addrlow=(u32)pa`, `addrhigh=0x80000000` (dma64, 0x83C) | C2 | `dma_attach` 0x10645; `dma64_dd_upd` 0xdcf8 |
 
 **End of M3.1. No register writes. Awaiting approval before M3.2.**
 
