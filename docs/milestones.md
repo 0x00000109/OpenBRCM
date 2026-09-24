@@ -297,9 +297,12 @@ Canonical status (exact):
   (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
   normal unload + DMA teardown + STOP boundary proven)
 - M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
-  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: NO` — blocked on the
-  band-0 MHF runtime inputs (initial value and write expressions proven; the
-  SPROM/NVRAM + opaque `wlc_info` inputs are not available)
+  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY
+  PROVEN`: all MHF write expressions and gate semantics are resolved
+  (`wlc->stf`, `pub->sih`/`bustype`/`buscorerev`, `si_pci_war16165`, EDCF
+  flag); missing input values are `antsel_type` (rev11 SPROM + NVRAM
+  `antswitch`/`aa2g`/`aa5g`), the PCIe core rev, and the final EDCF flag; a
+  read-only raw-SPROM + SI-field probe is designed (not run)
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated

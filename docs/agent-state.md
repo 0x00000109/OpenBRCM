@@ -427,19 +427,24 @@ verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
 `sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
-**Next action — D3B blocked on MHF inputs; D4 after.** M3.4D3B (band init /
-`d11ac1bsinitvals42`) is analyzed in
+**Next action — D3B blocked on MHF input values; D4 after.** M3.4D3B (band
+init / `d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
-`wlc_phy_init` (0x669df). Newly pinned: the pre-bs helper `sub_62766` is
+`wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
 `wlc_bmac_write_mhf` (writes MHF1..5 to SHM `0x5e/0x60/0x62/0x78/0xd4` from
-`band-0 mhfs[0..4]`). The MHF init call graph and every value expression are
-proven, but the runtime inputs (`antsel_type` from SPROM/NVRAM; opaque
-`wlc_info` gates) are not available, so `D3B IMPLEMENTATION GO: NO` — do not
-invent a default. Unblock via a read-only SPROM/NVRAM probe + field mapping,
-the `wl`-layer initializer, or an explicit logged-probe decision (§3.2). D4 (AC
-PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO)
-follows. Neither D3B nor D4 has code or hardware proof yet.
+`band-0 mhfs[0..4]`). All write expressions and formerly-opaque gate fields are
+now resolved: `wlc+0x550` = `wlc->stf` (`stf+0x59` = phytype != HT -> 1 for AC);
+`pub+0x100` = `si_t *sih` with `bustype`/`buscoretype`/`buscorerev`;
+`wlc+0x60` = `si_pci_war16165` (PCIe core WAR 16165); `pub+0x54` = EDCF flag
+(init `0xffffffff`). The MHF vector is `VALUE PARTIALLY PROVEN`: the three
+missing input values are `antsel_type` (rev11 SPROM `boardtype`/`boardflags` +
+NVRAM `antswitch`/`aa2g`/`aa5g`), the PCIe core revision, and the final EDCF
+flag, so `D3B IMPLEMENTATION GO: NO` — do not invent a default. A smallest
+read-only probe (raw rev11 SPROM dump + SI struct fields; no D11/PHY/DMA/IRQ)
+is designed but not implemented or run. D4 (AC PHY bring-up: `wlc_phy_init` ->
+`wlc_phy_anacore`, first PHY-indirect MMIO) follows. Neither D3B nor D4 has
+code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
