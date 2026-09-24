@@ -40,7 +40,21 @@ int ob_probe(struct bcma_device *core)
 	if (ret)
 		return ret;
 
-	return ob_mac80211_register(hw);
+	/*
+	 * M3.2: allocate the DMA64 descriptor rings (software model only). The
+	 * D11 DMA register blocks are left untouched and no engine is enabled.
+	 */
+	ret = ob_dma_init(hw);
+	if (ret)
+		return ret;
+
+	ret = ob_mac80211_register(hw);
+	if (ret) {
+		ob_dma_free(hw);
+		return ret;
+	}
+
+	return 0;
 }
 
 void ob_remove(struct bcma_device *core)
@@ -51,6 +65,7 @@ void ob_remove(struct bcma_device *core)
 		return;
 
 	ob_mac80211_unregister(hw);
+	ob_dma_free(hw);
 	dev_info(hw->dev, OB_DRV_NAME ": removed\n");
 	bcma_set_drvdata(core, NULL);
 }

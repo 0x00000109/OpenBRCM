@@ -223,3 +223,30 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
 | 9 | PCI host: no DMA offset, use DMA API | C2 | `dma_attach` (hosttype PCI → offsets 0) |
 
 **End of M3.1. No register writes. Awaiting approval before M3.2.**
+
+---
+
+## M3.2 implementation note (software model only)
+
+`src/ob_dma.{h,c}` implements the model above without touching hardware.
+
+- **Allocation API:** `dma_pool_create("ob-dma-ring", core->dma_dev,
+  OB_DMA_RING_BYTES=8192, OB_DMA_RING_ALIGN=8192, 8192)`, then
+  `dma_pool_alloc()` per ring. A pool with `size == align == boundary == 8192`
+  carves each block on an 8 KiB boundary, which a plain
+  `dma_alloc_coherent(8192)` does not guarantee; `IS_ALIGNED(..., 8192)` is
+  still verified for CPU and DMA addresses and the allocation is rejected with
+  `-EINVAL` if it fails.
+- **Real DMA device:** `core->dma_dev`, which `bcma` sets to `bus->dev` (the
+  PCIe device, `drivers/bcma/main.c:250`). The 64-bit capability is validated
+  with `dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64))`; a rejection fails
+  probe (no DMA32 fallback).
+- **Descriptor:** `struct ob_dma_desc { __le32 ctrl1, ctrl2, addrlow, addrhigh; }`
+  with `_Static_assert(sizeof(...) == 16)`; encoded via `cpu_to_le32` helpers.
+- **Ring:** `struct ob_dma_ring` keeps `desc_cpu`/`desc_dma`, the pool block
+  base handles, `n`, `head`, `tail`, a per-slot ownership array and an
+  `allocated` flag, with independent RX and TX instances.
+- **Not done (by design):** writing 0x200/0x220/0x240/0x280/0x2C0, `control`,
+  `addrlow`, `addrhigh`, `ptr`, enabling an engine, or taking an IRQ. Descriptors
+  are zero-initialised; no buffer is mapped and no EOT is written to the ring.
+

@@ -101,7 +101,8 @@ enable, FAST clock/HAVEHT, and mac80211 registration all work.
 - Permanent MAC = **2c:fd:a1:61:40:25**, exposed by both `iw dev` and
   `/sys/class/net/wlp33s0b1/address`.
 - On-chip OTP is reachable only via the opt-in `otp_diag` (default off).
-Next: **M3**, staged (M3.1 = DMA architecture report; no register writes yet).
+Next: **M3**, staged — M3.1 (DMA architecture report) and M3.2 (software-side
+ring allocation) are done; M3.3 (interrupts) awaits M3.2 runtime validation.
 
 ## M2.5f — board-data source resolved: external SPROM
 Runtime `SROM_CONTROL=0x23` (PRESENT|SIZE_4K|OTP_PRESENT, OTPSEL=0) and
@@ -130,6 +131,37 @@ and applies rev8 `IL0MAC=+0x8C` to rev11 data; rev11 puts the first MAC at
   `ieee80211_register_hw()`, never using `bus->sprom.il0mac`.
 Runtime-verified: `iw dev` and `/sys/class/net/wlp33s0b1/address` both show
 **2c:fd:a1:61:40:25** (OUI ASUSTeK). OTP remains untouched. M3 not started.
+
+## M3.1 — DMA architecture (report)
+
+Recovered the BCM4352 / D11 rev42 DMA64 model; see `docs/dma_architecture.md`.
+No register writes. Key conclusions: 64-bit dma64 engine; FIFO map for
+`corerev > 10` (TX0 0x200 / RX0 0x220 / TX1 0x240 / TX2 0x280 / TX3 0x2C0,
+stride 0x40; RX ring = FIFO0, management TX = FIFO3); per-channel registers
+`control 0x00 / ptr 0x04 / addrlow 0x08 / addrhigh 0x0C / status0 0x10 /
+status1 0x14` (corrects the earlier "STATUS=0x04" artifact); 16-byte descriptor
+`{ctrl1, ctrl2, addrlow, addrhigh}`; 8 KiB ring alignment; producer/consumer via
+`ptr` + `status0`; D11 `macintstatus` 0x128 / `macintmask` 0x12C
+(`I_RI`=1<<16, `I_XI`=1<<24); 38-byte hardware RX header.
+
+## M3.2 — DMA ring allocation (software model only)
+
+Implemented `src/ob_dma.{h,c}`. Software only: no D11 DMA register is touched,
+no ring base is published, no engine is enabled and no IRQ is taken.
+- Validates the real device capability with
+  `dma_set_mask_and_coherent(core->dma_dev, DMA_BIT_MASK(64))` and fails probe
+  cleanly (no silent DMA32 fallback) if 64-bit DMA is not accepted.
+- Allocates one RX and one TX/control ring (future FIFO0 RX @0x220 / FIFO3 TX
+  @0x2c0) from a `dma_pool` of 8 KiB blocks with 8 KiB alignment/boundary, and
+  verifies `IS_ALIGNED(..., 8192)` for both CPU and DMA addresses.
+- Descriptor = 16 bytes `{ctrl1, ctrl2, addrlow, addrhigh}` with explicit
+  masks/shifts (no bitfields); rings = 512 descriptors = 8192 bytes.
+- Separate RX/TX index and per-slot ownership metadata (skb/dma/mapped) so a
+  later mapping is unmapped and freed exactly once.
+- Full unwind on every failure stage and in `ob_remove()`; no hardware reset is
+  needed because DMA was never enabled.
+- Host + KUnit tests cover descriptor encoding, ring arithmetic/wraparound,
+  index bounds, descriptor offsets/aliasing and the EOT helper.
 
 ## Previously
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).
