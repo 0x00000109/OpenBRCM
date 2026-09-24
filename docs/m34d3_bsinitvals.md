@@ -575,9 +575,11 @@ Still unknown / open decisions:
 - `ef4be46` — `m34d3: analyze rev42 band-switch initvals and PHY boundary`
   (initial report + classifier).
 - `b7d4376` — `m34d3: resolve switch_radio ordering; correct PHY/RF boundary`
-  (this correction: §0, Appendix A, revised §16/§17/§18/§19).
+  (first correction: §0, Appendix A, revised §16/§17/§18/§19).
+- `da2bb4a` — `m34d3: reverse post-common tail; DMA/IRQ content blocks D3A/D3B`
+  (second correction: Appendix B, §0/§16/§17/§18/§19).
 
-Both DCO signed, on `m34d3-bsinitvals-analysis`; no driver code and no hardware
+All DCO signed, on `m34d3-bsinitvals-analysis`; no driver code and no hardware
 interaction.
 
 ## 21. Draft PR
