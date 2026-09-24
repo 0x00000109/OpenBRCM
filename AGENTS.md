@@ -12,13 +12,19 @@ Before modifying anything:
 1. `pwd` — must be this repository.
 2. `git status --short --branch`; `git rev-parse HEAD`; `git log --oneline -15`.
 3. Read `AGENTS.md` (this file), then `docs/agent-state.md`, then
-   `docs/milestones.md`.
+   `docs/milestones.md`, then `docs/re-tooling.md` (the canonical RE-tooling
+   document).
 4. Identify the **active milestone** and its exact **STOP boundary**.
 5. Check hook activation:
    `git config --local --get core.hooksPath`; `ls -l .githooks/`.
-6. Confirm no uncommitted work is about to be overwritten or discarded.
+6. Run the lightweight read-only RE-tooling bootstrap: `scripts/re-bootstrap.sh`.
+   It must PASS; do not begin analysis if it FAILs (fix the index, not the
+   symptom).
+7. Confirm no uncommitted work is about to be overwritten or discarded.
 
-Only then may code be changed.
+Only then may code be changed. The OpenCode project integration
+(`.opencode/opencode.json`, `.opencode/plugins/`, `.opencode/skills/openbrcm-re`)
+surfaces these paths automatically; do not rely on conversation memory.
 
 ## 1. Non-negotiable safety rules
 
@@ -75,6 +81,9 @@ documentation says which status it reached.
 - `.githooks/pre-commit` — runs the checker and enforces that source/milestone
   changes also move the state documentation. Activate once per clone with
   `git config --local core.hooksPath .githooks`.
+- `scripts/re-bootstrap.sh` — read-only verification that the deterministic
+  RE tooling (the `re` binary, `re.db`, its blob identity, the gate scripts) and
+  the persistent OpenCode integration are present and current.
 - Intentional bypass: `OPENBRCM_SKIP_DOCS_CHECK=1 git commit ...`.
 
 ## 5. Current state and next action
@@ -88,3 +97,34 @@ before acting, and update it when the state changes.
 
 Branching, commit format, pull-request/review rules, releases and SSH-key
 handling are defined in [`docs/github-workflow.md`](docs/github-workflow.md).
+
+## 7. Tool-first reverse engineering (mandatory)
+
+Reverse engineering must use the deterministic tooling documented in
+[`docs/re-tooling.md`](docs/re-tooling.md) **before** manual inspection.
+
+**Rule:** before any manual `objdump` / `readelf` / `r2` / `grep` over the
+vendor blob, check whether the fact already exists in the index (`re.db`). A
+fact already indexed **must** be queried from `re`; manual disassembly alone is
+not acceptable evidence when the index can answer the question.
+
+Manual disassembly is permitted only when:
+
+- a) `re`/`re.db` cannot answer the question, or
+- b) it is being used as independent verification of an indexed fact.
+
+When a useful fact is missing from `re`, record it as a **tooling gap** (see
+`docs/re-tooling.md` §9) so the same manual work is not repeated indefinitely.
+The minimum workflow is:
+
+```
+re.db -> re query -> compact evidence packet -> reasoning -> targeted manual check
+```
+
+Query the index with the repository wrapper, e.g.
+`scripts/re.sh fn|card|fields|switch|seq|flow|data|gstruct|phy|tables <fn>`
+(it cd's to the tooling workspace so the relative vendor-blob path resolves).
+The OpenCode project integration (`docs/re-tooling.md`, the `openbrcm-re`
+skill, and the project plugin) surfaces this automatically; it is still the
+agent's responsibility to follow it. `scripts/re-bootstrap.sh` must PASS before
+analysis begins.

@@ -14,6 +14,18 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - OpenBRCM `ob_si` for recovered chip-specific behaviour
 - mac80211 SoftMAC integration
 
+## Tooling bootstrap (read first)
+- Deterministic RE tooling is canonical in
+  `/media/kartashoff/Storage/opensource/iced/test`; see `docs/re-tooling.md`.
+- `scripts/re-bootstrap.sh` (read-only) verifies the `re` binary, `re.db`, its
+  indexed blob sha256, the gate scripts, the Git hook and the OpenCode
+  integration. It must **PASS** before analysis; if `re.db` is stale it prints
+  the rebuild command.
+- OpenCode from this directory auto-loads the tool-first RE context, the
+  `openbrcm-re` skill and the project plugins via `.opencode/opencode.json`.
+- Rule: query `re.db`/`re` before manual `objdump`/`readelf`/`r2`/`grep`
+  (`AGENTS.md` §7).
+
 ## Commit state (IMPORTANT)
 - `main` = `2a7ba1d` — **PR #2 merged** (`85d3013`), **PR #5 merged**
   (`65d61ce`), **PR #6 merged** (`4146cd8`), and **PR #7 merged**

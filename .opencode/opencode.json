@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "docs/agent-state.md",
+    "docs/re-tooling.md"
+  ],
+  "references": {
+    "re-tooling": {
+      "path": "/media/kartashoff/Storage/opensource/iced/test",
+      "description": "Authoritative deterministic RE tooling: the re.db index, the re binary, verification gates, and the cross-OS matcher. Use for every reverse-engineering task before manual disassembly."
+    },
+    "brcm-re": {
+      "path": "/home/kartashoff/brcm-re",
+      "description": "Cross-binary RE workspace (Windows wl7-64.sys / wl10-64.sys, Linux wl.ko) with bcm4352_recover.py for normalized instruction fingerprint matching."
+    }
+  },
+  "plugin": [
+    "file:///media/kartashoff/Storage/opensource/iced/test/.opencode/plugins/re-hooks.ts"
+  ]
+}
