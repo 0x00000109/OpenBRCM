@@ -101,8 +101,9 @@ enable, FAST clock/HAVEHT, and mac80211 registration all work.
 - Permanent MAC = **2c:fd:a1:61:40:25**, exposed by both `iw dev` and
   `/sys/class/net/wlp33s0b1/address`.
 - On-chip OTP is reachable only via the opt-in `otp_diag` (default off).
-Next: **M3**, staged — M3.1 (DMA architecture report) and M3.2 (software-side
-ring allocation) are done; M3.3 (interrupts) awaits M3.2 runtime validation.
+Next: **M3**, staged — M3.1 (DMA architecture report), M3.2 (software-side ring
+allocation, runtime-validated) and M3.3 (interrupt infrastructure) are done;
+M3.4 (RX enable) awaits M3.3 runtime validation.
 
 ## M2.5f — board-data source resolved: external SPROM
 Runtime `SROM_CONTROL=0x23` (PRESENT|SIZE_4K|OTP_PRESENT, OTPSEL=0) and
@@ -164,6 +165,30 @@ no ring base is published, no engine is enabled and no IRQ is taken.
   needed because DMA was never enabled.
 - Host + KUnit tests cover descriptor encoding, ring arithmetic/wraparound,
   index bounds, descriptor offsets/aliasing and the EOT helper.
+
+## M3.3 — interrupt infrastructure
+
+Implemented `src/ob_irq.{h,c}`. Establishes and proves a safe IRQ path without
+enabling any source, DMA or frame processing.
+- **Transport:** the IRQ is the one `bcma` already recorded for the D11 core
+  (`core->irq == bus->host_pci->irq`); OpenBRCM calls no `pci_alloc_irq_vectors()`
+  and does not touch the PCI IRQ routing. Mode is reported from real PCI state
+  (`pci_dev->msix_enabled`/`msi_enabled`, else INTx).
+- **Registers:** `MACINTSTATUS=0x128`, `MACINTMASK=0x12C`, per-FIFO
+  `intctrlregs` at 0x20. Corrects the M3.1 draft: `I_RI`/`I_XI` are per-FIFO
+  bits, not `macintstatus` bits (see `docs/dma_architecture.md` §7).
+- **Owned bits:** `MI_DMAINT` only; `OB_D11_IRQ_OWNED_MASK ⊆ KNOWN_MASK`, so the
+  handler never acks an unproven bit. Owned sources are RMW-masked (unrelated
+  bits preserved) before `request_irq`.
+- **Handler:** read `MACINTSTATUS`; treat `0xffffffff` as invalid; if no owned
+  bit pending return `IRQ_NONE`; otherwise rate-limited log, write back only the
+  owned pending bits (write-1-to-clear), return `IRQ_HANDLED`. No loops, no
+  sleeps, no allocation.
+- **Teardown order:** mask owned bits → clear the handler gate →
+  `synchronize_irq()` → `free_irq()` → log counters. `ob_remove()`:
+  mac80211 → IRQ → DMA.
+- Host + KUnit tests cover owned-mask subset, status validity, pending/ack,
+  IRQ_NONE/HANDLED decisions, unknown-bit preservation and RMW masking.
 
 ## Previously
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).

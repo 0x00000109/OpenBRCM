@@ -9,7 +9,7 @@ ifneq ($(KERNELRELEASE),)
 
 obj-m		:= openbrcm.o
 openbrcm-y	:= src/ob_main.o src/ob_core.o src/ob_si.o \
-		   src/ob_dma.o \
+		   src/ob_dma.o src/ob_irq.o \
 		   src/ob_channel.o src/ob_rate.o src/ob_mac80211.o
 
 else

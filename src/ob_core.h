@@ -13,6 +13,7 @@
 #include <linux/device.h>
 #include <linux/bcma/bcma.h>
 #include "ob_dma.h"
+#include "ob_irq.h"
 
 #define OB_DRV_NAME	"openbrcm"
 
@@ -30,6 +31,7 @@ struct ieee80211_hw;
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
  * @ieee:	mac80211 hw, once registered
  * @dma:	DMA64 descriptor rings and DMA capability (M3.2, software only)
+ * @irq:	D11 interrupt registration and counters (M3.3)
  */
 struct ob_hw {
 	struct bcma_device	*core;
@@ -42,6 +44,7 @@ struct ob_hw {
 	bool			mac_valid;
 	struct ieee80211_hw	*ieee;
 	struct ob_dma		dma;
+	struct ob_irq		irq;
 };
 
 int ob_probe(struct bcma_device *core);

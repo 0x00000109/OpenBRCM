@@ -129,15 +129,36 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
   be sanity-checked against `RxFrameSize` and the buffer size.
 
 ## 7. Interrupt relationship — C2
-- Single D11 IRQ. ISR must read **`macintstatus` (0x128)**, mask with
-  **`macintmask` (0x12C)`, and acknowledge D11 bits by writing them back.
-- Bits (`d11.h`): `I_RI = 1<<16` (RX), `I_XI = 1<<24` (TX), errors `I_PC`(10),
-  `I_PD`(11), `I_DE`(12), `I_RU`(13), `I_RO`(14), `I_XU`(15). RX/TX completion
-  also gated by per-descriptor `IOC` (bit 29).
+> **Correction (M3.3).** An earlier draft of this section attributed `I_RI`
+> (1<<16) / `I_XI` (1<<24) to `macintstatus`. That is wrong: those are the
+> per-FIFO interrupt bits (`intctrlregs[i]`, D11+0x20) for the RX/TX FIFOs.
+> `macintstatus`/`macintmask` (0x128/0x12C) use the **`MI_*`** bit set.
+
+- Single D11 IRQ. ISR reads **`macintstatus` (0x128)**, keeps
+  `raw & macintmask`, and acknowledges by writing the owned bits back
+  (write-1-to-clear). A read of `0xffffffff` means the core is in reset / the
+  device was removed and must not be acknowledged.
+- **`macintstatus`/`macintmask` bits (C3 `d11.h`, `MI_*`)**: `MI_TBTT`(2),
+  `MI_MACTXERR`(9), `MI_PHYTXERR`(11), **`MI_DMAINT`(15, OR of the per-FIFO DMA
+  interrupts)**, `MI_TXSTOP`(16), `MI_TFS`(29), `MI_PHYCHANGED`(30),
+  `MI_TO`(31), plus PSM/PMQ/beacon/gp bits (0-21, 28-31).
+- **Per-FIFO DMA interrupt control at D11+0x20** (`intctrlregs[8]`,
+  `{intstatus, intmask}`): `RX_FIFO = 0` (0x20/0x24) uses `I_RI = 1<<16`;
+  `TX_AC_VO_FIFO = TX_CTL_FIFO = 3` (0x38/0x3C) uses `I_XI = 1<<24`; error bits
+  `I_PC`(10) `I_PD`(11) `I_DE`(12) `I_RU`(13) `I_RO`(14) `I_XU`(15). These
+  assert `MI_DMAINT` at the top level; per-FIFO `intstatus` is
+  write-1-to-clear. RX/TX completion is also gated by per-descriptor `IOC`
+  (bit 29).
 - `wlc_intrson`: caches mask at `[wlc+0x9c]`, writes `macintmask`. `wlc_intrsoff`:
   writes 0 then reads back with a 1 µs delay. `sub_7a769` reads status and does
   `macintstatus = read & [wlc+0x1c4]` (masked acknowledge). **Never write
   0xffffffff blindly.**
+- **PCI transport (C3):** `bcma` records the core IRQ as `core->irq =
+  bus->host_pci->irq` but does not request it. The per-core routing is
+  `bcma_host_pci_irq_ctl(bus, core, enable)`, which sets the core's bit in the
+  PCI `IRQMASK` config register (`bcma_regs.h:59`). `brcmsmac` uses
+  `request_irq(pdev->irq, ..., IRQF_SHARED, ...)` and never allocates its own
+  vectors.
 
 ## 8. Reset / enable ordering (derived, C3 + C2 hooks)
 1. DMA device ready (`bcma` host up — already done in `ob_si_powerup`).

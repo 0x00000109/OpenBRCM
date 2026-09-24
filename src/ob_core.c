@@ -48,8 +48,19 @@ int ob_probe(struct bcma_device *core)
 	if (ret)
 		return ret;
 
+	/*
+	 * M3.3: register the D11 interrupt path. No source is enabled; the
+	 * handler is installed only to prove safe registration/teardown.
+	 */
+	ret = ob_irq_init(hw);
+	if (ret) {
+		ob_dma_free(hw);
+		return ret;
+	}
+
 	ret = ob_mac80211_register(hw);
 	if (ret) {
+		ob_irq_free(hw);
 		ob_dma_free(hw);
 		return ret;
 	}
@@ -65,6 +76,7 @@ void ob_remove(struct bcma_device *core)
 		return;
 
 	ob_mac80211_unregister(hw);
+	ob_irq_free(hw);
 	ob_dma_free(hw);
 	dev_info(hw->dev, OB_DRV_NAME ": removed\n");
 	bcma_set_drvdata(core, NULL);
