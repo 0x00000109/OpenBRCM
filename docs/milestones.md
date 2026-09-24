@@ -296,7 +296,9 @@ Canonical status (exact):
 - M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
   normal unload + DMA teardown + STOP boundary proven)
-- M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN
+- M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
+  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: CONDITIONAL` (one open
+  item: band-0 MHF values)
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
@@ -358,8 +360,11 @@ Module built + MOK-signed, **never loaded** (no hardware execution).
   order, postconditions validated, **normal `rmmod` + verified DMA teardown +
   STOP before `sub_6656c`/bsinitvals/PHY**; no kernel fault. Proof:
   `docs/m34d3a1_vendor_tail_test.md` §14.1.
-- **Next:** D3B analysis (band init / `d11ac1bsinitvals42`) → D4 (AC PHY
-  bring-up). Both remain `ANALYSIS ONLY` / NOT HARDWARE PROVEN.
+- **Next:** D3B (band init / `d11ac1bsinitvals42`) → D4 (AC PHY bring-up). D3B
+  is analyzed in `docs/m34d3b_band_init.md`; the pre-bs helper `sub_62766` is
+  newly pinned as `wlc_bmac_write_mhf` (MHF1..5). D3B
+  `IMPLEMENTATION GO: CONDITIONAL` on the band-0 MHF values; D4 remains not
+  started.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

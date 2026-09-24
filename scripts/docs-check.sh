@@ -208,6 +208,14 @@ if grep -rniE 'M3\.4D3B.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
 else
 	ok "D3B not claimed hardware proven"
 fi
+if [ -f docs/m34d3b_band_init.md ] && \
+   grep -q 'ANALYSIS ONLY' docs/m34d3b_band_init.md && \
+   grep -q 'D3B IMPLEMENTATION GO:.*CONDITIONAL' docs/m34d3b_band_init.md && \
+   grep -q 'wlc_bmac_write_mhf' docs/m34d3b_band_init.md; then
+	ok "D3B analysis record present (ANALYSIS ONLY / CONDITIONAL GO)"
+else
+	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / CONDITIONAL GO / wlc_bmac_write_mhf)"
+fi
 
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
 if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
