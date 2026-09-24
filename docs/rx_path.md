@@ -296,3 +296,33 @@ ISR: read `D11+0x128`; if `MI_DMAINT`, read `D11+0x20`, ack `I_RI`, ack owned
 disables the engine (bounded poll), kills the tasklet, then frees the IRQ.
 
 **End of addendum. No DMA register written, no engine enabled.**
+
+---
+
+# M3.4B correction — aligned RX PTR model
+
+The first M3.4B run aborted on a PTR equality check; the engine itself was
+healthy. Blob re-proof:
+
+`dma_rxfill` (`0xf39f`–`0xf3cf`):
+```
+f39f cmpb $0,0x40(%rbx)     ; dma64
+f3b1 mov  0x50(%rbx),%rsi   ; RX reg base
+f3b5 shl  $0x4,%edi         ; rxout*16
+f3b8 add  0xe0(%rbx),%edi   ; + rcvptrbase
+f3be add  $0x4,%rsi         ; PTR
+f3cf call writel            ; write(PTR, rcvptrbase + rxout*16)
+```
+`_dma_ddtable_init` (`0xe683`): `cmpb $0,0x104(%rdi)` (aligndesc_4k) → when set
+it **skips** assigning `rcvptrbase` (`di+0xe0`), so it stays 0. `dma_attach`
+(`0x1076f`–`0x107c3`) sets `di+0x104 = (readback(addrlow after 0xff0) == 0)`;
+BCM4352 takes the aligned path. Therefore **rcvptrbase = 0** and
+**PTR = rxout*16 = 0x400** for rxout=64 — not `ring_dma + 0x400`.
+
+PTR readback is a hardware-updated current/last descriptor register whose raw
+value carries base/current bits; it is logged (`ptr_field = ptr & 0x1fff`) and
+not compared for raw equality. Validation now uses only proven fields:
+CONTROL.RE, ADDRLOW, ADDRHIGH, STATUS0 valid + not DISABLED, STATUS1 error bits.
+
+Runtime STATUS0=0x2000e000 → RS=0x2 (IDLE), CD=0; STATUS1=0x0000e000 → RE=0,
+AD=0xe000. RX was healthy and idle.

@@ -21,6 +21,20 @@ static void ob_rx_index_test(struct kunit *test)
 	KUNIT_EXPECT_TRUE(test, ob_rx_index_ok(255, 256));
 	KUNIT_EXPECT_FALSE(test, ob_rx_index_ok(256, 256));
 	KUNIT_EXPECT_FALSE(test, ob_rx_index_ok(511, 256));
+
+	/* PTR model: aligned (rcvptrbase=0) vs unaligned */
+	KUNIT_EXPECT_EQ(test, ob_rx_ptr_value(true, 0, 64), 0x400u);
+	KUNIT_EXPECT_EQ(test, ob_rx_ptr_value(false, 0xd74fe000u, 64),
+			0xd74fe000u + 0x400);
+
+	/* runtime STATUS0 = 0x2000e000 decode */
+	KUNIT_EXPECT_EQ(test, ob_rx_rs0_state(0x2000e000u), 2u);
+	KUNIT_EXPECT_TRUE(test, ob_rx_rs0_is_idle(0x2000e000u));
+	KUNIT_EXPECT_EQ(test, ob_rx_rs0_cd(0x2000e000u), 0u);
+	KUNIT_EXPECT_EQ(test,
+			ob_rx_status_index(0x2000e000u, 0xd74fe000ULL), 0u);
+	KUNIT_EXPECT_EQ(test,
+			ob_rx_status_index(0x2000e010u, 0xd74fe000ULL), 1u);
 }
 
 static void ob_rx_len_test(struct kunit *test)

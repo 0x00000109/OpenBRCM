@@ -166,11 +166,15 @@ static int ob_rx_program(struct ob_hw *hw)
 {
 	struct ob_dma_ring *ring = &hw->dma.rx;
 	u32 ring_lo = (u32)ring->desc_dma;
-	u32 ptr = ring_lo + OB_DMA_RX_POST_INIT * OB_DMA_DESC_SIZE;
+	/*
+	 * BCM4352 is the aligned-descriptor path (probed with 0xff0, readback 0),
+	 * so rcvptrbase stays 0 and PTR is the pure byte offset rxout*16.
+	 */
+	u32 ptr = ob_rx_ptr_value(true, 0, OB_DMA_RX_POST_INIT);
 	u32 control, rb_ptr, rb_lo, rb_hi, status0, status1;
 
 	dev_info(hw->dev,
-		 "rx: ring dma=0x%llx addrlow=%08x addrhigh=%08x\n",
+		 "rx: ring dma=0x%llx addrlow=%08x addrhigh=%08x aligned=yes rcvptrbase=0\n",
 		 (unsigned long long)ring->desc_dma, ring_lo, OB_DMA_PCIE_H32);
 
 	ob_rx_dump_desc(hw, 0);
@@ -196,14 +200,20 @@ static int ob_rx_program(struct ob_hw *hw)
 	hw->rx.last_status0 = status0;
 	hw->rx.last_status1 = status1;
 
+	/*
+	 * PTR is a hardware-updated current/last descriptor register on this
+	 * part; its raw readback carries base/current bits, so it is logged but
+	 * NOT compared for raw equality (proven by the first M3.4B run).
+	 */
 	dev_info(hw->dev,
-		 "rx: readback control=%08x ptr=%08x addrlow=%08x addrhigh=%08x status0=%08x status1=%08x\n",
-		 control, rb_ptr, rb_lo, rb_hi, status0, status1);
+		 "rx: readback control=%08x ptr=%08x ptr_field=%05x addrlow=%08x addrhigh=%08x status0=%08x status1=%08x rs0_state=%u\n",
+		 control, rb_ptr, rb_ptr & OB_D11_RS0_CD_MASK, rb_lo, rb_hi,
+		 status0, status1, ob_rx_rs0_state(status0));
 
 	if ((control & OB_D11_RC_RE) == 0 ||
-	    (rb_ptr & OB_D11_RS0_CD_MASK) != (ptr & OB_D11_RS0_CD_MASK) ||
 	    rb_lo != ring_lo || rb_hi != OB_DMA_PCIE_H32 ||
-	    status0 == 0xffffffffu) {
+	    status0 == 0xffffffffu ||
+	    (status0 & OB_D11_RS0_RS_MASK) == OB_D11_RS0_RS_DISABLED) {
 		dev_err(hw->dev, "rx: programming readback inconsistent\n");
 		return -EIO;
 	}

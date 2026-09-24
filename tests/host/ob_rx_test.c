@@ -42,6 +42,30 @@ int main(void)
 	chk("index_ok 256", (long)ob_rx_index_ok(256, 256), 0);
 	chk("index_ok 511", (long)ob_rx_index_ok(511, 256), 0);
 
+	/* ---- PTR model: aligned (rcvptrbase=0) vs unaligned ---- */
+	chk("ptr aligned 0", ob_rx_ptr_value(true, 0, 0), 0);
+	chk("ptr aligned 64", ob_rx_ptr_value(true, 0, 64), 0x400);
+	chk("ptr unaligned 64",
+	    (long)ob_rx_ptr_value(false, 0xd74fe000u, 64),
+	    (long)(0xd74fe000u + 0x400));
+	chk("ptr unaligned 0",
+	    (long)ob_rx_ptr_value(false, 0xd74fe000u, 0),
+	    (long)0xd74fe000u);
+
+	/* ---- runtime STATUS0 = 0x2000e000 decode (first M3.4B run) ---- */
+	chk("rs0 state idle", ob_rx_rs0_state(0x2000e000u), 2);
+	chk("rs0 is idle", (long)ob_rx_rs0_is_idle(0x2000e000u), 1);
+	chk("rs0 cd", ob_rx_rs0_cd(0x2000e000u), 0);
+	chk("index from 0x2000e000",
+	    ob_rx_status_index(0x2000e000u, 0xd74fe000ULL), 0);
+	chk("index from +16",
+	    ob_rx_status_index(0x2000e010u, 0xd74fe000ULL), 1);
+
+	/* ---- runtime STATUS1 = 0x0000e000 decode ---- */
+	chk("rs1 re", (long)(0x0000e000u & OB_D11_RS1_RE_MASK), 0);
+	chk("rs1 ad",
+	    (long)(0x0000e000u & OB_D11_RS1_AD_MASK), 0xe000);
+
 	/* ---- RxFrameSize bounds ---- */
 	chk("len min ok", (long)ob_rx_frame_len_ok(OB_RX_MIN_FRAME), 1);
 	chk("len max ok", (long)ob_rx_frame_len_ok(OB_RX_MAX_FRAME), 1);

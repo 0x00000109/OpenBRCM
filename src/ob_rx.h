@@ -38,7 +38,12 @@
 #define OB_D11_RS0_CD_MASK	0x00001fffu	/* current descriptor address */
 #define OB_D11_RS0_CD_SHIFT	4		/* /16 bytes per descriptor */
 #define OB_D11_RS0_RS_MASK	0xf0000000u	/* receive state */
+#define OB_D11_RS0_RS_SHIFT	28
 #define OB_D11_RS0_RS_DISABLED	0x00000000u
+#define OB_D11_RS0_RS_ACTIVE	0x10000000u
+#define OB_D11_RS0_RS_IDLE	0x20000000u
+#define OB_D11_RS0_RS_STOPPED	0x30000000u
+#define OB_D11_RS1_AD_MASK	0x0001ffffu	/* active descriptor */
 #define OB_D11_RS1_RE_MASK	0xf0000000u	/* receive error code */
 
 /* RX geometry */
@@ -68,6 +73,36 @@ static inline u32 ob_rx_status_index(u32 status0, dma_addr_t ring_dma)
 static inline bool ob_rx_index_ok(u32 idx, u16 n)
 {
 	return idx < n;
+}
+
+/*
+ * RX PTR value. Blob `dma_rxfill` (0xf3b8) writes
+ *   ptr = rcvptrbase + rxout*16
+ * and `_dma_ddtable_init` (0xe683) only assigns rcvptrbase when the table is
+ * NOT aligned. BCM4352 takes the aligned path, so rcvptrbase stays 0 and the
+ * PTR register holds the pure byte offset (rxout*16), NOT `ring_dma + rxout*16`.
+ */
+static inline u32 ob_rx_ptr_value(bool aligned, u32 rcvptrbase, u16 out)
+{
+	u32 off = (u32)out * OB_DMA_DESC_SIZE;
+
+	return aligned ? off : rcvptrbase + off;
+}
+
+static inline u32 ob_rx_rs0_state(u32 status0)
+{
+	return (status0 & OB_D11_RS0_RS_MASK) >> OB_D11_RS0_RS_SHIFT;
+}
+
+static inline bool ob_rx_rs0_is_idle(u32 status0)
+{
+	return ob_rx_rs0_state(status0) == (OB_D11_RS0_RS_IDLE >>
+					   OB_D11_RS0_RS_SHIFT);
+}
+
+static inline u32 ob_rx_rs0_cd(u32 status0)
+{
+	return status0 & OB_D11_RS0_CD_MASK;
 }
 
 static inline bool ob_rx_frame_len_ok(u32 len)
