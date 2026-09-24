@@ -179,19 +179,91 @@ grep -q 'free_allowed' src/ob_d3a0.h \
 	&& ok "lifecycle separates stopped/contained/free/fatal" \
 	|| bad "lifecycle flags not separated"
 
-# 4e. D3A1 analysis is COMPLETE (GO: YES) but not implemented/hardware proven.
-if [ -f docs/m34d3a1_vendor_tail.md ] && \
-   grep -q 'ANALYSIS COMPLETE' docs/m34d3a1_vendor_tail.md && \
-   grep -q 'D3A1 IMPLEMENTATION GO: YES' docs/m34d3a1_vendor_tail.md; then
-	ok "D3A1 recorded as ANALYSIS COMPLETE (GO: YES, not implemented)"
+# 4e. D3A1 is HARDWARE RUNTIME PROVEN on BCM4352, but only for the isolated
+# vendor post-common / pre-PHY D11 tail. Band init / bsinitvals / PHY stay
+# unproven, and D3B must not be overclaimed either.
+if [ -f docs/m34d3a1_vendor_tail_test.md ] && \
+   grep -q 'IMPLEMENTED' docs/m34d3a1_vendor_tail_test.md && \
+   grep -q 'STATIC TESTED' docs/m34d3a1_vendor_tail_test.md && \
+   grep -q 'HARDWARE RUNTIME PROVEN' docs/m34d3a1_vendor_tail_test.md; then
+	ok "D3A1 implementation recorded (IMPLEMENTED / STATIC TESTED / HARDWARE RUNTIME PROVEN)"
 else
-	bad "docs/m34d3a1_vendor_tail.md must record D3A1 as ANALYSIS COMPLETE (GO: YES)"
+	bad "docs/m34d3a1_vendor_tail_test.md must record D3A1 HARDWARE RUNTIME PROVEN"
 fi
-if grep -rniE 'M3\.4D3A1.*(IMPLEMENTED|HARDWARE[^.]*PROVEN|RUNTIME PROVEN)' docs/ 2>/dev/null \
-		| grep -viE 'not|never|unproven|analysis' | grep -q .; then
-	bad "a document overclaims M3.4D3A1 status"
+if [ -f docs/m34d3a1_vendor_tail.md ] && \
+   grep -q 'D3A1 IMPLEMENTATION GO: YES' docs/m34d3a1_vendor_tail.md; then
+	ok "D3A1 analysis record present (GO: YES)"
 else
-	ok "D3A1 not claimed implemented/hardware proven"
+	bad "docs/m34d3a1_vendor_tail.md must record D3A1 IMPLEMENTATION GO: YES"
+fi
+if grep -rniE 'M3\.4D3A1.*(band init|bsinitvals|wlc_phy_init|AC PHY|radio|calibration|channel).*PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven|before|does not|stops' | grep -q .; then
+	bad "a document overclaims M3.4D3A1 scope"
+else
+	ok "D3A1 scope limited to the post-common/pre-PHY tail"
+fi
+if grep -rniE 'M3\.4D3B.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven' | grep -q .; then
+	bad "a document overclaims M3.4D3B hardware status"
+else
+	ok "D3B not claimed hardware proven"
+fi
+if [ -f docs/m34d3b_band_init.md ] && \
+   grep -q 'ANALYSIS ONLY' docs/m34d3b_band_init.md && \
+   grep -q 'D3B IMPLEMENTATION GO:.*CONDITIONAL' docs/m34d3b_band_init.md && \
+   grep -q 'wlc_bmac_write_mhf' docs/m34d3b_band_init.md; then
+	ok "D3B analysis record present (ANALYSIS ONLY / CONDITIONAL GO)"
+else
+	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / CONDITIONAL GO / wlc_bmac_write_mhf)"
+fi
+
+# 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
+if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -q 'hw->cc = hw->bus->drv_cc.core' && \
+   sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -q 'ob_si_read_mac(hw, hw->mac)'; then
+	ok "D3A1 board-data prep sets hw->cc and reads the external-SPROM MAC"
+else
+	bad "ob_si_prepare_board_data_for_d3a1 missing hw->cc / ob_si_read_mac"
+fi
+if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -qE 'ob_si_powerup|ob_si_d11_diag|ob_si_otp_diag|ob_si_sprom_diag|bcma_write|ob_si_cc_write'; then
+	bad "D3A1 board-data prep imports normal-probe side effects"
+else
+	ok "D3A1 board-data prep is read-only (no power-up/diag/register writes)"
+fi
+d3a1_prep=$(grep -n 'ob_si_prepare_board_data_for_d3a1(hw)' src/ob_core.c | head -1 | cut -d: -f1)
+d3a1_test=$(grep -n 'ret = ob_d3a1_test(hw)' src/ob_core.c | head -1 | cut -d: -f1)
+if [ -n "$d3a1_prep" ] && [ -n "$d3a1_test" ] && [ "$d3a1_prep" -lt "$d3a1_test" ]; then
+	ok "D3A1 dispatch prepares board data before ob_d3a1_test"
+else
+	bad "D3A1 dispatch must call ob_si_prepare_board_data_for_d3a1 before ob_d3a1_test"
+fi
+if grep -q 'if (!hw->cc)' src/ob_d3a1.c && \
+   grep -q 'if (!hw->mac_valid)' src/ob_d3a1.c; then
+	ok "D3A1 refuses without hw->cc and without a validated MAC"
+else
+	bad "D3A1 must refuse without hw->cc / validated MAC"
+fi
+if grep -q 'best-effort' src/ob_d3a1.c src/ob_d3a1.h; then
+	bad "D3A1 contains best-effort arithmetic"
+else
+	ok "D3A1 has no best-effort arithmetic"
+fi
+# 4f. The 0x530 predicate is whole-word zero and 0x540 is bit0 clear; no 0x8000
+# mask and no 0x0007 special case may creep in.
+if grep -q 'return v == 0u;' src/ob_d3a1.h && \
+   grep -q 'return (v & 0x1u) == 0u;' src/ob_d3a1.h && \
+   ! grep -qE 'v & 0x8000|== 0x0007|0x8000u? *\)' src/ob_d3a1.c src/ob_d3a1.h; then
+	ok "D3A1 poll predicates exact (0x530 word-zero, 0x540 bit0-clear)"
+else
+	bad "D3A1 poll predicate drift (must be 0x530 word-zero / 0x540 bit0-clear)"
+fi
+if grep -q 'fifo_poll_expired' src/ob_d3a1.c && \
+   grep -q 'vendor continues, non-fatal' src/ob_d3a1.c; then
+	ok "D3A1 poll expiry is vendor-non-fatal"
+else
+	bad "D3A1 poll expiry must be vendor-non-fatal (logged, no abort)"
 fi
 
 # 5. No proprietary firmware/blob may be tracked.

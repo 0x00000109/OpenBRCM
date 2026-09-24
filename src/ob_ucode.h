@@ -107,24 +107,28 @@ enum ob_isolated_mode {
 	OB_ISOLATED_UCODE_TEST,
 	OB_ISOLATED_INITVALS_TEST,
 	OB_ISOLATED_DMA_TEST,
+	OB_ISOLATED_D3A1_TEST,
 	OB_ISOLATED_CONFLICT,
 };
 
-static inline unsigned int ob_isolated_mode_count(bool fw_validate_only,
-						  bool ucode_test_only,
-						  bool initvals_test_only,
-						  bool dma_test_only)
+static inline unsigned int
+ob_isolated_mode_count5(bool fw_validate_only, bool ucode_test_only,
+			bool initvals_test_only, bool dma_test_only,
+			bool d11_tail_test_only)
 {
 	return (fw_validate_only ? 1u : 0u) + (ucode_test_only ? 1u : 0u) +
-	       (initvals_test_only ? 1u : 0u) + (dma_test_only ? 1u : 0u);
+	       (initvals_test_only ? 1u : 0u) + (dma_test_only ? 1u : 0u) +
+	       (d11_tail_test_only ? 1u : 0u);
 }
 
 static inline enum ob_isolated_mode
-ob_isolated_mode_select(bool fw_validate_only, bool ucode_test_only,
-			bool initvals_test_only, bool dma_test_only)
+ob_isolated_mode_select5(bool fw_validate_only, bool ucode_test_only,
+			 bool initvals_test_only, bool dma_test_only,
+			 bool d11_tail_test_only)
 {
-	if (ob_isolated_mode_count(fw_validate_only, ucode_test_only,
-				   initvals_test_only, dma_test_only) > 1)
+	if (ob_isolated_mode_count5(fw_validate_only, ucode_test_only,
+				    initvals_test_only, dma_test_only,
+				    d11_tail_test_only) > 1)
 		return OB_ISOLATED_CONFLICT;
 	if (fw_validate_only)
 		return OB_ISOLATED_FW_VALIDATE;
@@ -134,7 +138,29 @@ ob_isolated_mode_select(bool fw_validate_only, bool ucode_test_only,
 		return OB_ISOLATED_INITVALS_TEST;
 	if (dma_test_only)
 		return OB_ISOLATED_DMA_TEST;
+	if (d11_tail_test_only)
+		return OB_ISOLATED_D3A1_TEST;
 	return OB_ISOLATED_NONE;
+}
+
+/* Four-mode form kept for existing callers/tests (no D3A1 mode). */
+static inline unsigned int ob_isolated_mode_count(bool fw_validate_only,
+						  bool ucode_test_only,
+						  bool initvals_test_only,
+						  bool dma_test_only)
+{
+	return ob_isolated_mode_count5(fw_validate_only, ucode_test_only,
+				       initvals_test_only, dma_test_only,
+				       false);
+}
+
+static inline enum ob_isolated_mode
+ob_isolated_mode_select(bool fw_validate_only, bool ucode_test_only,
+			bool initvals_test_only, bool dma_test_only)
+{
+	return ob_isolated_mode_select5(fw_validate_only, ucode_test_only,
+					initvals_test_only, dma_test_only,
+					false);
 }
 
 static inline bool ob_isolated_mode_conflict(enum ob_isolated_mode mode)
@@ -143,22 +169,24 @@ static inline bool ob_isolated_mode_conflict(enum ob_isolated_mode mode)
 }
 
 /*
- * Both the D2B initvals mode and the D3A0 DMA mode apply the common table
- * before any post-common work (the D3A0 entry state IS the hardware-proven D2B
- * exit). ucode_test_only must never issue a common-initvals write (M3.4D2B
- * requirement 15).
+ * The D2B initvals mode, the D3A0 DMA mode and the D3A1 tail mode apply the
+ * common table before any post-common work (the D3A0/D3A1 entry state IS the
+ * hardware-proven D2B exit). ucode_test_only must never issue a
+ * common-initvals write (M3.4D2B requirement 15).
  */
 static inline bool ob_isolated_mode_applies_initvals(enum ob_isolated_mode mode)
 {
 	return mode == OB_ISOLATED_INITVALS_TEST ||
-	       mode == OB_ISOLATED_DMA_TEST;
+	       mode == OB_ISOLATED_DMA_TEST ||
+	       mode == OB_ISOLATED_D3A1_TEST;
 }
 
 /*
  * fw_validate/ucode_test/initvals_test bypass normal bring-up and initialize
- * no platform resources, so remove() must skip all teardown. dma_test_only
- * DOES own DMA resources and therefore handles teardown through
- * ob_d3a0_remove(); the normal path uses the standard teardown.
+ * no platform resources, so remove() must skip all teardown. dma_test_only and
+ * d3a1_test_only DO own DMA resources and therefore handle teardown through
+ * their own fail-closed remove hook; the normal path uses the standard
+ * teardown.
  */
 static inline bool ob_isolated_mode_skips_teardown(enum ob_isolated_mode mode)
 {
@@ -167,10 +195,14 @@ static inline bool ob_isolated_mode_skips_teardown(enum ob_isolated_mode mode)
 	       mode == OB_ISOLATED_INITVALS_TEST;
 }
 
-/* Only dma_test_only enters the vendor DMA lifecycle. */
+/*
+ * dma_test_only enters the isolated D3A0 DMA lifecycle; d3a1_test_only reuses
+ * that same lifecycle in its vendor position inside the D3A1 tail.
+ */
 static inline bool ob_isolated_mode_uses_dma(enum ob_isolated_mode mode)
 {
-	return mode == OB_ISOLATED_DMA_TEST;
+	return mode == OB_ISOLATED_DMA_TEST ||
+	       mode == OB_ISOLATED_D3A1_TEST;
 }
 
 /* A validated flat ucode image is exactly size/4 32-bit words. */

@@ -180,10 +180,17 @@ equivalent is `brcms_b_corerev_fifofixup()`. Entry `rdi = dev`.
      ⇒ 7 × 6 = 42 writes.
 6. **42-entry loop** `idx = 0..41`. Per entry:
    `writew(0x534, idx)`, `writew(0x536, min(idx+2,0x29))`,
-   `writew(0x532, min(idx+2,0x29) + (idx==0 ? 1 : 0))`,
+   `writew(0x532, min(42 - idx, 3))` (the blob's
+   `min(idx+2,0x29) + r13d`, `r13d` init 1 and `dec r13d` each iteration),
    `writew(0x530, (idx<<4)|0x8007)`;
-   poll `readw(0x530) == 0`, bound `0xd1` decrement 10.
+   poll `readw(0x530) == 0` (whole 16-bit word, `test %ax,%ax`), bound `0xd1`
+   decrement 10.
    ⇒ 42 × 4 = 168 writes.
+
+> **Poll expiry is non-fatal in the blob.** Both the `0x540` and `0x530` loops
+> fall through and continue when the bound reaches `9`; `sub_67efd` has no error
+> path and always returns 0. OpenBRCM must therefore not abort on poll expiry
+> (see the D3A1 implementation record).
 
 Total on rev42: **1 readl, 2 + 42 + 168 = 212 writew**, two bounded polls, and
 no other access. Per-rev parameter tables: `.rodata+0x284740` (entry list) and

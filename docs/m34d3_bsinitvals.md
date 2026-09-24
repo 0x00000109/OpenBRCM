@@ -856,13 +856,16 @@ Operations (exact):
   `0x67f73..0x67fd6` are for rev > 0x2a and are **not** executed for rev42.)
 - `osl_writew(D11+0x542)` `xmtfifoflush` <- machwcap-derived value.
 - `osl_writew(D11+0x540)` `xmtfifocmd` <- `5`; poll `osl_readw(D11+0x540)` bit0
-  until clear, bounded (`0xd1` down in 10s, <= ~20 x 10us).
+  until clear, bounded (`0xd1` down in 10s, <= ~20 x 10us). **Expiry is
+  non-fatal in the blob (falls through).**
 - loop 7 entries (`0x680b8..0x6819f`): per entry `osl_writew` to
   `0x54a xmtfiforqpri`, `0x54c xmttplatetxptr`, `0x520 xmtfifodef`,
   `0x54e`, `0x550 xmttplateptr`, `0x548 xmtfifoprirdy` -> 42 writes.
 - loop 42 entries (`0x681da..0x6826d`): per entry `osl_writew` to
-  `0x534`, `0x536`, `0x532`, `0x530` -> 168 writes; poll `osl_readw(D11+0x530)`
-  until 0, bounded (`0xd1` down in 10s).
+  `0x534`, `0x536`, `0x532` (= `min(42-idx,3)`), `0x530` (= `(idx<<4)|0x8007`)
+  -> 168 writes; poll `osl_readw(D11+0x530)` until **the whole 16-bit word is 0**
+  (`test %ax,%ax`, NOT a bit15 mask), bounded (`0xd1` down in 10s). **Expiry is
+  non-fatal in the blob (falls through).**
 
 All offsets are D11 **TXE0 transmit-control** (`0x520..0x550`) and unnamed PAD
 regs `0x530..0x536`. Runtime write count ~212 `osl_writew`, 4 `osl_readw`

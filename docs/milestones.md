@@ -289,16 +289,23 @@ Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
 - STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
   radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail (`ANALYSIS COMPLETE`)
+## M3.4D3A1 — vendor post-common / pre-PHY tail test
 
 Canonical status (exact):
 - M3.4D3A0 = HARDWARE RUNTIME PROVEN
-- M3.4D3A1 = ANALYSIS COMPLETE / NOT IMPLEMENTED / NOT HARDWARE PROVEN
-- D3A1 IMPLEMENTATION GO = YES (analysis decision only)
+- M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
+  (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
+  normal unload + DMA teardown + STOP boundary proven)
+- M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
+  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: CONDITIONAL` (one open
+  item: band-0 MHF values)
 
-Report: `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
-`352a6e349f…`; no hardware/MMIO/implementation). Scope: recover the exact
-rev42 vendor sequence after the common initvals and before real PHY init.
+Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
+`352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
+mode `d11_tail_test_only=1` reproduces the exact rev42 vendor sequence after
+the common initvals and STOPS before real PHY init. New code:
+`src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`, `tests/kunit/ob_d3a1_kunit.c`.
+Module built + MOK-signed, **never loaded** (no hardware execution).
 - **Ordering:** the vendor **interleaves** DMA inside the tail —
   `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
   intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →
@@ -320,9 +327,44 @@ rev42 vendor sequence after the common initvals and before real PHY init.
   `nvram_get` list (`srom_var_init` + `nvram_init`/`nvram.txt`);
   `btc_params`/`btc_flags` absent on ASUS PCE-AC56 ⇒ **skip** (no zero-fill);
   `M_MAX_ANTCNT = 0x0a` = upstream vanilla `ANTCNT`.
-- `D3A1 IMPLEMENTATION GO: YES` (analysis decision only). NOT IMPLEMENTED /
-  NOT HARDWARE PROVEN. Only the symbolic name of the `0x78c/0x78e/0x790` SHM
-  slots remains UNKNOWN (value/source proven; microcode-only consumer).
+- **Implementation:** exact `sub_67efd` (2 + 42 + 168 = 212 writes), exact T1
+  order, DMA reused from D3A0 in vendor position, T2 (`btc_base` gate; absent
+  `btc_params`/`btc_flags` ⇒ skip; MAC into `0x78c/0x78e/0x790` only inside the
+  `btc_base != 0` gate), `switch_macfreq`, deterministic postconditions,
+  fail-closed quiesce; `STOPPED BEFORE sub_6656c / bsinitvals / PHY`.
+- Build/sign: `make` + `make signed` OK; module `ce9b7cc5…` signed
+  (`Broadcom Driver MOK`), vermagic `7.0.0-34-generic`. Host tests 10/10 PASS.
+- Audit corrections: the isolated dispatch prepares `hw->cc` + the validated
+  external-SPROM MAC (`ob_si_prepare_board_data_for_d3a1`) before
+  `ob_d3a1_test`; the `switch_macfreq` BB-VCO / 64-bit divide are exact verbatim
+  ports (no best-effort), and an un-derivable VCO is an error, never a PASS.
+- **First hardware attempt** (candidate `1186a9b`, module `ce9b7cc5…`):
+  board-data/D2A/D2B PASS; `sub_67efd` `0x530` index 0 programmed `0x8007`,
+  readback `0x0007`, aborted under the then-current fail-closed poll.
+- **0x530/0x540 re-derivation**: the blob `0x530` predicate is the whole 16-bit
+  word reading 0 (`test %ax,%ax`), NOT a `0x8000` mask; `0x540` is bit0 clear;
+  both loops have **no error path** and continue on bound expiry. Corrected:
+  expiry is non-fatal (logged), and `x532 = min(42-idx,3)` (the prior
+  `(idx==0?1:0)` misread the decrementing loop counter). Corrected module
+  `6ba2d853…` (4170009 B, srcversion `011D0C80396320496A86768`).
+- Pre-freeze corrections: `switch_macfreq` checks `hw->cc` *before* the PLL
+  read; `ob_si_read_mac()`'s errno is preserved by board-data preparation; the
+  FIFO timeout logs include the final readback; and the first run records raw
+  PLL2/PLL3, `d`, `den`, VCO, TSF fraction and `0x62e`/`0x630` (readback
+  classified UNPROVEN, no equality gate).
+- Only the symbolic name of the `0x78c/0x78e/0x790` SHM slots remains UNKNOWN
+  (value/source proven; microcode-only consumer).
+- **HARDWARE RUNTIME PROVEN** (candidate `42d74b8`, module `6ba2d853…`): one-shot
+  isolated `d11_tail_test_only=1` on BCM4352 (kernel `7.0.0-34-generic`);
+  `sub_67efd` ran with `0x530`/`0x540` expiry non-fatal, T1/DMA/T2 in vendor
+  order, postconditions validated, **normal `rmmod` + verified DMA teardown +
+  STOP before `sub_6656c`/bsinitvals/PHY**; no kernel fault. Proof:
+  `docs/m34d3a1_vendor_tail_test.md` §14.1.
+- **Next:** D3B (band init / `d11ac1bsinitvals42`) → D4 (AC PHY bring-up). D3B
+  is analyzed in `docs/m34d3b_band_init.md`; the pre-bs helper `sub_62766` is
+  newly pinned as `wlc_bmac_write_mhf` (MHF1..5). D3B
+  `IMPLEMENTATION GO: CONDITIONAL` on the band-0 MHF values; D4 remains not
+  started.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

@@ -79,6 +79,24 @@ module_param(dma_test_only, bool, 0444);
 MODULE_PARM_DESC(dma_test_only,
 		 "isolated D3A0 DMA lifecycle test (4 TX + FIFO0 RX) + verified quiesce; stops before band/PHY/mac80211 (default: 0)");
 
+/*
+ * Explicit isolated D3A1 vendor post-common / pre-PHY D11 tail test
+ * (M3.4D3A1).
+ *
+ * BCM4352 rev42 vendor-ordered post-common/pre-PHY D11 tail test; includes the
+ * proven DMA lifecycle in its vendor position (T1 -> DMA -> T2); stops before
+ * sub_6656c/bsinitvals/PHY. When set, probe runs the proven D2A/D2B core, the
+ * exact rev42 tail (sub_67efd equivalent, T1, DMA, T2, switch_macfreq), the
+ * deterministic postconditions and the mandatory verified quiesce, then STOPS
+ * before sub_6656c/wlc_phy_init/PHY/radio/channel/mac80211. It never enables
+ * EN_MAC, MACINTMASK, MI_DMAINT or the host IRQ route. Mutually exclusive with
+ * the other isolated modes; any conflict fails probe before hardware access.
+ */
+static bool d11_tail_test_only;
+module_param(d11_tail_test_only, bool, 0444);
+MODULE_PARM_DESC(d11_tail_test_only,
+		 "isolated D3A1 vendor-ordered post-common/pre-PHY D11 tail test; includes proven DMA lifecycle; stops before bsinitvals/PHY (default: 0)");
+
 int ob_probe(struct bcma_device *core)
 {
 	struct ob_hw *hw;
@@ -90,11 +108,12 @@ int ob_probe(struct bcma_device *core)
 		return -ENODEV;
 
 	/* Explicit mode policy: at most one isolated mode may be selected. */
-	mode = ob_isolated_mode_select(fw_validate_only, ucode_test_only,
-				       initvals_test_only, dma_test_only);
+	mode = ob_isolated_mode_select5(fw_validate_only, ucode_test_only,
+					initvals_test_only, dma_test_only,
+					d11_tail_test_only);
 	if (ob_isolated_mode_conflict(mode)) {
 		dev_err(&core->dev,
-			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only are mutually exclusive\n");
+			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only/d11_tail_test_only are mutually exclusive\n");
 		return -EINVAL;
 	}
 
@@ -195,6 +214,43 @@ int ob_probe(struct bcma_device *core)
 		}
 		if (ret) {
 			/* No live DMA resources (teardown ran or none created). */
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
+
+	/*
+	 * d11_tail_test_only: isolated D3A1 vendor post-common / pre-PHY D11
+	 * tail test. Runs the proven D2A/D2B core, the exact rev42 tail
+	 * (sub_67efd, T1, DMA in vendor position, T2, switch_macfreq), the
+	 * deterministic postconditions and the mandatory verified quiesce, then
+	 * STOPS before sub_6656c/bsinitvals/PHY/radio/channel. It never
+	 * registers mac80211 and never enables EN_MAC or the host IRQ route.
+	 */
+	if (mode == OB_ISOLATED_D3A1_TEST) {
+		hw->d3a1_test_only = true;
+		/*
+		 * Minimal board-data preparation (ChipCommon pointer + validated
+		 * external-SPROM MAC) BEFORE D2A/D2B. It must not run the
+		 * normal ob_si_probe() path.
+		 */
+		ret = ob_si_prepare_board_data_for_d3a1(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		ret = ob_d3a1_test(hw);
+		if (hw->d3a0.lc.fatal) {
+			/* Fail-closed: keep the device bound and the DMA memory
+			 * retained; ob_d3a1_test latched a module-wide re-entry
+			 * block and pinned the module. Only a reboot clears it.
+			 */
+			dev_crit(hw->dev,
+				 OB_DRV_NAME ": d3a1-test FATAL unverified quiesce; device kept bound, reboot required\n");
+			return 0;
+		}
+		if (ret) {
 			bcma_set_drvdata(core, NULL);
 			return ret;
 		}
@@ -306,6 +362,16 @@ void ob_remove(struct bcma_device *core)
 	 */
 	if (hw->dma_test_only) {
 		ob_d3a0_remove(hw);
+		return;
+	}
+
+	/*
+	 * d3a1_test_only owns its own DMA lifecycle (shared with D3A0, in the
+	 * vendor T1 -> DMA -> T2 position). ob_d3a1_remove() applies the same
+	 * fail-closed policy.
+	 */
+	if (hw->d3a1_test_only) {
+		ob_d3a1_remove(hw);
 		return;
 	}
 

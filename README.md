@@ -38,16 +38,16 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > integration before PHY bring-up. It STOPS before band
 > init/bsinitvals/PHY/radio/channel/mac80211. Evidence:
 > [`docs/m34d3a0_dma_test.md`](docs/m34d3a0_dma_test.md).
-> M3.4D3A1 (vendor post-common / pre-PHY tail) is **`ANALYSIS COMPLETE`** /
-> NOT IMPLEMENTED / NOT HARDWARE PROVEN; `D3A1 IMPLEMENTATION GO: YES` (analysis
-> decision only). It re-proves `sub_67efd` for rev42, recovers the omitted
-> SHM/NVRAM/BTC groups, establishes the vendor order **T1 → DMA → T2** (DMA is
-> interleaved inside the tail), STOP before
-> `sub_6656c`/bsinitvals/`wlc_phy_init`, and closes the value-source blockers
-> (the `0x78c/0x78e/0x790` six bytes are the `cur_etheraddr` MAC; the SCR `0x24`
-> write is skipped on the first init; `btc_params`/`btc_flags` absent ⇒ skip).
-> Report:
-> [`docs/m34d3a1_vendor_tail.md`](docs/m34d3a1_vendor_tail.md).
+> M3.4D3A1 (isolated vendor post-common / pre-PHY D11 tail test) is
+> **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN**. New
+> isolated mode `d11_tail_test_only=1` reproduces the exact rev42 order
+> (`sub_67efd → T1 → DMA → T2 → switch_macfreq`), reuses the proven D3A0 DMA
+> lifecycle in its vendor position, validates deterministic postconditions and
+> quiesces, then **STOPS before `sub_6656c`/bsinitvals/PHY**. The module is
+> built + MOK-signed but **never loaded**. Reports:
+> [`docs/m34d3a1_vendor_tail_test.md`](docs/m34d3a1_vendor_tail_test.md)
+> (implementation) and
+> [`docs/m34d3a1_vendor_tail.md`](docs/m34d3a1_vendor_tail.md) (analysis).
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in
