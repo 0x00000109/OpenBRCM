@@ -221,8 +221,13 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   `wlc_phy_init`). Vendor quiesce = `wlc_coredisable` before freeing.
 - **Formal decomposition A/B/C/D = YES** (report §C.18): D3A0 (vendor DMA/
   IRQ-source, host route off) -> D3A1 (remaining tail) -> D3B (band init + 73
-  bsinitvals) -> D4 (PHY). Conditional on host IRQ route off and an
-  `ob_dma_quiesce`/reboot policy. PHY/RF boundary = YES.
+  bsinitvals) -> D4 (PHY). PHY/RF boundary = YES.
+- **D3A0 blocker closure (Appendix D):** 4-TX map (BK/BE/VI/VO @ 0x200/0x240/
+  0x280/0x2C0); TX CONTROL = RMW `read(control) | XE | (PD?)`; `ddoffsethigh =
+  dataoffsethigh = 0x80000000`; `intrcvlazy[0] = 0x01000000`; `dma_txreset
+  0xf64a` / `dma_rxreset 0xf5ef`; quiesce = per-channel reset +
+  `bcma_core_disable`. **`D3A0 IMPLEMENTATION GO: YES`** (report §D.19), still
+  NOT IMPLEMENTED / NOT HARDWARE PROVEN.
 - Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
   `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
   `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`

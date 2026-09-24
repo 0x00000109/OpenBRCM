@@ -81,8 +81,9 @@ source of truth; this file records the live working-tree state on top of HEAD.
   post-common tail is **not D11-only** (it inits 4 TX DMA engines + FIFO0 RX and
   writes interrupt-source masks); Appendix C reverses it and yields **A/B/C/D =
   YES** (D3A0 DMA/IRQ-source → D3A1 remaining tail → D3B), conditional on host
-  IRQ route off and a core-reset/reboot quiesce. The isolated unit is the full
-  vendor prefix, not the 73 records alone.
+  IRQ route off and a core-reset/reboot quiesce; Appendix D closes the D3A0
+  blockers and returns **`D3A0 IMPLEMENTATION GO: YES`**. The isolated unit is
+  the full vendor prefix, not the 73 records alone.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -128,11 +129,16 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   active; `wl_intrson` only in `wlc_bmac_up_finish` after `wlc_phy_init`).
   Vendor quiesce = `wlc_coredisable` before `dma_detach` frees memory.
 - Decisions: PHY/RF boundary **YES**; formal decomposition **A YES (D3A0),
-  B YES, C YES, D YES** (§C.18), conditional on host IRQ route disabled and an
-  `ob_dma_quiesce`/reboot policy. `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
+  B YES, C YES, D YES** (§C.18). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
   `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
-  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendices B/C. No
-  implementation.
+  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendices B/C.
+- D3A0 blocker closure (Appendix D): 4-TX map (BK/BE/VI/VO @ 0x200/0x240/0x280/
+  0x2C0); TX CONTROL is RMW `read(control) | XE | (PD?)` (per-FIFO cap bits
+  re-asserted, not a constant); `ddoffsethigh=dataoffsethigh=0x80000000`
+  (bus core 0x83C + dma64); `intrcvlazy[0]=0x01000000` (constant, set in attach
+  0x69faf); `dma_txreset 0xf64a`, `dma_rxreset 0xf5ef` (bounded 10 ms polls);
+  quiesce = per-channel reset + `bcma_core_disable`. **`D3A0 IMPLEMENTATION
+  GO: YES`** (§D.19), still NOT IMPLEMENTED / NOT HARDWARE PROVEN.
 
 ## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**
@@ -212,9 +218,12 @@ rev42 tail is now fully reversed: **4** TX channels (not 6), TX enabled/idle,
 FIFO0 RX enabled with 64 buffers, host IRQ route off, vendor quiesce = core
 reset/disable. Formal decomposition **A/B/C/D = YES**: D3A0 (vendor DMA/
 IRQ-source, host route off) → D3A1 (remaining tail) → D3B (band init + 73
-bsinitvals) → D4 (PHY). Next (analysis/design only): design `ob_dma_alloc/
-desc_init/program/post_rx`, an out-of-band `ob_irq_route`, and `ob_dma_quiesce`
-(core reset/disable); until the quiesce exists D3A0 is reboot-required. **No
+bsinitvals) → D4 (PHY). Appendix D closes the D3A0 blockers and returns
+**`D3A0 IMPLEMENTATION GO: YES`** (4-TX map; TX CONTROL RMW; `0x80000000` high
+word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
+quiesce = per-channel reset + `bcma_core_disable`). Next (analysis/design to
+code): implement D3A0 as a new isolated mode with same-run teardown via the D.17
+helper split. M3.4D3 stays ANALYSIS ONLY until then. **No
 hardware action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/
 channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime
 evidence, `docs/m34d2b_initvals_test.md`.

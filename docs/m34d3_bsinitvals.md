@@ -530,12 +530,13 @@ bsinitvals write**, then STOP before `wlc_phy_init`. Concretely:
 
 Keep these separate; do not collapse (vendor order preserved):
 
-- **D3A0 — vendor DMA/IRQ-source bring-up** (Appendix C): program the **4** TX
-  channels (BK/BE/VI/VO) and FIFO0 RX (64 buffers posted) exactly as the vendor,
-  with the **host IRQ route kept disabled** (`macintmask=0`,
+- **D3A0 — vendor DMA/IRQ-source bring-up** (Appendices C/D): program the **4**
+  TX channels (BK/BE/VI/VO) and FIFO0 RX (64 buffers posted) exactly as the
+  vendor, with the **host IRQ route kept disabled** (`macintmask=0`,
   `bcma_host_pci_irq_ctl=false`, no `I_RI`/`MI_DMAINT`); read-only
-  postconditions. Status: **YES isolatable** (§C.18), conditional on an
-  `ob_dma_quiesce` (core reset/disable) or reboot-only policy.
+  postconditions; then `ob_dma_quiesce` (per-channel reset + core disable) and
+  free. Status: **`D3A0 IMPLEMENTATION GO: YES`** with same-run teardown
+  (§D.19); still `NOT IMPLEMENTED` / `NOT HARDWARE PROVEN`.
 - **D3A1 — remaining rev42 tail** (`0x6930e..0x695d8`): NVRAM/BTC SHM tables,
   `tsf`, `MACCONTROL`, `macphyclk_set`, `switch_macfreq`. D11/SHM only.
   Status: **YES** (§C.18).
@@ -575,14 +576,14 @@ Resolved by Appendix C (DMA reversal):
 - ~~"dma_txinit x6"~~ -> **x4** (only di[0..3] attached; §C.0).
 - ~~DMA/IRQ blocks D3A/D3B?~~ -> DMA init is **isolatable as D3A0**; host IRQ
   delivery is **not** possible there (`macintmask=0`, `wl_intrsoff`);
-  formal A/B/C/D = **YES** (§C.18). OpenBRCM needs `ob_dma_quiesce`,
-  4-channel TX programming and an out-of-band IRQ route (§C.12/C.17).
+  formal A/B/C/D = **YES** (§C.18).
+- ~~D3A0 blockers~~ -> closed in Appendix D: 4-TX map, TX CONTROL RMW formula,
+  `ddoffsethigh=0x80000000`, `intrcvlazy[0]=0x01000000`, `dma_txreset 0xf64a` /
+  `dma_rxreset 0xf5ef`, quiesce = per-channel reset + `bcma_core_disable`.
+  **`D3A0 IMPLEMENTATION GO: YES`** (§D.19).
 
 Still unknown / open decisions:
-1. **`ob_dma_quiesce` (core reset/disable around armed DMA)** not yet
-   implemented/proven in OpenBRCM → D3A0 is reboot-required until then
-   (§C.17/C.20).
-2. Meaning of the 5 direct IHR fields (`0x680/0x682/0x684/0x686` IFS,
+1. Meaning of the 5 direct IHR fields (`0x680/0x682/0x684/0x686` IFS,
    `0x700` NAV) — values proven, field names UNKNOWN.
 3. The exact band/MHF state used during the initial BCM4352 bring-up (not
    measured on hardware). `wlc_default_chanspec()` is function-derived, not a
@@ -1520,3 +1521,346 @@ Prerequisite for A: implement `ob_dma_alloc/desc_init/program/post_rx` and
 4. `intrcvlazy[0]` source value (`*(dev+0x1ac)`) is runtime-derived.
 5. `ddoffsethigh` static initialization not pinned (value `0x80000000` is
    M3.4B-proven but its blob source was not re-derived here).
+
+---
+
+# Appendix D — D3A0 blocker closure and implementation GO gate
+
+Read-only RE of `wlc_hybrid.o_shipped` (sha256 `352a6e349f…`), Linux BCMA
+sources and the current OpenBRCM tree. No hardware, no MMIO, no implementation.
+This closes the Appendix C.20 blockers.
+
+## D.1 Exact four TX DMA channel map (re-proven)
+
+`wlc_bmac_attach` does exactly four `dma_attach` calls and four
+`wlc_hw_set_di(fifo)` stores (fifo 0..3). Register bases are selected by
+`[dev+0x84] > 0xA` (`phyrev`); BCM4352 `phyrev=0x2A` takes the 0x40 stride.
+
+| ch | logical FIFO | TX base | RX base |
+|---|---|---|---|
+| TX0 | `TX_AC_BK_FIFO` | `D11+0x200` | (`RX_FIFO` `+0x220`) |
+| TX1 | `TX_AC_BE_FIFO` | `D11+0x240` | – |
+| TX2 | `TX_AC_VI_FIFO` | `D11+0x280` | – |
+| TX3 | `TX_AC_VO`/`TX_CTL_FIFO` | `D11+0x2C0` | – |
+
+Per-channel dma64 block: `control` +0x00, `ptr` +0x04, `addrlow` +0x08,
+`addrhigh` +0x0C, `status0` +0x10, `status1` +0x14.
+
+Per channel `dma64_txinit` (`0xf947`): `ntxd` descriptors, descriptor 16 B,
+`memset(ring,0,ntxd*16)`, `txin=txout=0`, `txavail=ntxd-1`; writes `control`
+twice (see D.2), `addrlow=ring_pa+ddoffsetlow`, `addrhigh=ddoffsethigh`;
+**`ptr` is not written** and **no descriptor is posted**. Engine ends
+ENABLED/IDLE (empty ring).
+
+## D.2 Exact TX CONTROL semantics
+
+Not a constant: `dma64_txinit` is a read-modify-write.
+
+`dma_attach` caches four capability fields from each channel's `control` read:
+`obj+0x106 = (control>>18)&7`, `obj+0x107 = (control>>6)&3`,
+`obj+0x108 = (control>>21)&7`, `obj+0x109 = (control>>24)&3`.
+
+`dma64_txinit` build:
+```
+c  = read(regbase+0x00)
+c &= 0xffe3ff3f; c |= (obj+0x106)<<18; c |= (obj+0x107)<<6   // preserves all bits; re-asserts cap fields [20:18],[7:6]
+c &= 0xff1fffff; c |= (obj+0x108)<<21                        // re-asserts [23:21]
+c &= 0xfcffffff; c |= (obj+0x109)<<24                        // re-asserts [25:24]
+write(regbase+0x00, c)
+c2 = read(regbase+0x00) | ((obj+0x0c & 1) ? 0x1 : 0x801)
+write(regbase+0x00, c2)
+```
+Net effect: **`control = read(control) | XE(0x1) | (PD(0x800) when parity is
+not enabled)`**; the capability fields ([25:24],[23:21],[20:18],[7:6]) are
+re-asserted to the values read from that channel at attach, and every other bit
+is preserved. `XE` is always set; `PD` is set iff `(obj+0x0c & 1)==0`
+(parity-not-enabled, C3 `DMA_CTRL_PEN`).
+
+Consequences for OpenBRCM: the driver must perform the **same RMW per channel**
+(`read control`, OR `XE`[|`PD`]); it must **not** write a hardcoded CONTROL
+constant. There is no per-FIFO fixed numeric value.
+
+## D.3 TX ring-base / PTR / address-high semantics
+
+`_dma_ddtable_init` (`0xe66f`) writes `addrlow = ring_pa + ddoffsetlow`
+(`obj+0xf4`) and `addrhigh = ddoffsethigh` (`obj+0xf8`); it does not write
+`ptr`. `ddoffsetlow/high` and `dataoffsetlow/high` (`obj+0xfc/0x100`) are set
+in `dma_attach` (`0x1060d..0x106cf`):
+
+```
+if (si+0x04 == 1) {
+    if (si+0x08 == 0x83c || si+0x08 == 0x820) {      // bus core id
+        if (dma64) { ddoffsetlow=0; ddoffsethigh=0x80000000; goto done; }
+    }
+    switch (si+0x3c /*chip id*/) {                   // BCM4352 = 0x4352 -> default
+        specials...: ddoffsetlow=0x80000000;
+        default:     ddoffsetlow=0x40000000;
+    }
+    ddoffsethigh = 0;
+}
+done: dataoffsetlow = ddoffsetlow; dataoffsethigh = ddoffsethigh;
+```
+BCM4352 (bus core `0x83C`, `dma64=1`, `si+0x04==1`) takes the first branch:
+**`ddoffsetlow=0`, `ddoffsethigh=0x80000000`; `dataoffsethigh=0x80000000`**.
+So TX and RX both use **ADDRHIGH = 0x80000000**, and `addrlow = pa` (32-bit DMA
+window). Alignment mask is `0x1fff` (8 KiB); PTR semantics: `ptr = rcvptrbase +
+rxout*16` for RX (rcvptrbase 0 on the aligned path); TX PTR unprogrammed by
+init. `ddoffsethigh`/`dataoffsethigh` provenance is therefore fully pinned.
+
+## D.4 `intrcvlazy[0]` derivation
+
+`wlc_bmac_attach` `0x69faf` sets `*(dev+0x1ac) = 0x01000000` (= `1 << 24`),
+unconditionally. `wlc_bmac_init 0x69006` writes it to `D11+0x100`
+(`intrcvlazy[0]`). C3 `brcms_b_coreinit` writes the same `(1 << IRL_FC_SHIFT)`
+with `IRL_FC_SHIFT=24`. So:
+
+**`intrcvlazy[0] = 0x01000000` (constant; one RX interrupt per frame).**
+
+## D.5 Exact interrupt-source register sequence
+
+| order | address | register | value | width |
+|---|---|---|---|---|
+| 1 | `0x69006` | `D11+0x100 intrcvlazy[0]` | `0x01000000` | 32 |
+| 2 | `0x69070` | `D11+0x128 macintstatus` | `0x4000` (W1C `MI_GP1`) | 32 |
+| 3 | `0x69082` | `D11+0x24 intctrlregs[0].intmask` | `I_RI=0x10000` | 32 |
+| – | (never) | `D11+0x12C macintmask` | – (held 0 by `wl_intrsoff`) | 32 |
+
+All three occur **before** the DMA init loop (`0x6921c`), i.e. per-FIFO
+`I_RI` is armed before the RX engine is enabled. `I_RI=0x00010000` (per-FIFO RX
+source) and `MI_DMAINT=1<<15` (MAC aggregate) are distinct; only `I_RI` is
+written here.
+
+## D.6 Pinned reset functions
+
+`dma_txreset` = **`0xf64a`** (vtable `dma64proc+0x10`):
+- if `ntxd==0` return true;
+- `write(control, SE=0x2)`;
+- poll `status0` mask `0xf0000000` until `0`, `0x30000000` (STOPPED) or
+  `0x20000000` (IDLE); `osl_delay(10)`; bound counter `0x2719`(10009)→9 step 10
+  (≈1000 iters ≈ 10 ms);
+- `write(control, 0)`;
+- poll `status0` mask `0xf0000000` until `0`; same bound;
+- on final timeout: one `osl_delay(300)`;
+- return `(status0 & 0xf0000000) == 0`.
+
+`dma_rxreset` = **`0xf5ef`** (vtable `dma64proc+0xa8`):
+- if `nrxd==0` return true;
+- `write(control, 0)`;
+- poll `status0` mask `0xf0000000` until `0`; `osl_delay(10)`; bound
+  `0x2719`→9 step 10;
+- return `(status0 & 0xf0000000) == 0`.
+
+Both match C3 `dma_txreset`/`dma_rxreset`. Vtable layout used: `+0x08` txinit,
+`+0x10` txreset, `+0xa0` rxinit, `+0xa8` rxreset, `+0xd8` rxfill.
+
+## D.7 Strongest DMA quiesce primitive
+
+Comparison:
+- **A. per-channel reset** (`dma_rxreset` then `dma_txreset`): stops each engine
+  and verifies `status0` state field 0. Does not by itself guarantee no
+  in-flight host-memory transaction.
+- **B. D11 core reset/disable** (`bcma_core_disable`): asserts the core reset
+  line; `bcma_core_wait_value(RESET_ST, ~0, 0, 300)` first waits for the core to
+  become idle, then writes `RESET_CTL=RESET`, reads it back, writes `IOCTL`,
+  reads it back, `udelay(10)`. A core held in reset cannot issue new descriptor
+  fetches or buffer DMA.
+- **C. vendor `wlc_coredisable`** (`0x6378d`): radio off + `si_core_disable`
+  (+ `wlc_phy_anacore`, `wlc_bmac_core_phypll_ctl`), i.e. the C3/vendor wrapper
+  around B.
+
+**SAFE DMA QUIESCE GUARANTEE:** `IRQ mask (macintmask=0, clear I_RI) →
+dma_rxreset → dma_txreset (both verified via status0 state==0) →
+bcma_core_disable(d11core, 0) with its RESET_ST wait and REG readbacks`. The
+core-disable step is the guarantee that the engines can no longer consume any
+Linux-owned ring/buffer address; the per-channel resets are the orderly
+per-engine stop. (Vendor normal bring-down uses core disable and does not call
+the per-channel resets; per-channel resets are the safer belt-and-suspenders
+because they are pinned and bounded.)
+
+## D.8 `ob_dma_quiesce()` contract
+
+Analysis only. Future helper:
+
+- **Preconditions:** D11 core powered; `ob_dma_*` resources allocated; IRQ
+  source may be armed but host route may or may not be enabled.
+- **Steps (order fixed):**
+  1. Disable interrupt sources: `macintmask` `0`, clear per-FIFO `I_RI`
+     (`intctrlregs[0].intmask &= ~I_RI`), ack `macintstatus` owned bits.
+  2. `dma_rxreset(di0)` (control=0, bounded poll `status0 & 0xf0000000`==0);
+     verify.
+  3. `dma_txreset(di3), (di2), (di1), (di0)` (control=SE, poll, control=0,
+     poll); verify each.
+  4. `bcma_core_disable(hw->core, 0)` (waits `RESET_ST`, asserts reset,
+     readbacks).
+  5. `dma_wmb()`/readback as needed.
+- **Fallback:** if any per-channel reset times out, still proceed to
+  `bcma_core_disable`; the core-reset is the non-optional backstop. Do not free
+  if core-disable itself fails.
+- **Postcondition (required before any free/unmap):** hardware cannot DMA to any
+  Linux-owned ring/buffer address (all engines stopped or core in reset).
+- **Error return:** report which stage failed; never free on unproven quiesce.
+
+Only after the postcondition may the caller `dma_unmap_single`, free skbs,
+`dma_pool_free`/`dma_free_coherent`, and free ring metadata.
+
+## D.9 Failure hierarchy
+
+```
+try per-channel resets (bounded) -> verify status0 state==0
+  on any timeout/failure:
+      bcma_core_disable (assert reset, wait RESET_ST, readback)
+  after guaranteed quiesce (or core reset asserted):
+      synchronize_irq (if host route could deliver) / tasklet_kill
+      dma_unmap_single each posted RX buffer
+      free skbs, free descriptor rings
+```
+No invented recovery beyond pinned per-channel resets and `bcma_core_disable`.
+
+## D.10 BCMA / core-reset DMA guarantee
+
+`bcma_core_disable` (Linux `drivers/bcma/core.c`): returns early if already in
+reset; otherwise `bcma_core_wait_value(RESET_ST, ~0, 0, 300)` (core idle),
+asserts `RESET_CTL=RESET`, reads back, `udelay(1)`, writes `IOCTL`, reads back,
+`udelay(10)`. Reset assertion stops the core's DMA. Caveat to record honestly:
+neither BCMA nor the vendor adds an explicit "PCIe outstanding-DMA completion"
+flush beyond the reset assertion + `RESET_ST` wait + register readbacks; the
+readbacks order the backplane writes. This is the standard and vendor-used
+guarantee; a D3A0 run must empirically confirm teardown.
+
+## D.11 Linux memory-ordering requirements
+
+- Coherent descriptor rings (`dma_pool`/`dma_alloc_coherent`): descriptor stores
+  then `dma_wmb()` before the doorbell (writing `ptr`/`addrlow`/`control` via
+  MMIO), so the device sees descriptors before it is told to fetch them.
+- Streaming RX buffers (`dma_map_single(DMA_FROM_DEVICE)`): map, then
+  `dma_wmb()` before publishing the descriptor; on reclaim, `dma_unmap_single`
+  synchronizes.
+- Ring base/`ptr`/`control` writes: MMIO (posted) writes; a readback is the
+  robust ordering point if a strict barrier is required.
+- brcmsmac uses no explicit `dma_wmb()` in `dma64_dd_upd`/`dma_rxfill`
+  (relies on coherent memory + MMIO ordering). OpenBRCM should nonetheless use
+  `dma_wmb()` before the doorbell (as already proposed in `docs/rx_path.md`).
+
+## D.12 TX software ring state for D3A0
+
+Minimum: `ntxd=512`; descriptors zeroed (`memset`); ring base published
+(`addrlow=pa`, `addrhigh=0x80000000`); `control = read | XE[|PD]`;
+`txin=txout=0`; `txavail=ntxd-1`; skb pointer array present but **no mappings
+and no payload buffers**; `ptr` not programmed by init. **No TX payload
+buffers/mappings are required for D3A0** (nothing is transmitted).
+
+## D.13 RX software state / lifetime
+
+256-descriptor ring; 64 posted buffers of 2048 B each, `dma_map_single(...,
+DMA_FROM_DEVICE)`, `skb` owned by the driver until completed, descriptor
+ownership flips when posted; `control=0x84D`; `ptr=0x400`. Cleanup order after
+quiesce: stop engine + confirm disabled → `synchronize_irq`/`tasklet_kill` if a
+route/handler could run → `dma_unmap_single` each posted buffer → free skbs →
+free descriptor ring metadata.
+
+## D.14 Deterministic D3A0 postconditions
+
+| channel | field | expected | class |
+|---|---|---|---|
+| TX0..TX3 | control bit0 (XE) | 1 | CONSTANT |
+| TX0..TX3 | control bits [25:24],[23:21],[20:18],[7:6] | equal to attach-time read | DERIVED (RMW) |
+| TX0..TX3 | addrlow | ring base | DERIVED |
+| TX0..TX3 | addrhigh | `0x80000000` | CONSTANT |
+| TX0..TX3 | status0 state | not DISABLED | DERIVED |
+| RX | control | `0x0000084D` | CONSTANT |
+| RX | addrlow | ring base | DERIVED |
+| RX | addrhigh | `0x80000000` | CONSTANT |
+| RX | ptr | `0x400` | CONSTANT |
+| RX | status0 | RS=IDLE (`0x2`) | CONSTANT |
+| RX | status1 err | 0 | CONSTANT |
+| global | `macintmask` (0x12C) | 0 | CONSTANT |
+| global | `intctrlregs[0].intmask` (0x24) | `0x10000` | CONSTANT |
+| global | `intrcvlazy[0]` (0x100) | `0x01000000` | CONSTANT |
+| global | `maccontrol` (0x120) | `0x44020402` | DERIVED |
+
+Do not require raw RX `ptr` equality (field/current bits); use the state fields.
+
+## D.15 Proposed D3A0 runtime boundary (analysis)
+
+```
+proven D2B prefix (ucode + common initvals)
+  -> allocate DMA resources (2..5 rings) + 8 KiB align + 32-bit mask
+  -> memset descriptors; map + post 64 RX buffers (DMA_FROM_DEVICE)
+  -> program TX0..TX3: addrlow/high + control RMW (XE[|PD]); no ptr/descriptors
+  -> program RX: addrlow/high + ptr=0x400 + control=0x84D (enable)
+  -> interrupt source only: intrcvlazy[0]=0x01000000; intctrlregs[0].intmask|=I_RI
+     (HOST ROUTE DISABLED; macintmask stays 0)
+  -> validate D3A0 postconditions (D.14)
+  -> ob_dma_quiesce (per-channel reset -> verify -> bcma_core_disable)
+  -> verify engines stopped / core in reset
+  -> dma_unmap/free, free skbs/rings
+  -> STOP
+```
+Bring-up and safe teardown must be proven **in the same run**.
+
+## D.16 Normal-unload vs reboot-only verdict
+
+```
+SAFE TO IMPLEMENT D3A0 WITH NORMAL QUIESCE/UNLOAD?   YES
+SAFE ONLY AS ONE-SHOT UNTIL REBOOT?                  YES (fallback, not the design)
+```
+The quiesce sequence (D.7/D.8) is built only from pinned vendor/BCMA operations
+and makes normal unload possible; reboot-only remains an emergency fallback
+until the first D3A0 run empirically confirms teardown.
+
+## D.17 OpenBRCM refactor plan (analysis only)
+
+| proposed helper | reuse | change from today |
+|---|---|---|
+| `ob_dma_alloc()` | `ob_dma_init` (mask, pool, ring alloc) | split out hardware-free allocation; add per-role rings (up to 5) |
+| `ob_dma_desc_init()` | new (same as ring `memset`) | explicit helper |
+| `ob_dma_map_rx()` | `ob_rx` buffer map loop | extract from `ob_rx_init` |
+| `ob_dma_program_tx()` | **new** | 4 channels: addrlow/high + control RMW; no ptr/descriptors |
+| `ob_dma_program_rx()` | `ob_rx_init` register writes | FIFO0 `0x220/0x224/0x228/0x22C`, control `0x84D` |
+| `ob_dma_post_rx()` | `ob_rx` post loop | 64 buffers, ptr `0x400` |
+| `ob_dma_config_irq_source()` | part of `ob_rx_init` | `intrcvlazy`/`I_RI` only; **no** `bcma_host_pci_irq_ctl`, no `MI_DMAINT` |
+| `ob_dma_quiesce()` | **new** | per-channel resets + core disable (D.7/D.8) |
+| `ob_dma_free()` | `ob_dma_free` | call only after quiesce; free rings/skbs |
+| `ob_irq_route()` | `ob_rx.c` `bcma_host_pci_irq_ctl` | keep **out** of the D3A0 path (used by M3.4B/normal only) |
+
+Behavioral changes: `ob_dma_init` becomes allocation-only (already close);
+`ob_rx_init` splits into program/post + IRQ routing; `ob_irq_init` unchanged
+(handler only) but must not be required by D3A0.
+
+## D.18 Regression protection
+
+New isolated mode (e.g. `dma_test_only`) must be mutually exclusive with
+`fw_validate_only`/`ucode_test_only`/`initvals_test_only` and must:
+- never call `ob_mac80211_register`, `bcma_host_pci_irq_ctl(true)`, or enable
+  `MI_DMAINT`;
+- keep `ob_remove` running `ob_dma_quiesce` before any free.
+Regression checks: the three earlier isolated modes must still skip DMA/IRQ
+allocation and programming entirely (assert by absence of the new code paths),
+and `make hosttest` must continue to pass unchanged.
+
+## D.19 Final D3A0 implementation GO gate
+
+Every required item is now resolved:
+
+- exact 4 TX channel programming known: **YES** (D.1);
+- exact TX CONTROL known as RMW formula: **YES** (D.2);
+- `dataoffsethigh`/`ddoffsethigh` provenance resolved: **YES** (D.3, `0x80000000`);
+- `intrcvlazy` derivation resolved: **YES** (D.4, `0x01000000` constant);
+- exact TX/RX reset functions pinned: **YES** (D.6, `0xf64a`/`0xf5ef`);
+- safe quiesce sequence proven: **YES** (D.7/D.8, per-channel reset + core disable);
+- Linux cleanup ordering proven: **YES** (D.8/D.9/D.13);
+- deterministic postconditions defined: **YES** (D.14);
+- no host IRQ delivery: **YES** (D.5, `macintmask=0`, route off);
+- prior milestone isolation preserved: **design** (D.18).
+
+```
+D3A0 IMPLEMENTATION GO:  YES
+```
+Scope of the GO: implement D3A0 **analysis-to-code** as a new isolated mode with
+the D.15 boundary and mandatory same-run teardown; it remains
+`NOT IMPLEMENTED` / `NOT HARDWARE PROVEN` until a hardware run proves bring-up
+and teardown. If that run cannot prove teardown, fall back to reboot-only.
+
+Remaining (implementation-time, not RE blockers): write the new helpers; add the
+isolated mode; prove teardown on hardware; confirm BCMA reset DMA guarantee
+empirically.
