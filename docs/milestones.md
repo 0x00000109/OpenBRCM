@@ -307,6 +307,13 @@ Canonical status (exact):
   `antswitch` (corrected: not NVRAM-only). No new hardware mode is required —
   the existing read-only `ob_si_read_mac`/`sprom_diag=1` path already reads all
   234 words; only their emission and the rev11 offset recovery are missing.
+- M3.4D3B MHF3 SPROM-evidence capture (branch `m34d3b-sprom-evidence`) =
+  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED`: the existing read-only SPROM path
+  now emits the already-read, CRC-validated 234-word rev11 image via the new
+  isolated `sprom_evidence_only=1` mode (`ob_si_emit_sprom11()`; **zero extra
+  MMIO**), with the offline decoder `scripts/sprom11_decode.py` and 10 host
+  tests. The one-shot read-only hardware run is **prepared, NOT executed**;
+  evidence `docs/m34d3b_sprom_evidence.md`.
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated

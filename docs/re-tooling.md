@@ -204,3 +204,35 @@ table commands, or add table-aware MMIO resolution to `re`.
 Known gap (2026-09): `re` panics with `failed printing to stdout: Broken pipe`
 when output is truncated by a pipe (e.g. `re card … | head`). Redirect to a file
 or use `--json` instead of piping to a short consumer.
+
+Tooling gaps filed during the M3.4D3B MHF value closure (analysis only; see
+`docs/m34d3b_band_init.md` §3.8.6). These are **scoped `re` improvements**, not
+requests to redesign the tool; each was worked around manually and the workaround
+is recorded in the milestone document:
+
+- **T1 — cross-function struct-field writer enumeration.** `re fields <fn>` is
+  per-function, so finding *every* writer of `wlc_info->pub+0x54` required a
+  whole-`.text` `,0x54(%r*)` store scan. Desired: `re fields --struct <name>
+  --writers` returning function + site + base provenance.
+- **T2 — structure-field aliasing / pointer provenance.** In `wlc_set_gmode`,
+  `re fields` attributed `band+0x54` to `*(a0 + 0x0)` (pub), flattening the
+  `band` pointer loaded from `wlc+0x40`; manual disasm was needed to separate
+  `band+0x54` from `pub+0x54`. Desired: exact base-pointer provenance.
+- **T3 — immediate/value propagation.** `re` did not show stored immediates
+  (`sub_62766` MHF offsets `0x5e/0x60/…`; `wlc_info_init` `0xffffffff`;
+  `si+0x8 = 0x804`); manual objdump was required. Desired: immediate/constant
+  value tracking in `re fn`.
+- **T4 — string-literal cross-references.** Finding the `srom_parsecis`
+  references to the literal field-format strings (`aa2g=0x%x`,
+  `antswitch=0x%x`, …) required `readelf -r` plus a manual `.rodata`→file-offset
+  map. Desired: `re refs <string-literal>`.
+- **T5 — reach output count vs function set.** `re reach <root>` prints only the
+  reachable *count*, so it could not be intersected with field writers. Desired:
+  `re reach --list`.
+- **T6 — overlapping ELF function symbols.** `srom_parsecis` (0x46a3, size
+  19103) and `srom_var_init` (0x9704) overlap (0x9704 < 0xb12e); `re fn`
+  inherits the ambiguous boundary. Desired: overlapping-symbol detection/flagging
+  and a disambiguation policy.
+- **T7 — table-derived MMIO offsets** (already noted above) blocked a direct
+  `re`-only reconstruction of the vendor `srom_parsecis` raw-field cursor;
+  recovering the rev11 field offsets needs the table-aware resolution.

@@ -27,16 +27,18 @@ source of truth; this file records the live working-tree state on top of HEAD.
   (`AGENTS.md` §7).
 
 ## Commit state (IMPORTANT)
-- `main` = `06bbd60ef69aefe4d4c5f53f2371e92cf0fb48c1` (**PR #11 merged**,
-  branch `m34d3b-band-init-analysis`); `main == origin/main`. Prior: PR #12
-  (`6eff1ea`, tool-first RE bootstrap + OpenCode integration).
+- `main` = `5f6c3d2b64ecf8c7c4beaf9d0c61607d27431551` (**PR #13 merged**,
+  branch `m34d3b-mhf-value-closure`); `main == origin/main`. Prior: PR #11
+  (`06bbd60`, D3B band-init / MHF provenance analysis), PR #12 (`6eff1ea`,
+  tool-first RE bootstrap + OpenCode integration).
 - Merged PR history (oldest → newest): **#2** `85d3013` (M3.4D2A), **#5**
   `65d61ce` (M3.4D2B analysis), **#6** `4146cd8` (M3.4D2B test), **#7**
   `2a7ba1d` (M3.4D3 analysis), **#8** `3bdef76` (M3.4D3A0 test), **#9**
   `12c3e7a` (M3.4D3A1 vendor-tail analysis), **#10** `839f007` (M3.4D3A1
   isolated test + the first D3B analysis), **#11** `06bbd60` (M3.4D3B band-init
   / MHF provenance analysis), **#12** `6eff1ea` (tool-first RE bootstrap +
-  OpenCode integration). `main` contains M3.4D1 (`2029292`), the
+  OpenCode integration), **#13** `5f6c3d2` (M3.4D3B band-0 MHF value closure).
+  `main` contains M3.4D1 (`2029292`), the
   isolated modes `fw_validate_only=1` / `ucode_test_only=1` /
   `initvals_test_only=1` / `dma_test_only=1` / `d11_tail_test_only=1`,
   `src/ob_ucode.{c,h}`, `src/ob_initvals.{c,h}`, `src/ob_d3a0.{c,h}`,
@@ -51,13 +53,14 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`) and
   **M3.4D3A1** (`d11_tail_test_only=1`, candidate `42d74b8`, module
   `6ba2d853…`) are all `HARDWARE RUNTIME PROVEN` on BCM4352.
-- **D3B analysis merged** via PR #11 (`06bbd60`): the band-0 MHF provenance
-  analysis with `D3B IMPLEMENTATION GO: NO` (`VALUE PARTIALLY PROVEN`).
-- **Active D3B value-closure branch** `m34d3b-mhf-value-closure` (from `main`
-  @ `06bbd60`): closes four of the five band-0 MHF words (MHF1/MHF2/MHF4/MHF5
-  PROVEN), leaves **MHF3** UNKNOWN, and corrects `aa2g`/`aa5g`/`antswitch` to
-  SPROM-synthesized (not NVRAM-only). Docs/tooling only — no `src/`, `tests/`,
-  `Makefile` or runtime-driver change.
+- **D3B analysis merged** via PR #11 (`06bbd60`); **value closure merged** via
+  PR #13 (`5f6c3d2`): `mhfs[0..4] = {0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`
+  (MHF1/MHF2/MHF4/MHF5 PROVEN), `D3B IMPLEMENTATION GO: NO` (blocked on MHF3).
+- **Active D3B SPROM-evidence branch** `m34d3b-sprom-evidence` (from `main`
+  @ `5f6c3d2`): read-only capture of the already-read 234-word rev11 SPROM
+  image (`sprom_evidence_only=1` + `ob_si_emit_sprom11()`), the offline decoder
+  `scripts/sprom11_decode.py` and host tests. `IMPLEMENTED` / `STATIC TESTED` /
+  `SIGNED`; the hardware run is **prepared but NOT executed**.
 - Analysis branch `m34d3a1-vendor-tail-analysis` — **M3.4D3A1 vendor-tail
   recovery, `ANALYSIS COMPLETE`**, `D3A1 IMPLEMENTATION GO: YES`; report
   `docs/m34d3a1_vendor_tail.md`; merged via PR #9.
@@ -339,6 +342,14 @@ statically (`docs/m34d3b_band_init.md` §3.8). The last hardware-proven
 milestone is **M3.4D3A1** (see "Last completed hardware test"); the D2B detail
 below is retained as the historical common-initvals result.
 
+**D3B MHF3 SPROM-evidence capture** (`m34d3b-sprom-evidence`, from `main` @
+`5f6c3d2`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` — the existing read-only
+SPROM path now emits the already-read, CRC-validated 234-word rev11 image
+(`sprom_evidence_only=1`, `ob_si_emit_sprom11()`, **zero extra MMIO**), with the
+offline decoder `scripts/sprom11_decode.py` and 10 host tests. The one-shot
+read-only hardware run is **prepared, NOT executed**; the rev11 raw offsets are
+the remaining static blocker. Evidence: `docs/m34d3b_sprom_evidence.md`.
+
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
   `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
@@ -470,12 +481,14 @@ MHF4 `0x0000` (4313-only site skipped);
 MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
 Only **MHF3** remains: `antsel_type` needs the rev11 SPROM
 `boardtype`/`boardflags` and the **SPROM-synthesized** `aa2g`/`aa5g`/
-`antswitch` (corrected: not NVRAM-only). No new hardware mode is required — the
-existing read-only `ob_si_read_mac`/`sprom_diag=1` path already reads and
-CRC-validates all 234 words; only their emission and the rev11 raw-offset
-recovery are missing. `D3B IMPLEMENTATION GO: NO` — do not invent an MHF3
-default. D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first
-PHY-indirect MMIO) follows. Neither D3B nor D4 has code or hardware proof yet.
+`antswitch` (corrected: not NVRAM-only). The capture is now implemented
+(`sprom_evidence_only=1` emits the already-read, CRC-validated 234-word image
+with **zero extra MMIO**; evidence `docs/m34d3b_sprom_evidence.md`); the
+one-shot read-only hardware run is **prepared but NOT executed**, and the rev11
+raw offsets remain the static blocker. `D3B IMPLEMENTATION GO: NO` — do not
+invent an MHF3 default. D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`,
+first PHY-indirect MMIO) follows. Neither D3B nor D4 has code or hardware proof
+yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -507,9 +520,11 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B value-closure, analysis-only): STOP after the docs/evidence
-closure commit and branch update; **no D3B implementation**, no
-`insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering.
+Current (D3B MHF3 SPROM-evidence capture, static-only): STOP after the signed
+frozen candidate + docs/evidence commit; **no D3B implementation**, no
+`insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering. The
+next action (owner approval) is the one-shot read-only `sprom_evidence_only=1`
+run, then static recovery of the rev11 offsets.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the

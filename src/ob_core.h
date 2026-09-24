@@ -50,6 +50,11 @@ struct ieee80211_hw;
  *		post-common tail (sub_67efd + T1 + DMA in vendor position + T2 +
  *		switch_macfreq) ran and STOPPED before sub_6656c/bsinitvals/PHY;
  *		@remove handles the fail-closed DMA lifecycle via ob_d3a1_remove()
+ * @sprom_evidence_only: true when probe ran with sprom_evidence_only=1: the
+ *		device is bound and only the READ-ONLY external-SPROM diagnostic
+ *		runs (it emits the already-read 234-word rev11 image); no power-up,
+ *		D11/core write, DMA, IRQ, PHY/radio, firmware or mac80211; @remove
+ *		skips all teardown
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
@@ -70,6 +75,7 @@ struct ob_hw {
 	bool			initvals_test_only;
 	bool			dma_test_only;
 	bool			d3a1_test_only;
+	bool			sprom_evidence_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;
