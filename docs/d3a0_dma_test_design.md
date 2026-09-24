@@ -164,3 +164,41 @@ free DMA resources.
 - D3A0 `IMPLEMENTATION GO = YES` (analysis, `docs/m34d3_bsinitvals.md` §D.19).
 - D3A0 `NOT IMPLEMENTED`; `NOT HARDWARE PROVEN`.
 - M3.4D3 = `ANALYSIS ONLY`; last hardware-proven = **M3.4D2B**.
+
+## 8. Prepared future hardware procedure (NOT executed)
+
+Prepared but intentionally **not run**. Requires explicit human approval and a
+quiet machine (no other openbrcm activity). Uses only `dma_test_only=1`; no
+`runtime-test.sh`, no combined isolated modes.
+
+Frozen artifacts (this branch):
+- implementation commit: `8a59bf1` (plus this documentation commit)
+- built + signed module: `openbrcm.ko`
+  SHA256 `c214f5eb61ecb04383e8fc1a37e21169140131772e83df99ae52255cf1bba464`
+  (`signer: Broadcom Driver MOK`, `sig_hashalgo: sha256`)
+
+```
+# 0. verify the frozen module hash
+sha256sum openbrcm.ko
+#   expect c214f5eb61ecb04383e8fc1a37e21169140131772e83df99ae52255cf1bba464
+
+# 1. ensure no stale module is loaded
+lsmod | grep -c '^openbrcm '    # expect 0
+
+# 2. load only the D3A0 isolated mode
+sudo insmod openbrcm.ko dma_test_only=1
+
+# 3. capture the D3A0 evidence (bring-up validation + quiesce + PASS)
+sudo dmesg | grep -E 'dma-test:|openbrcm:'
+
+# 4. unload
+sudo rmmod openbrcm
+```
+
+Expected dmesg milestones: `dma-test: BEGIN`; `TX0..TX3 programmed`;
+`RX buffers posted=64`; `bring-up validation PASS`; `quiesce begin`;
+`RX reset PASS`; `TX0..TX3 reset PASS`; `all DMA engines stopped`;
+`rings released`; `PASS - bring-up + teardown proven`;
+`STOP before remaining D3A1/band/PHY`. A missing/failed quiesce logs
+`quiesce NOT verified; ... reboot required` and must be treated as a failure
+(reboot), not PASS.
