@@ -37,10 +37,11 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `docs/m34d3a1_vendor_tail.md`. Docs/tooling only, no runtime code, no
   hardware; merged to `main` via a normal merge commit.
 - Implementation branch `m34d3a1-vendor-tail-test` — **M3.4D3A1 =
-  IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN**; report
-  `docs/m34d3a1_vendor_tail_test.md`. New isolated mode
+  IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN** on BCM4352
+  (candidate `42d74b8`, module `6ba2d853…`); report
+  `docs/m34d3a1_vendor_tail_test.md` (§14.1 proof). New isolated mode
   `d11_tail_test_only=1`; DMA sub-lifecycle reused from D3A0 in its vendor
-  position; STOPS before `sub_6656c`. Not loaded; no hardware.
+  position; STOPS before `sub_6656c`. Normal unload + DMA teardown proven.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -95,6 +96,17 @@ source of truth; this file records the live working-tree state on top of HEAD.
   SHM tail, band init, bsinitvals, AC PHY, PHY tables, radio, synth/PLL, channel,
   calibration, real RX completion, TX frame completion, scan or association).
   Evidence: `docs/m34d3a0_dma_test.md`.
+- M3.4D3A1 (isolated mode, branch `m34d3a1-vendor-tail-test`):
+  `d11_tail_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352** — tested
+  candidate `42d74b8`, signed module SHA256
+  `6ba2d853adef9860213498c32c8968bdbb027e59ac17ffe8a2c2670503ff5abd`, kernel
+  `7.0.0-34-generic`. `insmod` rc=0; D2A/D2B prefix PASS; exact rev42 tail
+  `sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`; `0x530`/`0x540` bounded
+  expiry handled vendor-**non-fatal**; postconditions validated; **normal
+  `rmmod` + verified DMA teardown**; STOP before `sub_6656c`/bsinitvals/PHY;
+  no BUG/Oops/lockup/reset. Scope: vendor post-common/pre-PHY D11 tail only
+  (does NOT prove band init, bsinitvals, AC PHY, radio, calibration, channel,
+  real RX/TX). Evidence: `docs/m34d3a1_vendor_tail_test.md` §14.1.
 
 ## Analysis-only facts (not hardware proven here)
 - M3.4C/C.1: exact vendor rev42 images recovered from `wlc_hybrid.o_shipped`;
@@ -127,10 +139,14 @@ Stated exactly:
 - M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
 - M3.4D3A0 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated DMA lifecycle only; candidate `4fa1b57`)
-- M3.4D3A1 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
-  (isolated `d11_tail_test_only=1` vendor post-common / pre-PHY tail; reuses
-  the proven D3A0 DMA lifecycle in its vendor position; STOPS before
-  `sub_6656c`; module built + MOK-signed, never loaded)
+- M3.4D3A1 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME
+  PROVEN` (isolated `d11_tail_test_only=1` vendor post-common / pre-PHY tail;
+  reuses the proven D3A0 DMA lifecycle in its vendor position; STOPS before
+  `sub_6656c`; candidate `42d74b8`, module `6ba2d853…`; normal unload + DMA
+  teardown proven)
+- M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
+  / `d11ac1bsinitvals42`; next milestone)
+- M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
@@ -188,14 +204,24 @@ conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail test (IMPLEMENTED / STATIC TESTED / SIGNED)
-Status: **`M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED` / NOT HARDWARE PROVEN.**
+## M3.4D3A1 — vendor post-common / pre-PHY tail test (HARDWARE RUNTIME PROVEN)
+Status: **`M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME
+PROVEN` on BCM4352** (candidate `42d74b8`, module `6ba2d853…`, kernel
+`7.0.0-34-generic`).
 Isolated mode `d11_tail_test_only=1` reproduces the exact rev42 vendor order
 (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) and STOPS before
 `sub_6656c`; the DMA sub-lifecycle is the hardware-proven D3A0 one, reused in
 its vendor position. New: `src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`,
 `tests/kunit/ob_d3a1_kunit.c`. Report:
-`docs/m34d3a1_vendor_tail.md`. Blob sha256 `352a6e349f…`; read-only RE.
+`docs/m34d3a1_vendor_tail.md`; proof `docs/m34d3a1_vendor_tail_test.md` §14.1.
+Blob sha256 `352a6e349f…`; read-only RE.
+- **Proof:** one-shot isolated `d11_tail_test_only=1`; `insmod` rc=0; full
+  `sub_67efd` tail (`0x530`/`0x540` expiry non-fatal), T1/DMA/T2 in vendor
+  order, postconditions validated, **normal `rmmod` + verified DMA teardown +
+  STOP before `sub_6656c`/bsinitvals/PHY**; no BUG/Oops/lockup/reset.
+- **Scope boundary (NOT proven):** band init, bsinitvals, `sub_6656c`,
+  `wlc_phy_init`, AC PHY, radio, calibration, channel, real RX/TX, scan,
+  association.
 - **Key correction: the vendor interleaves DMA inside the tail** —
   `T1 (sub_67efd → MACCONTROL/macphyclk/SCR/SFBL/ifs) → DMA (4× txinit +
   rxinit + rxfill) → T2 (BTC/NVRAM SHM, 0x78c/0x78e/0x790, switch_macfreq) →
@@ -336,10 +362,13 @@ Runtime evidence (BCM4352, chip rev 3, D11 rev 42):
 no DMA/IRQ/PHY/radio/channel init.
 
 ## Last completed hardware test
-M3.4D2B isolated `initvals_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
-(tested candidate `f27286f`, module SHA256 `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`;
-see "Current milestone"). Prior: M3.4D2A isolated `ucode_test_only=1` HARDWARE
-RUNTIME PROVEN (candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
+M3.4D3A1 isolated `d11_tail_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
+(tested candidate `42d74b8`, module SHA256
+`6ba2d853adef9860213498c32c8968bdbb027e59ac17ffe8a2c2670503ff5abd`; normal
+`rmmod` + verified DMA teardown + STOP before `sub_6656c`). Prior: M3.4D3A0
+`dma_test_only=1` HARDWARE RUNTIME PROVEN (candidate `4fa1b57`); M3.4D2B
+`initvals_test_only=1` (candidate `f27286f`); M3.4D2A `ucode_test_only=1`
+(candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
 
 ## Last failure / reset event
 A test that used `fw_dryrun=1` believing it isolated hardware caused a long
@@ -374,16 +403,22 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-**M3.4D3A1 is now IMPLEMENTED / STATIC TESTED / SIGNED** (NOT HARDWARE PROVEN)
-on `m34d3a1-vendor-tail-test`; report `docs/m34d3a1_vendor_tail_test.md` (the
-recovered ordering/source evidence remains in `docs/m34d3a1_vendor_tail.md`).
-The isolated mode `d11_tail_test_only=1` runs the proven D2A/D2B core, the
-exact rev42 tail (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) with the
-D3A0 DMA lifecycle reused in its vendor position, validates deterministic
-postconditions and quiesces, then **STOPS before `sub_6656c`**. Module built +
-MOK-signed, **never loaded**. **No hardware action:** no `insmod`, no DMA test,
-no PHY/radio/channel/mac80211. See `docs/d3a0_dma_test_design.md`,
+**M3.4D3A1 is now HARDWARE RUNTIME PROVEN on BCM4352** (candidate `42d74b8`,
+module `6ba2d853…`) on `m34d3a1-vendor-tail-test`; report
+`docs/m34d3a1_vendor_tail_test.md` §14.1 (recovered ordering/source evidence in
+`docs/m34d3a1_vendor_tail.md`). The one-shot isolated
+`d11_tail_test_only=1` run executed the proven D2A/D2B core, the exact rev42
+tail (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) with the D3A0 DMA
+lifecycle in its vendor position, validated the postconditions, ran the
+verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
+`sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
+
+**Next action — D3B analysis, then D4.** M3.4D3B (band init /
+`d11ac1bsinitvals42`, the 73-record consumer `sub_60f67` called by `sub_6656c`)
+is `ANALYSIS ONLY`; formalize it into an implementable, provenance-pinned
+isolated test (STOP before `wlc_phy_init`). D4 (AC PHY bring-up) follows.
+Neither D3B nor D4 has code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

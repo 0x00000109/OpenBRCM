@@ -293,7 +293,10 @@ Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
 
 Canonical status (exact):
 - M3.4D3A0 = HARDWARE RUNTIME PROVEN
-- M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN
+- M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
+  (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
+  normal unload + DMA teardown + STOP boundary proven)
+- M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
@@ -349,6 +352,14 @@ Module built + MOK-signed, **never loaded** (no hardware execution).
   classified UNPROVEN, no equality gate).
 - Only the symbolic name of the `0x78c/0x78e/0x790` SHM slots remains UNKNOWN
   (value/source proven; microcode-only consumer).
+- **HARDWARE RUNTIME PROVEN** (candidate `42d74b8`, module `6ba2d853…`): one-shot
+  isolated `d11_tail_test_only=1` on BCM4352 (kernel `7.0.0-34-generic`);
+  `sub_67efd` ran with `0x530`/`0x540` expiry non-fatal, T1/DMA/T2 in vendor
+  order, postconditions validated, **normal `rmmod` + verified DMA teardown +
+  STOP before `sub_6656c`/bsinitvals/PHY**; no kernel fault. Proof:
+  `docs/m34d3a1_vendor_tail_test.md` §14.1.
+- **Next:** D3B analysis (band init / `d11ac1bsinitvals42`) → D4 (AC PHY
+  bring-up). Both remain `ANALYSIS ONLY` / NOT HARDWARE PROVEN.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

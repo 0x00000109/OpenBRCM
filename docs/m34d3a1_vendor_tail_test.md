@@ -1,7 +1,9 @@
 # M3.4D3A1 — isolated vendor post-common / pre-PHY D11 tail test
 
-Status: **`M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED`,
-`NOT HARDWARE PROVEN`.**
+Status: **`M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME
+PROVEN` on BCM4352** (isolated `d11_tail_test_only=1`; candidate `42d74b8`,
+module `6ba2d853…`). Normal unload, DMA teardown and the STOP boundary are
+proven. See §14.1 for the proof record.
 
 This document records the isolated implementation of the vendor BCM4352 /
 D11 rev42 post-common/pre-PHY tail recovered in
@@ -9,8 +11,9 @@ D11 rev42 post-common/pre-PHY tail recovered in
 COMPLETE`, `D3A1 IMPLEMENTATION GO: YES`). It is **not** a normal-bring-up
 stage: it is a one-shot, isolated test that STOPS before `sub_6656c`.
 
-**No hardware execution was performed.** The module is built and MOK-signed
-but never loaded in this task.
+**Scope (proven):** the vendor post-common / pre-PHY D11 tail only. It does
+**not** prove band init, bsinitvals, `sub_6656c`, AC PHY, radio, calibration,
+channel, real RX/TX, scan or association.
 
 ## 1. Isolated mode
 
@@ -348,6 +351,30 @@ normal driver path is untouched; all pre-existing host tests still pass.
 | signer | `Broadcom Driver MOK` |
 | depends | `mac80211,bcma` |
 
+## 14.1 Hardware runtime proof record (BCM4352)
+
+**`M3.4D3A1 = HARDWARE RUNTIME PROVEN`** — one-shot isolated
+`d11_tail_test_only=1` run on BCM4352 (D11 rev 42), kernel
+`7.0.0-34-generic`.
+
+| field | value |
+| :--- | :--- |
+| tested candidate | `42d74b8ac2d41193d26e90945c5368d299273c4b` |
+| signed module SHA256 | `6ba2d853adef9860213498c32c8968bdbb027e59ac17ffe8a2c2670503ff5abd` |
+| `insmod` | rc=0 |
+| board-data / D2A / D2B | PASS (as D2B: 10850 ucode writes, PSM poll `iterations=11`, 610 common initvals `w16=113`/`w32=497`) |
+| `sub_67efd` | full tail executed; `0x530`/`0x540` expiry handled vendor-**non-fatal** (bounded, logged, continued) |
+| T1 / DMA / T2 | executed in vendor order; postconditions validated |
+| normal unload (`rmmod`) | **PROVEN** — verified D3A0 teardown, no fatal latch |
+| DMA teardown | **PROVEN** — all programmed engines verified stopped, rings released |
+| stop boundary | **before `sub_6656c` / bsinitvals / PHY** (unchanged) |
+| kernel faults | none observed (no BUG/Oops/lockup/reset) |
+
+The failure mode that blocked the first attempt (candidate `1186a9b`, module
+`ce9b7cc5…`) was the invented fail-closed abort on the `0x530` bounded poll;
+after the §3.1 correction the run follows the vendor control flow and reaches
+the expected STOP with a clean teardown + unload.
+
 ## 15. Known limitations (documented, non-blocking)
 
 1. No OpenBRCM NVRAM text-variable provider: `btc_params`/`btc_flags` are
@@ -378,9 +405,11 @@ No equality postcondition is placed on them.
 | E. DMA/T2/validation failure | full tail | yes | mandatory verified D3A0 teardown |
 | F. DMA reset unverifiable | full tail | yes | fatal latch, retain memory, pin module, reboot only |
 
-## 16. Future hardware command sequence (PREPARED ONLY — DO NOT RUN)
+## 16. Hardware command sequence (EXECUTED — see §14.1 for the proof)
 
-Requires explicit human approval. No command in this section was executed.
+This sequence was approved and run for the §14.1 proof. It is recorded for
+reproducibility; do not re-run without a new explicit human approval (the test
+is one-shot and leaves the chip partial).
 
 ```sh
 # 0. build + sign (already done)

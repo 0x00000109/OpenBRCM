@@ -179,14 +179,16 @@ grep -q 'free_allowed' src/ob_d3a0.h \
 	&& ok "lifecycle separates stopped/contained/free/fatal" \
 	|| bad "lifecycle flags not separated"
 
-# 4e. D3A1 is IMPLEMENTED / STATIC TESTED / SIGNED but NOT hardware proven.
+# 4e. D3A1 is HARDWARE RUNTIME PROVEN on BCM4352, but only for the isolated
+# vendor post-common / pre-PHY D11 tail. Band init / bsinitvals / PHY stay
+# unproven, and D3B must not be overclaimed either.
 if [ -f docs/m34d3a1_vendor_tail_test.md ] && \
    grep -q 'IMPLEMENTED' docs/m34d3a1_vendor_tail_test.md && \
    grep -q 'STATIC TESTED' docs/m34d3a1_vendor_tail_test.md && \
-   grep -q 'NOT HARDWARE PROVEN' docs/m34d3a1_vendor_tail_test.md; then
-	ok "D3A1 implementation recorded (IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN)"
+   grep -q 'HARDWARE RUNTIME PROVEN' docs/m34d3a1_vendor_tail_test.md; then
+	ok "D3A1 implementation recorded (IMPLEMENTED / STATIC TESTED / HARDWARE RUNTIME PROVEN)"
 else
-	bad "docs/m34d3a1_vendor_tail_test.md must record D3A1 IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN"
+	bad "docs/m34d3a1_vendor_tail_test.md must record D3A1 HARDWARE RUNTIME PROVEN"
 fi
 if [ -f docs/m34d3a1_vendor_tail.md ] && \
    grep -q 'D3A1 IMPLEMENTATION GO: YES' docs/m34d3a1_vendor_tail.md; then
@@ -194,11 +196,17 @@ if [ -f docs/m34d3a1_vendor_tail.md ] && \
 else
 	bad "docs/m34d3a1_vendor_tail.md must record D3A1 IMPLEMENTATION GO: YES"
 fi
-if grep -rniE 'M3\.4D3A1.*(HARDWARE[^.]*PROVEN|RUNTIME PROVEN)' docs/ 2>/dev/null \
-		| grep -viE 'not|never|unproven' | grep -q .; then
-	bad "a document overclaims M3.4D3A1 hardware status"
+if grep -rniE 'M3\.4D3A1.*(band init|bsinitvals|wlc_phy_init|AC PHY|radio|calibration|channel).*PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven|before|does not|stops' | grep -q .; then
+	bad "a document overclaims M3.4D3A1 scope"
 else
-	ok "D3A1 not claimed hardware proven"
+	ok "D3A1 scope limited to the post-common/pre-PHY tail"
+fi
+if grep -rniE 'M3\.4D3B.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven' | grep -q .; then
+	bad "a document overclaims M3.4D3B hardware status"
+else
+	ok "D3B not claimed hardware proven"
 fi
 
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
