@@ -604,6 +604,8 @@ Still unknown / open decisions:
   (second correction: Appendix B, §0/§16/§17/§18/§19).
 - `1f32300` — `m34d3: reverse vendor DMA/IRQ stage; A/B/C/D isolation YES`
   (third correction: Appendix C, §0/§16/§17/§18/§19).
+- `802e01f` — `m34d3: close D3A0 blockers; implementation GO YES (analysis only)`
+  (Appendix D; §18/§19).
 
 All DCO signed, on `m34d3-bsinitvals-analysis`; no driver code and no hardware
 interaction.
