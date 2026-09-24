@@ -62,6 +62,17 @@ static int ob_fw_request(struct ob_hw *hw, const char *name, const char *legacy,
 	return 0;
 }
 
+/*
+ * Acquire + validate only the rev42 ucode image for the isolated hardware test
+ * (M3.4D2A). Same strictness as ob_fw_probe(): exact size + FNV-1a-64.
+ */
+int ob_fw_request_ucode(struct ob_hw *hw, const struct firmware **fw,
+			const char **used)
+{
+	return ob_fw_request(hw, OB_FW_UCODE42_NAME, OB_FW_UCODE42_NAME_LEGACY,
+			     OB_FW_UCODE42_SIZE, OB_FW_UCODE42_FNV, fw, used);
+}
+
 static void ob_fw_trace_ucode(struct ob_hw *hw, const u8 *data, u32 words)
 {
 	u32 i, v, start;

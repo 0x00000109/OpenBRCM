@@ -27,6 +27,49 @@ hardware writes.
   `MACCONTROL=0x04020402` (PSM_RUN), poll `MI_MACSSPNDD` → common initvals →
   STOP before band init/PHY. bsinitvals deferred (applied with `wlc_phy_init`).
 
+## M3.4D2A — D11 rev42 ucode upload + PSM start only (HARDWARE RUNTIME PROVEN on BCM4352)
+
+Isolated mode `ucode_test_only=1` (mutually exclusive with `fw_validate_only`).
+Gate (observed on BCM4352): upload `writes=10850`, PSM start, bounded poll
+`MI_MACSSPNDD` PASS, then STOP before initvals/PHY/radio/DMA.
+- Minimum prep only: `bcma_host_pci_up` + D11 `bcma_core_enable` + FAST clock
+  (the proven M2.5 A/B/C subset), then the vendor upload sequence.
+- `MACCONTROL=0x04000404` (IHR_EN|PSM_JMP0|WAKE) via masked RMW -> OBJADDR
+  `0x03000000` (auto-inc) + 10850 raw LE OBJDATA writes with a write-count
+  invariant -> `MACINTSTATUS=0xffffffff` -> `MACCONTROL=0x04020402`
+  (IHR_EN|INFRA|PSM_RUN|WAKE, no EN_MAC) -> poll `MI_MACSSPNDD`
+  (10 us x <=100000 => <=1.0 s). No initvals applier, no EN_MAC.
+- SHM `M_FIFOSIZE0..3` (0x98..0x9e) are read with the vendor windowed
+  `wlc_bmac_read_shm` access, logged only (the vendor reads them after common
+  initvals). No revision string is invented (vendor reads none).
+- Full call graph, MMIO chronology, unwind matrix and timing:
+  `docs/ucode_test.md`. `remove()` has its own ucode_test_only guard and calls
+  no RX/IRQ/DMA/mac80211 teardown. No cleanup register writes on any failure.
+
+### M3.4D2A runtime evidence (BCM4352, chip rev 3, D11 rev 42)
+Tested candidate `7265f9d`; implementation `47e0883`; base `854e398`.
+`insmod` rc=0; image `brcm/bcm43xx-ucode.fw` `size=43400` `words=10850`;
+`host_is_pcie2=1`, `clkctlst=070b0042`, HAVEHT=1, core_enabled=1; MACCONTROL
+`00000000` -> upload `04000404`; `OBJADDR=30000000`; writes `10850/10850`; first
+`0300104e 0001bc60 02f00e25 0003bfde`; last `02f00000 000002de 00000000
+00000000`; PSM start `04020402`; poll `delay=10us max_iter=100000
+max_total_us=1000000` PASS `iterations=11` `MACINTSTATUS=00000001`; SHM
+`M_FIFOSIZE0..3=0000 0000 0000 0000` (diagnostic only — the vendor reads these
+after the common-initvals applier, which D2A does not run); final
+`PASS - stopped before initvals/PHY/radio/DMA`. No timeout/BUG/Oops/lockup/reset;
+no DMA/IRQ/PHY/radio/channel init. Post-test state is intentionally partial
+(`PSM_RUN=1`, D11 enabled, `EN_MAC=0`) with no cleanup writes.
+
+## M3.4D2B — common initvals application (analysis only; NOT implemented)
+Conceptual next milestone. Before any implementation, recover and verify:
+- exact vendor ordering after a successful PSM start;
+- the exact relationship between common initvals and band init;
+- which registers/SHM/object-memory regions the 610 records touch;
+- whether any records assume an already-running PSM;
+- expected state before and after application;
+- a safe bounded test boundary.
+No PHY/radio/channel work in this milestone.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.
