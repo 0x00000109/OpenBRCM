@@ -19,6 +19,7 @@
 
 #include <linux/types.h>
 #include "ob_dma.h"
+#include "ob_initvals.h"
 
 /* ---- DMA64 channel register block, relative to a channel base ---- */
 #define OB_D3A0_D64_CONTROL	0x00u
@@ -42,6 +43,15 @@
 #define OB_D3A0_TX_NTXD		512u
 #define OB_D3A0_TX_RING_BYTES	(OB_D3A0_TX_NTXD * OB_DMA_DESC_SIZE) /* 8192 */
 #define OB_D3A0_RING_ALIGN	8192u
+
+/*
+ * Ownership accounting: the TX rings publish ONLY base + CONTROL (no pointer,
+ * no posted descriptors), so dma_test_only performs ZERO TX payload mappings.
+ * All streaming mappings in D3A0 belong to FIFO0 RX (OB_DMA_RX_POST_INIT = 64
+ * DMA_FROM_DEVICE buffers).
+ */
+#define OB_D3A0_TX_PAYLOAD_MAPPINGS	0u
+#define OB_D3A0_RX_MAPPINGS		OB_DMA_RX_POST_INIT
 
 /* ---- TX control bits (proven) ---- */
 #define OB_D3A0_XC_XE		0x00000001u	/* transmit enable */
@@ -247,6 +257,17 @@ static inline bool ob_d3a0_host_irq_disabled(u32 macintmask)
 static inline bool ob_d3a0_irq_source_ok(u32 intmask0)
 {
 	return (intmask0 & OB_D3A0_I_RI) != 0;
+}
+
+/*
+ * Hard ordering gate. The post-common D3A0 prefix (and therefore every DMA
+ * action) may run ONLY after the shared D2B stage produced the exact
+ * provenance-backed common-initvals postconditions. Any deviation means the
+ * common-initvals stage did not complete correctly and DMA MUST NOT start.
+ */
+static inline bool ob_d3a0_d2b_state_ok(const struct ob_initvals_post *post)
+{
+	return ob_initvals_post_ok(post);
 }
 
 #ifdef __KERNEL__

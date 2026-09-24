@@ -23,11 +23,13 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > TX remain unproven. M3.4D3 (band-switch initvals + PHY boundary) analysis is
 > merged. M3.4D3A0 (isolated vendor pre-PHY DMA bring-up, `dma_test_only=1`) is
 > **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`** on
-> `m34d3a0-dma-test` (Draft PR): D2B prefix + pinned D11/IRQ-source writes (host
-> IRQ route off, `MACINTMASK=0`), 4 TX DMA channels + FIFO0 RX (64 buffers),
-> deterministic validation, fail-closed quiesce (per-channel reset verified;
-> core-reset containment fallback only). It STOPS before band init/bsinitvals/
-> PHY/radio/channel/mac80211.
+> `m34d3a0-dma-test` (Draft PR): full D2B entry (proven D2A + exactly 610 common
+> initvals + gate) + pinned D11/IRQ-source writes (host IRQ route off,
+> `MACINTMASK=0`), 4 TX DMA channels (zero TX payload mappings) + FIFO0 RX
+> (exactly 64 buffers), deterministic validation, fail-closed quiesce
+> (per-channel reset verified; core-reset containment with real readback only;
+> fatal state latched + module pinned + probe kept bound). It STOPS before band
+> init/bsinitvals/PHY/radio/channel/mac80211.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

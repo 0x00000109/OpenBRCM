@@ -90,13 +90,19 @@ static void test_mode_conflict(void)
 	chk("ucode mode teardown-skip",
 	    ob_isolated_mode_skips_teardown(OB_ISOLATED_UCODE_TEST), 1);
 
-	/* Only the initvals mode applies the common table (D2A regression). */
+	/*
+	 * The common table is applied by the D2B initvals mode AND by the D3A0
+	 * DMA mode (whose entry state IS the D2B exit); ucode_test_only must
+	 * never apply it (D2A regression).
+	 */
 	chk("ucode mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_UCODE_TEST), 0);
 	chk("fw mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_FW_VALIDATE), 0);
 	chk("initvals mode applies",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_INITVALS_TEST), 1);
+	chk("dma mode applies initvals",
+	    ob_isolated_mode_applies_initvals(OB_ISOLATED_DMA_TEST), 1);
 	chk("none mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_NONE), 0);
 }

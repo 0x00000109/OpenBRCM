@@ -37,13 +37,18 @@ static void ob_initvals_write(struct ob_hw *hw, const struct ob_fw_iv *rec)
 		bcma_write32(hw->core, rec->offset, rec->value);
 }
 
-int ob_initvals_test(struct ob_hw *hw)
+/*
+ * Shared D2B core (single common-initvals implementation). Runs the proven D2A
+ * sequence, applies exactly the 610 records and gates on the deterministic
+ * postconditions. @tag is the log prefix ("initvals-test" / "dma-test").
+ */
+int ob_initvals_run_d2b(struct ob_hw *hw, const char *tag,
+			struct ob_ucode_run *run,
+			struct ob_initvals_post *post)
 {
 	const struct firmware *iv = NULL;
-	struct ob_ucode_run run;
 	struct ob_initvals_plan plan;
 	struct ob_fw_iv rec;
-	struct ob_initvals_post post;
 	const char *stage = "iv-request";
 	u32 total = 0, w16 = 0, w32 = 0, i;
 	int ret;
@@ -52,21 +57,21 @@ int ob_initvals_test(struct ob_hw *hw)
 	 * 1-5. Shared, hardware-proven D2A core. On success the PSM is paused
 	 * after auto-init and MACCONTROL == 0x04020402 (EN_MAC=0, SHM_EN=0).
 	 */
-	ret = ob_ucode_run_d2a(hw, "initvals-test", &run);
+	ret = ob_ucode_run_d2a(hw, tag, run);
 	if (ret)
 		return ret;
 
-	dev_info(hw->dev, "initvals-test: D2A prep complete\n");
-	dev_info(hw->dev, "initvals-test: ucode upload complete writes=%u\n",
-		 run.written);
-	dev_info(hw->dev, "initvals-test: PSM PASS iterations=%u status=%08x\n",
-		 run.psm_iterations, run.psm_status);
+	dev_info(hw->dev, "%s: D2A prep complete\n", tag);
+	dev_info(hw->dev, "%s: ucode upload complete writes=%u\n", tag,
+		 run->written);
+	dev_info(hw->dev, "%s: PSM PASS iterations=%u status=%08x\n", tag,
+		 run->psm_iterations, run->psm_status);
 
 	/* 6. acquire + validate the common table (size + FNV-1a-64). */
 	ret = ob_fw_request_initvals(hw, &iv);
 	if (ret) {
 		dev_err(hw->dev,
-			"initvals-test: common initvals unavailable/invalid: %d\n",
+			"%s: common initvals unavailable/invalid: %d\n", tag,
 			ret);
 		goto out;
 	}
@@ -74,21 +79,20 @@ int ob_initvals_test(struct ob_hw *hw)
 	stage = "iv-plan";
 	ret = ob_initvals_plan_from_table(iv->data, iv->size, &plan);
 	if (ret) {
-		dev_err(hw->dev,
-			"initvals-test: common initvals malformed: %d\n", ret);
+		dev_err(hw->dev, "%s: common initvals malformed: %d\n", tag,
+			ret);
 		goto out;
 	}
 	if (!ob_initvals_plan_ok(&plan)) {
 		dev_err(hw->dev,
-			"initvals-test: common initvals shape records=%u w16=%u w32=%u (expected %u/%u/%u)\n",
-			plan.records, plan.w16, plan.w32,
+			"%s: common initvals shape records=%u w16=%u w32=%u (expected %u/%u/%u)\n",
+			tag, plan.records, plan.w16, plan.w32,
 			OB_INITVALS_RECORDS, OB_INITVALS_W16,
 			OB_INITVALS_W32);
 		ret = -EINVAL;
 		goto out;
 	}
-	dev_info(hw->dev,
-		 "initvals-test: common initvals begin records=%u\n",
+	dev_info(hw->dev, "%s: common initvals begin records=%u\n", tag,
 		 plan.records);
 
 	/*
@@ -117,64 +121,73 @@ int ob_initvals_test(struct ob_hw *hw)
 	}
 	if (!ob_initvals_counts_ok(total, w16, w32)) {
 		dev_err(hw->dev,
-			"initvals-test: write count total=%u w16=%u w32=%u (expected %u/%u/%u)\n",
-			total, w16, w32, OB_INITVALS_RECORDS,
+			"%s: write count total=%u w16=%u w32=%u (expected %u/%u/%u)\n",
+			tag, total, w16, w32, OB_INITVALS_RECORDS,
 			OB_INITVALS_W16, OB_INITVALS_W32);
 		ret = -EIO;
 		goto out;
 	}
 	dev_info(hw->dev,
-		 "initvals-test: common initvals complete total=%u w16=%u w32=%u\n",
+		 "%s: common initvals complete total=%u w16=%u w32=%u\n", tag,
 		 total, w16, w32);
 
 	/* 8. read-only deterministic postconditions. */
 	stage = "post-read";
-	post.fifosize0 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0);
-	post.fifosize1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
-	post.fifosize2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
-	post.fifosize3 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE3);
-	post.macintmask = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
-	post.maccontrol = bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
-	post.shm14 = (u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_LO) |
-		     ((u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_HI) << 16);
+	post->fifosize0 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0);
+	post->fifosize1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
+	post->fifosize2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
+	post->fifosize3 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE3);
+	post->macintmask = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
+	post->maccontrol = bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
+	post->shm14 = (u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_LO) |
+		      ((u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_HI)
+		       << 16);
 
-	dev_info(hw->dev, "initvals-test: M_FIFOSIZE0=%04x\n",
-		 post.fifosize0);
-	dev_info(hw->dev, "initvals-test: M_FIFOSIZE1=%04x\n",
-		 post.fifosize1);
-	dev_info(hw->dev, "initvals-test: M_FIFOSIZE2=%04x\n",
-		 post.fifosize2);
-	dev_info(hw->dev, "initvals-test: M_FIFOSIZE3=%04x\n",
-		 post.fifosize3);
-	dev_info(hw->dev, "initvals-test: MACINTMASK=%08x\n", post.macintmask);
-	dev_info(hw->dev, "initvals-test: MACCONTROL=%08x\n", post.maccontrol);
-	dev_info(hw->dev, "initvals-test: SHM[0014]=%08x\n", post.shm14);
+	dev_info(hw->dev, "%s: M_FIFOSIZE0=%04x\n", tag, post->fifosize0);
+	dev_info(hw->dev, "%s: M_FIFOSIZE1=%04x\n", tag, post->fifosize1);
+	dev_info(hw->dev, "%s: M_FIFOSIZE2=%04x\n", tag, post->fifosize2);
+	dev_info(hw->dev, "%s: M_FIFOSIZE3=%04x\n", tag, post->fifosize3);
+	dev_info(hw->dev, "%s: MACINTMASK=%08x\n", tag, post->macintmask);
+	dev_info(hw->dev, "%s: MACCONTROL=%08x\n", tag, post->maccontrol);
+	dev_info(hw->dev, "%s: SHM[0014]=%08x\n", tag, post->shm14);
 
-	if (!ob_initvals_post_ok(&post)) {
+	if (!ob_initvals_post_ok(post)) {
 		dev_err(hw->dev,
-			"initvals-test: FIFO mismatch got/exp %04x/%04x %04x/%04x %04x/%04x %04x/%04x\n",
-			post.fifosize0, OB_INITVALS_FIFOSIZE0_EXPECTED,
-			post.fifosize1, OB_INITVALS_FIFOSIZE1_EXPECTED,
-			post.fifosize2, OB_INITVALS_FIFOSIZE2_EXPECTED,
-			post.fifosize3, OB_INITVALS_FIFOSIZE3_EXPECTED);
+			"%s: FIFO mismatch got/exp %04x/%04x %04x/%04x %04x/%04x %04x/%04x\n",
+			tag, post->fifosize0, OB_INITVALS_FIFOSIZE0_EXPECTED,
+			post->fifosize1, OB_INITVALS_FIFOSIZE1_EXPECTED,
+			post->fifosize2, OB_INITVALS_FIFOSIZE2_EXPECTED,
+			post->fifosize3, OB_INITVALS_FIFOSIZE3_EXPECTED);
 		dev_err(hw->dev,
-			"initvals-test: reg mismatch got/exp MACINTMASK=%08x/%08x MACCONTROL=%08x/%08x SHM14=%08x/%08x\n",
-			post.macintmask, OB_INITVALS_MACINTMASK_EXPECTED,
-			post.maccontrol, OB_INITVALS_MACCONTROL_EXPECTED,
-			post.shm14, OB_INITVALS_SHM14_EXPECTED);
+			"%s: reg mismatch got/exp MACINTMASK=%08x/%08x MACCONTROL=%08x/%08x SHM14=%08x/%08x\n",
+			tag, post->macintmask, OB_INITVALS_MACINTMASK_EXPECTED,
+			post->maccontrol, OB_INITVALS_MACCONTROL_EXPECTED,
+			post->shm14, OB_INITVALS_SHM14_EXPECTED);
 		ret = -EIO;
 		goto out;
 	}
 
-	dev_info(hw->dev,
-		 "initvals-test: PASS - stopped before bsinitvals/PHY/radio/channel/DMA\n");
 	ret = 0;
-
 out:
 	if (ret)
 		dev_err(hw->dev,
-			"initvals-test: FAIL stage=%s ret=%d (no cleanup writes)\n",
-			stage, ret);
+			"%s: D2B FAIL stage=%s ret=%d (no cleanup writes)\n",
+			tag, stage, ret);
 	release_firmware(iv);
 	return ret;
+}
+
+int ob_initvals_test(struct ob_hw *hw)
+{
+	struct ob_ucode_run run;
+	struct ob_initvals_post post;
+	int ret;
+
+	ret = ob_initvals_run_d2b(hw, "initvals-test", &run, &post);
+	if (ret)
+		return ret;
+
+	dev_info(hw->dev,
+		 "initvals-test: PASS - stopped before bsinitvals/PHY/radio/channel/DMA\n");
+	return 0;
 }

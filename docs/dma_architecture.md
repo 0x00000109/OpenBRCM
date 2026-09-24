@@ -290,18 +290,22 @@ untouched. Lifecycle stages (`src/ob_d3a0.c`):
 
 | stage | function | registers / resources |
 | :--- | :--- | :--- |
+| D2B entry | `ob_initvals_run_d2b` | D2A core + exactly 610 common initvals (113 w16 / 497 w32) + postcondition gate |
+| D2B re-read | `ob_d3a0_check_d2b_exit` | live `MACCONTROL=0x04020402`, `MACINTMASK=0`, FIFO=`0x01c4/0/0/0x079e`, `SHM14=0xb4` |
 | prefix | `ob_d3a0_prefix` | pinned D11: `intrcvlazy`, `MACCONTROL` RMW, `tsf`, `macintstatus`, `intctrlregs[0]=I_RI`, `macphyclk`, machwcap SHM |
 | alloc | `ob_d3a0_ring_alloc` | 4 TX + 1 RX 8 KiB-aligned coherent rings |
-| TX program | `ob_d3a0_tx_program` | `addrlow`, `addrhigh=0x80000000`, `control = read\|XE\|PD`; no `ptr`, no descriptors |
-| RX map/desc | `ob_d3a0_rx_map`, `ob_d3a0_rx_build_desc` | 64 `DMA_FROM_DEVICE` buffers, 16-B descriptors, EOT@255 |
+| TX program | `ob_d3a0_tx_program` | `addrlow`, `addrhigh=0x80000000`, `control = read\|XE\|PD`; no `ptr`, no descriptors (zero TX payload mappings) |
+| RX map/desc | `ob_d3a0_rx_map`, `ob_d3a0_rx_build_desc` | exactly 64 `DMA_FROM_DEVICE` buffers, 16-B descriptors, EOT@255 |
 | RX program | `ob_d3a0_rx_program` | `control=0x84d`, `ptr=0x400`, `addrhigh=0x80000000` |
 | validate | `ob_d3a0_validate` | addrlow/addrhigh/control/status0(state)/status1; `macintmask=0` |
-| quiesce | `ob_d3a0_quiesce` | clear `I_RI`; `dma_rxreset`; `dma_txreset` per initialized channel (bounded 10 ms); verify; `bcma_core_disable` containment only if verified |
+| quiesce | `ob_d3a0_quiesce` | clear `I_RI`; `dma_rxreset`; `dma_txreset` per initialized channel (bounded 10 ms); verify; `bcma_core_disable` containment only if its `bcma_core_is_enabled()` readback is false |
 | free | `ob_d3a0_free_mem` | only after `ob_d3a0_can_free()`; unmap/free buffers and rings |
 
 Fail-closed invariant: DMA memory is never freed while hardware may still
 consume it (`ob_d3a0_can_free`); an unverified quiesce sets a fatal,
-reboot-required state and `ob_d3a0_remove` refuses to free. `MACINTMASK` stays
-0 and the host BCMA/PCI IRQ route is never enabled. The four TX channels are
-`0x200` AC_BK, `0x240` AC_BE, `0x280` AC_VI, `0x2C0` AC_VO/CTL; FIFO0 RX is
-`0x220`.
+reboot-required state, latches a module-wide re-entry block, records the
+retained ring addresses and pins the module (`__module_get`), and
+`ob_d3a0_remove` refuses to free. Probe is kept successful so the bound device
+retains the state; only a reboot clears it. `MACINTMASK` stays 0 and the host
+BCMA/PCI IRQ route is never enabled. The four TX channels are `0x200` AC_BK,
+`0x240` AC_BE, `0x280` AC_VI, `0x2C0` AC_VO/CTL; FIFO0 RX is `0x220`.

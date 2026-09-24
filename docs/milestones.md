@@ -247,16 +247,27 @@ Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
 (no hardware run). Module param **`dma_test_only=1`**, mutually exclusive with
 the other isolated modes. Files: `src/ob_d3a0.{c,h}`,
 `tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
-- Executes the proven `ob_ucode_run_d2a()` prefix, the exactly-pinned
-  D11/IRQ-source writes **before** DMA (vendor order), the four TX DMA channels
+- **Hard blocker found and fixed by the pre-hardware static audit:** the first
+  cut ran only `ob_ucode_run_d2a()` (D2A) before the DMA prefix and skipped the
+  610 common initvals. It now runs the shared `ob_initvals_run_d2b()` (proven
+  D2A core + exactly 610 records, 113 w16 / 497 w32 + postcondition gate), then
+  a live `ob_d3a0_check_d2b_exit` (`MACCONTROL=0x04020402`, `MACINTMASK=0`,
+  FIFO=`0x01c4/0/0/0x079e`, `SHM[0x14]=0xb4`) before the first post-common
+  write. No D2A-only path remains; `ob_ucode_run_d2a()` is not duplicated.
+- Executes the exactly-pinned D11/IRQ-source writes **before** DMA (vendor
+  order; `MACCONTROL 0x04020402→0x44020402`), the four TX DMA channels
   (0x200/0x240/0x280/0x2c0; 512x16 B; 8192 align; `ADDRHIGH=0x80000000`;
-  `control = read|XE|PD`; no ptr/descriptors) and FIFO0 RX (0x220; 256 desc;
-  64 posted 2048-B buffers; `CONTROL=0x84d`; `PTR=0x400`).
+  `control = read|XE|PD`; no ptr/descriptors → zero TX payload mappings) and
+  FIFO0 RX (0x220; 256 desc; exactly 64 posted 2048-B buffers; `CONTROL=0x84d`;
+  `PTR=0x400`).
 - Host IRQ delivery impossible (`MACINTMASK=0`, no `request_irq`, no
   `bcma_host_pci_irq_ctl`, no `MI_DMAINT`); `EN_MAC=0`.
 - Fail-closed quiesce (per-channel reset verified; `bcma_core_disable`
-  containment fallback only); same-run free only after verified quiesce.
-  `ob_remove()` honours the fatal/reboot-required state.
+  containment fallback only with a real `bcma_core_is_enabled()` readback);
+  same-run free only after verified quiesce. If both fail: module-wide fatal
+  latch + retained diagnostic record + module pinned, probe kept successful so
+  the bound device retains the fatal state; reboot required. `ob_remove()`
+  honours this and never frees.
 - STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
   radio / channel / mac80211.
 

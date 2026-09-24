@@ -108,21 +108,33 @@ exclusive with `fw_validate_only`/`ucode_test_only`/`initvals_test_only` (any
 conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
 `tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
 
-- Runs the proven `ob_ucode_run_d2a()` prefix, then the exactly-pinned
-  D11/IRQ-source writes **in vendor order** (`intrcvlazy[0]=0x01000000` →
-  `MACCONTROL` RMW → `macintstatus` W1C `MI_GP1` → `intctrlregs[0].intmask=I_RI`
-  → `macphyclk_set` ON → machwcap SHM caps), then DMA.
+- **Entry state = the full hardware-proven D2B exit**: runs the shared
+  `ob_initvals_run_d2b()` (the proven `ob_ucode_run_d2a()` core plus EXACTLY the
+  610 common-initvals records — 113 × 16-bit, 497 × 32-bit — and the
+  postcondition gate). There is no D2A-only bypass; the D3A0 prefix is reached
+  only after `ob_initvals_post_ok()` and a live re-read
+  (`ob_d3a0_check_d2b_exit`: `MACCONTROL=0x04020402`, `MACINTMASK=0`,
+  FIFO0..3=`0x01c4/0/0/0x079e`, `SHM[0x14]=0xb4`) pass. Only then:
+- Exactly-pinned D11/IRQ-source writes **in vendor order** (`intrcvlazy[0]
+  =0x01000000` → `MACCONTROL` RMW `0x04020402→0x44020402` → `macintstatus` W1C
+  `MI_GP1` → `intctrlregs[0].intmask=I_RI` → `macphyclk_set` ON → machwcap SHM
+  caps), then DMA.
 - DMA: four TX channels (`0x200/0x240/0x280/0x2c0`, 512×16 B, 8192-aligned,
-  `ADDRHIGH=0x80000000`, `control = read|XE|PD`, no ptr/descriptors) and FIFO0
-  RX (`0x220`, 256 desc, 64 posted 2048-B buffers, `CONTROL=0x84d`,
-  `PTR=0x400`).
+  `ADDRHIGH=0x80000000`, `control = read|XE|PD`, no ptr/descriptors → **zero TX
+  payload mappings**) and FIFO0 RX (`0x220`, 256 desc, exactly 64 posted 2048-B
+  `DMA_FROM_DEVICE` buffers, `CONTROL=0x84d`, `PTR=0x400`).
 - Host IRQ impossible: `MACINTMASK` stays 0, no `request_irq`, no
   `bcma_host_pci_irq_ctl`, no `MI_DMAINT`; `EN_MAC` stays 0.
 - Fail-closed quiesce: clear `I_RI`; `dma_rxreset`; `dma_txreset` per
   initialized channel (bounded 10 ms polls); verify stopped. `bcma_core_disable`
-  containment only if a per-channel reset times out and is verified. DMA memory
-  is freed only after verified quiesce; otherwise the module enters a
-  reboot-required fatal state and never frees. `ob_remove()` honours this.
+  containment only if a per-channel reset times out and its real
+  `bcma_core_is_enabled()` readback is false. DMA memory is freed only after
+  verified quiesce. If neither per-channel reset nor verified containment
+  succeeds, a **module-wide fatal latch** is set, a diagnostic record of the
+  retained rings is kept, and the module is pinned (`__module_get`) so the
+  state cannot disappear via rmmod/rebind; probe is kept successful so the
+  bound device and its devres retain the state. Only a reboot clears it.
+  `ob_remove()` honours this and never frees.
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
 
@@ -259,13 +271,16 @@ word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
 quiesce = per-channel reset + `bcma_core_disable`).
 
 **D3A0 is now IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN** on
-`m34d3a0-dma-test` (see the M3.4D3A0 section). Next: review the Draft PR, then
-(when explicitly approved) run the frozen signed module with `dma_test_only=1`
-on hardware and record the bring-up + teardown evidence exactly as M3.4D2A/D2B
-did. **No hardware action in this task:** no `insmod`, no DMA test, no
-PHY/radio/channel/mac80211. See `docs/d3a0_dma_test_design.md`,
-`docs/m34d3_bsinitvals.md` and, for D2B runtime evidence,
-`docs/m34d2b_initvals_test.md`.
+`m34d3a0-dma-test` (see the M3.4D3A0 section). A static pre-hardware audit found
+and fixed a real bug: the first cut ran only `ob_ucode_run_d2a()` before the DMA
+prefix, skipping the 610 common initvals. D3A0 now runs the shared
+`ob_initvals_run_d2b()` (D2A + 610 common initvals + gate) first, exactly as the
+hardware-proven D2B. Next: review the Draft PR, then (when explicitly approved)
+run the frozen signed module with `dma_test_only=1` on hardware and record the
+bring-up + teardown evidence exactly as M3.4D2A/D2B did. **No hardware action in
+this task:** no `insmod`, no DMA test, no PHY/radio/channel/mac80211. See
+`docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md` and, for D2B runtime
+evidence, `docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

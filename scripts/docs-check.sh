@@ -120,6 +120,37 @@ else
 	ok "M3.4D3 not claimed hardware proven"
 fi
 
+# 4c. D3A0 entry state MUST be the full D2B common-initvals exit (no D2A-only
+#     bypass). The shared applier must carry the exact 610/113/497 shape, and
+#     the D3A0 test must call it, and dma_test_only must be marked as applying
+#     the common table.
+if grep -q 'ob_initvals_run_d2b' src/ob_d3a0.c; then
+	ok "D3A0 runs the shared D2B common-initvals prefix"
+else
+	bad "src/ob_d3a0.c does not run ob_initvals_run_d2b (D2A-only bypass)"
+fi
+if awk '/static inline bool ob_isolated_mode_applies_initvals/,/^}/' \
+		src/ob_ucode.h | grep -q 'OB_ISOLATED_DMA_TEST'; then
+	ok "dma_test_only marked as applying common initvals"
+else
+	bad "ob_isolated_mode_applies_initvals must include OB_ISOLATED_DMA_TEST"
+fi
+grep -qE '^#define[[:space:]]+OB_INITVALS_RECORDS[[:space:]]+610u' src/ob_initvals.h \
+	&& ok "common initvals = 610 records" \
+	|| bad "src/ob_initvals.h common-initvals record count is not 610"
+grep -qE '^#define[[:space:]]+OB_INITVALS_W16[[:space:]]+113u' src/ob_initvals.h \
+	&& ok "common initvals w16 = 113" \
+	|| bad "src/ob_initvals.h common-initvals w16 count is not 113"
+grep -qE '^#define[[:space:]]+OB_INITVALS_W32[[:space:]]+497u' src/ob_initvals.h \
+	&& ok "common initvals w32 = 497" \
+	|| bad "src/ob_initvals.h common-initvals w32 count is not 497"
+if grep -rniE 'M3\.4D3A0.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|before|remain|unproven' | grep -q .; then
+	bad "a document claims M3.4D3A0 is hardware proven"
+else
+	ok "M3.4D3A0 not claimed hardware proven"
+fi
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"

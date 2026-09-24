@@ -149,12 +149,15 @@ static void test_path_and_teardown(void)
 	    ob_isolated_mode_applies_initvals(mode), 0);
 	chk("ucode skips teardown", ob_isolated_mode_skips_teardown(mode), 1);
 
-	/* dma_test_only owns the DMA lifecycle and is not teardown-skipping. */
+	/*
+	 * dma_test_only owns the DMA lifecycle and is not teardown-skipping. It
+	 * MUST apply the common table first (its entry state is the D2B exit).
+	 */
 	mode = ob_isolated_mode_select(false, false, false, true);
 	chk("select dma mode", mode, OB_ISOLATED_DMA_TEST);
 	chk("dma uses dma", ob_isolated_mode_uses_dma(mode), 1);
-	chk("dma does not apply common table",
-	    ob_isolated_mode_applies_initvals(mode), 0);
+	chk("dma applies common table",
+	    ob_isolated_mode_applies_initvals(mode), 1);
 	chk("dma does not skip teardown",
 	    ob_isolated_mode_skips_teardown(mode), 0);
 

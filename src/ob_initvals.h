@@ -129,6 +129,22 @@ static inline bool ob_initvals_post_ok(const struct ob_initvals_post *post)
 
 #ifdef __KERNEL__
 struct ob_hw;
+struct ob_ucode_run;
+
+/*
+ * Shared D2B core: the hardware-proven D2A sequence (ob_ucode_run_d2a), then
+ * EXACTLY the 610 common-initvals records in strict original order (113 x
+ * 16-bit, 497 x 32-bit), then the provenance-backed postcondition gate. @tag
+ * selects the log prefix. On success @run and @post describe the upload/poll
+ * and the verified D2B exit state.
+ *
+ * This is the single common-initvals implementation. Both initvals_test_only
+ * (D2B) and dma_test_only (D3A0) MUST run it before any post-common work, so
+ * the common-initvals stage cannot be bypassed or silently diverge.
+ */
+int ob_initvals_run_d2b(struct ob_hw *hw, const char *tag,
+			struct ob_ucode_run *run,
+			struct ob_initvals_post *post);
 
 /*
  * Run the isolated common-initvals test. Requires explicit human approval to

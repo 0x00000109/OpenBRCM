@@ -7,6 +7,11 @@ Implementation on branch `m34d3a0-dma-test`: `src/ob_d3a0.{c,h}`,
 milestone: **M3.4D2B**.
 
 Implementation notes / deviations from this design, all documented:
+- **D2B entry (audit fix).** The implementation runs the shared
+  `ob_initvals_run_d2b()` (D2A + 610 common initvals + postconditions) before the
+  D3A0 prefix and re-checks the live D2B exit state. The first cut skipped the
+  610 common initvals (D2A-only) — a real bug caught by the static pre-hardware
+  audit.
 - `sub_67efd` (TXE0 FIFO fixup) and the runtime NVRAM/BTC/rate/power SHM tables
   are **not** implemented: their exact write sets are not pinned in the merged
   analysis, and they are not prerequisites for the DMA engine programming.
@@ -15,10 +20,13 @@ Implementation notes / deviations from this design, all documented:
   `0x80=8`, `0x5c=0x0a`, `intrcvlazy[0]=0x01000000`, `MACCONTROL` RMW,
   `tsf_cfprep`/`tsf_cfpstart`, `macintstatus` W1C, `intctrlregs[0].intmask=I_RI`,
   `macphyclk` ON, `M_MACHW_VER`/`M_MACHW_CAP_L/H`.
+- Naming: `ob_d3a0_rx_map()` maps exactly 64 RX `DMA_FROM_DEVICE` buffers; the
+  TX rings publish base+CONTROL only, so there are **zero TX payload mappings**.
+  (`test_tx_reg_map` / `ob_d3a0_tx_reg_map_test` test the TX *register* map, not
+  DMA mappings.)
 
-This branch (`m34d3a0-dma-test`) records the exact future D3A0 implementation
-boundary. It contains **design documentation only**; nothing here is
-implemented. Source: `docs/m34d3_bsinitvals.md` Appendix D (D3A0 blocker closure,
+This branch (`m34d3a0-dma-test`) records the exact D3A0 implementation and its
+design. Source: `docs/m34d3_bsinitvals.md` Appendix D (D3A0 blocker closure,
 GO = YES) and Appendix C (DMA/IRQ reversal).
 
 ## 1. Scope and non-goals
@@ -40,7 +48,11 @@ The recovered vendor write order configures the interrupt source **before** DMA
 init. The implementation MUST preserve this order:
 
 ```
-proven D2B preparation (ucode + common initvals)
+proven D2B preparation = ob_ucode_run_d2a() + EXACTLY 610 common initvals
+    (113 w16 / 497 w32) + postcondition gate   [ob_initvals_run_d2b]
+  ->
+live re-read of the D2B exit state            [ob_d3a0_check_d2b_exit]
+    (MACCONTROL=0x04020402, MACINTMASK=0, FIFO=0x01c4/0/0/0x079e, SHM14=0xb4)
   ->
 required post-common D11 prefix up to IRQ-source configuration (D3A1 content,
     in vendor position)
@@ -136,9 +148,23 @@ skbs, and free rings (`dma_pool_free`/`dma_free_coherent`).
   is possible.
 - No invented PCIe flush mechanism. BCMA `bcma_core_disable` asserts core reset
   and waits `RESET_ST` with register readbacks; that is the containment
-  guarantee, not a free-permission bypass.
+  guarantee, not a free-permission bypass. The accepted containment check is the
+  **real readback** `bcma_core_is_enabled() == false` (reads `BCMA_IOCTL` clock
+  bits and `BCMA_RESET_CTL`), not a cached software flag. Remaining honest
+  caveat: asserting the core reset does not by itself prove the PCIe bridge has
+  drained already-outstanding reads/writes; the retained DMA memory makes a
+  stray transaction harmless.
 - Track per-channel initialization state so partial-bring-up cleanup never
   resets/frees an uninitialized resource and never misses an initialized one.
+- **Fatal retention rule (case D).** If neither per-channel reset nor verified
+  containment succeeds: set `lc->fatal`, set a **module-wide latch**, record the
+  retained ring DMA addresses + mapped count in a static diagnostic record, and
+  `__module_get(THIS_MODULE)` so rmmod cannot unload the owning text. `ob_probe`
+  keeps the probe **successful** in this state so the device stays bound and
+  `@hw` (devres) is retained; the latch also blocks any D3A0 re-entry for the
+  module's lifetime. The invariant: an unverified live DMA engine can never
+  outlive the memory it references, and the fatal state cannot silently
+  disappear through failed probe/unbind/rebind. Only a reboot clears it.
 
 `ob_dma_quiesce()` is mandatory before any `dma_unmap_single`, skb free, ring
 free, or isolated-mode teardown.
@@ -162,7 +188,9 @@ free DMA resources.
 ## 7. Formal status
 
 - D3A0 `IMPLEMENTATION GO = YES` (analysis, `docs/m34d3_bsinitvals.md` §D.19).
-- D3A0 `NOT IMPLEMENTED`; `NOT HARDWARE PROVEN`.
+- D3A0 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`.
+- A static pre-hardware audit found that the first implementation skipped the 610
+  common initvals (D2A-only); it now runs the shared D2B applier first.
 - M3.4D3 = `ANALYSIS ONLY`; last hardware-proven = **M3.4D2B**.
 
 ## 8. Prepared future hardware procedure (NOT executed)
@@ -171,16 +199,18 @@ Prepared but intentionally **not run**. Requires explicit human approval and a
 quiet machine (no other openbrcm activity). Uses only `dma_test_only=1`; no
 `runtime-test.sh`, no combined isolated modes.
 
-Frozen artifacts (this branch):
-- implementation commit: `8a59bf1` (plus this documentation commit)
+Frozen artifacts (this branch). The earlier candidate `c214f5eb…` / commits
+`8a59bf1`+`b33e7e3` is **SUPERSEDED**: it lacked the D2B common-initvals entry
+(the audit blocker) and must never be used.
+- implementation + docs commit: the commit that contains this document
 - built + signed module: `openbrcm.ko`
-  SHA256 `c214f5eb61ecb04383e8fc1a37e21169140131772e83df99ae52255cf1bba464`
+  SHA256 `76d6ec29e43381e8ea2e513021d04225d3aa882ba526dd316745903826ad2be2`
   (`signer: Broadcom Driver MOK`, `sig_hashalgo: sha256`)
 
 ```
 # 0. verify the frozen module hash
 sha256sum openbrcm.ko
-#   expect c214f5eb61ecb04383e8fc1a37e21169140131772e83df99ae52255cf1bba464
+#   expect 76d6ec29e43381e8ea2e513021d04225d3aa882ba526dd316745903826ad2be2
 
 # 1. ensure no stale module is loaded
 lsmod | grep -c '^openbrcm '    # expect 0
@@ -195,10 +225,13 @@ sudo dmesg | grep -E 'dma-test:|openbrcm:'
 sudo rmmod openbrcm
 ```
 
-Expected dmesg milestones: `dma-test: BEGIN`; `TX0..TX3 programmed`;
-`RX buffers posted=64`; `bring-up validation PASS`; `quiesce begin`;
-`RX reset PASS`; `TX0..TX3 reset PASS`; `all DMA engines stopped`;
-`rings released`; `PASS - bring-up + teardown proven`;
-`STOP before remaining D3A1/band/PHY`. A missing/failed quiesce logs
-`quiesce NOT verified; ... reboot required` and must be treated as a failure
+Expected dmesg milestones: `dma-test: BEGIN`; `common initvals begin records=610`;
+`common initvals complete total=610 w16=113 w32=497`;
+`D2B exit verified ...`; `D2B prefix complete common_records=610`;
+`TX0..TX3 programmed`; `RX buffers mapped=64`; `RX buffers posted=64`;
+`bring-up validation PASS`; `quiesce begin`; `RX reset PASS`;
+`TX0..TX3 reset PASS`; `all DMA engines stopped`; `rings released`;
+`PASS - bring-up + teardown proven`; `STOP before remaining D3A1/band/PHY`.
+A missing/failed quiesce logs `quiesce NOT verified; ... reboot required`,
+sets the fatal latch, pins the module and must be treated as a failure
 (reboot), not PASS.

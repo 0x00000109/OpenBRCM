@@ -28,7 +28,7 @@ static void chk_u64(const char *what, u64 got, u64 exp)
 	}
 }
 
-static void test_tx_map(void)
+static void test_tx_reg_map(void)
 {
 	chk("tx channels", OB_D3A0_TX_CHANNELS, 4);
 	chk("tx0 base (AC_BK)", ob_d3a0_tx_base(0), 0x0200);
@@ -56,6 +56,49 @@ static void test_tx_geometry(void)
 	chk("rx control", OB_D3A0_RX_CONTROL, 0x0000084d);
 	chk("rx ptr", OB_D3A0_RX_PTR, 0x400);
 	chk("pcie h32", OB_DMA_PCIE_H32, 0x80000000);
+	/* Ownership: TX publishes base+CONTROL only (zero payload mappings). */
+	chk("tx payload mappings", OB_D3A0_TX_PAYLOAD_MAPPINGS, 0);
+	chk("rx mappings", OB_D3A0_RX_MAPPINGS, 64);
+	chk("rx mappings == post init", OB_D3A0_RX_MAPPINGS,
+	    OB_DMA_RX_POST_INIT);
+}
+
+/* The D3A0 prefix may run only after the exact D2B exit state is proven. */
+static void test_d2b_gate(void)
+{
+	struct ob_initvals_post p = {
+		.fifosize0 = OB_INITVALS_FIFOSIZE0_EXPECTED,
+		.fifosize1 = OB_INITVALS_FIFOSIZE1_EXPECTED,
+		.fifosize2 = OB_INITVALS_FIFOSIZE2_EXPECTED,
+		.fifosize3 = OB_INITVALS_FIFOSIZE3_EXPECTED,
+		.macintmask = OB_INITVALS_MACINTMASK_EXPECTED,
+		.maccontrol = OB_INITVALS_MACCONTROL_EXPECTED,
+		.shm14 = OB_INITVALS_SHM14_EXPECTED,
+	};
+
+	chk("d2b gate ok", ob_d3a0_d2b_state_ok(&p), 1);
+	chk("d2b exit maccontrol", OB_INITVALS_MACCONTROL_EXPECTED,
+	    0x04020402);
+	chk("d2b exit macintmask", OB_INITVALS_MACINTMASK_EXPECTED, 0);
+
+	/* The D3A0 transition target is NOT the D2B exit and must be rejected. */
+	p.maccontrol = 0x44020402u;
+	chk("d2b gate rejects post-transition mctrl",
+	    ob_d3a0_d2b_state_ok(&p), 0);
+	p.maccontrol = OB_INITVALS_MACCONTROL_EXPECTED;
+
+	p.fifosize0 = 0;
+	chk("d2b gate rejects fifo0 mismatch", ob_d3a0_d2b_state_ok(&p), 0);
+	p.fifosize0 = OB_INITVALS_FIFOSIZE0_EXPECTED;
+
+	p.macintmask = 1;
+	chk("d2b gate rejects macintmask", ob_d3a0_d2b_state_ok(&p), 0);
+	p.macintmask = OB_INITVALS_MACINTMASK_EXPECTED;
+
+	p.shm14 = 0;
+	chk("d2b gate rejects shm14 mismatch", ob_d3a0_d2b_state_ok(&p), 0);
+
+	chk("d2b gate rejects null", ob_d3a0_d2b_state_ok(NULL), 0);
 }
 
 static void test_tx_control(void)
@@ -162,9 +205,11 @@ static void test_lifecycle(void)
 	chk("quiesced not active", ob_d3a0_hw_active(&lc), 0);
 	chk("quiesced can free", ob_d3a0_can_free(&lc), 1);
 
-	/* fatal overrides everything: never free */
+	/* fatal overrides everything: never free, even if quiesced was set */
 	lc.fatal = true;
+	lc.quiesced = true;
 	chk("fatal cannot free", ob_d3a0_can_free(&lc), 0);
+	chk("fatal still blocks even quiesced", ob_d3a0_can_free(&lc), 0);
 }
 
 static void test_rx_descriptors(void)
@@ -210,9 +255,10 @@ static void test_mode_inclusion(void)
 
 int main(void)
 {
-	test_tx_map();
+	test_tx_reg_map();
 	test_tx_geometry();
 	test_tx_control();
+	test_d2b_gate();
 	test_addr_window();
 	test_irq_constants();
 	test_maccontrol();

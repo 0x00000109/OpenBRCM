@@ -174,11 +174,23 @@ int ob_probe(struct bcma_device *core)
 	if (mode == OB_ISOLATED_DMA_TEST) {
 		hw->dma_test_only = true;
 		ret = ob_d3a0_test(hw);
-		if (ret) {
+		if (hw->d3a0.lc.fatal) {
 			/*
-			 * The DMA lifecycle state may hold resources on a fatal
-			 * quiesce; ob_remove() will apply the fail-closed policy.
+			 * Fail-closed: the DMA engine could not be verified
+			 * stopped. Keep probe SUCCESSFUL so the device stays
+			 * bound and @hw (devres) is retained -- the fatal state
+			 * and the retained DMA memory must not silently
+			 * disappear through a failed probe/unbind. ob_d3a0_test()
+			 * latched a module-wide re-entry block and pinned the
+			 * module; only a reboot clears it.
 			 */
+			dev_crit(hw->dev,
+				 OB_DRV_NAME ": dma-test FATAL unverified quiesce; device kept bound, reboot required\n");
+			return 0;
+		}
+		if (ret) {
+			/* No live DMA resources (teardown ran or none created). */
+			bcma_set_drvdata(core, NULL);
 			return ret;
 		}
 		return 0;

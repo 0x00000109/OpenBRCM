@@ -40,12 +40,16 @@ static void ob_ucode_mode_test(struct kunit *test)
 			ob_isolated_mode_select(false, false, true, true)));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
 			ob_isolated_mode_select(true, true, true, true)));
-	/* D2A regression: ucode_test_only never applies the common table. */
+	/*
+	 * D2A regression: ucode_test_only never applies the common table. The
+	 * D2B initvals mode and the D3A0 DMA mode both do (D3A0 entry state is
+	 * the D2B exit).
+	 */
 	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_applies_initvals(
 			OB_ISOLATED_UCODE_TEST));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_applies_initvals(
 			OB_ISOLATED_INITVALS_TEST));
-	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_applies_initvals(
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_applies_initvals(
 			OB_ISOLATED_DMA_TEST));
 	/* Only dma_test_only enters the DMA lifecycle. */
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_uses_dma(

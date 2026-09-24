@@ -8,7 +8,7 @@
 #include "ob_d3a0.h"
 #include "ob_rx.h"
 
-static void ob_d3a0_tx_map_test(struct kunit *test)
+static void ob_d3a0_tx_reg_map_test(struct kunit *test)
 {
 	KUNIT_EXPECT_EQ(test, OB_D3A0_TX_CHANNELS, 4u);
 	KUNIT_EXPECT_EQ(test, ob_d3a0_tx_base(0), 0x0200);
@@ -16,6 +16,37 @@ static void ob_d3a0_tx_map_test(struct kunit *test)
 	KUNIT_EXPECT_EQ(test, ob_d3a0_tx_base(2), 0x0280);
 	KUNIT_EXPECT_EQ(test, ob_d3a0_tx_base(3), 0x02c0);
 	KUNIT_EXPECT_EQ(test, OB_D3A0_RX_BASE, 0x0220);
+	/* TX publishes base+CONTROL only: zero payload mappings. */
+	KUNIT_EXPECT_EQ(test, OB_D3A0_TX_PAYLOAD_MAPPINGS, 0u);
+	KUNIT_EXPECT_EQ(test, OB_D3A0_RX_MAPPINGS, OB_DMA_RX_POST_INIT);
+}
+
+static void ob_d3a0_d2b_gate_test(struct kunit *test)
+{
+	struct ob_initvals_post p = {
+		.fifosize0 = OB_INITVALS_FIFOSIZE0_EXPECTED,
+		.fifosize1 = OB_INITVALS_FIFOSIZE1_EXPECTED,
+		.fifosize2 = OB_INITVALS_FIFOSIZE2_EXPECTED,
+		.fifosize3 = OB_INITVALS_FIFOSIZE3_EXPECTED,
+		.macintmask = OB_INITVALS_MACINTMASK_EXPECTED,
+		.maccontrol = OB_INITVALS_MACCONTROL_EXPECTED,
+		.shm14 = OB_INITVALS_SHM14_EXPECTED,
+	};
+
+	KUNIT_EXPECT_TRUE(test, ob_d3a0_d2b_state_ok(&p));
+	/* the D3A0 transition target is not the D2B exit */
+	p.maccontrol = 0x44020402u;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_d2b_state_ok(&p));
+	p.maccontrol = OB_INITVALS_MACCONTROL_EXPECTED;
+	p.fifosize0 = 0;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_d2b_state_ok(&p));
+	p.fifosize0 = OB_INITVALS_FIFOSIZE0_EXPECTED;
+	p.macintmask = 1;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_d2b_state_ok(&p));
+	p.macintmask = OB_INITVALS_MACINTMASK_EXPECTED;
+	p.shm14 = 0;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_d2b_state_ok(&p));
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_d2b_state_ok(NULL));
 }
 
 static void ob_d3a0_geometry_test(struct kunit *test)
@@ -101,7 +132,9 @@ static void ob_d3a0_lifecycle_test(struct kunit *test)
 	KUNIT_EXPECT_FALSE(test, ob_d3a0_hw_active(&lc));
 	KUNIT_EXPECT_TRUE(test, ob_d3a0_can_free(&lc));
 
+	/* fatal overrides everything, even a quiesced flag */
 	lc.fatal = true;
+	lc.quiesced = true;
 	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
 }
 
@@ -121,8 +154,9 @@ static void ob_d3a0_rx_desc_test(struct kunit *test)
 }
 
 static struct kunit_case ob_d3a0_test_cases[] = {
-	KUNIT_CASE(ob_d3a0_tx_map_test),
+	KUNIT_CASE(ob_d3a0_tx_reg_map_test),
 	KUNIT_CASE(ob_d3a0_geometry_test),
+	KUNIT_CASE(ob_d3a0_d2b_gate_test),
 	KUNIT_CASE(ob_d3a0_tx_control_test),
 	KUNIT_CASE(ob_d3a0_addr_window_test),
 	KUNIT_CASE(ob_d3a0_irq_constants_test),

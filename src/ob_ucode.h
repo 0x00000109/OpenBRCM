@@ -143,12 +143,15 @@ static inline bool ob_isolated_mode_conflict(enum ob_isolated_mode mode)
 }
 
 /*
- * Only the D2B initvals mode applies the common table; ucode_test_only must
- * never issue a common-initvals write (M3.4D2B requirement 15).
+ * Both the D2B initvals mode and the D3A0 DMA mode apply the common table
+ * before any post-common work (the D3A0 entry state IS the hardware-proven D2B
+ * exit). ucode_test_only must never issue a common-initvals write (M3.4D2B
+ * requirement 15).
  */
 static inline bool ob_isolated_mode_applies_initvals(enum ob_isolated_mode mode)
 {
-	return mode == OB_ISOLATED_INITVALS_TEST;
+	return mode == OB_ISOLATED_INITVALS_TEST ||
+	       mode == OB_ISOLATED_DMA_TEST;
 }
 
 /*

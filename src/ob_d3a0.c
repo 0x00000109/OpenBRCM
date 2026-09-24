@@ -31,7 +31,29 @@
 #include "ob_dma.h"
 #include "ob_irq.h"
 #include "ob_ucode.h"
+#include "ob_initvals.h"
 #include "ob_d3a0.h"
+
+/*
+ * Module-wide fatal latch. Once a D3A0 quiesce cannot be verified, the DMA
+ * engine may still reference its retained DMA memory. The latch forbids any
+ * further D3A0 probe (including after a device unbind/rebind) for the lifetime
+ * of the loaded module, and the module is pinned so the state cannot silently
+ * disappear through rmmod. Only a reboot clears it.
+ */
+static bool ob_d3a0_fatal_latched;
+
+/*
+ * Diagnostic record of the retained DMA memory, kept outside @ob_hw so it
+ * survives a failed probe (where devres may free @ob_hw). This is the state
+ * necessary to protect/diagnose the memory that must never be freed.
+ */
+static struct ob_d3a0_fatal_record {
+	dma_addr_t tx_ring[OB_D3A0_TX_CHANNELS];
+	dma_addr_t rx_ring;
+	u32 rx_mapped;
+	u32 tx_channels;
+} ob_d3a0_fatal_rec;
 
 /* ---- tiny helpers ------------------------------------------------------ */
 
@@ -65,11 +87,85 @@ static u32 ob_d3a0_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 	return bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL);
 }
 
+/* ---- fatal latch (fail-closed lifetime protection) --------------------- */
+
+static void ob_d3a0_latch_fatal(struct ob_hw *hw)
+{
+	u32 ch;
+
+	if (ob_d3a0_fatal_latched)
+		return;
+
+	ob_d3a0_fatal_latched = true;
+	ob_d3a0_fatal_rec.tx_channels = OB_D3A0_TX_CHANNELS;
+	ob_d3a0_fatal_rec.rx_ring = hw->d3a0.rx.desc_dma;
+	ob_d3a0_fatal_rec.rx_mapped = hw->d3a0.lc.rx_mapped;
+	for (ch = 0; ch < OB_D3A0_TX_CHANNELS; ch++)
+		ob_d3a0_fatal_rec.tx_ring[ch] = hw->d3a0.tx[ch].desc_dma;
+
+	/*
+	 * Pin the module so rmmod cannot unload the text that owns the retained
+	 * rings; the operator must reboot.
+	 */
+#ifdef MODULE
+	__module_get(THIS_MODULE);
+#endif
+
+	dev_crit(hw->dev,
+		 "dma-test: FATAL latch: retained rx_ring=%pad rx_mapped=%u tx_ring[%pad %pad %pad %pad]; module pinned, reboot required\n",
+		 &ob_d3a0_fatal_rec.rx_ring, ob_d3a0_fatal_rec.rx_mapped,
+		 &ob_d3a0_fatal_rec.tx_ring[0],
+		 &ob_d3a0_fatal_rec.tx_ring[1],
+		 &ob_d3a0_fatal_rec.tx_ring[2],
+		 &ob_d3a0_fatal_rec.tx_ring[3]);
+}
+
 /* ---- exactly-pinned pre-DMA D11 / IRQ-source prefix (vendor order) ------ */
+
+/*
+ * State gate: immediately before the first post-common D3A0 write, the live
+ * D11 state MUST equal the hardware-proven D2B exit state. This is read back
+ * from the hardware; no approximate state is reconstructed.
+ */
+static int ob_d3a0_check_d2b_exit(struct ob_hw *hw)
+{
+	u32 mctrl = bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL);
+	u32 macintmask = bcma_read32(hw->core, OB_D3A0_REG_MACINTMASK);
+	u32 fs0 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0);
+	u32 fs1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
+	u32 fs2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
+	u32 fs3 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE3);
+	u32 shm14 = (u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_LO) |
+		    ((u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_HI) << 16);
+
+	if (mctrl != OB_INITVALS_MACCONTROL_EXPECTED ||
+	    macintmask != OB_INITVALS_MACINTMASK_EXPECTED ||
+	    fs0 != OB_INITVALS_FIFOSIZE0_EXPECTED ||
+	    fs1 != OB_INITVALS_FIFOSIZE1_EXPECTED ||
+	    fs2 != OB_INITVALS_FIFOSIZE2_EXPECTED ||
+	    fs3 != OB_INITVALS_FIFOSIZE3_EXPECTED ||
+	    shm14 != OB_INITVALS_SHM14_EXPECTED) {
+		dev_err(hw->dev,
+			"dma-test: D2B exit state mismatch maccontrol=%08x macintmask=%08x fifo=%04x/%04x/%04x/%04x shm14=%08x; DMA forbidden\n",
+			mctrl, macintmask, fs0, fs1, fs2, fs3, shm14);
+		return -EIO;
+	}
+
+	dev_info(hw->dev,
+		 "dma-test: D2B exit verified maccontrol=%08x macintmask=%08x fifo=%04x/%04x/%04x/%04x shm14=%08x\n",
+		 mctrl, macintmask, fs0, fs1, fs2, fs3, shm14);
+	return 0;
+}
 
 static int ob_d3a0_prefix(struct ob_hw *hw)
 {
 	u32 machwcap, mctrl, irq;
+	int ret;
+
+	/* hard gate: no post-common write until the D2B exit state is proven */
+	ret = ob_d3a0_check_d2b_exit(hw);
+	if (ret)
+		return ret;
 
 	/* small SHM tables that precede the interrupt setup in vendor order */
 	ob_d3a0_write_shm16(hw, OB_D3A0_SHM_MBURST, OB_D3A0_SHM_MBURST_VAL);
@@ -468,6 +564,7 @@ static int ob_d3a0_quiesce(struct ob_hw *hw)
 	}
 
 	lc->fatal = true;
+	ob_d3a0_latch_fatal(hw);
 	dev_crit(hw->dev,
 		 "dma-test: quiesce NOT verified; DMA memory retained, reboot required\n");
 	return -EIO;
@@ -592,7 +689,15 @@ static int ob_d3a0_bringup(struct ob_hw *hw)
 int ob_d3a0_test(struct ob_hw *hw)
 {
 	struct ob_ucode_run run;
+	struct ob_initvals_post post;
 	int ret;
+
+	/* never re-enter after an unverified quiesce; only a reboot clears it */
+	if (ob_d3a0_fatal_latched) {
+		dev_crit(hw->dev,
+			 "dma-test: refusing re-entry after fatal quiesce; reboot required\n");
+		return -EIO;
+	}
 
 	memset(&hw->d3a0, 0, sizeof(hw->d3a0));
 
@@ -605,13 +710,23 @@ int ob_d3a0_test(struct ob_hw *hw)
 
 	dev_info(hw->dev, "dma-test: BEGIN\n");
 
-	/* proven D2B prefix (ucode upload + PSM start + common initvals) */
-	ret = ob_ucode_run_d2a(hw, "dma-test", &run);
+	/*
+	 * D2B: the shared hardware-proven D2A core followed by EXACTLY the 610
+	 * common-initvals records (113 x 16-bit, 497 x 32-bit) and the
+	 * provenance-backed postcondition gate. The D3A0 entry state IS the D2B
+	 * exit; every post-common/DMA action is forbidden unless this succeeds.
+	 */
+	ret = ob_initvals_run_d2b(hw, "dma-test", &run, &post);
 	if (ret)
 		return ret;
+	if (!ob_d3a0_d2b_state_ok(&post)) {
+		dev_err(hw->dev,
+			"dma-test: D2B postconditions not satisfied; DMA forbidden\n");
+		return -EIO;
+	}
 	dev_info(hw->dev,
-		 "dma-test: D2B prefix complete writes=%u psm_iter=%u\n",
-		 run.written, run.psm_iterations);
+		 "dma-test: D2B prefix complete common_records=%u writes=%u psm_iter=%u\n",
+		 OB_INITVALS_RECORDS, run.written, run.psm_iterations);
 
 	/* exactly-pinned D11 / IRQ-source prefix, before DMA (vendor order) */
 	ret = ob_d3a0_prefix(hw);
