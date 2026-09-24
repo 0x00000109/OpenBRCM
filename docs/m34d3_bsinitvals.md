@@ -457,9 +457,13 @@ milestone.
 
 ## 20. Analysis commit hash
 
-(recorded after commit; script + docs on `m34d3-bsinitvals-analysis`.)
+`ef4be46` — `m34d3: analyze rev42 band-switch initvals and PHY boundary`
+(DCO signed; script + docs on `m34d3-bsinitvals-analysis`). It contains no
+driver code and no hardware interaction.
 
 ## 21. Draft PR
 
-(recorded after push; Draft PR titled
-`M3.4D3: analyze rev42 band-switch initvals and PHY boundary`.)
+PR **#7** `M3.4D3: analyze rev42 band-switch initvals and PHY boundary` —
+Draft/OPEN, base `main`, head `m34d3-bsinitvals-analysis`. Kept Draft; not
+Ready, not merged. Status is `ANALYSIS ONLY` / NOT IMPLEMENTED /
+NOT HARDWARE PROVEN.
