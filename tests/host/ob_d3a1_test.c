@@ -212,18 +212,87 @@ static void test_scr24_and_btc(void)
 	    ob_d3a1_chip_uses_macfreq(0x0000), 0);
 }
 
+static void test_muladd_div(void)
+{
+	u32 hi, lo;
+
+	/* muladd(a,b,c) == a*b + c (64-bit), exact vectors */
+	ob_d3a1_muladd(&hi, &lo, 3, 5, 7);
+	chk("muladd(3,5,7) hi", hi, 0);
+	chk("muladd(3,5,7) lo", lo, 22);
+	ob_d3a1_muladd(&hi, &lo, 0x10000, 0x10000, 0);
+	chk("muladd(1<<16,1<<16,0) hi", hi, 1);
+	chk("muladd(1<<16,1<<16,0) lo", lo, 0);
+	ob_d3a1_muladd(&hi, &lo, 0xffffffffu, 0xffffffffu, 0);
+	chk("muladd(ff,ff,0) hi", hi, 0xfffffffeu);
+	chk("muladd(ff,ff,0) lo", lo, 1);
+
+	/* exact vendor divide vectors (validated against the blob machine code) */
+	chk_u64("divide(3a9,80000000,3)",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 3), 0x80000000u);
+	chk_u64("divide(3a9,80000000,2)",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 2), 0xbffffc57u);
+	chk_u64("divide(3a9,80000000,1500)",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 1500), 0xa0000000u);
+	chk_u64("divide(3a9,80000000,400000)",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 400000), 0x00999999u);
+	chk_u64("divide(1234,5678,7)",
+		ob_d3a1_u64_divide(0x1234, 0x5678, 7), 0xb6db7a11u);
+	/* b <= 1 => the vendor writes nothing */
+	chk_u64("divide b=1 no write",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 1),
+		OB_D3A1_DIV_NO_WRITE);
+	chk_u64("divide b=0 no write",
+		ob_d3a1_u64_divide(0x3a9, 0x80000000u, 0),
+		OB_D3A1_DIV_NO_WRITE);
+}
+
+static void test_bb_vcofreq(void)
+{
+	/* d == 0 branch: 127 * 400000 */
+	chk_u64("bbvco(3F80) ",
+		ob_d3a1_bb_vcofreq_from_pll(0x3f80u, 0), 0x03072580u);
+	/* d != 0 branch folds PLL3 */
+	chk_u64("bbvco(3F90,1234)",
+		ob_d3a1_bb_vcofreq_from_pll(0x3f90u, 0x1234u), 0x030725efu);
+	/* den == 0 => cannot derive */
+	chk_u64("bbvco(70) den0",
+		ob_d3a1_bb_vcofreq_from_pll(0x70u, 0), 0);
+	/* rejected: q > (~esi)/den */
+	chk_u64("bbvco(540000) rejected",
+		ob_d3a1_bb_vcofreq_from_pll(0x540000u, 0), 0);
+}
+
 static void test_switch_macfreq_math(void)
 {
-	u32 frac = ob_d3a1_tsf_frac(400000);
-	u32 zero = ob_d3a1_tsf_frac(0);
+	/* exact TSF fraction vectors */
+	chk_u64("tsf frac vco=3", ob_d3a1_tsf_frac(3), 0x80000000u);
+	chk_u64("tsf frac vco=1500", ob_d3a1_tsf_frac(1500), 0xa0000000u);
+	chk_u64("tsf frac vco=400000", ob_d3a1_tsf_frac(400000),
+		0x00999999u);
+	chk_u64("tsf frac vco=1 no write", ob_d3a1_tsf_frac(1),
+		OB_D3A1_DIV_NO_WRITE);
 
-	chk("tsf frac 0 vco", zero, 0);
-	chk("tsf frac nonzero", frac != 0, 1);
-	chk("frac reconstruct",
-	    ((u32)ob_d3a1_tsf_frac_hi(frac) << 16) |
-	    (u32)ob_d3a1_tsf_frac_lo(frac), frac);
+	{
+		u32 frac = ob_d3a1_tsf_frac(1500);
+
+		chk("frac lo", ob_d3a1_tsf_frac_lo(frac), 0x0000);
+		chk("frac hi", ob_d3a1_tsf_frac_hi(frac), 0xa000);
+		chk("frac reconstruct",
+		    ((u32)ob_d3a1_tsf_frac_hi(frac) << 16) |
+		    (u32)ob_d3a1_tsf_frac_lo(frac), frac);
+	}
 	chk("tsf frac regs", OB_D3A1_REG_TSF_FRAC_L, 0x62e);
 	chk("tsf frac reg h", OB_D3A1_REG_TSF_FRAC_H, 0x630);
+}
+
+static void test_poll_model(void)
+{
+	chk("poll continue !done 0xd1",
+	    ob_d3a1_poll_continue(false, 0xd1u), 1);
+	chk("poll stop done", ob_d3a1_poll_continue(true, 0xd1u), 0);
+	chk("poll stop at 9", ob_d3a1_poll_continue(false, 9), 0);
+	chk("poll max iters", OB_D3A1_FIFO_POLL_MAX_ITERS, 20);
 }
 
 static void test_lifecycle_reuse(void)
@@ -253,7 +322,10 @@ int main(void)
 	test_t1_constants();
 	test_mac_to_shm();
 	test_scr24_and_btc();
+	test_muladd_div();
+	test_bb_vcofreq();
 	test_switch_macfreq_math();
+	test_poll_model();
 	test_lifecycle_reuse();
 
 	if (failures) {

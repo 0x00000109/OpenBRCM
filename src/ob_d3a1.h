@@ -235,6 +235,17 @@ static inline u16 ob_d3a1_fifo42_x530(u32 idx)
 	return (u16)((idx << 4) | 0x8007u);
 }
 
+/*
+ * Bounded vendor poll predicate. The blob loop continues while the completion
+ * predicate is false AND the counter has not reached step-1 (`cmp ...,9`).
+ * A poll that exits because the counter reached step-1 is a TIMEOUT and must
+ * abort the caller.
+ */
+static inline bool ob_d3a1_poll_continue(bool done, u32 counter)
+{
+	return !done && counter != (OB_D3A1_FIFO_POLL_STEP - 1u);
+}
+
 /* ---- pure MAC / BTC / clock model (host-testable) ---- */
 
 /* SHM word N = big-endian pair (mac[2N] << 8) | mac[2N+1]. */
@@ -252,19 +263,116 @@ static inline u32 ob_d3a1_btc_base(u16 shm92)
 }
 
 /*
- * TSF clock fraction. The blob computes
- *   bcm_uint64_divide(&out, 0x3a9, 0x80000000, vcofreq)
- * i.e. out = ((u64)0x80000000 << 32 | 0x3a9) / vcofreq, and writes
- * out[15:0] -> 0x62e, out[31:16] -> 0x630. This is the native 64-bit
- * equivalent of the vendor's 32-bit-limb helper.
+ * ---- exact vendor 64-bit helpers (verbatim blob ports) ----
+ *
+ * ob_d3a1_muladd() is a verbatim port of blob `bcm_uint64_multiple_add`
+ * (0xac8f): out_hi/out_lo <- (a * b + c) as a 64-bit value. Verified against
+ * the extracted vendor machine code over 200000 random inputs.
+ *
+ * ob_d3a1_u64_divide() is a verbatim port of blob `bcm_uint64_divide`
+ * (0xad85): divide(x, y, b) with x high / y low. It is NOT a plain 64-bit
+ * divide; it is the vendor's 32-bit-limb long division, ported instruction by
+ * instruction and verified against the extracted vendor machine code over 288
+ * directed + 50000 random vectors. b <= 1 makes the vendor write nothing; this
+ * helper returns OB_D3A1_DIV_NO_WRITE in that case.
  */
-static inline u32 ob_d3a1_tsf_frac(u32 vcofreq)
-{
-	u64 num = ((u64)0x80000000u << 32) | 0x3a9u;
+#define OB_D3A1_DIV_NO_WRITE	0xffffffffu
 
-	if (vcofreq == 0)
-		return 0;
-	return (u32)(num / vcofreq);
+static inline void ob_d3a1_muladd(u32 *out_hi, u32 *out_lo, u32 a, u32 b,
+				  u32 c)
+{
+	u32 r10 = a, r11 = b, ecx = b, edx = a, r15, r13, r12, eax, ebx;
+	u32 r9, r14, r8 = c;
+
+	r10 >>= 16;
+	ecx &= 0xffff;
+	edx &= 0xffff;
+	r11 >>= 16;
+	r15 = c;
+	r8 &= 0x7fffffff;
+	r15 >>= 31;
+	r13 = ecx;
+	ecx *= r10;
+	r13 *= edx;
+	r12 = ecx;
+	ecx >>= 16;
+	edx *= r11;
+	r12 <<= 16;
+	eax = r13;
+	ebx = r12;
+	eax &= 0x7fffffff;
+	r13 >>= 31;
+	ebx &= 0x7fffffff;
+	r13 += r15;
+	r12 >>= 31;
+	r9 = edx;
+	ebx += eax;
+	r12 = r13 + r12;
+	r9 <<= 16;
+	r14 = ebx;
+	ebx >>= 31;
+	eax = r9;
+	r14 &= 0x7fffffff;
+	r9 >>= 31;
+	eax &= 0x7fffffff;
+	r9 = r12 + r9;
+	edx >>= 16;
+	eax = r14 + eax;
+	edx = ecx + edx;
+	r9 += ebx;
+	r14 = eax;
+	eax >>= 31;
+	r14 &= 0x7fffffff;
+	r9 += eax;
+	r8 = r14 + r8;
+	r12 = r8;
+	r8 &= 0x7fffffff;
+	r12 >>= 31;
+	r9 += r12;
+	eax = r9;
+	eax &= 1;
+	eax = (u32)(-(s32)eax);
+	eax &= 0x80000000u;
+	r11 *= r10;
+	r9 >>= 1;
+	eax |= r8;
+	r10 = edx + r11;
+	r9 = r10 + r9;
+	*out_hi = r9;
+	*out_lo = eax;
+}
+
+static inline u32 ob_d3a1_u64_divide(u32 x, u32 y, u32 b)
+{
+	u32 a = x, c = y, r12 = 0;
+
+	if (b <= 1)
+		return OB_D3A1_DIV_NO_WRITE;
+	while (a != 0) {
+		u32 q1 = 0xffffffffu / b;
+		u32 rem1 = 0xffffffffu % b;
+		u32 rem2 = (rem1 + 1u) % b;
+
+		r12 += q1 * a;
+		ob_d3a1_muladd(&a, &c, rem2, a, c);
+	}
+	return r12 + (c / b);
+}
+
+/*
+ * BCM4352 TSF clock fraction. The blob calls
+ *   bcm_uint64_divide(&out, 0x3a9, 0x80000000, vco)
+ * and writes out[15:0] -> 0x62e, out[31:16] -> 0x630. A divisor <= 1 leaves
+ * the vendor output unwritten (undefined); the helper signals that with
+ * OB_D3A1_DIV_NO_WRITE.
+ */
+#define OB_D3A1_TSF_DIV_HIGH	0x80000000u
+#define OB_D3A1_TSF_DIV_LOW	0x000003a9u
+
+static inline u32 ob_d3a1_tsf_frac(u32 vco)
+{
+	return ob_d3a1_u64_divide(OB_D3A1_TSF_DIV_LOW, OB_D3A1_TSF_DIV_HIGH,
+				  vco);
 }
 
 static inline u16 ob_d3a1_tsf_frac_lo(u32 frac)
@@ -275,6 +383,40 @@ static inline u16 ob_d3a1_tsf_frac_lo(u32 frac)
 static inline u16 ob_d3a1_tsf_frac_hi(u32 frac)
 {
 	return (u16)(frac >> 16);
+}
+
+/*
+ * ---- exact BCM4352 BB VCO frequency (blob si_pmu_get_bb_vcofreq 0x14b7b) ----
+ *
+ * For chip 0x4352: p2 = PMU PLL index 2, p3 = PMU PLL index 3.
+ *   d   = (p2 >> 4) & 7
+ *   den = p2 >> 7
+ *   q   = 0x28 * 10000          (the caller passes 0x28)
+ *   esi = 0                     if d == 0
+ *       = (lo >> 24) | (hi << 8) where {hi, lo} = muladd(q, p3, 0x800000)
+ *   if (s32)q > (s32)(~esi / den) -> 0 (rejected)
+ *   else esi + den * q
+ * Returns 0 when den == 0 (the vendor would divide by zero); the caller must
+ * treat 0 as "cannot derive", never as a legitimate skip.
+ */
+static inline u32 ob_d3a1_bb_vcofreq_from_pll(u32 p2, u32 p3)
+{
+	u32 d = (p2 >> 4) & 0x7u;
+	u32 den = p2 >> 7;
+	u32 q = 0x28u * 10000u;
+	u32 esi = 0;
+
+	if (d != 0) {
+		u32 hi, lo;
+
+		ob_d3a1_muladd(&hi, &lo, q, p3, 0x800000u);
+		esi = (lo >> 24) | (hi << 8);
+	}
+	if (den == 0)
+		return 0;
+	if ((s32)q > (s32)((~esi) / den))
+		return 0;
+	return esi + den * q;
 }
 
 /*
@@ -382,13 +524,17 @@ struct ob_hw;
  * @fifo_fixed_writes: 0x542/0x540 writes performed
  * @fifo7_writes:      writes performed by the 7-entry loop (must be 42)
  * @fifo42_writes:     writes performed by the 42-entry loop (must be 168)
- * @fifo_poll540:      poll iterations of the 0x540 completion poll
- * @fifo_poll530:      poll iterations of the 0x530 completion poll
+ * @fifo_poll540_iters: iterations of the 0x540 completion poll (must complete)
+ * @fifo_poll530_iters: total iterations across the 42 x 0x530 polls
+ * @fifo_poll530_max:  max iterations observed in a single 0x530 poll
+ * @fifo_poll_completed: number of 0x530 polls that met the completion predicate
+ * @fifo_fail_index:   -1, or the 0x530 table index that timed out
  * @machwcap:          machwcap read from D11+0x15c
  * @fastpwrup_dly:     value written to D11+0x6a8
  * @fastpwrup_dly_sw:  vendor software copy (dev+0x192) incl. sub_5fdca delta
- * @bb_vcofreq:        PMU-derived BB VCO frequency
+ * @bb_vcofreq:        PMU-derived BB VCO frequency (0 => cannot derive)
  * @tsf_frac:          derived TSF clock fraction
+ * @btc_shm92:         raw SHM[0x92] value
  * @btc_base:          2 * SHM[0x92]
  * @btc_block_ran:     true when btc_base != 0 (BTC T2 block executed)
  * @mac_written:       true when the 0x78c/0x78e/0x790 MAC words were written
@@ -398,13 +544,17 @@ struct ob_d3a1 {
 	u32	fifo_fixed_writes;
 	u32	fifo7_writes;
 	u32	fifo42_writes;
-	u32	fifo_poll540;
-	u32	fifo_poll530;
+	u32	fifo_poll540_iters;
+	u32	fifo_poll530_iters;
+	u32	fifo_poll530_max;
+	u32	fifo_poll_completed;
+	int	fifo_fail_index;
 	u32	machwcap;
 	u16	fastpwrup_dly;
 	u16	fastpwrup_dly_sw;
 	u32	bb_vcofreq;
 	u32	tsf_frac;
+	u16	btc_shm92;
 	u32	btc_base;
 	bool	btc_block_ran;
 	bool	mac_written;

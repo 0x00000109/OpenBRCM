@@ -78,16 +78,52 @@ static void ob_d3a1_btc_test(struct kunit *test)
 
 static void ob_d3a1_scr_and_clock_test(struct kunit *test)
 {
-	u32 frac = ob_d3a1_tsf_frac(400000);
-
 	KUNIT_EXPECT_EQ(test, OB_D3A1_SCR_RATE_24, 0x24u);
 	KUNIT_EXPECT_EQ(test, OB_D3A1_SCR_RATE_24_FIRST_INIT_SKIPPED, 1);
-	KUNIT_EXPECT_EQ(test, ob_d3a1_tsf_frac(0), 0u);
-	KUNIT_EXPECT_NE(test, frac, 0u);
-	KUNIT_EXPECT_EQ(test,
-		((u32)ob_d3a1_tsf_frac_hi(frac) << 16) |
-		(u32)ob_d3a1_tsf_frac_lo(frac), frac);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_tsf_frac(3), 0x80000000u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_tsf_frac(1500), 0xa0000000u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_tsf_frac(400000), 0x00999999u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_tsf_frac(1), OB_D3A1_DIV_NO_WRITE);
 	KUNIT_EXPECT_EQ(test, OB_D3A1_REG_TSF_FRAC_L, 0x62eu);
+}
+
+static void ob_d3a1_muladd_div_test(struct kunit *test)
+{
+	u32 hi, lo;
+
+	ob_d3a1_muladd(&hi, &lo, 3, 5, 7);
+	KUNIT_EXPECT_EQ(test, hi, 0u);
+	KUNIT_EXPECT_EQ(test, lo, 22u);
+	ob_d3a1_muladd(&hi, &lo, 0x10000, 0x10000, 0);
+	KUNIT_EXPECT_EQ(test, hi, 1u);
+	KUNIT_EXPECT_EQ(test, lo, 0u);
+
+	KUNIT_EXPECT_EQ(test, ob_d3a1_u64_divide(0x3a9, 0x80000000u, 3),
+			0x80000000u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_u64_divide(0x3a9, 0x80000000u, 2),
+			0xbffffc57u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_u64_divide(0x3a9, 0x80000000u, 1500),
+			0xa0000000u);
+	KUNIT_EXPECT_EQ(test,
+			ob_d3a1_u64_divide(0x3a9, 0x80000000u, 400000),
+			0x00999999u);
+	KUNIT_EXPECT_EQ(test,
+			ob_d3a1_u64_divide(0x3a9, 0x80000000u, 1),
+			OB_D3A1_DIV_NO_WRITE);
+}
+
+static void ob_d3a1_bb_vcofreq_test(struct kunit *test)
+{
+	KUNIT_EXPECT_EQ(test, ob_d3a1_bb_vcofreq_from_pll(0x3f80u, 0),
+			0x03072580u);
+	KUNIT_EXPECT_EQ(test,
+			ob_d3a1_bb_vcofreq_from_pll(0x3f90u, 0x1234u),
+			0x030725efu);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_bb_vcofreq_from_pll(0x70u, 0), 0u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_bb_vcofreq_from_pll(0x540000u, 0),
+			0u);
+	KUNIT_EXPECT_TRUE(test, ob_d3a1_poll_continue(false, 0xd1u));
+	KUNIT_EXPECT_FALSE(test, ob_d3a1_poll_continue(false, 9));
 }
 
 static void ob_d3a1_lifecycle_test(struct kunit *test)
@@ -113,6 +149,8 @@ static struct kunit_case ob_d3a1_test_cases[] = {
 	KUNIT_CASE(ob_d3a1_mac_test),
 	KUNIT_CASE(ob_d3a1_btc_test),
 	KUNIT_CASE(ob_d3a1_scr_and_clock_test),
+	KUNIT_CASE(ob_d3a1_muladd_div_test),
+	KUNIT_CASE(ob_d3a1_bb_vcofreq_test),
 	KUNIT_CASE(ob_d3a1_lifecycle_test),
 	{}
 };

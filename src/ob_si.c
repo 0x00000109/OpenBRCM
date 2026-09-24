@@ -801,6 +801,38 @@ static int ob_si_sprom_diag(struct ob_hw *hw)
 	return valid ? 0 : -ENODATA;
 }
 
+/*
+ * Minimal board-data preparation for the isolated D3A1 tail test.
+ *
+ * The D3A1 path is selected BEFORE the normal ob_si_probe() path, so it must
+ * obtain the two pieces of board data D3A1 needs without importing any of the
+ * normal probe side effects:
+ *
+ *   - hw->cc = hw->bus->drv_cc.core, verified non-NULL (ChipCommon is the
+ *     CC/PMU/PLL/SPROM window used by switch_macfreq);
+ *   - the already hardware-proven READ-ONLY external-SPROM MAC path
+ *     (ob_si_read_mac) into hw->mac/hw->mac_valid.
+ *
+ * It performs NO D11/PMU/PLL/core writes, no power-up, no diagnostics and no
+ * DMA/IRQ/RX/mac80211 initialization. The only PMU PLL accesses in the D3A1
+ * path remain inside the exact switch_macfreq implementation.
+ */
+int ob_si_prepare_board_data_for_d3a1(struct ob_hw *hw)
+{
+	hw->cc = hw->bus->drv_cc.core;
+	if (!hw->cc) {
+		dev_err(hw->dev, "d3a1-test: no ChipCommon core\n");
+		return -ENODEV;
+	}
+
+	/* Read-only external-SPROM MAC (reuses the proven parser). */
+	hw->mac_valid = (ob_si_read_mac(hw, hw->mac) == 0);
+	dev_info(hw->dev,
+		 "d3a1-test: board data prepared (cc=%p mac_valid=%d mac=%pM)\n",
+		 hw->cc, hw->mac_valid, hw->mac);
+	return 0;
+}
+
 int ob_si_probe(struct ob_hw *hw)
 {
 	/* ChipCommon core provides the CC/PMU/OTP/SPROM window. */

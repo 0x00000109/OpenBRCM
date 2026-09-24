@@ -230,6 +230,16 @@ int ob_probe(struct bcma_device *core)
 	 */
 	if (mode == OB_ISOLATED_D3A1_TEST) {
 		hw->d3a1_test_only = true;
+		/*
+		 * Minimal board-data preparation (ChipCommon pointer + validated
+		 * external-SPROM MAC) BEFORE D2A/D2B. It must not run the
+		 * normal ob_si_probe() path.
+		 */
+		ret = ob_si_prepare_board_data_for_d3a1(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
 		ret = ob_d3a1_test(hw);
 		if (hw->d3a0.lc.fatal) {
 			/* Fail-closed: keep the device bound and the DMA memory

@@ -63,6 +63,20 @@ static void ob_d3a1_write_scr16(struct ob_hw *hw, u16 off, u16 val)
 	ob_d3a1_obj_write16(hw, OB_D3A1_OBJADDR_SCR_SEL, off, val);
 }
 
+static u16 ob_d3a1_read_obj16(struct ob_hw *hw, u32 sel, u16 off)
+{
+	bcma_write32(hw->core, OB_D3A1_REG_OBJADDR, sel | ((u32)off >> 2));
+	(void)bcma_read32(hw->core, OB_D3A1_REG_OBJADDR);
+	if (off & 0x2)
+		return bcma_read16(hw->core, OB_D3A1_REG_OBJDATA + 2);
+	return bcma_read16(hw->core, OB_D3A1_REG_OBJDATA);
+}
+
+static u16 ob_d3a1_read_scr16(struct ob_hw *hw, u16 off)
+{
+	return ob_d3a1_read_obj16(hw, OB_D3A1_OBJADDR_SCR_SEL, off);
+}
+
 /*
  * SICF_MPCLKE lives in the D11 core agent IO control (bit 4). Identical to the
  * proven D3A0 helper (reversible core-cflags gate; no PHY/radio/PLL).
@@ -90,7 +104,14 @@ static u32 ob_d3a1_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 
 /* ---- bounded FIFO completion poll (vendor bound 0xd1 / step 10) --------- */
 
-static void ob_d3a1_poll16(struct ob_hw *hw, u16 off, bool bit0, u32 *iters)
+/*
+ * Fail-closed bounded poll. Returns 0 ONLY when the completion predicate was
+ * observed true; -ETIMEDOUT when the vendor bound expired first. The final
+ * register value and the iteration count are reported so a timeout is
+ * diagnosable.
+ */
+static int ob_d3a1_poll16(struct ob_hw *hw, u16 off, bool bit0, u32 *iters,
+			  u16 *last)
 {
 	u32 counter = OB_D3A1_FIFO_POLL_BOUND;
 	u32 n;
@@ -99,14 +120,20 @@ static void ob_d3a1_poll16(struct ob_hw *hw, u16 off, bool bit0, u32 *iters)
 		u16 v = bcma_read16(hw->core, off);
 		bool done = bit0 ? ((v & 0x1u) == 0u) : (v == 0u);
 
-		if (done)
-			break;
-		if (counter == OB_D3A1_FIFO_POLL_STEP - 1u)
-			break;
+		*last = v;
+		if (done) {
+			*iters = n + 1u;
+			return 0;
+		}
+		if (!ob_d3a1_poll_continue(done, counter)) {
+			*iters = n + 1u;
+			return -ETIMEDOUT;
+		}
 		udelay(OB_D3A1_FIFO_POLL_DELAY_US);
 		counter -= OB_D3A1_FIFO_POLL_STEP;
 	}
 	*iters = n;
+	return -ETIMEDOUT;
 }
 
 /* ---- sub_67efd equivalent (rev42 only) ---------------------------------- */
@@ -116,15 +143,23 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 	struct ob_d3a1 *st = &hw->d3a1;
 	u32 machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
 	u16 v = ob_d3a1_fifo_flush_val(machwcap);
+	u16 last = 0;
 	u32 i;
 
 	st->machwcap = machwcap;
+	st->fifo_fail_index = -1;
 
 	/* 0x542 = v, 0x540 = 5, bounded completion poll on 0x540 bit0 */
 	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOFLUSH, v);
 	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOCMD, 5);
 	st->fifo_fixed_writes += OB_D3A1_FIFO_FIXED_WRITES;
-	ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, true, &st->fifo_poll540);
+	if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, true,
+			   &st->fifo_poll540_iters, &last)) {
+		dev_err(hw->dev,
+			"d3a1-test: sub_67efd FAIL 0x540 xmtfifocmd poll TIMEOUT iters=%u last=%04x\n",
+			st->fifo_poll540_iters, last);
+		return -ETIMEDOUT;
+	}
 
 	/* exact 7-entry programming loop (42 writes) */
 	for (i = 0; i < OB_D3A1_FIFO_TABLE1_LEN; i++) {
@@ -145,8 +180,13 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 		st->fifo7_writes += 6;
 	}
 
-	/* exact 42-entry programming loop (168 writes), bounded poll each */
+	/*
+	 * Exact 42-entry programming loop (168 writes), bounded poll each.
+	 * A timeout aborts immediately and never continues to the next entry.
+	 */
 	for (i = 0; i < OB_D3A1_FIFO42_ENTRIES; i++) {
+		u32 iters;
+
 		bcma_write16(hw->core, OB_D3A1_REG_XMT_534,
 			     ob_d3a1_fifo42_x534(i));
 		bcma_write16(hw->core, OB_D3A1_REG_XMT_536,
@@ -155,26 +195,38 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 			     ob_d3a1_fifo42_x532(i));
 		bcma_write16(hw->core, OB_D3A1_REG_XMT_530,
 			     ob_d3a1_fifo42_x530(i));
-		ob_d3a1_poll16(hw, OB_D3A1_REG_XMT_530, false,
-			       &st->fifo_poll530);
+		if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMT_530, false,
+				   &iters, &last)) {
+			st->fifo_fail_index = (int)i;
+			dev_err(hw->dev,
+				"d3a1-test: sub_67efd FAIL 0x530 index=%u value=%04x poll TIMEOUT iters=%u\n",
+				i, ob_d3a1_fifo42_x530(i), iters);
+			return -ETIMEDOUT;
+		}
+		st->fifo_poll_completed++;
+		st->fifo_poll530_iters += iters;
+		if (iters > st->fifo_poll530_max)
+			st->fifo_poll530_max = iters;
 		(void)bcma_read16(hw->core, OB_D3A1_REG_XMT_530);
 		st->fifo42_writes += 4;
 	}
 
 	if (st->fifo_fixed_writes != OB_D3A1_FIFO_FIXED_WRITES ||
 	    st->fifo7_writes != OB_D3A1_FIFO7_WRITES ||
-	    st->fifo42_writes != OB_D3A1_FIFO42_WRITES) {
+	    st->fifo42_writes != OB_D3A1_FIFO42_WRITES ||
+	    st->fifo_poll_completed != OB_D3A1_FIFO42_ENTRIES) {
 		dev_err(hw->dev,
-			"d3a1-test: sub_67efd write accounting mismatch fixed=%u loop7=%u loop42=%u\n",
+			"d3a1-test: sub_67efd accounting mismatch fixed=%u loop7=%u loop42=%u completed=%u\n",
 			st->fifo_fixed_writes, st->fifo7_writes,
-			st->fifo42_writes);
+			st->fifo42_writes, st->fifo_poll_completed);
 		return -EIO;
 	}
 
 	dev_info(hw->dev,
-		 "d3a1-test: sub_67efd machwcap=%08x flush=%04x poll540=%u loop7=%u loop42=%u poll530_total=%u\n",
-		 machwcap, v, st->fifo_poll540, st->fifo7_writes,
-		 st->fifo42_writes, st->fifo_poll530);
+		 "d3a1-test: sub_67efd machwcap=%08x flush=%04x poll540=%u loop7=%u loop42=%u polls530=%u/%u max_iters=%u\n",
+		 machwcap, v, st->fifo_poll540_iters, st->fifo7_writes,
+		 st->fifo42_writes, st->fifo_poll_completed,
+		 OB_D3A1_FIFO42_ENTRIES, st->fifo_poll530_max);
 	return 0;
 }
 
@@ -317,54 +369,56 @@ static u32 ob_d3a1_pmu_pll_read(struct ob_hw *hw, u32 idx)
 }
 
 /*
- * BB VCO frequency (blob si_pmu_get_bb_vcofreq 0x14b7b, 0x4352 branch). The
- * recovered arithmetic multiplies the requested fraction (edx = 0x28) by
- * 10000 and divides by the PLL2-derived value; when the PLL2 sub-field
- * (bits 4..6) is non-zero the vendor folds in PLL3 with a 64-bit helper. We
- * reproduce the primary formula exactly and the PLL3 fold as a documented
- * best-effort (no hardware validation is possible in this task).
+ * BB VCO frequency (blob si_pmu_get_bb_vcofreq 0x14b7b, 0x4352 branch).
+ * Exact: reads PMU PLL2 (and PLL3 when the PLL2 sub-field (bits 4..6) is
+ * non-zero), then applies the recovered arithmetic via the ported
+ * ob_d3a1_bb_vcofreq_from_pll(). No approximation.
+ *
+ * Note: the vendor reads PLL3 into `ecx` without masking; the recovered value
+ * is used directly by bcm_uint64_multiple_add.
  */
 static u32 ob_d3a1_bb_vcofreq(struct ob_hw *hw)
 {
 	u32 p2 = ob_d3a1_pmu_pll_read(hw, 2);
-	u32 d = (p2 >> 4) & 0x7u;
-	u32 e = p2 >> 7;
-	u32 q = 0x28u * 10000u;
+	u32 p3 = 0;
 
-	if (e == 0)
-		return 0;
-
-	if (d == 0) {
-		if ((s32)q > (s32)(0xffffffffu / e))
-			return 0;
-		return e * q;
-	}
-
-	{
-		u32 p3 = ob_d3a1_pmu_pll_read(hw, 3) & 0xffffffu;
-		u64 t = (u64)p3 * 0x800000u + q;
-		u32 combined = (u32)t;
-
-		if ((s32)q > (s32)((~combined) / e))
-			return 0;
-		return combined + e * q;
-	}
+	if (((p2 >> 4) & 0x7u) != 0)
+		p3 = ob_d3a1_pmu_pll_read(hw, 3);
+	return ob_d3a1_bb_vcofreq_from_pll(p2, p3);
 }
 
 static int ob_d3a1_switch_macfreq(struct ob_hw *hw)
 {
 	u32 vco = ob_d3a1_bb_vcofreq(hw);
-	u32 frac = ob_d3a1_tsf_frac(vco);
+	u32 frac;
+
+	if (!hw->cc) {
+		dev_err(hw->dev,
+			"d3a1-test: no ChipCommon core; cannot derive BB VCO\n");
+		return -ENODEV;
+	}
+
+	/*
+	 * vco <= 1 is NOT a legitimate vendor skip: bcm_uint64_divide writes
+	 * nothing for div <= 1 (the vendor would then publish an uninitialized
+	 * stack value). Our inability to derive a usable VCO is an ERROR and
+	 * must never become a D3A1 PASS.
+	 */
+	if (vco <= 1u) {
+		dev_err(hw->dev,
+			"d3a1-test: switch_macfreq cannot derive a valid BB VCO (vco=%u); D3A1 FAIL\n",
+			vco);
+		return -EIO;
+	}
 
 	hw->d3a1.bb_vcofreq = vco;
-	hw->d3a1.tsf_frac = frac;
-
-	if (vco == 0) {
-		/* blob bcm_uint64_divide returns without writing when div <= 1 */
-		dev_warn(hw->dev,
-			 "d3a1-test: bb vcofreq 0; tsf fraction write skipped\n");
-		return 0;
+	frac = ob_d3a1_tsf_frac(vco);
+	if (frac == OB_D3A1_DIV_NO_WRITE) {
+		dev_err(hw->dev,
+			"d3a1-test: switch_macfreq divide produced no write\n");
+		return -EIO;
 	}
+	hw->d3a1.tsf_frac = frac;
 
 	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_L,
 		     ob_d3a1_tsf_frac_lo(frac));
@@ -386,7 +440,11 @@ static int ob_d3a1_t2(struct ob_hw *hw)
 	u32 btc_base = ob_d3a1_btc_base(shm92);
 	u32 i;
 
+	st->btc_shm92 = shm92;
 	st->btc_base = btc_base;
+	dev_info(hw->dev,
+		 "d3a1-test: T2 BTC gate SHM[0x92]=%04x btc_base=%u block=%s\n",
+		 shm92, btc_base, btc_base ? "run" : "skip");
 
 	/*
 	 * Vendor gate: btc_base == 0 skips the ENTIRE BTC block (btc_params,
@@ -447,6 +505,11 @@ static int ob_d3a1_t2(struct ob_hw *hw)
 
 	/* vendor read-only diagnostic of SHM 0x8e */
 	(void)ob_ucode_read_shm16(hw, OB_D3A1_SHM_BTC_READBACK);
+
+	dev_info(hw->dev,
+		 "d3a1-test: T2 complete shm92=%04x btc_base=%u btc_block_ran=%d mac_written=%d\n",
+		 st->btc_shm92, st->btc_base, st->btc_block_ran,
+		 st->mac_written);
 
 	if (ob_d3a1_chip_uses_macfreq(hw->chip_id))
 		return ob_d3a1_switch_macfreq(hw);
@@ -513,6 +576,71 @@ static int ob_d3a1_validate(struct ob_hw *hw)
 		ret = -EIO;
 	}
 
+	/* Deterministic T1 register readbacks (exact equality). */
+	{
+		u32 cfprep = bcma_read32(hw->core, OB_D3A1_REG_TSF_CFPREP);
+		u32 cfpstart = bcma_read32(hw->core, OB_D3A1_REG_TSF_CFPSTART);
+		u16 fastp = bcma_read16(hw->core, OB_D3A1_REG_FASTPWRUP_DLY);
+		u16 ifs_ctl = bcma_read16(hw->core, OB_D3A1_REG_IFS_CTL);
+		u16 ifs_aifsn = bcma_read16(hw->core, OB_D3A1_REG_IFS_AIFSN);
+
+		if (cfprep != OB_D3A1_TSF_CFPREP) {
+			dev_err(hw->dev,
+				"d3a1-test: tsf_cfprep=%08x expected %08x\n",
+				cfprep, OB_D3A1_TSF_CFPREP);
+			ret = -EIO;
+		}
+		if (cfpstart != OB_D3A1_TSF_CFPSTART) {
+			dev_err(hw->dev,
+				"d3a1-test: tsf_cfpstart=%08x expected %08x\n",
+				cfpstart, OB_D3A1_TSF_CFPSTART);
+			ret = -EIO;
+		}
+		if (fastp != st->fastpwrup_dly) {
+			dev_err(hw->dev,
+				"d3a1-test: fastpwrup=%04x expected %04x\n",
+				fastp, st->fastpwrup_dly);
+			ret = -EIO;
+		}
+		/* ifs_ctl is masked (the vendor clears the high bits); aifsn exact */
+		if (ifs_ctl & ~OB_D3A1_IFS_CTL_MASK) {
+			dev_err(hw->dev,
+				"d3a1-test: ifs_ctl=%04x high bits not cleared\n",
+				ifs_ctl);
+			ret = -EIO;
+		}
+		if (ifs_aifsn != OB_D3A1_IFS_AIFSN_VAL) {
+			dev_err(hw->dev,
+				"d3a1-test: ifs_aifsn=%04x expected %04x\n",
+				ifs_aifsn, OB_D3A1_IFS_AIFSN_VAL);
+			ret = -EIO;
+		}
+	}
+
+	/* SRL/LRL (SCR window) and SFBL/LFBL (SHM) exact readbacks. */
+	{
+		u16 srl = ob_d3a1_read_scr16(hw, OB_D3A1_SCR_SRL);
+		u16 lrl = ob_d3a1_read_scr16(hw, OB_D3A1_SCR_LRL);
+		u16 sfbl = ob_ucode_read_shm16(hw, OB_D3A1_SHM_SFBL);
+		u16 lfbl = ob_ucode_read_shm16(hw, OB_D3A1_SHM_LFBL);
+
+		if (srl != OB_D3A1_SRL_DEFAULT || lrl != OB_D3A1_LRL_DEFAULT) {
+			dev_err(hw->dev,
+				"d3a1-test: SCR SRL/LRL=%04x/%04x expected %04x/%04x\n",
+				srl, lrl, OB_D3A1_SRL_DEFAULT,
+				OB_D3A1_LRL_DEFAULT);
+			ret = -EIO;
+		}
+		if (sfbl != OB_D3A1_SFBL_DEFAULT ||
+		    lfbl != OB_D3A1_LFBL_DEFAULT) {
+			dev_err(hw->dev,
+				"d3a1-test: SHM SFBL/LFBL=%04x/%04x expected %04x/%04x\n",
+				sfbl, lfbl, OB_D3A1_SFBL_DEFAULT,
+				OB_D3A1_LFBL_DEFAULT);
+			ret = -EIO;
+		}
+	}
+
 	/* MAC SHM postcondition only when the vendor would have written it. */
 	if (st->mac_written) {
 		for (i = 0; i < OB_D3A1_MAC_WORDS; i++) {
@@ -571,6 +699,11 @@ int ob_d3a1_test(struct ob_hw *hw)
 			hw->core->id.rev, OB_D3A1_PHYREV_REV42);
 		return -ENOTSUPP;
 	}
+	if (!hw->cc) {
+		dev_err(hw->dev,
+			"d3a1-test: no ChipCommon core; refusing\n");
+		return -ENODEV;
+	}
 	if (!hw->mac_valid) {
 		dev_err(hw->dev,
 			"d3a1-test: no validated MAC; refusing (vendor attach would fail)\n");
@@ -596,7 +729,17 @@ int ob_d3a1_test(struct ob_hw *hw)
 
 	ret = ob_d3a1_fifo_fixup(hw);
 	if (ret) {
-		dev_err(hw->dev, "d3a1-test: sub_67efd FAIL ret=%d\n", ret);
+		/*
+		 * sub_67efd mutates TX FIFO hardware before DMA begins. On a
+		 * completion-poll timeout the hardware state is NOT proven.
+		 * No DMA memory is live yet, so returning an error is safe, but
+		 * the operator MUST NOT retry the isolated test in the same
+		 * boot: capture the logs, then reboot before another attempt.
+		 * No unproven FIFO/core reset recovery is attempted here.
+		 */
+		dev_err(hw->dev,
+			"d3a1-test: sub_67efd FAIL ret=%d; TX FIFO state unproven - capture logs and REBOOT before retry\n",
+			ret);
 		return ret;
 	}
 

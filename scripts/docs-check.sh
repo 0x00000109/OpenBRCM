@@ -201,6 +201,40 @@ else
 	ok "D3A1 not claimed hardware proven"
 fi
 
+# 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
+if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -q 'hw->cc = hw->bus->drv_cc.core' && \
+   sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -q 'ob_si_read_mac(hw, hw->mac)'; then
+	ok "D3A1 board-data prep sets hw->cc and reads the external-SPROM MAC"
+else
+	bad "ob_si_prepare_board_data_for_d3a1 missing hw->cc / ob_si_read_mac"
+fi
+if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
+		| grep -qE 'ob_si_powerup|ob_si_d11_diag|ob_si_otp_diag|ob_si_sprom_diag|bcma_write|ob_si_cc_write'; then
+	bad "D3A1 board-data prep imports normal-probe side effects"
+else
+	ok "D3A1 board-data prep is read-only (no power-up/diag/register writes)"
+fi
+d3a1_prep=$(grep -n 'ob_si_prepare_board_data_for_d3a1(hw)' src/ob_core.c | head -1 | cut -d: -f1)
+d3a1_test=$(grep -n 'ret = ob_d3a1_test(hw)' src/ob_core.c | head -1 | cut -d: -f1)
+if [ -n "$d3a1_prep" ] && [ -n "$d3a1_test" ] && [ "$d3a1_prep" -lt "$d3a1_test" ]; then
+	ok "D3A1 dispatch prepares board data before ob_d3a1_test"
+else
+	bad "D3A1 dispatch must call ob_si_prepare_board_data_for_d3a1 before ob_d3a1_test"
+fi
+if grep -q 'if (!hw->cc)' src/ob_d3a1.c && \
+   grep -q 'if (!hw->mac_valid)' src/ob_d3a1.c; then
+	ok "D3A1 refuses without hw->cc and without a validated MAC"
+else
+	bad "D3A1 must refuse without hw->cc / validated MAC"
+fi
+if grep -q 'best-effort' src/ob_d3a1.c src/ob_d3a1.h; then
+	bad "D3A1 contains best-effort arithmetic"
+else
+	ok "D3A1 has no best-effort arithmetic"
+fi
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"
