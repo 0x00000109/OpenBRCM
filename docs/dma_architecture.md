@@ -1,0 +1,225 @@
+# M3.1 — BCM4352 / D11 rev 42 DMA architecture report
+
+Status: **report only — no hardware register writes performed.**
+Blob: `wlc_hybrid.o_shipped` sha256 `352a6e34…4743` (Repo A). This document
+recovers the DMA model from (a) the blob itself and (b) Linux
+`brcmsmac`/`bcma` used strictly as structural corroboration.
+
+## Provenance legend
+- **C2** — binary-confirmed in our blob (`dma_attach` 0x10380, `dma_addrwidth`
+  0xffbc, `wlc_bmac_attach` 0x6984f, `wlc_intrson` 0x7a720, `wlc_intrsoff`
+  0x7a6b5, `wlc_isr` 0x7a8e4, `wlc_bmac_enable_mac` 0x60d3d, `sub_7a769`).
+- **C3** — upstream structural (`brcmsmac/dma.c`, `dma.h`, `d11.h`; `bcma`).
+- **C4** — hardware-validated (none yet; that is M3.2+).
+
+## 1. DMA32 vs DMA64
+**Conclusion: 64-bit DMA engine (dma64) — C2/C3, predicate to be evaluated at
+runtime in M3.2 before any write.**
+
+- BCM4352 `CC_CAP = 0x58680001` has `BCMA_CC_CAP_64BIT (0x08000000)` set →
+  64-bit silicon backplane.
+- Blob `dma_attach` sets `di+0x40 = (si_core_sflags(sih,0,0) >> 12) & 1` and
+  branches the descriptor alignment on it (`di+0x68 = 0x0d/0x0c` for the 64-bit
+  path vs `0x04` for the 32-bit path). `di+0x40` is the 64-bit-addressing flag.
+- Blob `dma_addrwidth(sih, di)` returns **0x40** when the backplane-64 flag +
+  `si_backplane64()` hold and `bustype==1 && buscoretype ∈ {0x820,0x83C}`;
+  otherwise 0x20 (32-bit) or 0x1E (30-bit). BCM4352 is PCIe (`bustype=1`,
+  bus core `0x83C`).
+- Per-fifo registers use the **dma64 6-register block** and a 16-byte descriptor
+  with separate `addrlow`/`addrhigh`.
+
+## 2. Channels / rings (D11 FIFO map) — C2 (blob) + C3
+`wlc_bmac_attach` calls `dma_attach` four times with register bases relative to
+the D11 core (`[wlc+0xD0]`). For `corerev > 10` (ours = 42) it uses the
+`fifo64regs[]` layout (0x40-byte stride, RX = TX + 0x20):
+
+| FIFO (ring) | TX base | RX base | Role |
+| ---: | ---: | ---: | :--- |
+| 0 | 0x200 | 0x220 | TX AC_BK (background data) **+ RX frames** |
+| 1 | 0x240 | — | TX AC_BE (best-effort data) |
+| 2 | 0x280 | — | TX AC_VI (video) |
+| 3 | 0x2C0 | — | TX AC_VO / **control & management** |
+
+- Older cores (`corerev <= 10`) use different bases (0x200/0x210/0x220/0x240/
+  0x260/0x280/0x2C0) — the blob selects by `[wlc+0x84] > 0xA`.
+- **RX channel/ring = FIFO0 RX (base 0x220).**
+- **TX selection:** data uses FIFO0..2 by AC; **management/control = FIFO3**
+  (`TX_CTL_FIFO = TX_AC_VO_FIFO`). M3.6's first controlled management TX should
+  target FIFO3.
+- The layout matches `struct fifo64 { dma64regs dmaxmt; pio4regs piotx;
+  dma64regs dmarcv; pio4regs piorx; }` (`d11.h`), stride 0x40 (`pio4regs`=8 B).
+
+## 3. Register map
+
+### 3a. Per-channel dma64 block (0x18 bytes) — C3, partially C2
+| off | name | semantics |
+| ---: | :--- | :--- |
+| 0x00 | `control` | engine enable + flags (see 3c) |
+| 0x04 | `ptr` | **last descriptor posted** by the driver (ring-base + index*16) |
+| 0x08 | `addrlow` | descriptor-ring base, low 32 bits (8 KiB aligned) |
+| 0x0C | `addrhigh` | descriptor-ring base, bits 63:32 |
+| 0x10 | `status0` | engine state + **current descriptor index** (hw) |
+| 0x14 | `status1` | active descriptor + error code |
+
+C2 evidence: the blob reads `base+0x00`, `base+0x04`, and writes `base+0x08=0xff0`
+(ring-size/alignment probe, matching brcmsmac `_dma_descriptor_align`).
+`status0/status1` at 0x10/0x14 are C3 (brcmsmac `struct dma64regs`); **the earlier
+`dma_regs.json` label "STATUS 0x04" is wrong** (0x04 is `ptr`).
+
+### 3b. D11 global registers — C2/C3
+| off | name | note |
+| ---: | :--- | :--- |
+| 0x100 | `intrcvlazy[0]` | RX interrupt lazy timer (blob writes here in `wlc_bmac_init`) |
+| 0x120 | `maccontrol` | MAC enable (`wlc_bmac_enable_mac`) |
+| 0x124 | `maccommand` | MAC command |
+| 0x128 | `macintstatus` | interrupt status (read in `sub_7a769`) |
+| 0x12C | `macintmask` | interrupt mask (`wlc_intrson/off`) |
+
+### 3c. Control-register bits
+TX (`control`): `XE`=0x1 (enable), `SE`=0x2 (suspend), `LE`=0x4, `FL`=0x10,
+`PD`=0x800 (parity disable), `AE`=0x30000 (bits[17:16] addr extension). — C3.
+RX (`control`): `RE`=0x1 (enable), `RO`=0xfe (rx-offset, bits[7:1]),
+`FM`=0x100, `SH`=0x200, `OC`=0x400, `PD`=0x800, `AE`=0x30000. — C3.
+
+## 4. Descriptor format — C3 (structure), C2 (size/align)
+16-byte descriptor (`struct dma64desc`), two 64-bit words:
+```
+struct ob_dma_desc {        /* little-endian on the wire */
+    __le32 ctrl1;           /* flags + buffer count            */
+    __le32 ctrl2;           /* byte count (len) + AE + parity  */
+    __le32 addrlow;         /* buffer DMA address [31:0]       */
+    __le32 addrhigh;        /* buffer DMA address [63:32]      */
+};
+```
+`ctrl1`: `EOT`=1<<28, `IOC`=1<<29, `EOF`=1<<30, `SOF`=1<<31; bits[27:20]
+core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
+(<<16), `PARITY`=0x40000.
+- **TX descriptor:** `ctrl1 = SOF|EOF|IOC` (+`EOT` on last ring slot);
+  `ctrl2 = len & 0x7fff`.
+- **RX descriptor:** `ctrl1 = 0` (+`EOT` on last slot); `ctrl2 = rxbufsize`.
+- Descriptor size **16 B** and ring alignment **8 KiB** are also C2 via
+  `dma_regs.json`/`brcm_dma.h` and the blob's `0xff0` probe.
+
+## 5. Producer / consumer semantics
+- **TX (producer = host):** software keeps `tin`/`tout`. Fill `desc[txout]`,
+  `txout = (txout+1) % ntxd`, then **write `ptr = ringbase + txout*16`** to
+  publish. Hardware consumes old→new; `status0 & XS0_CD_MASK` = current
+  descriptor. Ring is full when `next(txout) == txin`; completion is read from
+  `status0`.
+- **RX (consumer = host):** software keeps `rin`/`rout`. Post buffers by filling
+  `desc[rout]`, `rout = (rout+1) % nrxd`, then **write `ptr = ringbase +
+  rout*16`** to publish. Hardware fills descriptors; `status0 & RS0_CD_MASK`
+  is the descriptor the engine is currently on, so frames `[rout, that index)`
+  are complete. Host consumes by advancing `rout`.
+- `ptr`/`status0` index fields are 13-bit masks (`XS0_CD_MASK`/`RS0_CD_MASK`
+  0x1fff), which is why the descriptor ring must be 8 KiB-aligned and ≤ 8192 B
+  (`D64MAXRINGSZ = 1<<13` → max 512 descriptors).
+
+## 6. RX path details
+- **Hardware RX header = 38 bytes** (`BRCMS_HWRXOFF`), written by the DMA at the
+  **start of each RX buffer**, followed by the 802.11 frame. Header
+  (`struct d11rxhdr`, on the wire little-endian `d11rxhdr_le`):
+  `RxFrameSize`@0, `PAD`@2, `PhyRxStatus_0..5`@4..15, `RxStatus1`@16,
+  `RxStatus2`@18, `RxTSFTime`@20, `RxChan`@22. `RxFrameSize` is the 802.11 frame
+  length; total buffer used = header + frame.
+- The header size is communicated to the engine via the **RX `control` bits[7:1]
+  (`RO`)** (`rxoffset << 1`). Exact value (38) to be confirmed at M3.4.
+- The channel `status0` (engine current index) — **not** the descriptor — is what
+  bounds how many RX buffers the host may reap. Frame length must additionally
+  be sanity-checked against `RxFrameSize` and the buffer size.
+
+## 7. Interrupt relationship — C2
+- Single D11 IRQ. ISR must read **`macintstatus` (0x128)**, mask with
+  **`macintmask` (0x12C)`, and acknowledge D11 bits by writing them back.
+- Bits (`d11.h`): `I_RI = 1<<16` (RX), `I_XI = 1<<24` (TX), errors `I_PC`(10),
+  `I_PD`(11), `I_DE`(12), `I_RU`(13), `I_RO`(14), `I_XU`(15). RX/TX completion
+  also gated by per-descriptor `IOC` (bit 29).
+- `wlc_intrson`: caches mask at `[wlc+0x9c]`, writes `macintmask`. `wlc_intrsoff`:
+  writes 0 then reads back with a 1 µs delay. `sub_7a769` reads status and does
+  `macintstatus = read & [wlc+0x1c4]` (masked acknowledge). **Never write
+  0xffffffff blindly.**
+
+## 8. Reset / enable ordering (derived, C3 + C2 hooks)
+1. DMA device ready (`bcma` host up — already done in `ob_si_powerup`).
+2. **TX reset:** set `control = SE` (suspend), poll `status0.XS` until
+   disabled/idle/stopped (bounded); `control = 0`; poll disabled; `udelay(~300)`.
+3. **RX reset:** `control = 0`; poll `status0.RS == disabled` (bounded).
+4. Program descriptor-ring base: `addrlow = ring_pa`; `addrhigh = ring_pa>>32`
+   (PCI host: no offset — see §11).
+5. Zero the descriptor ring **before** enabling (or after, if 4K-aligned);
+   publish `ptr` only with valid descriptors.
+6. **TX enable:** `control |= XE` (`| PD` if parity disabled).
+   **RX enable:** `control = RE | (rxoffset<<1) [| PD][| OC]`.
+7. MAC interrupts: leave `macintmask = 0` until the IRQ handler is installed;
+   then unmask only `I_RI` first (M3.3/M3.4).
+
+## 9. bcma plumbing (this is how M3.2/M3.3 get their handles) — C2 (kernel)
+- **DMA device:** `core->dma_dev`. For `BCMA_HOSTTYPE_PCI` (ours),
+  `bcma` sets `core->dma_dev = bus->dev` (the PCIe device). Use it for
+  `dma_alloc_coherent()` / `dma_map_single()`.
+- **IRQ:** `core->irq = bus->host_pci->irq`. `bcma` does **not** request MSI;
+  the line is the PCI-assigned IRQ. M3.3 must confirm MSI/MSI-X/INTx from the
+  `pci_dev` state, and register with `IRQF_SHARED` (bcma may already have a
+  handler for the PCIe core on the same line).
+- Register access continues through `bcma_read32/16` on the D11 core window.
+
+## 10. Relation to the D11 revision (rev 42)
+- The only rev-sensitive DMA detail observed is the **FIFO register stride**
+  (`corerev > 10` → the `fifo64regs[]` 0x40-stride map above; RX base 0x220).
+- `dma_attach` special-cases core ids `0x829`/`0x834` (other 802.11 cores) for
+  address-extension; our D11 `0x812` takes the general path.
+
+## 11. Translation / PCIe DMA offset
+- PCI host: `ddoffsetlow = dataoffsetlow = 0` — program absolute DMA addresses;
+  the Linux DMA API performs any IOMMU/translation.
+- The `AE` (address-extension) mechanism (`ctrl2` bits[17:16], control bits
+  [17:16]) is only for **32-bit** engines placing buffers above 1 GiB. For a
+  64-bit engine it is not required; M3.2 will still probe AE support as the blob
+  does.
+- (SoC-only `SI_PCIE_DMA_H32` high-address offset does **not** apply to our PCI
+  host.)
+
+## 12. Unresolved fields (do not guess; resolve in M3.2/M3.4)
+- Exact value of RX `control` `RO` (rxoffset) on this part (expected 38 = header).
+- `status0`/`status1` layout is C3, not yet observed in our blob (inlined
+  reset/rx/tx functions were not symbolised). Confirm by read-only dump first.
+- The blob `dma_attach` reads core-specific control bits at [25:18]
+  (`0x1c0000/0xe00000/0x3000000`) into `di+0x105/0x10a/0x10b`; meaning unknown.
+- `[di+0xF4] = 0x80000000` (PCIe 0x820/0x83C) / `0x40000000` (others) — likely a
+  "DMA core flags" default; semantics unresolved.
+- Whether the RX engine writes per-descriptor status back into `ctrl1/ctrl2`
+  (we rely on the 38-byte header + channel `status0`).
+- Exact `rxbufsize`/`nrxpost` used by the Windows-style stack for this PCIe part
+  (brcmsmac uses `RXBUFSZ`, `NRXBUFPOST=32`); we will choose our own, bounded.
+
+## 13. Proposed minimal M3.2 plan (allocation only; engine stays disabled)
+1. Add `struct ob_dma_desc` (16 B, above) and `struct ob_dma_ring`
+   { `desc[]` (coherent), `dma_addr_t ring_dma`, `u16 n`, `u16 head`, `u16 tail`,
+   `void **buf`/`dma_addr_t *buf_dma`, `bool ready`, `enum {TX,RX}` }.
+2. Add `struct ob_dma` in `od_hw`: one RX ring (FIFO0-RX base 0x220) and one
+   control TX ring (FIFO3 base 0x2C0); RX descriptors only, no mapping of skbs
+   yet beyond coherent buffers.
+3. Ring rules: n ≤ 512, ring bytes 8 KiB-aligned via `dma_alloc_coherent` +
+   manual align (like brcmsmac) or kmalloc+dma_map_single; publish `ptr` only
+   when valid; wrap arithmetic `(i+1) % n`.
+4. Use `dma_alloc_coherent(core->dma_dev, …)`, check every failure, keep a full
+   cleanup path in `ob_remove`.
+5. **Do not touch `control`/`addrlow`/`ptr` yet** — allocate, initialise
+   descriptors in memory, and log the computed bases only.
+6. Host/KUnit tests: wraparound, full/empty, descriptor init, index arithmetic.
+7. STOP after allocation/free is clean; no hardware enable, no IRQ, no RX/TX.
+
+## 14. Exact provenance per conclusion
+| # | Conclusion | Confidence | Source |
+| :-- | :-- | :-- | :-- |
+| 1 | 64-bit DMA engine; predicate | C2/C3 | `dma_addrwidth` 0xffbc, `dma_attach` di+0x40; `brcmsmac/dma.h` |
+| 2 | FIFO map, RX=FIFO0@0x220, mgmt=FIFO3@0x2C0 | C2 | `wlc_bmac_attach` 0x6984f dma_attach call sites; `brcmsmac/d11.h` |
+| 3 | dma64 reg layout control/ptr/addrlow/addrhigh/status0/status1 | C3(+C2 partial) | `brcmsmac/dma.h`; blob reads +0/+4, writes +8 |
+| 4 | D11 `macintstatus` 0x128 / `macintmask` 0x12C | C2 | `wlc_intrson/off` 0x7a720/0x7a6b5, `sub_7a769` |
+| 5 | descriptor 16 B, ctrl bits, 8 KiB ring | C3/C2 | `brcmsmac/dma.c`; `dma_regs.json`, blob `0xff0` probe |
+| 6 | RX hw header 38 B + fields | C3 | `brcmsmac/d11.h` `d11rxhdr`, `BRCMS_HWRXOFF` |
+| 7 | IRQ/data plumbing via bcma `core->irq`/`core->dma_dev` | C2 | `drivers/bcma/main.c:257` |
+| 8 | reset/enable ordering | C3 | `brcmsmac/dma.c` `dma_txreset/rxreset/txinit/rxinit` |
+| 9 | PCI host: no DMA offset, use DMA API | C2 | `dma_attach` (hosttype PCI → offsets 0) |
+
+**End of M3.1. No register writes. Awaiting approval before M3.2.**
