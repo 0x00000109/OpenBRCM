@@ -15,9 +15,9 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `main` = `089e413` (governance + GitHub workflow). Its M3.4D1 commit `2029292`
-  adds `ob_fw.{c,h}` and calls `ob_fw_probe()` from **normal** probe (after
-  `ob_si_probe`); `main` has **no** isolated mode.
+- `main` = `854e398` (governance + docs-check CI + GitHub workflow). Its M3.4D1
+  commit `2029292` adds `ob_fw.{c,h}` and calls `ob_fw_probe()` from **normal**
+  probe (after `ob_si_probe`); `main` has **no** isolated mode.
 - Branch `m34d2a-ucode-upload` (this branch, **draft PR, not merged**) adds the
   isolated modes `fw_validate_only=1` and `ucode_test_only=1`, plus
   `src/ob_ucode.{c,h}`, `docs/ucode_test.md` and the `docs/milestones.md` D2A
