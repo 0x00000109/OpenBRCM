@@ -99,6 +99,11 @@ static u32 ob_d3a0_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 
 /* ---- fatal latch (fail-closed lifetime protection) --------------------- */
 
+bool ob_d3a0_fatal_is_latched(void)
+{
+	return ob_d3a0_fatal_latched;
+}
+
 static void ob_d3a0_latch_fatal(struct ob_hw *hw)
 {
 	u32 ch;
@@ -644,7 +649,7 @@ static int ob_d3a0_free_mem(struct ob_hw *hw)
 	return 0;
 }
 
-static int ob_d3a0_teardown(struct ob_hw *hw)
+int ob_d3a0_teardown(struct ob_hw *hw)
 {
 	dev_info(hw->dev, "dma-test: quiesce begin\n");
 	if (ob_d3a0_quiesce(hw))
@@ -654,7 +659,7 @@ static int ob_d3a0_teardown(struct ob_hw *hw)
 
 /* ---- bring-up ---------------------------------------------------------- */
 
-static int ob_d3a0_bringup(struct ob_hw *hw)
+int ob_d3a0_bringup(struct ob_hw *hw)
 {
 	struct ob_d3a0_lifecycle *lc = &hw->d3a0.lc;
 	u32 tx_old[OB_D3A0_TX_CHANNELS];

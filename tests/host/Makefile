@@ -5,7 +5,7 @@ SRC     := ../../src
 
 .PHONY: run clean
 run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
-     ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test
+     ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test ob_d3a1_test
 	./ob_math_test
 	./ob_caps_test
 	./ob_dma_test
@@ -15,6 +15,7 @@ run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
 	./ob_ucode_test
 	./ob_initvals_test
 	./ob_d3a0_test
+	./ob_d3a1_test
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -45,6 +46,12 @@ ob_d3a0_test: ob_d3a0_test.c $(SRC)/ob_d3a0.h $(SRC)/ob_rx.h \
 		$(SRC)/ob_dma.h $(SRC)/ob_ucode.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+ob_d3a1_test: ob_d3a1_test.c $(SRC)/ob_d3a1.h $(SRC)/ob_d3a0.h \
+		$(SRC)/ob_rx.h $(SRC)/ob_dma.h $(SRC)/ob_ucode.h \
+		$(SRC)/ob_initvals.h
+	$(CC) $(CFLAGS) -o $@ $<
+
 clean:
 	rm -f ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
-	      ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test
+	      ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test \
+	      ob_d3a1_test

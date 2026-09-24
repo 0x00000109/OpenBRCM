@@ -325,6 +325,18 @@ int ob_d3a0_test(struct ob_hw *hw);
  * frees DMA memory while hardware may still consume it.
  */
 void ob_d3a0_remove(struct ob_hw *hw);
+
+/*
+ * Reusable DMA lifecycle primitives for later milestones (M3.4D3A1 reuses the
+ * exact hardware-proven D3A0 lifecycle in its vendor position). ob_d3a0_bringup
+ * allocates/programs/posts/validates the four TX channels + FIFO0 RX from the
+ * proven D2B exit prefix; ob_d3a0_teardown performs the mandatory verified
+ * quiesce and frees only after every programmed engine was verified stopped.
+ * ob_d3a0_fatal_is_latched() reports the module-wide fail-closed latch.
+ */
+int  ob_d3a0_bringup(struct ob_hw *hw);
+int  ob_d3a0_teardown(struct ob_hw *hw);
+bool ob_d3a0_fatal_is_latched(void);
 #endif /* __KERNEL__ */
 
 #endif /* _OB_D3A0_H_ */

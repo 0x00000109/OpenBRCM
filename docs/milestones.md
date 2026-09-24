@@ -289,16 +289,18 @@ Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
 - STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
   radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail (`ANALYSIS COMPLETE`)
+## M3.4D3A1 — vendor post-common / pre-PHY tail test
 
 Canonical status (exact):
 - M3.4D3A0 = HARDWARE RUNTIME PROVEN
-- M3.4D3A1 = ANALYSIS COMPLETE / NOT IMPLEMENTED / NOT HARDWARE PROVEN
-- D3A1 IMPLEMENTATION GO = YES (analysis decision only)
+- M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN
 
-Report: `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
-`352a6e349f…`; no hardware/MMIO/implementation). Scope: recover the exact
-rev42 vendor sequence after the common initvals and before real PHY init.
+Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
+`352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
+mode `d11_tail_test_only=1` reproduces the exact rev42 vendor sequence after
+the common initvals and STOPS before real PHY init. New code:
+`src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`, `tests/kunit/ob_d3a1_kunit.c`.
+Module built + MOK-signed, **never loaded** (no hardware execution).
 - **Ordering:** the vendor **interleaves** DMA inside the tail —
   `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
   intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →
@@ -320,9 +322,15 @@ rev42 vendor sequence after the common initvals and before real PHY init.
   `nvram_get` list (`srom_var_init` + `nvram_init`/`nvram.txt`);
   `btc_params`/`btc_flags` absent on ASUS PCE-AC56 ⇒ **skip** (no zero-fill);
   `M_MAX_ANTCNT = 0x0a` = upstream vanilla `ANTCNT`.
-- `D3A1 IMPLEMENTATION GO: YES` (analysis decision only). NOT IMPLEMENTED /
-  NOT HARDWARE PROVEN. Only the symbolic name of the `0x78c/0x78e/0x790` SHM
-  slots remains UNKNOWN (value/source proven; microcode-only consumer).
+- **Implementation:** exact `sub_67efd` (2 + 42 + 168 = 212 writes), exact T1
+  order, DMA reused from D3A0 in vendor position, T2 (`btc_base` gate; absent
+  `btc_params`/`btc_flags` ⇒ skip; MAC into `0x78c/0x78e/0x790` only inside the
+  `btc_base != 0` gate), `switch_macfreq`, deterministic postconditions,
+  fail-closed quiesce; `STOPPED BEFORE sub_6656c / bsinitvals / PHY`.
+- Build/sign: `make` + `make signed` OK; module `045448c9…` signed
+  (`Broadcom Driver MOK`), vermagic `7.0.0-34-generic`. Host tests 10/10 PASS.
+- Only the symbolic name of the `0x78c/0x78e/0x790` SHM slots remains UNKNOWN
+  (value/source proven; microcode-only consumer).
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

@@ -36,6 +36,11 @@ source of truth; this file records the live working-tree state on top of HEAD.
   NOT HARDWARE PROVEN**, `D3A1 IMPLEMENTATION GO: YES`; report
   `docs/m34d3a1_vendor_tail.md`. Docs/tooling only, no runtime code, no
   hardware; merged to `main` via a normal merge commit.
+- Implementation branch `m34d3a1-vendor-tail-test` — **M3.4D3A1 =
+  IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN**; report
+  `docs/m34d3a1_vendor_tail_test.md`. New isolated mode
+  `d11_tail_test_only=1`; DMA sub-lifecycle reused from D3A0 in its vendor
+  position; STOPS before `sub_6656c`. Not loaded; no hardware.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -122,9 +127,10 @@ Stated exactly:
 - M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
 - M3.4D3A0 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated DMA lifecycle only; candidate `4fa1b57`)
-- M3.4D3A1 = `ANALYSIS COMPLETE` (vendor post-common / pre-PHY tail; NOT
-  IMPLEMENTED / NOT HARDWARE PROVEN; value-source/struct-field blockers closed;
-  `D3A1 IMPLEMENTATION GO: YES` — analysis decision only)
+- M3.4D3A1 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
+  (isolated `d11_tail_test_only=1` vendor post-common / pre-PHY tail; reuses
+  the proven D3A0 DMA lifecycle in its vendor position; STOPS before
+  `sub_6656c`; module built + MOK-signed, never loaded)
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
@@ -182,12 +188,13 @@ conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
 
-## M3.4D3A1 — vendor post-common / pre-PHY tail (ANALYSIS COMPLETE)
-Status: **`M3.4D3A1 = ANALYSIS COMPLETE` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
-`D3A1 IMPLEMENTATION GO: YES` (all value-source / struct-field blockers closed by
-the follow-up in §15: MAC six bytes = `cur_etheraddr`; SCR `0x24` is a
-read-modify-write skipped on the first init; `btc_params`/`btc_flags` absent ⇒
-skip; `M_MAX_ANTCNT = 0x0a`). Report:
+## M3.4D3A1 — vendor post-common / pre-PHY tail test (IMPLEMENTED / STATIC TESTED / SIGNED)
+Status: **`M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED` / NOT HARDWARE PROVEN.**
+Isolated mode `d11_tail_test_only=1` reproduces the exact rev42 vendor order
+(`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) and STOPS before
+`sub_6656c`; the DMA sub-lifecycle is the hardware-proven D3A0 one, reused in
+its vendor position. New: `src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`,
+`tests/kunit/ob_d3a1_kunit.c`. Report:
 `docs/m34d3a1_vendor_tail.md`. Blob sha256 `352a6e349f…`; read-only RE.
 - **Key correction: the vendor interleaves DMA inside the tail** —
   `T1 (sub_67efd → MACCONTROL/macphyclk/SCR/SFBL/ifs) → DMA (4× txinit +
@@ -365,17 +372,16 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-**M3.4D3A1 vendor-tail analysis is now COMPLETE** (ANALYSIS COMPLETE / NOT
-IMPLEMENTED / NOT HARDWARE PROVEN) on `m34d3a1-vendor-tail-analysis`; report
-`docs/m34d3a1_vendor_tail.md`. It
-re-proves `sub_67efd` for rev42, recovers the omitted SHM/NVRAM/BTC groups, and
-establishes that the vendor order is **T1 → DMA → T2** (DMA is interleaved, not
-a separate pre- or post-tail stage), with the D3A1 STOP immediately before
-`sub_6656c` (`bsinitvals` → `wlc_phy_init`). The value-source/struct-field
-blockers are now closed and `D3A1 IMPLEMENTATION GO: YES` (analysis decision
-only — **not implemented**). **No hardware action:** no `insmod`, no DMA test,
+**M3.4D3A1 is now IMPLEMENTED / STATIC TESTED / SIGNED** (NOT HARDWARE PROVEN)
+on `m34d3a1-vendor-tail-test`; report `docs/m34d3a1_vendor_tail_test.md` (the
+recovered ordering/source evidence remains in `docs/m34d3a1_vendor_tail.md`).
+The isolated mode `d11_tail_test_only=1` runs the proven D2A/D2B core, the
+exact rev42 tail (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) with the
+D3A0 DMA lifecycle reused in its vendor position, validates deterministic
+postconditions and quiesces, then **STOPS before `sub_6656c`**. Module built +
+MOK-signed, **never loaded**. **No hardware action:** no `insmod`, no DMA test,
 no PHY/radio/channel/mac80211. See `docs/d3a0_dma_test_design.md`,
-`docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail.md`.
+`docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
