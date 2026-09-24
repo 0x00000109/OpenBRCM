@@ -268,43 +268,89 @@ free DMA resources.
   common initvals (D2A-only); it now runs the shared D2B applier first.
 - M3.4D3 = `ANALYSIS ONLY`; last hardware-proven = **M3.4D2B**.
 
-## 8. Prepared future hardware procedure (NOT executed)
+## 8. Hardware-test candidate (FROZEN for test; NOT hardware proven)
 
-Prepared but intentionally **not run**. Requires explicit human approval and a
+Frozen **only** for the approved D3A0 hardware run. It is **not** hardware
+proven and no hardware-proven tag exists. Requires explicit human approval and a
 quiet machine (no other openbrcm activity). Uses only `dma_test_only=1`; no
-`runtime-test.sh`, no combined isolated modes.
+`runtime-test.sh`, no combined isolated modes, no normal OpenBRCM mode.
 
-**Candidate artifacts — NOT YET FROZEN.** Freezing requires explicit human
-approval; this document only prepares the procedure. Earlier candidates
-`c214f5eb…` (commits `8a59bf1`+`b33e7e3`) and `76d6ec29…` (commit `90a5ae0`)
-are **SUPERSEDED** and must never be used: the first lacked the D2B
-common-initvals entry and the second treated core-reset containment as free
-authorization.
-- implementation + docs commit: the commit that contains this document
-- built + signed module from that commit: `openbrcm.ko`
-  SHA256 `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`
-  (`signer: Broadcom Driver MOK`, `sig_hashalgo: sha256`)
-- the module build is content-reproducible: docs-only commits do not change the
-  hash. Before any approved run, rebuild+re-sign from the exact approved commit
-  and re-verify the hash.
+Candidate identity:
+- candidate HEAD: the commit that contains this document
+- runtime-code commit: `7e68fe24fb1409c1f4d29ad8fb25ab642f7170e4`
+- base: `origin/main` `2a7ba1d8eac3f19579b30f9fabb3a4280585b6c0`
+- signed module: `openbrcm.ko`, SHA256
+  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`
+  (`signer: Broadcom Driver MOK`; `vermagic: 7.0.0-34-generic SMP preempt
+  mod_unload modversions`; `depends: mac80211,bcma`)
+- the build is content-reproducible: docs-only commits do not change the hash.
+  Rebuild+re-sign from the exact candidate HEAD and re-verify before running.
+- earlier candidates `c214f5eb…` (lacked D2B entry) and `76d6ec29…` (treated
+  containment as free authorization) are **SUPERSEDED** and must never be used.
 
-```
-# 0. verify the candidate module hash
-sha256sum openbrcm.ko
-#   expect 0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08
+### 8.1 Operator safety rule (MANDATORY)
 
-# 1. ensure no stale module is loaded
-lsmod | grep -c '^openbrcm '    # expect 0
+If D3A0 logs ANY of: `FATAL`, `reboot-required`, `quiesce NOT verified`, a
+`reset TIMEOUT`, or a `core containment` fallback, the operator MUST capture
+`dmesg` + the journal and **reboot**, and MUST NOT: `rmmod openbrcm`, unbind the
+BCMA device, bind another driver, repeat `dma_test_only`, or run normal
+OpenBRCM. The module pin blocks `rmmod` but not a manual sysfs unbind/rebind.
 
-# 2. load only the D3A0 isolated mode
+### 8.2 One-shot procedure (prepared, NOT executed)
+
+Start after a clean reboot. There is **no** automatic `rmmod` after `insmod`.
+
+```sh
+# --- A. preflight (read-only) ---
+uname -r                                   # expect 7.0.0-34-generic
+sha256sum openbrcm.ko                      # expect 0282d9b2...af08
+modinfo openbrcm.ko | grep -E '^(vermagic|depends|signer):'
+lsmod | grep -c '^openbrcm '               # expect 0
+lsmod | grep -E '^(mac80211|bcma) '        # both present
+
+# --- B. persistent test marker with the exact candidate hash ---
+sudo sh -c 'printf "D3A0 candidate kernel=%s module=%s\n" "$(uname -r)" \
+  "0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08" \
+  > /var/log/openbrcm-d3a0-candidate'
+
+# --- C. ONE insmod only ---
 sudo insmod openbrcm.ko dma_test_only=1
 
-# 3. capture the D3A0 evidence (bring-up validation + quiesce + PASS)
-sudo dmesg | grep -E 'dma-test:|openbrcm:'
+# --- D. immediate full capture ---
+sudo dmesg > /var/log/openbrcm-d3a0-dmesg.txt
+sudo journalctl -k -b > /var/log/openbrcm-d3a0-journal.txt
 
-# 4. unload
-sudo rmmod openbrcm
+# --- E. filtered D3A0 view ---
+grep -E 'dma-test:|openbrcm:' /var/log/openbrcm-d3a0-dmesg.txt
+
+# --- F. ONLY if FATAL/reset-timeout/containment was logged: capture + reboot,
+#        do NOT rmmod, do NOT unbind ---
+sudo dmesg > /var/log/openbrcm-d3a0-FATAL.txt
+sudo journalctl -k -b -1 > /var/log/openbrcm-d3a0-prevboot.txt
+ls -l /sys/fs/pstore/ 2>/dev/null
+sudo reboot
 ```
+
+### 8.3 Exact PASS criteria
+
+PASS requires BOTH bring-up AND teardown.
+
+Bring-up:
+- full D2B gate PASS (`common initvals complete total=610 w16=113 w32=497`,
+  `D2B exit verified`, `D2B prefix complete common_records=610`);
+- TX0..TX3: ring programmed, XE set, capability bits preserved;
+- RX: `CONTROL=0x84d`, PTR field `0x400`, `ADDRHIGH=0x80000000`, `RS=IDLE`,
+  no STATUS1 receive error;
+- mappings: TX payload = 0, RX = 64;
+- interrupt state: `INTRCVLAZY=0x01000000`, `I_RI` configured, `MACINTMASK=0`,
+  no host IRQ route.
+
+Teardown:
+- `RX reset PASS`; `TX0 reset PASS`; `TX1 reset PASS`; `TX2 reset PASS`;
+  `TX3 reset PASS`; `all DMA engines stopped`;
+- RX mappings released = 64; rings released; pool released.
+
+Only then may the driver log `PASS - bring-up + teardown proven`.
 
 Expected dmesg milestones: `dma-test: BEGIN`; `common initvals begin records=610`;
 `common initvals complete total=610 w16=113 w32=497`;
@@ -313,7 +359,7 @@ Expected dmesg milestones: `dma-test: BEGIN`; `common initvals begin records=610
 `bring-up validation PASS`; `quiesce begin`; `RX reset PASS`;
 `TX0..TX3 reset PASS`; `all DMA engines stopped`; `rings released`;
 `PASS - bring-up + teardown proven`; `STOP before remaining D3A1/band/PHY`.
-A missing/failed quiesce logs `core containment observed ... free still
-forbidden` (if containment verified) followed by `quiesce NOT verified; ...
-reboot required`, sets the fatal latch, pins the module and must be treated as
-a failure (reboot), not PASS — containment is never a free permit.
+A missing/failed per-channel reset logs `core containment observed ... free
+still forbidden` (if containment verified) followed by `quiesce NOT verified;
+... reboot required`, sets the fatal latch, pins the module and must be treated
+as a failure (reboot), not PASS — containment is never a free permit.
