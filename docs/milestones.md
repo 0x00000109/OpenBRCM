@@ -227,6 +227,31 @@ Two **corrections to the accepted M3.1/M3.2 model** (blocking M3.4B):
 `addrhigh = 0x80000000` (not 0), and RX ring = 256 (not 512). STOP for
 acceptance before enabling DMA.
 
+## M3.4B — FIFO0 RX engine bring-up (first RX)
+
+Implemented `src/ob_rx.{h,c}`. Programs only the proven FIFO0 RX DMA block and
+never hands frames to mac80211.
+- Maps 64 RX buffers (`alloc_skb(2048)` + `dma_map_single(DMA_FROM_DEVICE)`),
+  each required to satisfy `upper_32_bits(dma) == 0`; any violation unwinds all
+  mappings and fails probe with no partial ring.
+- Builds descriptors 0..63 (`ctrl1=0`, `ctrl2=0x0800`, `addrlow=(u32)pa`,
+  `addrhigh=0x80000000`) and a structural EOT-only slot at 255 (address 0,
+  length 0); `dma_wmb()` before publishing.
+- Programs `addrlow`/`addrhigh`/`PTR=ring+0x400`/`control=0x0000084d`, reads
+  back control/ptr/base/status0/status1 and aborts+disables on mismatch.
+- Enables host routing (`bcma_host_pci_irq_ctl(true)`) then only
+  `FIFO0 intmask |= I_RI` and `MACINTMASK |= MI_DMAINT`.
+- Hard IRQ: read `MACINTSTATUS`, require `MI_DMAINT`, read FIFO0 `intstatus`,
+  require `I_RI`, ack only `I_RI` and the owned MAC bit, mask RX, schedule a
+  bounded tasklet. No ring walk in hard IRQ.
+- Tasklet: `index = (status0 & 0x1fff) >> 4` (validated `< 256`, not past PTR,
+  no wrap), unmap exactly once, validate `RxFrameSize`, log at most 5 frames
+  (frame_control/type/subtype, 32 bytes) and "beacon detected"; no refill, stop
+  when the posted set is drained. Failure containment masks/unroutes/disables.
+- Teardown order: mask `I_RI` → mask `MI_DMAINT` → unroute → disable RX +
+  bounded poll → `synchronize_irq()` → `tasklet_kill()` → `free_irq()` → unmap
+  once → free skbs → free rings.
+
 ## Previously
 - M0/M1 code present (`src/ob_main.c`, `src/ob_core.c`, `src/ob_si.c`).
 - **M2 present:** `src/ob_mac80211.c` registers with mac80211 and exposes the

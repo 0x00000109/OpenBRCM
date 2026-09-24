@@ -66,6 +66,14 @@ static irqreturn_t ob_irq_handler(int irq, void *dev_id)
 		hw->irq.unexpected++;
 	hw->irq.handled++;
 
+	/*
+	 * MI_DMAINT is the DMA-interrupt summary. Hand the FIFO0 RX handling to
+	 * ob_rx (acks I_RI, masks the source and schedules bounded deferred
+	 * work); only then acknowledge the owned MACINTSTATUS bit.
+	 */
+	if (raw & OB_D11_MI_DMAINT)
+		ob_rx_irq(hw);
+
 	ack = ob_d11_irq_ack_bits(raw, hw->irq.owned_mask);
 	bcma_write32(hw->core, OB_D11_REG_MACINTSTATUS, ack);
 

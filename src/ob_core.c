@@ -58,9 +58,23 @@ int ob_probe(struct bcma_device *core)
 		return ret;
 	}
 
+	/*
+	 * M3.4B: map the RX buffers, program the FIFO0 ring, route the D11 IRQ
+	 * and enable only I_RI + MI_DMAINT. No TX, no mac80211 RX yet.
+	 */
+	ret = ob_rx_init(hw);
+	if (ret) {
+		/* ob_rx_init already quiesced and freed its buffers. */
+		ob_irq_free(hw);
+		ob_dma_free(hw);
+		return ret;
+	}
+
 	ret = ob_mac80211_register(hw);
 	if (ret) {
+		ob_rx_quiesce(hw);
 		ob_irq_free(hw);
+		ob_rx_free_buffers(hw);
 		ob_dma_free(hw);
 		return ret;
 	}
@@ -76,7 +90,15 @@ void ob_remove(struct bcma_device *core)
 		return;
 
 	ob_mac80211_unregister(hw);
+	/*
+	 * Teardown order: mask RX sources, disable host routing, disable the RX
+	 * engine with a bounded poll, synchronize_irq() so no in-flight hard IRQ
+	 * can schedule new deferred work, tasklet_kill(), then free_irq, then
+	 * unmap/free every still-mapped buffer exactly once, then free rings.
+	 */
+	ob_rx_quiesce(hw);
 	ob_irq_free(hw);
+	ob_rx_free_buffers(hw);
 	ob_dma_free(hw);
 	dev_info(hw->dev, OB_DRV_NAME ": removed\n");
 	bcma_set_drvdata(core, NULL);

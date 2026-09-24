@@ -32,6 +32,10 @@
 #define OB_D11_FIFO_RX		0	/* RX_FIFO: data and control frames */
 #define OB_D11_FIFO_TX_CTL	3	/* TX_AC_VO_FIFO == TX_CTL_FIFO */
 
+/* per-FIFO intstatus/intmask bits (C3 d11.h) */
+#define OB_D11_FIFO_I_RI	(1u << 16)	/* receive interrupt */
+#define OB_D11_FIFO_I_XI	(1u << 24)	/* transmit interrupt */
+
 /* ---- macintstatus / macintmask bits (C3: brcmsmac d11.h) ---- */
 #define OB_D11_MI_MACSSPNDD	(1u << 0)	/* gracefully suspended */
 #define OB_D11_MI_BCNTPL	(1u << 1)	/* beacon template available */

@@ -216,6 +216,36 @@ static inline void ob_dma_slot_init(struct ob_dma_slot *s)
 	s->mapped = false;
 }
 
+/*
+ * Claim a slot for exactly one (skb, dma) mapping. Returns false if the slot
+ * is already owned, which prevents a double-claim.
+ */
+static inline bool ob_dma_slot_claim(struct ob_dma_slot *s,
+				     struct sk_buff *skb, dma_addr_t dma)
+{
+	if (s->mapped || s->skb)
+		return false;
+	s->skb = skb;
+	s->dma = dma;
+	s->mapped = true;
+	return true;
+}
+
+/*
+ * Release a slot exactly once. Returns false and leaves the slot untouched if
+ * it is not owned, which prevents a double unmap/free.
+ */
+static inline bool ob_dma_slot_release(struct ob_dma_slot *s,
+				       struct sk_buff **skb, dma_addr_t *dma)
+{
+	if (!s->mapped || !s->skb)
+		return false;
+	*skb = s->skb;
+	*dma = s->dma;
+	ob_dma_slot_init(s);
+	return true;
+}
+
 /* ---- pure ring index helpers (host-testable) ---- */
 
 static inline u16 ob_dma_next(u16 n, u16 i)
