@@ -46,5 +46,5 @@ Broadcom 43xx silicon and delegates everything generic to the kernel.
   hardware action each mac80211 callback must perform.
 
 ## Kernel compatibility
-Primary target Linux 7.x; 6.12 LTS is also supported. CI builds against a small
-matrix and runs `sparse`, `checkpatch`, and KUnit/host tests.
+Primary target Linux 7.x. 6.12 build compatibility is pending (issue #3). CI
+builds against 7.0/7.2 and runs `docs-check`, host tests and `checkpatch`.
