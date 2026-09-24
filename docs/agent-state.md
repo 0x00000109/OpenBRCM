@@ -26,8 +26,10 @@ source of truth; this file records the live working-tree state on top of HEAD.
   reachable from `main`.
 - Active branch `m34d2b-initvals-test` (from `main` @ `65d61ce`) — holds the
   **M3.4D2B isolated common-initvals test** (`initvals_test_only=1`):
-  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN**. Draft PR
-  open; not merged. `main` does not yet contain the D2B implementation.
+  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **HARDWARE RUNTIME PROVEN on
+  BCM4352** (tested candidate `f27286f`, module SHA256
+  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; PR #6).
+  Merge pending; `main` does not yet contain the D2B implementation.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -55,6 +57,16 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `brcm/bcm43xx-ucode.fw` `size=43400`/`words=10850`; upload `writes=10850`;
   PSM start `MACCONTROL=0x04020402`; bounded poll PASS `iterations=11`
   `MACINTSTATUS=0x00000001`, then STOP. Scope: ucode upload + PSM start only.
+- M3.4D2B (isolated mode, branch `m34d2b-initvals-test`): `initvals_test_only=1`
+  **HARDWARE RUNTIME PROVEN on BCM4352** — tested candidate `f27286f`, module
+  SHA256 `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`,
+  base `65d61ce`. `insmod` rc=0; ucode `brcm/bcm43xx-ucode.fw` `43400`/`10850`
+  writes; PSM PASS `iterations=11` `MACINTSTATUS=0x00000001`; common initvals
+  `610/610` (`w16=113`, `w32=497`); postconditions
+  `M_FIFOSIZE0..3=01c4/0000/0000/079e`, `MACINTMASK=0`, `MACCONTROL=0x04020402`,
+  SHM `0x14=0xb4`; STOP before bsinitvals/PHY/radio/channel/DMA. No
+  timeout/BUG/Oops/lockup/reset. Scope: **common initvals only** (does NOT prove
+  bsinitvals, band init, AC PHY, radio, calibration, channel, RX or TX).
 
 ## Analysis-only facts (not hardware proven here)
 - M3.4C/C.1: exact vendor rev42 images recovered from `wlc_hybrid.o_shipped`;
@@ -62,38 +74,41 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
-Stated exactly (an implementation or a formal analysis GO is never hardware proof):
+Stated exactly:
 - M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
 - M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
-- M3.4D2B hardware status = NOT HARDWARE PROVEN
 
-The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` cleared the design;
-the code exists but has **not** run on hardware and is **not** a hardware proof.
+Both are hardware-proven only for their own narrow scope (see below); the later
+PHY/radio/channel stages remain **unproven**.
 
-## Current milestone
+## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**
-Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN.**
-- Branch `m34d2b-initvals-test` (Draft PR, not merged); mode
-  `initvals_test_only=1`, mutually exclusive with `fw_validate_only`/
-  `ucode_test_only` (any conflict -> `-EINVAL`, no hardware access).
-- Implementation doc `docs/m34d2b_initvals_test.md`; analysis report
+Status: **`HARDWARE RUNTIME PROVEN` on BCM4352.**
+- Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
+  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
+  `main` @ `65d61ce`; PR #6.
+- Runtime: `insmod` rc=0; ucode `brcm/bcm43xx-ucode.fw` `43400` bytes / **10850
+  writes**; pre-upload `MACCONTROL 00000000 -> 04000404`; PSM start
+  `04020402`; poll `iterations=11` `MACINTSTATUS=0x00000001`; common initvals
+  **`610/610`** (`w16=113`, `w32=497`); postconditions all seven exact
+  (`01c4/0000/0000/079e`, `MACINTMASK=0`, `MACCONTROL=0x04020402`,
+  `SHM[0x14]=0xb4`); final `PASS - stopped before
+  bsinitvals/PHY/radio/channel/DMA`. No timeout/BUG/Oops/lockup/reset.
+- Mode `initvals_test_only=1`, mutually exclusive with `fw_validate_only`/
+  `ucode_test_only` (conflict -> `-EINVAL`, no hardware access).
+- Shared D2A core `ob_ucode_run_d2a()` (src/ob_ucode.c) used by both D2A and D2B.
+- Evidence: `docs/m34d2b_initvals_test.md`; report
   `docs/m34d2b_common_initvals.md`; classification
   `docs/m34d2b/initvals_classification.{md,json}`.
-- Shared hardware-proven D2A core `ob_ucode_run_d2a()` (src/ob_ucode.c) is used
-  by both D2A and D2B; only one copy of the register sequence exists.
-- Applies exactly the 610 `d11ac1initvals42` records (113 x 16-bit, 497 x
-  32-bit) in strict order, terminator excluded, then reads only
-  `M_FIFOSIZE0..3=01c4/0000/0000/079e`, `MACINTMASK=0`,
-  `MACCONTROL=0x04020402`, SHM `0x14=0xb4`. Stops before
-  bsinitvals/`sub_6656c`/PHY/radio/channel/DMA/IRQ/mac80211.
-- Static verification: `make` + `make hosttest` (8/8 PASS) +
-  `scripts/docs-check.sh` PASS + checkpatch clean + `scripts/sign.sh`
-  (Broadcom Driver MOK, sha256). KUnit NOT EXECUTED (no runner).
-- NOT run on hardware. Last hardware-proven milestone remains **M3.4D2A**.
+- **Negative boundary (NOT proven):** `d11ac1bsinitvals42`, band initialization,
+  AC PHY initialization, radio, calibration, channel selection, RX frame
+  reception, TX. Do not broaden this milestone.
 
 ## Last hardware-proven milestone
-**M3.4D2A — D11 rev42 ucode upload + PSM start only.**
+**M3.4D2B — isolated rev42 common-initvals test (see "Current milestone").**
+Prior: **M3.4D2A — D11 rev42 ucode upload + PSM start only.**
 Status: **`HARDWARE PROVEN` — HARDWARE RUNTIME PROVEN on BCM4352** (tested
 candidate `7265f9d`, implementation `47e0883`, base `854e398`), now merged to
 `main` (`85d3013`). This proves the ucode upload + PSM start **only**;
@@ -121,9 +136,10 @@ Runtime evidence (BCM4352, chip rev 3, D11 rev 42):
 no DMA/IRQ/PHY/radio/channel init.
 
 ## Last completed hardware test
-M3.4D2A isolated `ucode_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
-(tested candidate `7265f9d`; see "Current milestone"). Prior: M3.4D1 isolated
-`fw_validate_only=1` runtime PASS.
+M3.4D2B isolated `initvals_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
+(tested candidate `f27286f`, module SHA256 `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`;
+see "Current milestone"). Prior: M3.4D2A isolated `ucode_test_only=1` HARDWARE
+RUNTIME PROVEN (candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
 
 ## Last failure / reset event
 A test that used `fw_dryrun=1` believing it isolated hardware caused a long
@@ -139,44 +155,48 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D2B implementation is **IMPLEMENTED / STATIC TESTED / SIGNED** on
-`m34d2b-initvals-test` (Draft PR, not merged) and is **NOT HARDWARE PROVEN**.
-Next task: review/merge the Draft PR, then — **only under explicit human
-approval in a dedicated task** — run the isolated test
-(`insmod openbrcm.ko initvals_test_only=1`). Until then: no `insmod`, no D2A
-repeat, no initvals write, no PHY/radio/channel work. See
-`docs/m34d2b_initvals_test.md` for the exact manual procedure and the
+M3.4D2B is **HARDWARE RUNTIME PROVEN** (candidate `f27286f`; PR #6) and its
+implementation is merged. Next milestone is **ANALYSIS ONLY**, on a fresh branch
+from new `main`: the vendor boundary after common initvals — band initialization
+plus `d11ac1bsinitvals42` plus the entry into real AC PHY initialization. Until
+that analysis is reviewed, perform **no** hardware action: no `insmod`, no
+initvals/bsinitvals write, no PHY/radio/channel/DMA/IRQ/mac80211. See
+`docs/m34d2b_initvals_test.md` for the D2B runtime evidence and the
 failure/residual-state matrix.
 
-## M3.4D2B implementation boundary (as implemented)
-The mode executes exactly this sequence, then STOP:
-proven D2A preparation -> exact ucode upload -> proven PSM start /
-`MI_MACSSPNDD` -> apply exactly the **610** `d11ac1initvals42` records ->
-read deterministic postconditions -> STOP.
+## M3.4D2B boundary and evidence (PROVEN)
+Executed sequence (candidate `f27286f`, module SHA256
+`1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`):
+proven D2A preparation -> exact ucode upload (`10850` writes) -> PSM start /
+`MI_MACSSPNDD` (`iterations=11`, `MACINTSTATUS=0x00000001`) -> apply exactly the
+**610** `d11ac1initvals42` records (`total=610`, `w16=113`, `w32=497`) -> read
+the deterministic postconditions -> STOP.
 
-Postconditions preserved (provenance-backed only; no other equality check):
+Postconditions observed exact (provenance-backed only; no other check):
 - `M_FIFOSIZE0 = 0x01c4`, `M_FIFOSIZE1 = 0x0000`, `M_FIFOSIZE2 = 0x0000`,
   `M_FIFOSIZE3 = 0x079e`;
 - `MACINTMASK = 0`;
 - `MACCONTROL = 0x04020402`;
 - SHM `0x0014 = 0x000000b4`.
 
-STOPs before: `sub_6656c`, bsinitvals, `wlc_phy_init`, PHY register programming,
-radio programming, calibration, channel selection, RX DMA, TX DMA,
-`request_irq`, host IRQ routing, mac80211 registration. Full design:
-`docs/m34d2b_common_initvals.md` §F13; implementation:
+STOPPED before: `sub_6656c`, bsinitvals, `wlc_phy_init`, PHY register
+programming, radio programming, calibration, channel selection, RX DMA, TX DMA,
+`request_irq`, host IRQ routing, mac80211 registration. Design:
+`docs/m34d2b_common_initvals.md` §F13; implementation + evidence:
 `docs/m34d2b_initvals_test.md`.
 
 ## Post-test hardware state (risk)
-After the successful D2A run the chip is intentionally left partial: `PSM_RUN=1`,
-D11 core enabled, `EN_MAC=0`. No cleanup/recovery register writes are performed
-(none is provenance-backed); a later load re-issues `OBJADDR` and rewrites the
-image. Do **not** repeat the test automatically and do not invent cleanup writes.
+After the successful D2B run the chip is intentionally left partial: `PSM_RUN=1`,
+D11 core enabled, `EN_MAC=0`, and the 610 common-initvals records applied. No
+cleanup/recovery register writes are performed (none is provenance-backed); a
+later load re-issues `OBJADDR` and rewrites the image. The D2B test is **ONE
+SHOT**: do **not** repeat it and do not invent cleanup writes; after a
+FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Implementation task: STOP after committing/pushing the D2B implementation and
-tests and opening a Draft PR, keeping it Draft. No `insmod`, no D2A repeat, no
-initvals write to hardware.
+Documentation task for the runtime result: STOP after committing the
+evidence-only update, marking PR #6 Ready and merging via a normal merge commit.
+No `insmod`, no D2A/D2B repeat, no initvals write to hardware.
 
 Runtime STOP (both D2A/D2B): the code returns after the shared D2A core (D2A
 also reads the SHM diagnostic; D2B applies the 610 records and reads the

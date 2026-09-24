@@ -60,16 +60,18 @@ after the common-initvals applier, which D2A does not run); final
 no DMA/IRQ/PHY/radio/channel init. Post-test state is intentionally partial
 (`PSM_RUN=1`, D11 enabled, `EN_MAC=0`) with no cleanup writes.
 
-## M3.4D2B — rev42 common initvals sequencing (`IMPLEMENTED`/`STATIC TESTED`/`SIGNED`; NOT hardware proven)
+## M3.4D2B — rev42 common initvals sequencing (`HARDWARE RUNTIME PROVEN` on BCM4352)
 
 Canonical status (exact):
 - M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
 - M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
-- M3.4D2B hardware status = NOT HARDWARE PROVEN
 
 The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` cleared the design;
-the code exists but has **not** run on hardware and is **not** a hardware proof.
+the implementation then passed on real BCM4352 hardware (evidence below). This
+milestone proves **only** the isolated common-initvals sequence; it does **not**
+prove bsinitvals, band init, AC PHY, radio, calibration, channel, RX or TX.
 
 Full analysis: `docs/m34d2b_common_initvals.md`; machine-generated 610/73-record
 classification in `docs/m34d2b/initvals_classification.{md,json}`
@@ -121,11 +123,31 @@ See `docs/m34d2b_common_initvals.md` (§F1–F14).
   *designing*/*implementing* an isolated test only; it is **not** permission to
   run hardware and **not** a hardware proof. Test design in §F13.
 
-### M3.4D2B implementation — isolated common-initvals test
+### M3.4D2B implementation + runtime evidence — isolated common-initvals test
 
-`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN** (branch
-`m34d2b-initvals-test`, Draft PR; not merged). Full detail:
-`docs/m34d2b_initvals_test.md`.
+`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **HARDWARE RUNTIME PROVEN** on
+BCM4352. Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; signed
+module SHA256 `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`;
+base `main` @ `65d61ce`; PR #6. Full detail: `docs/m34d2b_initvals_test.md`.
+
+Runtime evidence (BCM4352, chip rev 3, D11 rev 42):
+- `insmod rc=0`; ucode `brcm/bcm43xx-ucode.fw` `size=43400`, `words=10850`,
+  upload `writes=10850`.
+- D11 prep: `host_is_pcie2=1`, `clkctlst=070b0042`, `HAVEHT=1`, `core_enabled=1`;
+  pre-upload `MACCONTROL 00000000 -> 04000404`; PSM start `04020402`.
+- PSM poll: `delay=10us`, `max_iter=100000`, `max_total_us=1000000`, PASS
+  `iterations=11`, `MACINTSTATUS=0x00000001`.
+- Common initvals: `records=610`, `total=610`, `w16=113`, `w32=497`.
+- Postconditions: `M_FIFOSIZE0..3=01c4/0000/0000/079e`, `MACINTMASK=00000000`,
+  `MACCONTROL=04020402`, `SHM[0014]=000000b4`.
+- Final `PASS - stopped before bsinitvals/PHY/radio/channel/DMA`; no
+  timeout/BUG/Oops/lockup/reset, no RX/TX DMA, no IRQ bring-up, no PHY/radio/
+  channel initialization.
+- **Negative boundary (NOT proven):** `d11ac1bsinitvals42`, band
+  initialization, AC PHY initialization, radio initialization, calibration,
+  channel selection, RX frame reception, TX. Do not broaden this milestone.
+
+Implementation notes (unchanged):
 - New mode `initvals_test_only=1`; at most one isolated mode allowed
   (`fw_validate_only`/`ucode_test_only`/`initvals_test_only`); any combination
   returns `-EINVAL` before hardware access.
@@ -142,8 +164,8 @@ See `docs/m34d2b_common_initvals.md` (§F1–F14).
 - Verified statically: `make` + `make hosttest` (8/8 PASS) +
   `scripts/docs-check.sh` PASS + checkpatch clean + signed as Broadcom Driver
   MOK (sha256). KUnit **NOT EXECUTED** (no runner).
-- **NOT HARDWARE PROVEN**: never run on hardware; requires explicit human
-  approval in a dedicated task (manual procedure in the impl doc).
+- **HARDWARE RUNTIME PROVEN** on BCM4352 (see the runtime evidence above); the
+  isolated test is **ONE SHOT** and must not be repeated.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

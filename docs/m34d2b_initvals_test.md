@@ -1,18 +1,42 @@
 # M3.4D2B — isolated rev42 common-initvals test (implementation)
 
-**Status: `IMPLEMENTED` — `STATIC TESTED` — `SIGNED` — `NOT HARDWARE PROVEN`.**
+**Status: `IMPLEMENTED` — `STATIC TESTED` — `SIGNED` — `HARDWARE RUNTIME PROVEN`
+on BCM4352 (candidate `f27286f`).**
 
 This is the implementation of the D2B test designed and cleared in
-`docs/m34d2b_common_initvals.md` (§F13). It has **not** been executed on
-hardware. The last hardware-proven milestone remains **M3.4D2A**. Nothing in
-this document implies a hardware result.
+`docs/m34d2b_common_initvals.md` (§F13). It passed on real BCM4352 hardware; the
+evidence is in §0 below. This proves the **common-initvals sequence only** —
+bsinitvals, band init, AC PHY, radio, calibration, channel, RX and TX remain
+**unproven**.
 
 - Mode: module param `initvals_test_only=1` (default 0).
 - Reuses the hardware-proven D2A core byte-for-byte.
 - Applies exactly the 610 `d11ac1initvals42` common-initvals records, in strict
   order, excluding the terminator.
 - Reads only the provenance-backed postconditions, then STOPS.
-- No `insmod`, no hardware write occurred while building or documenting this.
+- The test is **ONE SHOT**: do not repeat; recover logs and analyze on failure.
+
+## 0. Runtime evidence (BCM4352, chip rev 3, D11 rev 42)
+
+- Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; signed module
+  SHA256 `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`;
+  base `main` @ `65d61ce`; PR #6.
+- `insmod rc=0`; `initvals-test: BEGIN`; ucode `brcm/bcm43xx-ucode.fw`
+  `size=43400`, `words=10850`, upload `writes=10850`.
+- D11 prep `host_is_pcie2=1`, `clkctlst=070b0042`, `HAVEHT=1`, `core_enabled=1`;
+  `MACCONTROL 00000000 -> 04000404`; PSM start `04020402`.
+- PSM poll `delay=10us max_iter=100000 max_total_us=1000000` PASS
+  `iterations=11` `MACINTSTATUS=0x00000001`.
+- Common initvals `records=610`, `total=610`, `w16=113`, `w32=497`.
+- Postconditions `M_FIFOSIZE0=01c4`, `M_FIFOSIZE1=0000`, `M_FIFOSIZE2=0000`,
+  `M_FIFOSIZE3=079e`, `MACINTMASK=00000000`, `MACCONTROL=04020402`,
+  `SHM[0014]=000000b4`.
+- Final `PASS - stopped before bsinitvals/PHY/radio/channel/DMA`. No
+  timeout/BUG/Oops/lockup/reset; no RX/TX DMA; no IRQ bring-up; no PHY/radio/
+  channel initialization.
+- **Negative boundary (NOT proven):** `d11ac1bsinitvals42`, band
+  initialization, AC PHY initialization, radio initialization, calibration,
+  channel selection, RX frame reception, TX.
 
 ## 1. Call graph (initvals_test_only)
 
@@ -179,9 +203,12 @@ parm: ucode_test_only:D11 rev42 ucode upload + PSM start only; stops before init
 parm: initvals_test_only:D11 rev42 common initvals + PSM only; stops before bsinitvals/PHY/DMA (default: 0) (bool)
 ```
 
-## 11. Manual hardware procedure (FOR LATER APPROVAL — DO NOT RUN)
+## 11. Manual hardware procedure (EXECUTED ONCE — PASS; DO NOT REPEAT)
 
-Requires explicit human approval in a dedicated task. Not executed here.
+This exact procedure was executed once under explicit human approval on the
+frozen candidate and produced the §0 evidence. It is **ONE SHOT**: do not repeat
+without a reboot/reset to a known state (see §8), and do not combine
+`initvals_test_only` with any other isolated mode.
 
 ```
 # preconditions: openbrcm.ko signed (Broadcom Driver MOK) and installed

@@ -17,8 +17,10 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > D2A proves ucode upload + PSM start **only** — initvals, PHY, radio, channel,
 > RX and TX remain unproven. M3.4D2B analysis merged (PR #5, `main` @
 > `65d61ce`). The isolated `initvals_test_only` test is `IMPLEMENTED` /
-> `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN** on
-> `m34d2b-initvals-test` (Draft PR); it has never run on hardware.
+> `STATIC TESTED` / `SIGNED` and **HARDWARE RUNTIME PROVEN on BCM4352**
+> (candidate `f27286f`; PR #6) — it proves the common-initvals sequence
+> **only**: bsinitvals, band init, AC PHY, radio, calibration, channel, RX and
+> TX remain unproven.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in
