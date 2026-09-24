@@ -74,9 +74,11 @@ Ucode upload: written to D11 IHR/object memory (`wlc_bmac_write_ihr` during
 - Those files **do not cover D11 rev42 / acphy**. BCM4352 D11 softmac ucode +
   initvals are not in mainline linux-firmware (it ships *fullmac* PCIe firmware
   for 4352, a different datapath).
-- `bcm4352-d11ac1initvals42.bin` is an **initvals** image (PHY/radio tables),
-  not D11 ucode. The exact rev42 ucode image and its source are **UNKNOWN** and
-  must be recovered from the vendor package / blob.
+- `bcm4352-d11ac1initvals42.bin` is an **initvals** image, not D11 ucode.
+- **CORRECTION (M3.4C.1):** this is *not* a hard blocker. Upstream b43 has an
+  explicit D11 rev42 + AC-PHY path (`ucode42`, `ac1initvals42`,
+  `ac1bsinitvals42`), and our vendor blob contains those exact images for the
+  rev42 path we are reverse-engineering. See `firmware_reconciliation.md`.
 
 ## 5. initvals role (partial)
 
@@ -136,11 +138,11 @@ Dependency-ordered classification:
 - H. RX DMA — DONE.
 
 **First missing prerequisite to implement next: A (D11 rev42 microcode), then B
-(initvals), then F (MAC enable), then C/D/E (PHY/radio/channel).** The very next
-actionable step is to **recover/obtain the BCM4352 D11 rev42 ucode + initvals
-images and the exact upload/start sequence**, since nothing downstream (MAC
-enable, PHY, radio, channel) can run without them. If those images are
-unavailable, that is a hard blocker and must be resolved before further RX
-bring-up.
+(initvals), then F (MAC enable), then C/D/E (PHY/radio/channel).** The rev42
+ucode + both initvals are now **sourced** (M3.4C.1, `firmware_reconciliation.md`):
+we have the vendor-blob images (`d11ucode42`, `d11ac1initvals42`,
+`d11ac1bsinitvals42`) and the proven vendor consumers. The next actionable step
+is to define M3.4D (D11 firmware loader) and implement it only after approval.
+This is **no longer a hard blocker** (corrected from the initial M3.4C draft).
 
 **End of M3.4C. No bring-up stage implemented; RX DMA untouched.**
