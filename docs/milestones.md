@@ -311,8 +311,17 @@ rev42 vendor sequence after the common initvals and before real PHY init.
   `macintmask` stays 0; first PHY op `wlc_phy_anacore` (`0xbac84`).
 - D3A1 boundary: `sub_67efd` (`0x68bab`) … `wlc_bmac_switch_macfreq`
   (`0x695cb`), STOP before `sub_6656c` (`0x695d8`).
-- `D3A1 IMPLEMENTATION GO: NO` (unresolved `0x78c/0x78e/0x790` semantics and
-  NVRAM BTC value sources). NOT IMPLEMENTED / NOT HARDWARE PROVEN.
+- **Blocker closure (§15):** the `0x78c/0x78e/0x790` six bytes are
+  `wlc_pub+8` = `cur_etheraddr` (device MAC); `r13 = wlc_info`,
+  `r13+0x20 = wlc_info->hw`; the SCR `0x24` write is a read-modify-write of
+  SCR `0x24`, **skipped on the first init** (`wlc_info+0x718 == 1` set by
+  `wlc_info_init`); `getvar` scans a `name=value` per-hw buffer then the global
+  `nvram_get` list (`srom_var_init` + `nvram_init`/`nvram.txt`);
+  `btc_params`/`btc_flags` absent on ASUS PCE-AC56 ⇒ **skip** (no zero-fill);
+  `M_MAX_ANTCNT = 0x0a` = upstream vanilla `ANTCNT`.
+- `D3A1 IMPLEMENTATION GO: YES` (analysis decision only). NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN. Only the symbolic name of the `0x78c/0x78e/0x790` SHM
+  slots remains UNKNOWN (value/source proven; microcode-only consumer).
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at

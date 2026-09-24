@@ -6,6 +6,12 @@ upstream `brcmsmac`. **No hardware, no MMIO, no `insmod`, no implementation.**
 Canonical status is unchanged: `M3.4D3A0 = HARDWARE RUNTIME PROVEN`,
 `M3.4D3A1 = ANALYSIS ONLY`.
 
+Blocker-closure follow-up: §15 resolves all remaining value-source /
+struct-field blockers (`wlc_info`/`wlc_pub` model, the MAC six bytes, the SCR
+`0x24` read-modify-write + first-init gate, `getvar`/NVRAM origin,
+`btc_params`/`btc_flags` absent behavior, `M_MAX_ANTCNT`). §16 now returns
+`D3A1 IMPLEMENTATION GO: YES` (still NOT implemented / NOT hardware proven).
+
 Primary provenance: `wlc_hybrid.o_shipped`, sha256
 `352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743`.
 Upstream C3 (`/usr/src/linux-7.2.2-build/.../brcmsmac/`) is secondary
@@ -221,29 +227,30 @@ Groups omitted from D3A0's prefix, in vendor order. Cross-checked against C3
 | 3 | `M_MACHW_VER` | `0x16` | `phyrev` | runtime | no | yes | no | ucode MAC version |
 | 4 | `M_MACHW_CAP_L/_H` | `0xc0/0xc2` | `machwcap` lo/hi | runtime | no | yes | no | ucode MAC caps |
 | 5 | SCR SRL/LRL | objmem `0x18/0x1c` | `dev+0x104/0x106` | runtime/config | yes (derived) | yes | no | retry limits |
-| 6 | SCR 4-byte | objmem `0x24` | `[r13+0x20]` | runtime | maybe | yes | no | rate/tpc |
+| 6 | SCR 4-byte | objmem `0x24` | read-modify-write of SCR `0x24`; **skipped on first init** | runtime | no | yes | no | rate/tpc |
 | 7 | `M_SFRMTXCNTFBRTHSD` | `0x44` | `dev+0x108` | config | yes | yes | no | rate fallback |
 | 8 | `M_LFRMTXCNTFBRTHSD` | `0x46` | `dev+0x10a` | config | yes | yes | no | rate fallback |
 | 9 | BTC params | `btc_base+2i` | NVRAM `btc_params%d` (119) | NVRAM/board | **yes** | yes | no | coexistence |
 | 10 | BTC extras | `btc_base+2/0x10/0x12/0x2c` | const `0x7530/0x4e20/0x7530/0x753` | const (4352) | no | yes | no | coexistence |
 | 11 | BTC flags | MHF (SHM) | NVRAM `btc_flags` → `sub_62b79` (`wlc_bmac_mhf` ×5) | NVRAM/board | **yes** | yes | no | coexistence/MHF |
-| 12 | unk. 6 bytes | `0x78c/0x78e/0x790` | `wlc+8..wlc+0xd` | runtime | UNKNOWN | yes | no | UNKNOWN name |
+| 12 | MAC 6 bytes | `0x78c/0x78e/0x790` | `wlc_pub+8..+0xd` = `cur_etheraddr` (SPROM/NVRAM `macaddr`) | runtime | yes | yes | no | device MAC (name of SHM slot UNKNOWN) |
 
 Notes:
 
-- `btc_base = read_shm(0x92) * 2` (`0x6930e`); if zero the 119-write loop is
-  skipped. The 4 extra writes (row 10) are unconditional for chip `0x4352`.
+- `btc_base = read_shm(0x92) * 2` (`0x6930e`); if zero the 119-write loop **and**
+  the `btc_flags` block are skipped. The 4 extra writes (row 10) are
+  unconditional for chip `0x4352` once `btc_base != 0`. A `btc_params` key that
+  is absent is **skipped, not zero-filled** (`getvar == NULL`).
 - Row 5/7/8 (`SRL/LRL`, `SFBL/LFBL`) are the NVRAM-derived retry limits; C3
   names them and writes them from `wlc_hw->SRL/LRL/SFBL/LFBL`.
-- Row 12 source is six bytes at `wlc+8..+0xd`; no C3 `d11.h` SHM macro at
-  `0x3c6/0x3c7/0x3c8` exists, so the semantic name is **UNKNOWN**. The value is
-  runtime `wlc` state, not a direct NVRAM read. This is the only group whose
-  meaning is not pinned.
+- Row 12 source is **`*wlc_info + 8`**, the 6-byte `cur_etheraddr` MAC; see §15.2
+  for the full `wlc_bmac_attach`(macaddr) → `wlc_attach`(memcpy) writer chain.
+  The SHM target slot name is **UNKNOWN** (microcode-only consumer), but the
+  value/source is proven and this is non-blocking.
 - **Values OpenBRCM can already obtain:** `phyrev`, `machwcap`, SRL/LRL/SFBL/
-  LFBL analogues, and (via bcma/SPROM) the NVRAM `btc_params`/`btc_flags` —
-  **provided the NVRAM parsers exist**. **No source yet in OpenBRCM:**
-  `btc_params%d` (119 keys) and `btc_flags` NVRAM parsing, and the `wlc+8..+0xd`
-  six bytes.
+  LFBL analogues, the validated SPROM MAC (`ob_si_read_mac`, rev11 IL0MAC
+  `+0x90`). **Not available (and not required):** NVRAM-text `btc_params%d` /
+  `btc_flags`; on the ASUS PCE-AC56 they are absent and the vendor skips them.
 - None of these writes touch the DMA register block, PHY, or radio.
 
 ---
@@ -482,22 +489,270 @@ New (decomposition suggestion, names non-binding):
 New prerequisites: NVRAM `btc_params%d` / `btc_flags` parsing; a source for the
 `wlc+8..+0xd` six bytes or an explicit `UNKNOWN` skip with documented reasoning.
 
-## 15. Unresolved unknowns
+## 15. Blocker closure — value-source / struct-field analysis
 
-1. Semantic name/source of the `0x78c/0x78e/0x790` six-byte group.
-2. Exact `wlc+8..+0xd` field identity.
-3. The `[r13+0x20]` 4-byte SCR write (`0x24`) source and its `[r13+0x718]` gate.
-4. Whether OpenBRCM will implement `btc_params` NVRAM parsing or defer with a
-   documented constant.
-5. `M_MAX_ANTCNT` value `0x0a` is constant here but is a driver policy constant
-   (C3 `ANTCNT`); confirm desired policy value.
+This section closes the value-source / struct-field blockers formerly listed in
+§15 of the first revision. All findings are read-only RE of the blob
+(`re`/`objdump`, `.rela.text`); upstream is corroboration only. The prior
+`sub_67efd`, ordering and STOP analysis is unchanged and not re-derived here.
+
+### 15.1 `wlc` object model (`wlc_info` vs `wlc_pub`)
+
+The address the earlier draft called `wlc` is **two dereferences below the
+`wlc_bmac_init` argument**; the naming was imprecise. Correct object graph
+(proven from `wlc_attach_malloc 0x4ebbb`, `wlc_info_init 0x24d9b`,
+`wlc_attach 0x37d10`, `wlc_bmac_init 0x6828a`):
+
+| name | how reached | size | constructor | notes |
+| :--- | :--- | :--- | :--- | :--- |
+| `wlc_hw` (`dev`) | `rdi` of `wlc_bmac_init`; `rbx` | — | `wlc_hw_attach 0x798ff` | D11 hardware object |
+| `wlc_info` (outer) | `r13 = *dev = dev->wlc` | `0x838` | `wlc_info_init 0x24d9b` | `wlc_attach` returns this |
+| `wlc_pub` (`P`) | `P = *wlc_info` (field `+0x00`) | `0x348` | fields seeded by `wlc_info_init` | `*(*dev)` |
+
+`wlc_info` (r13) field map (`0x00..0x40`, verified writers/readers):
+
+| off | width | field | evidence |
+| :--- | :--- | :--- | :--- |
+| `+0x00` | ptr | `pub` (`P`) | `wlc_attach_malloc 0x4eddd` `*(r14)=r15`; `wlc_attach 0x37dda` `r12=*(rbx)` |
+| `+0x08` | ptr | `osh`/handle | `wlc_attach 0x37ddd` `*(r14+8)=r14` (2nd attach arg) |
+| `+0x20` | ptr | `hw` (== `dev`) | `wlc_attach 0x380fb`/`0x38625` pass `*(wlc+0x20)` as `wlc_hw` to `wlc_bmac_retrylimit_upd`/`wlc_bmac_hw_etheraddr` |
+| `+0x68` | u32 | scratch | `wlc_bmac_init 0x69211` `*(r13+0x68)=0` |
+| `+0x718` | u8 | first-init gate | `wlc_info_init 0x24f5f` `=1`; read/cleared in `wlc_bmac_init` |
+
+`wlc_pub` (`P`) field map (nearby, verified):
+
+| off | width | field | evidence |
+| :--- | :--- | :--- | :--- |
+| `+0x07` | u8 | `=3` | `wlc_info_init 0x24dd6` |
+| `+0x08` | 6×u8 | `cur_etheraddr` (MAC) | `wlc_ampdu_macaddr_upd 0x4f511`; `wlc_attach 0x38641` |
+| `+0x14` | u32 | arch/rev cached | `wlc_set_mac 0x3a120` compares to `0x27` |
+| `+0x54` | u32 | `=-1` | `wlc_info_init 0x24e99` |
+| `+0x80` | u32 | `=0` | `wlc_info_init 0x24f04` |
+| `+0x100` | ptr | `si`/bus | `wlc_attach 0x37de7`; read `wlc_bmac_attach 0x69908` |
+| `+0x108` | ptr | per-hw NVRAM vars buffer | `wlc_attach 0x37df3`; `wlc_bmac_attach 0x6991a` |
+| `+0x110` | u32 | vars length | `wlc_attach 0x37e06`; `wlc_bmac_attach 0x69932` |
+| `+0x2F8` | ptr | primary owner back-pointer | `wlc_set_mac 0x3a109` |
+
+So the six bytes are at **`wlc_pub+0x08` = `cur_etheraddr`**, i.e. in the object
+`*(wlc_info)`, not in `wlc_info` itself.
+
+### 15.2 The six bytes at `wlc_pub+8..+0xd` — complete writer chain
+
+Class: **a 6-byte IEEE MAC address** (six u8; also consumed as three big-endian
+u16 pairs). Not rate/power/antenna/timing/coexistence.
+
+Backward dataflow (attach path):
+
+1. `wlc_bmac_attach 0x6a94a`: `getvar(*(dev+0xC0), "macaddr")`; if `NULL` →
+   attach error `0x15`. Else `bcm_ether_atoe(value, dev+0x178)` parses the text
+   MAC into `wlc_hw->hw_etheraddr` (`0x6a96e..0x6a978`), with a zero/`0xff`
+   sanity check.
+2. `wlc_attach 0x3861e..0x38641`: `wlc_bmac_hw_etheraddr(dev, buf)` reads
+   `dev+0x178` (6 bytes); then `osl_memcpy(wlc_pub+8, buf, 6)` — **the writer**.
+3. Later interface/`cur_etheraddr` iovars rewrite `dev+0x178`
+   (`wlc_bmac_set_hw_etheraddr 0x611f2`, called from `wlc_doiovar 0x4823a` et
+   al.); those are runtime BSS changes, not the initial bring-up value.
+
+`wlc_ampdu_macaddr_upd` independently proves the field is the MAC: it does
+`osl_memcpy(tmp, wlc_pub+8, 6)` then programs the 8-byte A-MPDU MAC template.
+
+Dependency summary: **board/SPROM/NVRAM dependent, not band/channel/PHY
+dependent**; constant during D3A1 (mac80211 is not up yet). Initialization site =
+`wlc_attach`; constructor path = `wlc_bmac_attach` (`macaddr` parse); later
+updates = `cur_etheraddr` iovars. No other writer exists on the D3A1 path.
+
+### 15.3 `r13` identity and `r13+0x20` (SCR `0x24` source)
+
+- `r13 = *dev = dev->wlc = wlc_info` (`wlc_bmac_init 0x6835b` `mov (%rbx),%r13`).
+- `r13+0x20 = wlc_info->hw = wlc_hw` (see 15.1). **It is a pointer to `dev`; it
+  is the first argument to `wlc_bmac_copyto_objmem`, not the data source.** The
+  earlier draft's `copyto_objmem(0x24, [r13+0x20], 4)` mis-read the ABI.
+- Real ABI: `wlc_bmac_copyto_objmem(wlc_hw=r12, off=esi, src=rdx, len=ecx,
+  flags=r8d)` (proven from the callee `0x62d48`).
+- Real `0x24` source is the **4-byte stack local `-0x34(%rbp)`**, which is:
+  - zero-initialized at `0x6835e` `movl $0,-0x34(%rbp)`; and
+  - loaded by `wlc_bmac_copyfrom_objmem(dev, 0x24, &local, 4, 0x20000)` at
+    `0x68773` early in the same function.
+
+  So the SCR `0x24` operation is a **read-modify-write / restore** of the
+  current SCR `0x24` content (read at `0x68773`, conditionally written back at
+  `0x69191`), not a fresh derived value. `wlc_hw` has no `SRL`-style source
+  needed for it.
+
+### 15.4 The `r13+0x718` gate — exact meaning and initial value
+
+`wlc_info+0x718` is a **u8 "first-init" flag**:
+
+- only writer of the value `1`: `wlc_info_init 0x24f5f` (`movb $1,0x718(%rdi)`),
+  called once from `wlc_attach 0x37e74`;
+- `wlc_bmac_init 0x6917d` reads it: `if (flag != 0) { flag = 0; skip the SCR
+  0x24 write; } else { copyto_objmem(0x24, local, 4); }`.
+
+Therefore on the **initial BCM4352 bring-up path** (attach → `wlc_info_init` →
+`wlc_init` → `wlc_bmac_init`, flag == 1) the SCR `0x24` write is
+**ALWAYS SKIPPED** on the first `wlc_bmac_init`, then executed on any later
+re-init. It is not configuration-dependent within D3A1.
+
+### 15.5 `getvar` implementation and the variable-table source
+
+`getvar(vars, name)` (`0xb807`) — first argument is the **variable table
+pointer**, second the key:
+
+1. `if (name == NULL || strlen(name) == 0) return NULL`.
+2. Walk the `vars` buffer as **NUL-separated `name=value` strings**: return
+   `value` on `strncmp(key)==0 && key[len]=='='`.
+3. If not found → return `nvram_get(name)` (global list fallback).
+
+`getintvar(vars, name)` (`0xba1a`) = `getvar()` then `bcm_strtoul(value, NULL,
+0)` (auto base); returns **0** when `getvar` returns `NULL`.
+
+`nvram_get` (`0x19916`) walks a global singly-linked list of blocks
+(`{next@0x00, len@0x0C, data@0x10}`; data = NUL-separated `name=value`). The
+list is built by:
+
+- `nvram_init 0x19a5f` — allocates 4 KiB, `osl_os_open_image("nvram.txt")`
+  (`.rodata.str1.1+0x17e4`), reads blocks, normalizes `\t \r \n NUL` to string
+  terminators, `nvram_append`;
+- `srom_var_init 0x9704` — parses the **SPROM** (`srom_read`/`srom_parsecis`)
+  and appends vars (`sromrev`, `ccode`, `leddc`, `pa%d`, `pd%d`, `pdh%d`,
+  `pdl%d`, `gcr%d`, MAC, …).
+
+Both are called from the SI attach path `sub_22b10` (`0x230b6`, `0x230d1`).
+Representation = text `name=value` table; lifetime = driver attach→detach;
+lookup = linear scan; conversion = `bcm_strtoul(..., 0)`; missing = `NULL`
+(→ `getintvar` = 0); default = none. Origin is **SROM-derived vars + a
+platform NVRAM text image**, not PCI config/OTP/driver module params.
+
+### 15.6 `btc_params` / `btc_flags` availability and absent behavior
+
+At `wlc_bmac_init 0x6930e`:
+
+- `btc = *(dev+0xB0)` (0x20-byte alloc in `wlc_hw_attach 0x79956`);
+  `btc+0x1A (u16) = btc_base_words = read_shm(0x92) * 2`.
+- `if (btc_base == 0) goto 0x694d8` — **the whole T2 BTC block (119 params + 4
+  extras + `btc_flags`) is skipped**.
+- else for `i = 0..0x76`: `snprintf(buf,"btc_params%d",i)`;
+  `if (getvar(vars,buf) == NULL) continue;` — **absent ⇒ the write is skipped
+  entirely** (it does *not* write zero); present ⇒
+  `write_shm(btc_base+2*i, getintvar(vars,buf))`.
+- `0x4352` (and `0xa8dc`): 4 unconditional constant writes (same gate):
+  `btc_base+0x2=0x7530`, `+0x10=0x4e20`, `+0x12=0x7530`, `+0x2c=0x753`.
+- `btc_flags`: `if (getvar(vars,"btc_flags") == NULL) skip;` else
+  `btc->flags (btc+8) = getintvar(...)` and call `0x62b79` (BTC MHF applier,
+  `wlc_bmac_mhf` ×N). **Absent ⇒ no `btc->flags`, no MHF writes.**
+
+`srom_var_init` generates **no** `btc_params`/`btc_flags` keys (its format
+strings are `pa%d`/`pd%d`/`pdh%d`/`pdl%d`/`gcr%d`/`ccode`/`leddc`/`sromrev`/MAC
+only). Those keys can therefore only come from the platform `nvram.txt`.
+
+### 15.7 Relationship to the rev11 external SPROM
+
+- The **MAC** is available from the SPROM: OpenBRCM `ob_si_read_mac()`
+  (`src/ob_si.c`) validates the CRC/revision and reads rev11 IL0MAC at
+  `+0x90` into `hw->mac[6]` (`mac_valid`). That is the same datum the vendor
+  parses from `macaddr`.
+- `btc_params`/`btc_flags` are **NVRAM text variables, not raw SPROM fields**;
+  `srom_var_init` never emits them. **External SPROM alone is insufficient** to
+  derive them.
+
+### 15.8 BTC functional requirement for the ASUS PCE-AC56 (BCM4352, no BT)
+
+BTC is **not required** on our board and is **not a value blocker**:
+
+- the whole T2 BTC block is gated by `btc_base = read_shm(0x92)*2` (ucode/PSM
+  state produced by the same D2A/D2B prefix); if 0 it is skipped;
+- even when non-zero, `btc_params`/`btc_flags` writes happen only if the keys
+  exist — with no `nvram.txt` provider and no SPROM keys they are absent, so the
+  vendor behavior is skip (15.6);
+- the 4 fixed `0x4352` extras are constants and are reproduced verbatim when
+  `btc_base != 0`.
+
+Classification: **REQUIRED ONLY IF `btc_base != 0` AND the key is present;
+otherwise OPTIONAL/NO-OP**. For a BT-less board it is functionally a no-op, but
+the branch/value reproduction is exact and cheap.
+
+### 15.9 `M_MAX_ANTCNT = 0x0a`
+
+SHM `0x5c` = `(0x02e * 2)`, upstream `d11.h` `M_MAX_ANTCNT` = **"antenna swap
+threshold"**, and upstream `main.c:131` defines `ANTCNT 10 /* vanilla
+M_MAX_ANTCNT val */`, written at `brcms_b_coreinit` (`main.c:3233`). It is a
+raw threshold count, not a bitfield/policy, and does **not** vary with chain
+count. **OpenBRCM may use exactly `0x000a`.** (Vendor constant == upstream.)
+
+### 15.10 Consumers of SHM `0x78c/0x78e/0x790`
+
+Whole-image scan of the immediates: the **only** references are the three
+`wlc_bmac_init` writes (`0x69472/0x694a2/0x694c3`). There is **no host-side
+reader/writer**; consumption is microcode-internal. Semantic name of the target
+SHM slots is **UNKNOWN**, but the written datum is fully proven: the 6-byte
+device MAC, big-endian pairs
+(`0x78c=(mac0<<8)|mac1`, `0x78e=(mac2<<8)|mac3`, `0x790=(mac4<<8)|mac5`).
+Per the task rule, an unknown symbolic name with a proven value/source is
+sufficient for implementation. (The `0x790` hits in `*sslpnphy*` are unrelated
+PHY-table offsets.)
+
+### 15.11 Blocker classification
+
+| blocker | class | resolved? |
+| :--- | :--- | :--- |
+| MAC six bytes / SHM `0x78c/78e/790` | B (source known, name unknown) | **yes** |
+| SCR objmem `0x24` / `[r13+0x20]` | C (source known; skipped on first init) | **yes** |
+| `[r13+0x718]` gate | C | **yes** |
+| `getvar` / NVRAM table origin | C | **yes** |
+| `btc_params`/`btc_flags` presence | C (deterministic absent ⇒ skip) | **yes** |
+| rev11 SPROM for BTC keys | C (insufficient by design) | **yes** |
+| `M_MAX_ANTCNT` | C | **yes** |
+| SHM `0x78c` semantic name | A→B (name only) | **non-blocking** |
+
+No **VALUE UNKNOWN** (class A) blocker remains on the BCM4352 rev42 path.
+
+### 15.12 Concrete BCM4352 rev42 values/formulas
+
+| write | value / derivation (target path) |
+| :--- | :--- |
+| SCR objmem `0x24` | **skip** (first-init gate `wlc+0x718 == 1`); else restore the value read from SCR `0x24` |
+| SHM `0x78c` | `(hw->mac[0]<<8) | hw->mac[1]` |
+| SHM `0x78e` | `(hw->mac[2]<<8) | hw->mac[3]` |
+| SHM `0x790` | `(hw->mac[4]<<8) | hw->mac[5]` |
+| `btc_base` | `read_shm(0x92) * 2`; if `0` skip all BTC writes |
+| `btc_params%d` (i=0..118) | present ⇒ `write_shm(btc_base+2i, value)`; absent ⇒ skip |
+| BTC `0x4352` extras | `0x7530/0x4e20/0x7530/0x753` at `btc_base+2/0x10/0x12/0x2c` |
+| `btc_flags` | present ⇒ `btc+8=value` + MHF applier; absent ⇒ skip |
+| `M_MAX_ANTCNT` | `0x000a` |
+
+`hw->mac[6]`: from the external SPROM via `ob_si_read_mac()` (`mac_valid`), or an
+equivalent validated board MAC.
 
 ## 16. GO decision
 
 ```
-D3A1 IMPLEMENTATION GO: NO (analysis only)
+D3A1 IMPLEMENTATION GO: YES
 ```
-Reason: the boundary and ordering are resolved, but the T2 NVRAM/BTC group and
-two SHM groups still lack OpenBRCM value sources / semantics. A follow-up may
-raise this to YES once those are resolved or explicitly deferred. No code was
-changed by this task.
+
+Justification against the acceptance rule:
+
+- vendor ordering and STOP boundary already proven (unchanged);
+- every D3A1 write now has an exact constant, a runtime read from a named
+  source, or a proven deterministic skip:
+  - MAC six bytes ← `hw->mac` (SPROM/NVRAM `macaddr`);
+  - SCR `0x24` ← skipped on the first init (gate `wlc_info+0x718`);
+  - `btc_base` ← `read_shm(0x92)*2` (reproduce the runtime read);
+  - `btc_params`/`btc_flags` ← absent ⇒ skip (vendor-identical);
+  - `M_MAX_ANTCNT` ← constant `0x0a`;
+  - `switch_macfreq` ← PMU-VCO-derived (`si_pmu_get_bb_vcofreq`) — unchanged
+    from the accepted D3A1 boundary;
+- all BCM4352 rev42 branches resolved; no value-unknown write remains;
+- D3A0 DMA lifecycle is reused unchanged, in its vendor position;
+- STOP stays before `sub_6656c`/bsinitvals/`wlc_phy_init`.
+
+Conditions carried into implementation (not blockers):
+
+1. Require `mac_valid`; abort (as the vendor does) if no validated MAC exists.
+2. Reproduce the `btc_base != 0` branch by reading SHM `0x92` at runtime; if the
+   project later gains a NVRAM text provider, `btc_params`/`btc_flags` become
+   readable without any further RE.
+3. The two SHM target names remain semantically UNKNOWN (value proven).
+
+Standing constraints for this task only: analysis/docs; **no implementation, no
+hardware, no `insmod`/`rmmod`/`modprobe`, no runtime source changes**, PR #9
+stays **Draft**.

@@ -39,10 +39,14 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > init/bsinitvals/PHY/radio/channel/mac80211. Evidence:
 > [`docs/m34d3a0_dma_test.md`](docs/m34d3a0_dma_test.md).
 > M3.4D3A1 (vendor post-common / pre-PHY tail) is **`ANALYSIS ONLY`** /
-> NOT IMPLEMENTED / NOT HARDWARE PROVEN; `D3A1 IMPLEMENTATION GO: NO`. It
-> re-proves `sub_67efd` for rev42, recovers the omitted SHM/NVRAM/BTC groups,
-> and establishes the vendor order **T1 → DMA → T2** (DMA is interleaved inside
-> the tail), STOP before `sub_6656c`/bsinitvals/`wlc_phy_init`. Report:
+> NOT IMPLEMENTED / NOT HARDWARE PROVEN; `D3A1 IMPLEMENTATION GO: YES` (analysis
+> decision only). It re-proves `sub_67efd` for rev42, recovers the omitted
+> SHM/NVRAM/BTC groups, establishes the vendor order **T1 → DMA → T2** (DMA is
+> interleaved inside the tail), STOP before
+> `sub_6656c`/bsinitvals/`wlc_phy_init`, and closes the value-source blockers
+> (the `0x78c/0x78e/0x790` six bytes are the `cur_etheraddr` MAC; the SCR `0x24`
+> write is skipped on the first init; `btc_params`/`btc_flags` absent ⇒ skip).
+> Report:
 > [`docs/m34d3a1_vendor_tail.md`](docs/m34d3a1_vendor_tail.md).
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
