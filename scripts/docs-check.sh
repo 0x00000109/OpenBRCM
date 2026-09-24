@@ -113,11 +113,13 @@ if [ -f docs/m34d3_bsinitvals.md ] && \
 else
 	bad "M3.4D3 analysis artifacts missing"
 fi
-if grep -rniE 'M3\.4D3.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+# The band-switch/PHY-boundary analysis M3.4D3 (not the D3A0 subset) must not be
+# claimed hardware proven. `M3.4D3A0` is intentionally excluded from this match.
+if grep -rniE 'M3\.4D3([^0-9A-Za-z]|$).*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
 		| grep -viE 'not|never|before|remain|unproven' | grep -q .; then
-	bad "a document claims M3.4D3 is hardware proven"
+	bad "a document claims M3.4D3 (band-switch/PHY boundary) is hardware proven"
 else
-	ok "M3.4D3 not claimed hardware proven"
+	ok "M3.4D3 (band-switch/PHY boundary) not claimed hardware proven"
 fi
 
 # 4c. D3A0 entry state MUST be the full D2B common-initvals exit (no D2A-only
@@ -144,11 +146,19 @@ grep -qE '^#define[[:space:]]+OB_INITVALS_W16[[:space:]]+113u' src/ob_initvals.h
 grep -qE '^#define[[:space:]]+OB_INITVALS_W32[[:space:]]+497u' src/ob_initvals.h \
 	&& ok "common initvals w32 = 497" \
 	|| bad "src/ob_initvals.h common-initvals w32 count is not 497"
-if grep -rniE 'M3\.4D3A0.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
-		| grep -viE 'not|never|before|remain|unproven' | grep -q .; then
-	bad "a document claims M3.4D3A0 is hardware proven"
+# D3A0 is HARDWARE RUNTIME PROVEN on BCM4352, but only for the isolated DMA
+# lifecycle; the analysis/PR must not overclaim the vendor tail/PHY scope.
+if [ -f docs/m34d3a0_dma_test.md ] && \
+   grep -q 'HARDWARE RUNTIME PROVEN' docs/m34d3a0_dma_test.md; then
+	ok "M3.4D3A0 hardware runtime status recorded"
 else
-	ok "M3.4D3A0 not claimed hardware proven"
+	bad "docs/m34d3a0_dma_test.md must record M3.4D3A0 hardware runtime proof"
+fi
+if grep -rniE 'M3\.4D3A0.*(vendor tail|post-common|sub_67efd|band init|bsinitvals|PHY|radio|channel|calibration).*PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven|before|skip|stops|remain|proves? .*only' | grep -q .; then
+	bad "a document overclaims M3.4D3A0 scope"
+else
+	ok "D3A0 scope limited to the isolated DMA lifecycle"
 fi
 
 # 4d. D3A0 scope classification and the conservative quiesce model.

@@ -263,17 +263,25 @@ free DMA resources.
 ## 7. Formal status
 
 - D3A0 `IMPLEMENTATION GO = YES` (analysis, `docs/m34d3_bsinitvals.md` §D.19).
-- D3A0 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`.
-- A static pre-hardware audit found that the first implementation skipped the 610
-  common initvals (D2A-only); it now runs the shared D2B applier first.
-- M3.4D3 = `ANALYSIS ONLY`; last hardware-proven = **M3.4D2B**.
+- D3A0 = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`
+  on BCM4352** (candidate `4fa1b57`, runtime `7e68fe24`, signed module SHA256
+  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`, kernel
+  `7.0.0-34-generic`): `PASS - bring-up + teardown proven`; no kernel fault.
+  Evidence: `docs/m34d3a0_dma_test.md`.
+- M3.4D3 = `ANALYSIS COMPLETE` (band-switch/PHY boundary; NOT hardware proven).
+- Scope unchanged: D3A0 proves the **isolated DMA lifecycle only** — not the
+  vendor post-common tail, `sub_67efd`, NVRAM/BTC/rate/power SHM tail, band init,
+  bsinitvals, PHY/radio/channel/calibration, RX frame or TX frame.
 
-## 8. Hardware-test candidate (FROZEN for test; NOT hardware proven)
+## 8. Hardware-test candidate (test completed — HARDWARE RUNTIME PROVEN)
 
-Frozen **only** for the approved D3A0 hardware run. It is **not** hardware
-proven and no hardware-proven tag exists. Requires explicit human approval and a
-quiet machine (no other openbrcm activity). Uses only `dma_test_only=1`; no
-`runtime-test.sh`, no combined isolated modes, no normal OpenBRCM mode.
+This candidate was executed on real BCM4352 and **PASSED** on
+`4fa1b57` (runtime `7e68fe24`, module SHA256 `0282d9b2…`), kernel
+`7.0.0-34-generic`. Full evidence: `docs/m34d3a0_dma_test.md`. The section below
+is retained as the exact one-shot procedure and PASS criteria that were used.
+No hardware-proven tag exists; the scope remains the isolated DMA lifecycle
+only. Re-runs must use only `dma_test_only=1`; no `runtime-test.sh`, no combined
+isolated modes, no normal OpenBRCM mode.
 
 Candidate identity:
 - candidate HEAD: the commit that contains this document

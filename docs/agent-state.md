@@ -15,21 +15,23 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `main` = `4146cd8` — **PR #2 merged** (`85d3013`), **PR #5 merged**
-  (`65d61ce`, normal merge commit, not squashed/rebase), and **PR #6 merged**
-  (`4146cd8`, parents `65d61ce` + `21107ef`). `main` contains M3.4D1
-  (`2029292`), the isolated modes `fw_validate_only=1` / `ucode_test_only=1`,
-  `src/ob_ucode.{c,h}`, `docs/ucode_test.md`, the M3.4D2A hardware record, the
-  M3.4D2B analysis (`137e290`, `ae25c68`, `0bdec35`), and **M3.4D2B**
-  (`initvals_test_only=1`, `src/ob_initvals.{c,h}`, shared
-  `ob_ucode_run_d2a()`), HARDWARE RUNTIME PROVEN on BCM4352 (candidate
-  `f27286f`, module SHA256
-  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`). The
-  hardware-tested candidate `7265f9d` and implementation `47e0883` are
-  reachable from `main`.
-- Active branch `m34d3-bsinitvals-analysis` (from `main` @ `4146cd8`) — M3.4D3
-  **analysis only** (`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN):
-  `d11ac1bsinitvals42` + entry into AC PHY init. Draft PR; not merged.
+- `main` = `2a7ba1d` — **PR #2 merged** (`85d3013`), **PR #5 merged**
+  (`65d61ce`), **PR #6 merged** (`4146cd8`), and **PR #7 merged**
+  (`2a7ba1d`, normal merge commit of the M3.4D3 analysis). `main` contains
+  M3.4D1 (`2029292`), the isolated modes `fw_validate_only=1` /
+  `ucode_test_only=1` / `initvals_test_only=1`, `src/ob_ucode.{c,h}`,
+  `docs/ucode_test.md`, the M3.4D2A hardware record, the M3.4D2B analysis and
+  **M3.4D2B** (`src/ob_initvals.{c,h}`, shared `ob_ucode_run_d2a()`),
+  HARDWARE RUNTIME PROVEN on BCM4352 (candidate `f27286f`, module SHA256
+  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`), plus the
+  merged M3.4D3 analysis (`docs/m34d3_bsinitvals.md`).
+- **M3.4D3A0** (`dma_test_only=1`) is `HARDWARE RUNTIME PROVEN` on BCM4352
+  (candidate `4fa1b57`, runtime `7e68fe24`, signed module SHA256
+  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`). Evidence:
+  `docs/m34d3a0_dma_test.md`; branch `m34d3a0-dma-test`, PR #8, merged to
+  `main` via a normal merge commit.
+- Active analysis branch `m34d3a1-vendor-tail-analysis` (from the post-PR-#8
+  `main`) — M3.4D3A1 vendor-tail recovery, **analysis only**.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -67,6 +69,23 @@ source of truth; this file records the live working-tree state on top of HEAD.
   SHM `0x14=0xb4`; STOP before bsinitvals/PHY/radio/channel/DMA. No
   timeout/BUG/Oops/lockup/reset. Scope: **common initvals only** (does NOT prove
   bsinitvals, band init, AC PHY, radio, calibration, channel, RX or TX).
+- M3.4D3A0 (isolated mode, branch `m34d3a0-dma-test`): `dma_test_only=1`
+  **HARDWARE RUNTIME PROVEN on BCM4352** — tested candidate `4fa1b57`, runtime
+  commit `7e68fe24`, signed module SHA256
+  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`, kernel
+  `7.0.0-34-generic`. `insmod` rc=0; D2A (10850 words, PSM PASS, 11 iters) +
+  D2B 610 common initvals (`w16=113`, `w32=497`) + D2B exit gate; IRQ source
+  only (`INTRCVLAZY=0x01000000`, `I_RI`, `MACINTMASK=0`); 4 TX rings
+  (`0x200/0x240/0x280/0x2c0`, `ADDRHIGH=0x80000000`, `CONTROL 0->0x801`) with
+  **0 TX payload mappings**; FIFO0 RX (`0x220`, `CONTROL=0x84d`, programmed PTR
+  `0x400`, 64 mappings, IDLE); bring-up validation PASS; then
+  `RX/TX0..TX3 reset PASS` + `all DMA engines stopped` + `rings released` +
+  `PASS - bring-up + teardown proven`. No BUG/Oops/WARNING/DMA-API error/lockup/
+  reset timeout/FATAL/reboot-required/AER. Scope: **isolated DMA lifecycle only**
+  (does NOT prove the vendor post-common tail, `sub_67efd`, NVRAM/BTC/rate/power
+  SHM tail, band init, bsinitvals, AC PHY, PHY tables, radio, synth/PLL, channel,
+  calibration, real RX completion, TX frame completion, scan or association).
+  Evidence: `docs/m34d3a0_dma_test.md`.
 
 ## Analysis-only facts (not hardware proven here)
 - M3.4C/C.1: exact vendor rev42 images recovered from `wlc_hybrid.o_shipped`;
@@ -93,16 +112,17 @@ Stated exactly:
 - M3.4D2A = HARDWARE RUNTIME PROVEN
 - M3.4D2B = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
-- M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
-- M3.4D3 = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN
+- M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED /
+  HARDWARE RUNTIME PROVEN
+- M3.4D3 = ANALYSIS COMPLETE / NOT IMPLEMENTED / NOT HARDWARE PROVEN
 - M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
-- M3.4D3A0 implementation = IMPLEMENTED / STATIC TESTED / SIGNED /
-  NOT HARDWARE PROVEN
+- M3.4D3A0 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
+  (isolated DMA lifecycle only; candidate `4fa1b57`)
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
 
-## M3.4D3A0 — isolated DMA lifecycle test (IMPLEMENTED, not proven)
+## M3.4D3A0 — isolated DMA lifecycle test (HARDWARE RUNTIME PROVEN)
 
 **D3A0 TYPE: `ISOLATED DMA LIFECYCLE TEST`** — NOT a full vendor-prefix
 reproduction. D3A0 starts from the proven D2B exit and programs only the
@@ -112,11 +132,16 @@ TXE0/FIFO fixup; runtime NVRAM/BTC/rate/power SHM tail) are intentionally
 omitted and MUST be restored by D3A1 integration before normal PHY bring-up.
 See `docs/d3a0_dma_test_design.md` §0/§4.1.
 
-Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
-(no hardware run performed). Module param **`dma_test_only=1`**; mutually
-exclusive with `fw_validate_only`/`ucode_test_only`/`initvals_test_only` (any
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME PROVEN`
+on BCM4352** (candidate `4fa1b57`, runtime commit `7e68fe24`, signed module
+SHA256 `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`,
+kernel `7.0.0-34-generic`). Proof: full isolated lifecycle
+allocate/map → program → hardware validation → verified stop → release;
+`PASS - bring-up + teardown proven`, no kernel fault. Module param
+**`dma_test_only=1`**; mutually exclusive with the other isolated modes (any
 conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
-`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
+`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`. Full evidence:
+`docs/m34d3a0_dma_test.md`.
 
 - **Entry state = the full hardware-proven D2B exit**: runs the shared
   `ob_initvals_run_d2b()` (the proven `ob_ucode_run_d2a()` core plus EXACTLY the
@@ -282,22 +307,21 @@ bsinitvals) → D4 (PHY). Appendix D closes the D3A0 blockers and returns
 word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
 quiesce = per-channel reset + `bcma_core_disable`).
 
-**D3A0 is now IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN** on
-`m34d3a0-dma-test` (see the M3.4D3A0 section). Two static pre-hardware audits
-found and fixed real issues: (1) the first cut ran only `ob_ucode_run_d2a()`
-before the DMA prefix, skipping the 610 common initvals — D3A0 now runs the
-shared `ob_initvals_run_d2b()` first, exactly as the hardware-proven D2B; (2)
-the quiesce fallback treated verified core-reset containment as free
-authorization — a hard safety bug. Corrected: free requires every PROGRAMMED
-engine's own verified normal per-channel stop; containment never authorizes a
-free and a failed reset is fatal/retained. D3A0 is explicitly classified as an
-**`ISOLATED DMA LIFECYCLE TEST`**, not a full vendor-prefix reproduction.
-Next: review the Draft PR, then (when explicitly approved) run the frozen signed
-module with `dma_test_only=1` on hardware and record the bring-up + teardown
-evidence exactly as M3.4D2A/D2B did. **No hardware action in this task:** no
+**D3A0 is now HARDWARE RUNTIME PROVEN on BCM4352** on `m34d3a0-dma-test`
+(candidate `4fa1b57`, runtime `7e68fe24`; PR #8, being merged to `main` via a
+normal merge commit). It was classified/exercised as an **`ISOLATED DMA
+LIFECYCLE TEST`** (not a full vendor-prefix reproduction); the run proved the
+complete isolated lifecycle allocate/map → program → hardware validation →
+verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
+Evidence: `docs/m34d3a0_dma_test.md`.
+
+Next: **M3.4D3A1 vendor-tail analysis only** on `m34d3a1-vendor-tail-analysis`
+(recover `sub_67efd` TXE0/FIFO fixup + the runtime NVRAM/BTC/rate/power SHM tail,
+their exact ordering relative to the now-proven DMA lifecycle and to band
+init/bsinitvals, and the safest next isolated boundary). Do not assume D3A0's
+isolated ordering is the final normal-driver order. **No hardware action:** no
 `insmod`, no DMA test, no PHY/radio/channel/mac80211. See
-`docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md` and, for D2B runtime
-evidence, `docs/m34d2b_initvals_test.md`.
+`docs/d3a0_dma_test_design.md` and `docs/m34d3_bsinitvals.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

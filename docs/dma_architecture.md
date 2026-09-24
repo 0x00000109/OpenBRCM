@@ -281,13 +281,18 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
   are zero-initialised; no buffer is mapped and no EOT is written to the ring.
 
 
-## M3.4D3A0 — isolated DMA lifecycle test (`dma_test_only`)
+## M3.4D3A0 — isolated DMA lifecycle test (`dma_test_only`) — HARDWARE RUNTIME PROVEN
 
 **D3A0 TYPE: `ISOLATED DMA LIFECYCLE TEST`** — not a full vendor-prefix
 reproduction (`sub_67efd` TXE0/FIFO fixup and the NVRAM/BTC/rate/power SHM tail
 are not pinned and are omitted; D3A1 must restore full vendor ordering before
 PHY bring-up). It is deliberately kept separate from the M3.2/M3.4B path so the
-proven normal and isolated modes are untouched. Lifecycle stages
+proven normal and isolated modes are untouched. **HARDWARE RUNTIME PROVEN on
+BCM4352** (candidate `4fa1b57`, runtime `7e68fe24`, module SHA256
+`0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`): the
+complete isolated lifecycle allocate/map → program → hardware validation →
+verified stop → release was proven (`PASS - bring-up + teardown proven`, no
+kernel fault). Evidence: `docs/m34d3a0_dma_test.md`. Lifecycle stages
 (`src/ob_d3a0.c`):
 
 | stage | function | registers / resources |

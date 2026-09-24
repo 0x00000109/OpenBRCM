@@ -241,16 +241,29 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   `wlc_phy_init`. OpenBRCM gaps: `ob_dma_quiesce`, 4-channel TX programming,
   out-of-band IRQ route. See report §17/§18 and Appendix C.
 
-## M3.4D3A0 — isolated DMA lifecycle test (`IMPLEMENTED`)
+## M3.4D3A0 — isolated DMA lifecycle test (`HARDWARE RUNTIME PROVEN` on BCM4352)
 
 **D3A0 TYPE: `ISOLATED DMA LIFECYCLE TEST`** — not a full vendor-prefix
 reproduction; `sub_67efd` (TXE0/FIFO fixup) and the runtime NVRAM/BTC/rate/
 power SHM tail are not pinned and are omitted (D3A1 integration content).
 
-Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
-(no hardware run). Module param **`dma_test_only=1`**, mutually exclusive with
-the other isolated modes. Files: `src/ob_d3a0.{c,h}`,
-`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
+Canonical status (exact):
+- M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B = HARDWARE RUNTIME PROVEN
+- M3.4D3 analysis = COMPLETE
+- M3.4D3A0 = HARDWARE RUNTIME PROVEN
+
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME PROVEN`
+on BCM4352** (candidate `4fa1b57`, runtime commit `7e68fe24`, signed module
+SHA256 `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`,
+kernel `7.0.0-34-generic`). The run proved the complete isolated lifecycle
+allocate/map → program → hardware validation → verified stop → release:
+`bring-up validation PASS`; `RX reset PASS` + `TX0..TX3 reset PASS` +
+`all DMA engines stopped` + `rings released` + `PASS - bring-up + teardown
+proven`; no BUG/Oops/WARNING/DMA-API error/lockup/reset timeout/FATAL. Module
+param **`dma_test_only=1`**, mutually exclusive with the other isolated modes.
+Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
+`tests/kunit/ob_d3a0_kunit.c`. Evidence: `docs/m34d3a0_dma_test.md`.
 - **Hard blocker found and fixed by the pre-hardware static audit:** the first
   cut ran only `ob_ucode_run_d2a()` (D2A) before the DMA prefix and skipped the
   610 common initvals. It now runs the shared `ob_initvals_run_d2b()` (proven
