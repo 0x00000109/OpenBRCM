@@ -1,13 +1,18 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * OpenBRCM — isolated vendor pre-PHY DMA bring-up test (M3.4D3A0).
+ * OpenBRCM — isolated D3A0 DMA lifecycle test (M3.4D3A0).
  *
- * `dma_test_only=1` reproduces the vendor post-common DMA/IRQ-source stage:
- * the proven D2B prefix, the exactly-pinned D11/IRQ-source writes in vendor
- * order, then four TX DMA channels + FIFO0 RX (64 buffers), deterministic
- * validation, a mandatory verified quiesce and a safe free. It never reaches
- * bsinitvals/PHY/radio/channel/mac80211, never enables EN_MAC, never routes the
- * host IRQ and never enables MACINTMASK/MI_DMAINT.
+ * D3A0 TYPE: ISOLATED DMA LIFECYCLE TEST. It does NOT reproduce the complete
+ * vendor post-common prefix. From the proven D2B exit it programs only the
+ * provenance-pinned D11/clock/IRQ-source prerequisites needed to exercise the
+ * vendor DMA engines independently: four TX DMA channels + FIFO0 RX (64
+ * buffers), deterministic validation, a mandatory verified quiesce and a safe
+ * free. Vendor-before-DMA stages that are not pinned (`sub_67efd` TXE0/FIFO
+ * fixup; runtime NVRAM/BTC/rate/power SHM tail) are omitted and must be
+ * restored by D3A1 integration before normal PHY bring-up.
+ *
+ * It never reaches bsinitvals/PHY/radio/channel/mac80211, never enables
+ * EN_MAC, never routes the host IRQ and never enables MACINTMASK/MI_DMAINT.
  *
  * The pure section below is host-testable and contains no kernel API.
  *
@@ -130,17 +135,27 @@ enum ob_d3a0_state {
  * @rx:		RX ring state
  * @rx_mapped:	RX buffers currently mapped (0..OB_DMA_RX_POST_INIT)
  * @irq_source: true once the per-FIFO I_RI source was written
- * @quiesced:	true once every programmed engine was verified stopped (or
- *		verified containment)
- * @fatal:	true if quiesce/containment could not be verified; DMA memory
- *		must then never be freed (reboot required)
+ * @engines_stopped: true only after EVERY programmed DMA engine was verified
+ *		stopped by its own normal per-channel reset. This is the only
+ *		evidence that authorizes freeing DMA memory.
+ * @core_contained: true if a D11 core reset was observed disabled after a
+ *		per-channel reset failure. This is CONTAINMENT ONLY and never
+ *		authorizes a free.
+ * @free_allowed: true only after @engines_stopped; the explicit free permit.
+ * @fatal:	true if any programmed engine could not be verified stopped.
+ *		DMA memory must then never be freed (reboot required).
+ *
+ * Invariant: free_allowed implies every programmed DMA engine had a verified
+ * normal stop. core_contained must never imply free_allowed.
  */
 struct ob_d3a0_lifecycle {
 	u8	tx[OB_D3A0_TX_CHANNELS];
 	u8	rx;
 	u32	rx_mapped;
 	bool	irq_source;
-	bool	quiesced;
+	bool	engines_stopped;
+	bool	core_contained;
+	bool	free_allowed;
 	bool	fatal;
 };
 
@@ -216,23 +231,29 @@ static inline bool ob_d3a0_hw_active(const struct ob_d3a0_lifecycle *lc)
 
 	if (!lc)
 		return false;
-	if (lc->rx == OB_D3A0_PROGRAMMED && !lc->quiesced)
+	if (lc->engines_stopped)
+		return false;
+	if (lc->rx == OB_D3A0_PROGRAMMED)
 		return true;
 	for (i = 0; i < OB_D3A0_TX_CHANNELS; i++)
-		if (lc->tx[i] == OB_D3A0_PROGRAMMED && !lc->quiesced)
+		if (lc->tx[i] == OB_D3A0_PROGRAMMED)
 			return true;
 	return false;
 }
 
 /*
- * Free is permitted only when no engine is active and quiesce (or verified
- * containment) succeeded. A fatal state forbids any free/unmap.
+ * Free is permitted ONLY when every programmed engine was verified stopped by
+ * its own normal per-channel reset. Core-reset containment alone NEVER
+ * authorizes a free (`free_allowed` is set only together with
+ * `engines_stopped`). A fatal state forbids any free/unmap.
  */
 static inline bool ob_d3a0_can_free(const struct ob_d3a0_lifecycle *lc)
 {
 	if (!lc)
 		return false;
 	if (lc->fatal)
+		return false;
+	if (!lc->free_allowed || !lc->engines_stopped)
 		return false;
 	return !ob_d3a0_hw_active(lc);
 }

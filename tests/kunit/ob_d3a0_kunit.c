@@ -120,7 +120,8 @@ static void ob_d3a0_lifecycle_test(struct kunit *test)
 	struct ob_d3a0_lifecycle lc;
 
 	memset(&lc, 0, sizeof(lc));
-	KUNIT_EXPECT_TRUE(test, ob_d3a0_can_free(&lc));
+	/* no verified stop yet: no free permit */
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
 
 	lc.tx[0] = OB_D3A0_PROGRAMMED;
 	lc.tx[1] = OB_D3A0_PROGRAMMED;
@@ -128,13 +129,47 @@ static void ob_d3a0_lifecycle_test(struct kunit *test)
 	KUNIT_EXPECT_TRUE(test, ob_d3a0_hw_active(&lc));
 	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
 
-	lc.quiesced = true;
+	/* A: every programmed engine verified stopped */
+	lc.engines_stopped = true;
+	lc.free_allowed = true;
 	KUNIT_EXPECT_FALSE(test, ob_d3a0_hw_active(&lc));
 	KUNIT_EXPECT_TRUE(test, ob_d3a0_can_free(&lc));
 
-	/* fatal overrides everything, even a quiesced flag */
+	/* fatal overrides everything */
 	lc.fatal = true;
-	lc.quiesced = true;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
+}
+
+static void ob_d3a0_fatal_test(struct kunit *test)
+{
+	struct ob_d3a0_lifecycle lc;
+
+	/* B/C: per-channel reset failed, core containment observed */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.rx = OB_D3A0_PROGRAMMED;
+	lc.core_contained = true;
+	lc.fatal = true;
+	KUNIT_EXPECT_TRUE(test, ob_d3a0_hw_active(&lc));
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
+	KUNIT_EXPECT_FALSE(test, lc.free_allowed);
+
+	/* D: reset failed and core disable failed */
+	memset(&lc, 0, sizeof(lc));
+	lc.rx = OB_D3A0_PROGRAMMED;
+	lc.fatal = true;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
+
+	/* permit without engines_stopped is refused */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.free_allowed = true;
+	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
+
+	/* containment alone is never a permit */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.core_contained = true;
 	KUNIT_EXPECT_FALSE(test, ob_d3a0_can_free(&lc));
 }
 
@@ -163,6 +198,7 @@ static struct kunit_case ob_d3a0_test_cases[] = {
 	KUNIT_CASE(ob_d3a0_maccontrol_test),
 	KUNIT_CASE(ob_d3a0_status_test),
 	KUNIT_CASE(ob_d3a0_lifecycle_test),
+	KUNIT_CASE(ob_d3a0_fatal_test),
 	KUNIT_CASE(ob_d3a0_rx_desc_test),
 	{}
 };

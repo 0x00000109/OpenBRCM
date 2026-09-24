@@ -40,10 +40,10 @@ struct ieee80211_hw;
  *		initvals were applied and postconditions verified; @remove must
  *		skip all RX/IRQ/DMA/mac80211 teardown
  * @dma_test_only: true when probe ran with dma_test_only=1: the device is
- *		bound, the D2B prefix plus the pinned D11/IRQ-source writes ran
- *		and the vendor DMA lifecycle (4 TX + FIFO0 RX) was brought up,
- *		validated, quiesced and freed; @remove handles the fail-closed
- *		DMA lifecycle via ob_d3a0_remove()
+ *		bound, the D2B prefix plus the pinned D11/clock/IRQ-source
+ *		prerequisites ran and the isolated DMA lifecycle (4 TX + FIFO0
+ *		RX) was brought up, validated, quiesced and freed; @remove
+ *		handles the fail-closed DMA lifecycle via ob_d3a0_remove()
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks

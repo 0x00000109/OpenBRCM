@@ -189,8 +189,9 @@ static void test_lifecycle(void)
 	struct ob_d3a0_lifecycle lc;
 
 	memset(&lc, 0, sizeof(lc));
-	chk("empty can free", ob_d3a0_can_free(&lc), 1);
+	/* nothing verified yet: no free permit even for an empty lifecycle */
 	chk("empty not active", ob_d3a0_hw_active(&lc), 0);
+	chk("empty cannot free (no permit)", ob_d3a0_can_free(&lc), 0);
 
 	/* partially brought up: TX0/TX1 programmed, TX2 failed, TX3 untouched */
 	lc.tx[0] = OB_D3A0_PROGRAMMED;
@@ -200,16 +201,62 @@ static void test_lifecycle(void)
 	chk("partial active", ob_d3a0_hw_active(&lc), 1);
 	chk("partial cannot free", ob_d3a0_can_free(&lc), 0);
 
-	/* quiesce verified: now free is allowed, untouched TX3 not required */
-	lc.quiesced = true;
-	chk("quiesced not active", ob_d3a0_hw_active(&lc), 0);
-	chk("quiesced can free", ob_d3a0_can_free(&lc), 1);
+	/* A: every programmed engine verified stopped -> free allowed */
+	lc.engines_stopped = true;
+	lc.free_allowed = true;
+	chk("A stopped not active", ob_d3a0_hw_active(&lc), 0);
+	chk("A can free", ob_d3a0_can_free(&lc), 1);
 
-	/* fatal overrides everything: never free, even if quiesced was set */
+	/* fatal overrides everything: never free, even if stopped/permitted */
 	lc.fatal = true;
-	lc.quiesced = true;
-	chk("fatal cannot free", ob_d3a0_can_free(&lc), 0);
-	chk("fatal still blocks even quiesced", ob_d3a0_can_free(&lc), 0);
+	chk("A+fatal cannot free", ob_d3a0_can_free(&lc), 0);
+}
+
+/*
+ * Conservative fatal matrix (B/C/D). Core-reset containment is reported but
+ * NEVER authorizes a free; only a normal per-channel verified stop does.
+ */
+static void test_fatal_scenarios(void)
+{
+	struct ob_d3a0_lifecycle lc;
+
+	/* B: a TX reset failed, core disable verified -> fatal, retained */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.tx[1] = OB_D3A0_PROGRAMMED;
+	lc.rx = OB_D3A0_PROGRAMMED;
+	lc.core_contained = true;
+	lc.fatal = true;
+	chk("B active", ob_d3a0_hw_active(&lc), 1);
+	chk("B cannot free", ob_d3a0_can_free(&lc), 0);
+	chk("B containment is not a free permit", lc.free_allowed, 0);
+
+	/* C: RX reset failed, core disable verified -> fatal, retained */
+	memset(&lc, 0, sizeof(lc));
+	lc.rx = OB_D3A0_PROGRAMMED;
+	lc.core_contained = true;
+	lc.fatal = true;
+	chk("C cannot free", ob_d3a0_can_free(&lc), 0);
+
+	/* D: reset failed and core disable failed -> fatal, retained */
+	memset(&lc, 0, sizeof(lc));
+	lc.rx = OB_D3A0_PROGRAMMED;
+	lc.tx[3] = OB_D3A0_PROGRAMMED;
+	lc.fatal = true;
+	chk("D active", ob_d3a0_hw_active(&lc), 1);
+	chk("D cannot free", ob_d3a0_can_free(&lc), 0);
+
+	/* a permit without engines_stopped must still be refused */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.free_allowed = true;
+	chk("permit without stop cannot free", ob_d3a0_can_free(&lc), 0);
+
+	/* containment alone can never grant the permit */
+	memset(&lc, 0, sizeof(lc));
+	lc.tx[0] = OB_D3A0_PROGRAMMED;
+	lc.core_contained = true;
+	chk("containment alone cannot free", ob_d3a0_can_free(&lc), 0);
 }
 
 static void test_rx_descriptors(void)
@@ -264,6 +311,7 @@ int main(void)
 	test_maccontrol();
 	test_status_helpers();
 	test_lifecycle();
+	test_fatal_scenarios();
 	test_rx_descriptors();
 	test_mode_inclusion();
 

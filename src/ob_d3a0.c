@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * OpenBRCM — isolated vendor pre-PHY DMA bring-up test (M3.4D3A0).
+ * OpenBRCM — isolated D3A0 DMA lifecycle test (M3.4D3A0).
  *
- * Module param dma_test_only=1. After the shared hardware-proven D2B prefix
- * it performs, in the exact vendor order, the exactly-pinned D11/IRQ-source
- * writes, then the four TX DMA channels and FIFO0 RX (64 buffers), validates a
- * small provenance-backed set, executes the mandatory quiesce and frees the
- * Linux DMA resources. It STOPS before band init / bsinitvals / PHY / radio /
- * channel / mac80211 and never enables EN_MAC, MACINTMASK, MI_DMAINT or the
- * host IRQ route.
+ * D3A0 TYPE: ISOLATED DMA LIFECYCLE TEST. NOT a full vendor-prefix
+ * reproduction.
  *
- * Fail-closed: DMA memory is only freed after a verified per-channel stop (or
- * verified core-reset containment). If quiesce cannot be verified, the module
- * enters a fatal/reboot-required state and never frees DMA memory.
+ * Module param dma_test_only=1. Starting from the shared hardware-proven D2B
+ * exit it programs ONLY the provenance-pinned D11/clock/IRQ-source
+ * prerequisites needed to exercise the vendor DMA engines independently: the
+ * four TX DMA channels and FIFO0 RX (64 buffers). It validates a small
+ * provenance-backed set, executes the mandatory quiesce and frees the Linux
+ * DMA resources.
+ *
+ * Vendor-before-DMA stages that are NOT pinned for implementation are
+ * intentionally omitted: `sub_67efd` (TXE0/FIFO fixup) and the runtime
+ * NVRAM/BTC/rate/power SHM tail. Final normal-driver integration MUST restore
+ * the complete vendor ordering before band init / bsinitvals / PHY bring-up;
+ * D3A1 is that integration task. D3A0 STOPS before all of it and never enables
+ * EN_MAC, MACINTMASK, MI_DMAINT or the host IRQ route.
+ *
+ * Fail-closed: DMA memory is freed only after EVERY programmed engine had its
+ * own verified normal per-channel stop. Core-reset containment after a failed
+ * reset NEVER authorizes a free: it records containment, sets a
+ * fatal/reboot-required state, pins the module and retains the DMA memory.
  *
  * Provenance: docs/m34d3_bsinitvals.md Appendices C/D,
  * docs/d3a0_dma_test_design.md.
@@ -120,7 +130,10 @@ static void ob_d3a0_latch_fatal(struct ob_hw *hw)
 		 &ob_d3a0_fatal_rec.tx_ring[3]);
 }
 
-/* ---- exactly-pinned pre-DMA D11 / IRQ-source prefix (vendor order) ------ */
+/*
+ * ---- pinned D11/clock/IRQ-source prerequisites for the DMA test ---------
+ * (provenance-pinned register values; NOT the complete vendor prefix order)
+ */
 
 /*
  * State gate: immediately before the first post-common D3A0 write, the live
@@ -549,20 +562,33 @@ static int ob_d3a0_quiesce(struct ob_hw *hw)
 	}
 
 	if (all_ok) {
-		lc->quiesced = true;
+		/* Normal path: every programmed engine verified stopped. */
+		lc->engines_stopped = true;
+		lc->free_allowed = true;
 		dev_info(hw->dev, "dma-test: all DMA engines stopped\n");
 		return 0;
 	}
 
+	/*
+	 * A per-channel reset failed. Core disable is attempted as CONTAINMENT
+	 * only: it may reduce further DMA, but it does NOT prove that already
+	 * issued PCIe transactions have drained, so it must NEVER authorize a
+	 * free. The retained DMA memory is what makes any late/outstanding
+	 * transaction harmless. No PCIe flush is invented.
+	 */
 	dev_warn(hw->dev,
-		 "dma-test: per-channel reset failed; core-reset containment\n");
+		 "dma-test: per-channel reset failed; attempting core containment (never authorizes free)\n");
 	if (ob_d3a0_core_contain(hw)) {
-		lc->quiesced = true;
-		dev_info(hw->dev,
-			 "dma-test: core containment verified; safe to free\n");
-		return 0;
+		lc->core_contained = true;
+		dev_warn(hw->dev,
+			 "dma-test: core containment observed (bcma_core_is_enabled==false); free still forbidden\n");
+	} else {
+		dev_err(hw->dev,
+			"dma-test: core containment not verified either\n");
 	}
 
+	lc->engines_stopped = false;
+	lc->free_allowed = false;
 	lc->fatal = true;
 	ob_d3a0_latch_fatal(hw);
 	dev_crit(hw->dev,
@@ -728,7 +754,12 @@ int ob_d3a0_test(struct ob_hw *hw)
 		 "dma-test: D2B prefix complete common_records=%u writes=%u psm_iter=%u\n",
 		 OB_INITVALS_RECORDS, run.written, run.psm_iterations);
 
-	/* exactly-pinned D11 / IRQ-source prefix, before DMA (vendor order) */
+	/*
+	 * Minimal pinned D11/clock/IRQ-source prerequisites for independent DMA
+	 * programming. This is NOT the complete vendor post-common prefix (see
+	 * the file header): sub_67efd and the NVRAM/BTC/rate/power SHM tail are
+	 * omitted and must be restored by D3A1 before normal PHY bring-up.
+	 */
 	ret = ob_d3a0_prefix(hw);
 	if (ret) {
 		dev_err(hw->dev, "dma-test: prefix FAIL ret=%d\n", ret);

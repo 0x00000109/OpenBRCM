@@ -82,8 +82,10 @@ source of truth; this file records the live working-tree state on top of HEAD.
   writes interrupt-source masks); Appendix C reverses it and yields **A/B/C/D =
   YES** (D3A0 DMA/IRQ-source → D3A1 remaining tail → D3B), conditional on host
   IRQ route off and a core-reset/reboot quiesce; Appendix D closes the D3A0
-  blockers and returns **`D3A0 IMPLEMENTATION GO: YES`**. The isolated unit is
-  the full vendor prefix, not the 73 records alone.
+  blockers and returns **`D3A0 IMPLEMENTATION GO: YES`**. The analysis proposed
+  the full vendor prefix; the shipped D3A0 is deliberately **`ISOLATED DMA
+  LIFECYCLE TEST`** (see below) because `sub_67efd` and the NVRAM/BTC/rate/power
+  SHM tail are not pinned — they remain D3A1 integration content.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -100,7 +102,15 @@ Stated exactly:
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
 
-## M3.4D3A0 — isolated vendor pre-PHY DMA bring-up (IMPLEMENTED, not proven)
+## M3.4D3A0 — isolated DMA lifecycle test (IMPLEMENTED, not proven)
+
+**D3A0 TYPE: `ISOLATED DMA LIFECYCLE TEST`** — NOT a full vendor-prefix
+reproduction. D3A0 starts from the proven D2B exit and programs only the
+provenance-pinned D11/clock/IRQ-source prerequisites needed to exercise the
+vendor DMA engines. Vendor-before-DMA stages that are not pinned (`sub_67efd`
+TXE0/FIFO fixup; runtime NVRAM/BTC/rate/power SHM tail) are intentionally
+omitted and MUST be restored by D3A1 integration before normal PHY bring-up.
+See `docs/d3a0_dma_test_design.md` §0/§4.1.
 
 Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
 (no hardware run performed). Module param **`dma_test_only=1`**; mutually
@@ -115,26 +125,28 @@ conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
   only after `ob_initvals_post_ok()` and a live re-read
   (`ob_d3a0_check_d2b_exit`: `MACCONTROL=0x04020402`, `MACINTMASK=0`,
   FIFO0..3=`0x01c4/0/0/0x079e`, `SHM[0x14]=0xb4`) pass. Only then:
-- Exactly-pinned D11/IRQ-source writes **in vendor order** (`intrcvlazy[0]
-  =0x01000000` → `MACCONTROL` RMW `0x04020402→0x44020402` → `macintstatus` W1C
-  `MI_GP1` → `intctrlregs[0].intmask=I_RI` → `macphyclk_set` ON → machwcap SHM
-  caps), then DMA.
+- Pinned D11/clock/IRQ-source prerequisites (`intrcvlazy[0]=0x01000000` →
+  `MACCONTROL` RMW `0x04020402→0x44020402` → `macintstatus` W1C `MI_GP1` →
+  `intctrlregs[0].intmask=I_RI` → `macphyclk_set` ON → machwcap SHM caps), then
+  DMA. These preserve the vendor register values and relative order, but are not
+  the complete vendor prefix (see TYPE above).
 - DMA: four TX channels (`0x200/0x240/0x280/0x2c0`, 512×16 B, 8192-aligned,
   `ADDRHIGH=0x80000000`, `control = read|XE|PD`, no ptr/descriptors → **zero TX
   payload mappings**) and FIFO0 RX (`0x220`, 256 desc, exactly 64 posted 2048-B
   `DMA_FROM_DEVICE` buffers, `CONTROL=0x84d`, `PTR=0x400`).
 - Host IRQ impossible: `MACINTMASK` stays 0, no `request_irq`, no
   `bcma_host_pci_irq_ctl`, no `MI_DMAINT`; `EN_MAC` stays 0.
-- Fail-closed quiesce: clear `I_RI`; `dma_rxreset`; `dma_txreset` per
-  initialized channel (bounded 10 ms polls); verify stopped. `bcma_core_disable`
-  containment only if a per-channel reset times out and its real
-  `bcma_core_is_enabled()` readback is false. DMA memory is freed only after
-  verified quiesce. If neither per-channel reset nor verified containment
-  succeeds, a **module-wide fatal latch** is set, a diagnostic record of the
-  retained rings is kept, and the module is pinned (`__module_get`) so the
-  state cannot disappear via rmmod/rebind; probe is kept successful so the
-  bound device and its devres retain the state. Only a reboot clears it.
-  `ob_remove()` honours this and never frees.
+- Fail-closed quiesce: clear `I_RI`; `dma_rxreset`; `dma_txreset` per PROGRAMMED
+  TX channel (bounded 10 ms polls); verify every PROGRAMMED engine stopped.
+  **Only then** `engines_stopped=true`/`free_allowed=true` and a free may occur.
+  If any per-channel reset fails, `bcma_core_disable` is attempted as
+  **containment only** and its real `bcma_core_is_enabled()` readback recorded
+  as `core_contained`; this **never** authorizes a free. In that case `fatal` is
+  set, a **module-wide fatal latch** and a diagnostic record of the retained
+  rings are kept, and the module is pinned (`__module_get`) so the state cannot
+  disappear via rmmod/rebind; probe is kept successful so the bound device and
+  its devres retain the state. Only a reboot clears it. `ob_remove()` honours
+  this and never frees. Operator rule: **FATAL → do not unbind/rebind → reboot.**
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
 
@@ -271,14 +283,19 @@ word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
 quiesce = per-channel reset + `bcma_core_disable`).
 
 **D3A0 is now IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN** on
-`m34d3a0-dma-test` (see the M3.4D3A0 section). A static pre-hardware audit found
-and fixed a real bug: the first cut ran only `ob_ucode_run_d2a()` before the DMA
-prefix, skipping the 610 common initvals. D3A0 now runs the shared
-`ob_initvals_run_d2b()` (D2A + 610 common initvals + gate) first, exactly as the
-hardware-proven D2B. Next: review the Draft PR, then (when explicitly approved)
-run the frozen signed module with `dma_test_only=1` on hardware and record the
-bring-up + teardown evidence exactly as M3.4D2A/D2B did. **No hardware action in
-this task:** no `insmod`, no DMA test, no PHY/radio/channel/mac80211. See
+`m34d3a0-dma-test` (see the M3.4D3A0 section). Two static pre-hardware audits
+found and fixed real issues: (1) the first cut ran only `ob_ucode_run_d2a()`
+before the DMA prefix, skipping the 610 common initvals — D3A0 now runs the
+shared `ob_initvals_run_d2b()` first, exactly as the hardware-proven D2B; (2)
+the quiesce fallback treated verified core-reset containment as free
+authorization — a hard safety bug. Corrected: free requires every PROGRAMMED
+engine's own verified normal per-channel stop; containment never authorizes a
+free and a failed reset is fatal/retained. D3A0 is explicitly classified as an
+**`ISOLATED DMA LIFECYCLE TEST`**, not a full vendor-prefix reproduction.
+Next: review the Draft PR, then (when explicitly approved) run the frozen signed
+module with `dma_test_only=1` on hardware and record the bring-up + teardown
+evidence exactly as M3.4D2A/D2B did. **No hardware action in this task:** no
+`insmod`, no DMA test, no PHY/radio/channel/mac80211. See
 `docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md` and, for D2B runtime
 evidence, `docs/m34d2b_initvals_test.md`.
 

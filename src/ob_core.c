@@ -61,20 +61,23 @@ MODULE_PARM_DESC(initvals_test_only,
 		 "D11 rev42 common initvals + PSM only; stops before bsinitvals/PHY/DMA (default: 0)");
 
 /*
- * Explicit isolated vendor pre-PHY DMA bring-up test (M3.4D3A0).
+ * Explicit isolated D3A0 DMA lifecycle test (M3.4D3A0).
  *
- * When set, probe runs the proven D2B prefix, the exactly-pinned D11/IRQ-source
- * writes (in vendor order, before DMA), then the four TX DMA channels and FIFO0
- * RX (64 buffers), validates deterministic postconditions, executes the
- * mandatory verified quiesce and frees the Linux DMA resources. It never
- * reaches band init/bsinitvals/PHY/radio/channel/mac80211 and never enables
- * EN_MAC, MACINTMASK, MI_DMAINT or the host IRQ route. Mutually exclusive with
- * the other isolated modes; any conflict fails probe before hardware access.
+ * D3A0 TYPE: ISOLATED DMA LIFECYCLE TEST (not a full vendor-prefix
+ * reproduction). When set, probe runs the proven D2B prefix, the
+ * provenance-pinned D11/clock/IRQ-source prerequisites, then the four TX DMA
+ * channels and FIFO0 RX (64 buffers), validates deterministic postconditions,
+ * executes the mandatory verified quiesce and frees the Linux DMA resources
+ * only after every programmed engine had its own verified normal stop. It
+ * never reaches band init/bsinitvals/PHY/radio/channel/mac80211 and never
+ * enables EN_MAC, MACINTMASK, MI_DMAINT or the host IRQ route. Mutually
+ * exclusive with the other isolated modes; any conflict fails probe before
+ * hardware access.
  */
 static bool dma_test_only;
 module_param(dma_test_only, bool, 0444);
 MODULE_PARM_DESC(dma_test_only,
-		 "vendor pre-PHY DMA bring-up (4 TX + FIFO0 RX) + quiesce; stops before band/PHY/mac80211 (default: 0)");
+		 "isolated D3A0 DMA lifecycle test (4 TX + FIFO0 RX) + verified quiesce; stops before band/PHY/mac80211 (default: 0)");
 
 int ob_probe(struct bcma_device *core)
 {
@@ -163,13 +166,15 @@ int ob_probe(struct bcma_device *core)
 	}
 
 	/*
-	 * dma_test_only: isolated vendor pre-PHY DMA bring-up. Runs the proven
-	 * D2B prefix, the pinned D11/IRQ-source prefix, the four TX + FIFO0 RX
-	 * DMA lifecycle, validation, mandatory quiesce and safe free. It never
-	 * reaches band init/bsinitvals/PHY/radio/channel, never enables EN_MAC
-	 * or the host IRQ route, and never registers mac80211. On success all
-	 * DMA resources are already released; @remove is still consulted for the
-	 * fail-closed fatal state.
+	 * dma_test_only: isolated D3A0 DMA lifecycle test. Runs the proven D2B
+	 * prefix, the pinned D11/clock/IRQ-source prerequisites, the four TX +
+	 * FIFO0 RX DMA lifecycle, validation, mandatory verified quiesce and safe
+	 * free. It is not a full vendor-prefix reproduction (see
+	 * docs/d3a0_dma_test_design.md §0) and never reaches band
+	 * init/bsinitvals/PHY/radio/channel, never enables EN_MAC or the host IRQ
+	 * route, and never registers mac80211. On success all DMA resources are
+	 * already released; @remove is still consulted for the fail-closed fatal
+	 * state.
 	 */
 	if (mode == OB_ISOLATED_DMA_TEST) {
 		hw->dma_test_only = true;

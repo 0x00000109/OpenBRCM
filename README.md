@@ -21,15 +21,19 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > (candidate `f27286f`; PR #6) — it proves the common-initvals sequence
 > **only**: bsinitvals, band init, AC PHY, radio, calibration, channel, RX and
 > TX remain unproven. M3.4D3 (band-switch initvals + PHY boundary) analysis is
-> merged. M3.4D3A0 (isolated vendor pre-PHY DMA bring-up, `dma_test_only=1`) is
-> **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`** on
-> `m34d3a0-dma-test` (Draft PR): full D2B entry (proven D2A + exactly 610 common
-> initvals + gate) + pinned D11/IRQ-source writes (host IRQ route off,
-> `MACINTMASK=0`), 4 TX DMA channels (zero TX payload mappings) + FIFO0 RX
-> (exactly 64 buffers), deterministic validation, fail-closed quiesce
-> (per-channel reset verified; core-reset containment with real readback only;
-> fatal state latched + module pinned + probe kept bound). It STOPS before band
-> init/bsinitvals/PHY/radio/channel/mac80211.
+> merged. M3.4D3A0 (`dma_test_only=1`) is **`ISOLATED DMA LIFECYCLE TEST`** —
+> `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN` on
+> `m34d3a0-dma-test` (Draft PR). It is NOT a full vendor-prefix reproduction:
+> it starts from the full D2B entry (proven D2A + exactly 610 common initvals +
+> gate) and programs only the provenance-pinned D11/clock/IRQ-source
+> prerequisites (host IRQ route off, `MACINTMASK=0`), 4 TX DMA channels (zero
+> TX payload mappings) + FIFO0 RX (exactly 64 buffers), deterministic
+> validation, fail-closed quiesce (free only after every programmed engine's
+> own verified normal stop; core-reset containment after a failed reset never
+> authorizes a free; fatal state latched + module pinned + probe kept bound).
+> Vendor-before-DMA stages not pinned (`sub_67efd`, NVRAM/BTC/rate/power SHM
+> tail) are omitted and MUST be restored by D3A1 integration before PHY
+> bring-up. It STOPS before band init/bsinitvals/PHY/radio/channel/mac80211.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

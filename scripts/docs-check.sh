@@ -151,6 +151,24 @@ else
 	ok "M3.4D3A0 not claimed hardware proven"
 fi
 
+# 4d. D3A0 scope classification and the conservative quiesce model.
+grep -q 'ISOLATED DMA LIFECYCLE TEST' docs/d3a0_dma_test_design.md \
+	&& ok "D3A0 classified as ISOLATED DMA LIFECYCLE TEST" \
+	|| bad "docs/d3a0_dma_test_design.md missing D3A0 scope classification"
+# containment must never be recorded as a free permit
+if grep -q 'core containment verified; safe to free' src/ob_d3a0.c; then
+	bad "src/ob_d3a0.c still treats core containment as free authorization"
+else
+	ok "core containment is not a free authorization"
+fi
+for m in engines_stopped core_contained free_allowed; do
+	grep -q "$m" src/ob_d3a0.h \
+		|| bad "src/ob_d3a0.h lifecycle missing $m"
+done
+grep -q 'free_allowed' src/ob_d3a0.h \
+	&& ok "lifecycle separates stopped/contained/free/fatal" \
+	|| bad "lifecycle flags not separated"
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"
