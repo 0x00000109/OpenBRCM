@@ -137,18 +137,28 @@ static void test_path_and_teardown(void)
 {
 	enum ob_isolated_mode mode;
 
-	mode = ob_isolated_mode_select(false, false, true);
+	mode = ob_isolated_mode_select(false, false, true, false);
 	chk("select initvals mode", mode, OB_ISOLATED_INITVALS_TEST);
 	chk("initvals applies table", ob_isolated_mode_applies_initvals(mode), 1);
 	chk("initvals skips teardown", ob_isolated_mode_skips_teardown(mode), 1);
+	chk("initvals no dma", ob_isolated_mode_uses_dma(mode), 0);
 
-	mode = ob_isolated_mode_select(false, true, false);
+	mode = ob_isolated_mode_select(false, true, false, false);
 	chk("select ucode mode", mode, OB_ISOLATED_UCODE_TEST);
 	chk("ucode does not apply table",
 	    ob_isolated_mode_applies_initvals(mode), 0);
 	chk("ucode skips teardown", ob_isolated_mode_skips_teardown(mode), 1);
 
-	mode = ob_isolated_mode_select(false, false, false);
+	/* dma_test_only owns the DMA lifecycle and is not teardown-skipping. */
+	mode = ob_isolated_mode_select(false, false, false, true);
+	chk("select dma mode", mode, OB_ISOLATED_DMA_TEST);
+	chk("dma uses dma", ob_isolated_mode_uses_dma(mode), 1);
+	chk("dma does not apply common table",
+	    ob_isolated_mode_applies_initvals(mode), 0);
+	chk("dma does not skip teardown",
+	    ob_isolated_mode_skips_teardown(mode), 0);
+
+	mode = ob_isolated_mode_select(false, false, false, false);
 	chk("select normal", mode, OB_ISOLATED_NONE);
 	chk("normal needs teardown", ob_isolated_mode_skips_teardown(mode), 0);
 

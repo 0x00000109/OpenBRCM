@@ -9,28 +9,51 @@
 
 static void ob_ucode_mode_test(struct kunit *test)
 {
-	KUNIT_EXPECT_EQ(test, ob_isolated_mode_count(false, false, false), 0u);
-	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, false, false),
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_count(false, false, false, false), 0u);
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_select(false, false, false, false),
 			OB_ISOLATED_NONE);
-	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(true, false, false),
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_select(true, false, false, false),
 			OB_ISOLATED_FW_VALIDATE);
-	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, true, false),
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_select(false, true, false, false),
 			OB_ISOLATED_UCODE_TEST);
-	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, false, true),
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_select(false, false, true, false),
 			OB_ISOLATED_INITVALS_TEST);
+	KUNIT_EXPECT_EQ(test,
+			ob_isolated_mode_select(false, false, false, true),
+			OB_ISOLATED_DMA_TEST);
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
-			ob_isolated_mode_select(true, true, false)));
+			ob_isolated_mode_select(true, true, false, false)));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
-			ob_isolated_mode_select(true, false, true)));
+			ob_isolated_mode_select(true, false, true, false)));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
-			ob_isolated_mode_select(false, true, true)));
+			ob_isolated_mode_select(false, true, true, false)));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
-			ob_isolated_mode_select(true, true, true)));
+			ob_isolated_mode_select(true, false, false, true)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(false, true, false, true)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(false, false, true, true)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(true, true, true, true)));
 	/* D2A regression: ucode_test_only never applies the common table. */
 	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_applies_initvals(
 			OB_ISOLATED_UCODE_TEST));
 	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_applies_initvals(
 			OB_ISOLATED_INITVALS_TEST));
+	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_applies_initvals(
+			OB_ISOLATED_DMA_TEST));
+	/* Only dma_test_only enters the DMA lifecycle. */
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_uses_dma(
+			OB_ISOLATED_DMA_TEST));
+	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_uses_dma(
+			OB_ISOLATED_INITVALS_TEST));
+	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_skips_teardown(
+			OB_ISOLATED_DMA_TEST));
 }
 
 static void ob_ucode_constants_test(struct kunit *test)

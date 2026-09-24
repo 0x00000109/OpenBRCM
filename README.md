@@ -20,15 +20,14 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > `STATIC TESTED` / `SIGNED` and **HARDWARE RUNTIME PROVEN on BCM4352**
 > (candidate `f27286f`; PR #6) — it proves the common-initvals sequence
 > **only**: bsinitvals, band init, AC PHY, radio, calibration, channel, RX and
-> TX remain unproven. M3.4D3 (band-switch initvals + PHY boundary) is
-> **analysis only** on `m34d3-bsinitvals-analysis` (Draft PR). On the
-> BCM4352/AC path `wlc_phy_switch_radio` does **not** run before bsinitvals (the
-> `0x69594` call is NPHY/HT-gated and mute is skipped), so a vendor-ordered test
-> can stop before real PHY/RF writes. The post-common tail is not D11-only: it
-> initializes 4 TX DMA channels (idle) and FIFO0 RX (64 buffers), with the host
-> IRQ route off. The DMA/IRQ stage is fully reversed and yields the isolatable
-> split D3A0 (DMA/IRQ-source) -> D3A1 -> D3B, conditional on a core-reset
-> quiesce or a reboot-only policy.
+> TX remain unproven. M3.4D3 (band-switch initvals + PHY boundary) analysis is
+> merged. M3.4D3A0 (isolated vendor pre-PHY DMA bring-up, `dma_test_only=1`) is
+> **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`** on
+> `m34d3a0-dma-test` (Draft PR): D2B prefix + pinned D11/IRQ-source writes (host
+> IRQ route off, `MACINTMASK=0`), 4 TX DMA channels + FIFO0 RX (64 buffers),
+> deterministic validation, fail-closed quiesce (per-channel reset verified;
+> core-reset containment fallback only). It STOPS before band init/bsinitvals/
+> PHY/radio/channel/mac80211.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

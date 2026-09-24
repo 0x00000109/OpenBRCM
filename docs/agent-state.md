@@ -93,9 +93,38 @@ Stated exactly:
 - M3.4D2B analysis = COMPLETE
 - M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
 - M3.4D3 = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN
+- M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
+- M3.4D3A0 implementation = IMPLEMENTED / STATIC TESTED / SIGNED /
+  NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
+
+## M3.4D3A0 — isolated vendor pre-PHY DMA bring-up (IMPLEMENTED, not proven)
+
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
+(no hardware run performed). Module param **`dma_test_only=1`**; mutually
+exclusive with `fw_validate_only`/`ucode_test_only`/`initvals_test_only` (any
+conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
+`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
+
+- Runs the proven `ob_ucode_run_d2a()` prefix, then the exactly-pinned
+  D11/IRQ-source writes **in vendor order** (`intrcvlazy[0]=0x01000000` →
+  `MACCONTROL` RMW → `macintstatus` W1C `MI_GP1` → `intctrlregs[0].intmask=I_RI`
+  → `macphyclk_set` ON → machwcap SHM caps), then DMA.
+- DMA: four TX channels (`0x200/0x240/0x280/0x2c0`, 512×16 B, 8192-aligned,
+  `ADDRHIGH=0x80000000`, `control = read|XE|PD`, no ptr/descriptors) and FIFO0
+  RX (`0x220`, 256 desc, 64 posted 2048-B buffers, `CONTROL=0x84d`,
+  `PTR=0x400`).
+- Host IRQ impossible: `MACINTMASK` stays 0, no `request_irq`, no
+  `bcma_host_pci_irq_ctl`, no `MI_DMAINT`; `EN_MAC` stays 0.
+- Fail-closed quiesce: clear `I_RI`; `dma_rxreset`; `dma_txreset` per
+  initialized channel (bounded 10 ms polls); verify stopped. `bcma_core_disable`
+  containment only if a per-channel reset times out and is verified. DMA memory
+  is freed only after verified quiesce; otherwise the module enters a
+  reboot-required fatal state and never frees. `ob_remove()` honours this.
+- STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
+  / PHY / radio / channel / mac80211.
 
 ## M3.4D3 — band-switch initvals + PHY boundary (ANALYSIS ONLY)
 Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
@@ -227,12 +256,16 @@ IRQ-source, host route off) → D3A1 (remaining tail) → D3B (band init + 73
 bsinitvals) → D4 (PHY). Appendix D closes the D3A0 blockers and returns
 **`D3A0 IMPLEMENTATION GO: YES`** (4-TX map; TX CONTROL RMW; `0x80000000` high
 word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
-quiesce = per-channel reset + `bcma_core_disable`). Next (analysis/design to
-code): implement D3A0 as a new isolated mode with same-run teardown via the D.17
-helper split. M3.4D3 stays ANALYSIS ONLY until then. **No
-hardware action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/
-channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime
-evidence, `docs/m34d2b_initvals_test.md`.
+quiesce = per-channel reset + `bcma_core_disable`).
+
+**D3A0 is now IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN** on
+`m34d3a0-dma-test` (see the M3.4D3A0 section). Next: review the Draft PR, then
+(when explicitly approved) run the frozen signed module with `dma_test_only=1`
+on hardware and record the bring-up + teardown evidence exactly as M3.4D2A/D2B
+did. **No hardware action in this task:** no `insmod`, no DMA test, no
+PHY/radio/channel/mac80211. See `docs/d3a0_dma_test_design.md`,
+`docs/m34d3_bsinitvals.md` and, for D2B runtime evidence,
+`docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

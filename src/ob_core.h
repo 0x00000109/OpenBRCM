@@ -16,6 +16,7 @@
 #include "ob_irq.h"
 #include "ob_rx.h"
 #include "ob_fw.h"
+#include "ob_d3a0.h"
 
 #define OB_DRV_NAME	"openbrcm"
 
@@ -38,6 +39,11 @@ struct ieee80211_hw;
  *		device is bound, the proven D2A core ran, the 610 common
  *		initvals were applied and postconditions verified; @remove must
  *		skip all RX/IRQ/DMA/mac80211 teardown
+ * @dma_test_only: true when probe ran with dma_test_only=1: the device is
+ *		bound, the D2B prefix plus the pinned D11/IRQ-source writes ran
+ *		and the vendor DMA lifecycle (4 TX + FIFO0 RX) was brought up,
+ *		validated, quiesced and freed; @remove handles the fail-closed
+ *		DMA lifecycle via ob_d3a0_remove()
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
@@ -56,6 +62,7 @@ struct ob_hw {
 	bool			validate_only;
 	bool			ucode_test_only;
 	bool			initvals_test_only;
+	bool			dma_test_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;
@@ -64,6 +71,7 @@ struct ob_hw {
 	struct ob_irq		irq;
 	struct ob_rx		rx;
 	struct ob_fw		fw;
+	struct ob_d3a0		d3a0;
 };
 
 int ob_probe(struct bcma_device *core);

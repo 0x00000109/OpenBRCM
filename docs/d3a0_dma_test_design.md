@@ -1,8 +1,20 @@
 # D3A0 — vendor pre-PHY DMA bring-up (design record)
 
-**Status: `ANALYSIS ONLY` / `NOT IMPLEMENTED` / `NOT HARDWARE PROVEN`.**
-Last hardware-proven milestone: **M3.4D2B**. No hardware action, no DMA/IRQ
-code, no `insmod`.
+**Status: `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`.**
+Implementation on branch `m34d3a0-dma-test`: `src/ob_d3a0.{c,h}`,
+`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`, module param
+`dma_test_only=1`. No hardware run was performed. Last hardware-proven
+milestone: **M3.4D2B**.
+
+Implementation notes / deviations from this design, all documented:
+- `sub_67efd` (TXE0 FIFO fixup) and the runtime NVRAM/BTC/rate/power SHM tables
+  are **not** implemented: their exact write sets are not pinned in the merged
+  analysis, and they are not prerequisites for the DMA engine programming.
+  They remain deferred pre-DMA/D3A1 content.
+- The D3A0 prefix implements only the exactly-pinned operations: SHM
+  `0x80=8`, `0x5c=0x0a`, `intrcvlazy[0]=0x01000000`, `MACCONTROL` RMW,
+  `tsf_cfprep`/`tsf_cfpstart`, `macintstatus` W1C, `intctrlregs[0].intmask=I_RI`,
+  `macphyclk` ON, `M_MACHW_VER`/`M_MACHW_CAP_L/H`.
 
 This branch (`m34d3a0-dma-test`) records the exact future D3A0 implementation
 boundary. It contains **design documentation only**; nothing here is

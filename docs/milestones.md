@@ -241,6 +241,25 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   `wlc_phy_init`. OpenBRCM gaps: `ob_dma_quiesce`, 4-channel TX programming,
   out-of-band IRQ route. See report §17/§18 and Appendix C.
 
+## M3.4D3A0 — isolated vendor pre-PHY DMA bring-up (`IMPLEMENTED`)
+
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `NOT HARDWARE PROVEN`**
+(no hardware run). Module param **`dma_test_only=1`**, mutually exclusive with
+the other isolated modes. Files: `src/ob_d3a0.{c,h}`,
+`tests/host/ob_d3a0_test.c`, `tests/kunit/ob_d3a0_kunit.c`.
+- Executes the proven `ob_ucode_run_d2a()` prefix, the exactly-pinned
+  D11/IRQ-source writes **before** DMA (vendor order), the four TX DMA channels
+  (0x200/0x240/0x280/0x2c0; 512x16 B; 8192 align; `ADDRHIGH=0x80000000`;
+  `control = read|XE|PD`; no ptr/descriptors) and FIFO0 RX (0x220; 256 desc;
+  64 posted 2048-B buffers; `CONTROL=0x84d`; `PTR=0x400`).
+- Host IRQ delivery impossible (`MACINTMASK=0`, no `request_irq`, no
+  `bcma_host_pci_irq_ctl`, no `MI_DMAINT`); `EN_MAC=0`.
+- Fail-closed quiesce (per-channel reset verified; `bcma_core_disable`
+  containment fallback only); same-run free only after verified quiesce.
+  `ob_remove()` honours the fatal/reboot-required state.
+- STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
+  radio / channel / mac80211.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

@@ -280,3 +280,28 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
   `addrlow`, `addrhigh`, `ptr`, enabling an engine, or taking an IRQ. Descriptors
   are zero-initialised; no buffer is mapped and no EOT is written to the ring.
 
+
+## M3.4D3A0 — isolated vendor pre-PHY DMA lifecycle (`dma_test_only`)
+
+The accepted M3.4D3 analysis (Appendices C/D of `docs/m34d3_bsinitvals.md`)
+adds a vendor-faithful DMA stage in `dma_test_only`. It is deliberately kept
+separate from the M3.2/M3.4B path so the proven normal and isolated modes are
+untouched. Lifecycle stages (`src/ob_d3a0.c`):
+
+| stage | function | registers / resources |
+| :--- | :--- | :--- |
+| prefix | `ob_d3a0_prefix` | pinned D11: `intrcvlazy`, `MACCONTROL` RMW, `tsf`, `macintstatus`, `intctrlregs[0]=I_RI`, `macphyclk`, machwcap SHM |
+| alloc | `ob_d3a0_ring_alloc` | 4 TX + 1 RX 8 KiB-aligned coherent rings |
+| TX program | `ob_d3a0_tx_program` | `addrlow`, `addrhigh=0x80000000`, `control = read\|XE\|PD`; no `ptr`, no descriptors |
+| RX map/desc | `ob_d3a0_rx_map`, `ob_d3a0_rx_build_desc` | 64 `DMA_FROM_DEVICE` buffers, 16-B descriptors, EOT@255 |
+| RX program | `ob_d3a0_rx_program` | `control=0x84d`, `ptr=0x400`, `addrhigh=0x80000000` |
+| validate | `ob_d3a0_validate` | addrlow/addrhigh/control/status0(state)/status1; `macintmask=0` |
+| quiesce | `ob_d3a0_quiesce` | clear `I_RI`; `dma_rxreset`; `dma_txreset` per initialized channel (bounded 10 ms); verify; `bcma_core_disable` containment only if verified |
+| free | `ob_d3a0_free_mem` | only after `ob_d3a0_can_free()`; unmap/free buffers and rings |
+
+Fail-closed invariant: DMA memory is never freed while hardware may still
+consume it (`ob_d3a0_can_free`); an unverified quiesce sets a fatal,
+reboot-required state and `ob_d3a0_remove` refuses to free. `MACINTMASK` stays
+0 and the host BCMA/PCI IRQ route is never enabled. The four TX channels are
+`0x200` AC_BK, `0x240` AC_BE, `0x280` AC_VI, `0x2C0` AC_VO/CTL; FIFO0 RX is
+`0x220`.
