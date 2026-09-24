@@ -34,6 +34,10 @@ struct ieee80211_hw;
  * @ucode_test_only: true when probe ran with ucode_test_only=1: the device is
  *		bound, minimum core prep + ucode upload + PSM start ran, and
  *		@remove must skip all RX/IRQ/DMA/mac80211 teardown
+ * @initvals_test_only: true when probe ran with initvals_test_only=1: the
+ *		device is bound, the proven D2A core ran, the 610 common
+ *		initvals were applied and postconditions verified; @remove must
+ *		skip all RX/IRQ/DMA/mac80211 teardown
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
@@ -51,6 +55,7 @@ struct ob_hw {
 	u8			chip_rev;
 	bool			validate_only;
 	bool			ucode_test_only;
+	bool			initvals_test_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;

@@ -9,10 +9,28 @@
 
 static void ob_ucode_mode_test(struct kunit *test)
 {
-	KUNIT_EXPECT_FALSE(test, ob_ucode_mode_conflict(false, false));
-	KUNIT_EXPECT_FALSE(test, ob_ucode_mode_conflict(true, false));
-	KUNIT_EXPECT_FALSE(test, ob_ucode_mode_conflict(false, true));
-	KUNIT_EXPECT_TRUE(test, ob_ucode_mode_conflict(true, true));
+	KUNIT_EXPECT_EQ(test, ob_isolated_mode_count(false, false, false), 0u);
+	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, false, false),
+			OB_ISOLATED_NONE);
+	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(true, false, false),
+			OB_ISOLATED_FW_VALIDATE);
+	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, true, false),
+			OB_ISOLATED_UCODE_TEST);
+	KUNIT_EXPECT_EQ(test, ob_isolated_mode_select(false, false, true),
+			OB_ISOLATED_INITVALS_TEST);
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(true, true, false)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(true, false, true)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(false, true, true)));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_conflict(
+			ob_isolated_mode_select(true, true, true)));
+	/* D2A regression: ucode_test_only never applies the common table. */
+	KUNIT_EXPECT_FALSE(test, ob_isolated_mode_applies_initvals(
+			OB_ISOLATED_UCODE_TEST));
+	KUNIT_EXPECT_TRUE(test, ob_isolated_mode_applies_initvals(
+			OB_ISOLATED_INITVALS_TEST));
 }
 
 static void ob_ucode_constants_test(struct kunit *test)

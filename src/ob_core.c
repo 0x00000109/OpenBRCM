@@ -11,6 +11,7 @@
 #include "ob_si.h"
 #include "ob_mac80211.h"
 #include "ob_ucode.h"
+#include "ob_initvals.h"
 
 /*
  * Explicit firmware-validation-only mode.
@@ -44,19 +45,37 @@ module_param(ucode_test_only, bool, 0444);
 MODULE_PARM_DESC(ucode_test_only,
 		 "D11 rev42 ucode upload + PSM start only; stops before initvals/PHY/DMA (default: 0)");
 
+/*
+ * Explicit isolated D11 rev42 common-initvals test (M3.4D2B).
+ *
+ * When set, probe runs the hardware-proven D2A core (ucode upload + PSM start),
+ * applies exactly the 610 `d11ac1initvals42` common-initvals records, reads the
+ * deterministic postconditions, then STOPS before bsinitvals/sub_6656c/PHY/
+ * radio/channel/RX/TX DMA/IRQ/mac80211. Mutually exclusive with the other
+ * isolated modes; any conflicting combination fails probe before hardware
+ * access.
+ */
+static bool initvals_test_only;
+module_param(initvals_test_only, bool, 0444);
+MODULE_PARM_DESC(initvals_test_only,
+		 "D11 rev42 common initvals + PSM only; stops before bsinitvals/PHY/DMA (default: 0)");
+
 int ob_probe(struct bcma_device *core)
 {
 	struct ob_hw *hw;
+	enum ob_isolated_mode mode;
 	int ret;
 
 	if (core->id.manuf != BCMA_MANUF_BCM ||
 	    core->id.id != BCMA_CORE_80211)
 		return -ENODEV;
 
-	/* Explicit mode policy: the two isolated modes must never combine. */
-	if (ob_ucode_mode_conflict(fw_validate_only, ucode_test_only)) {
+	/* Explicit mode policy: at most one isolated mode may be selected. */
+	mode = ob_isolated_mode_select(fw_validate_only, ucode_test_only,
+				       initvals_test_only);
+	if (ob_isolated_mode_conflict(mode)) {
 		dev_err(&core->dev,
-			OB_DRV_NAME ": fw_validate_only and ucode_test_only are mutually exclusive\n");
+			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only are mutually exclusive\n");
 		return -EINVAL;
 	}
 
@@ -82,7 +101,7 @@ int ob_probe(struct bcma_device *core)
 	 * calls request_firmware()/release_firmware() and the size-bounded
 	 * parsers; it never touches an OpenBRCM register. No mac80211.
 	 */
-	if (fw_validate_only) {
+	if (mode == OB_ISOLATED_FW_VALIDATE) {
 		hw->validate_only = true;
 		ret = ob_fw_probe(hw);
 		if (ret) {
@@ -100,9 +119,26 @@ int ob_probe(struct bcma_device *core)
 	 * returns before any normal OpenBRCM bring-up (no ob_si_probe, no DMA,
 	 * no IRQ, no RX, no mac80211).
 	 */
-	if (ucode_test_only) {
+	if (mode == OB_ISOLATED_UCODE_TEST) {
 		hw->ucode_test_only = true;
 		ret = ob_ucode_test(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
+
+	/*
+	 * initvals_test_only: isolated D11 common-initvals test. Runs the proven
+	 * D2A core, applies the 610 common-initvals records and verifies the
+	 * deterministic postconditions, then returns before any normal OpenBRCM
+	 * bring-up (no ob_si_probe, no bsinitvals/PHY/radio, no DMA, no IRQ, no
+	 * RX, no mac80211).
+	 */
+	if (mode == OB_ISOLATED_INITVALS_TEST) {
+		hw->initvals_test_only = true;
+		ret = ob_initvals_test(hw);
 		if (ret) {
 			bcma_set_drvdata(core, NULL);
 			return ret;
@@ -192,6 +228,18 @@ void ob_remove(struct bcma_device *core)
 	if (hw->ucode_test_only) {
 		dev_info(hw->dev,
 			 OB_DRV_NAME ": removed (ucode-test; no resource teardown, hardware left as-is)\n");
+		bcma_set_drvdata(core, NULL);
+		return;
+	}
+
+	/*
+	 * initvals_test_only never initialized mac80211, IRQ, DMA or RX; skip all
+	 * teardown. Like ucode_test_only, no MAC/PHY register is restored because
+	 * no recovery write is provenance-backed for this partial state.
+	 */
+	if (hw->initvals_test_only) {
+		dev_info(hw->dev,
+			 OB_DRV_NAME ": removed (initvals-test; no resource teardown, hardware left as-is)\n");
 		bcma_set_drvdata(core, NULL);
 		return;
 	}

@@ -1,11 +1,14 @@
 # M3.4D2B — rev42 common initvals analysis
 
-**Status: `ANALYSIS ONLY` — NOT IMPLEMENTED — NOT HARDWARE PROVEN.**
+**Status: analysis `COMPLETE`; implementation `IMPLEMENTED` / `STATIC TESTED` /
+`SIGNED`; `NOT HARDWARE PROVEN`.** The analysis below is complete; the isolated
+test that implements it lives in `docs/m34d2b_initvals_test.md` (mode
+`initvals_test_only=1`) and has not been run on hardware.
 
 Canonical status (exact):
 - M3.4D2A = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
-- M3.4D2B implementation = NOT IMPLEMENTED
+- M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
 - M3.4D2B hardware status = NOT HARDWARE PROVEN
 
 The formal decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe

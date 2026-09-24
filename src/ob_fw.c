@@ -73,6 +73,17 @@ int ob_fw_request_ucode(struct ob_hw *hw, const struct firmware **fw,
 			     OB_FW_UCODE42_SIZE, OB_FW_UCODE42_FNV, fw, used);
 }
 
+/*
+ * Acquire + size/FNV-validate the rev42 common initvals table for the isolated
+ * common-initvals test (M3.4D2B). Same strictness as ob_fw_probe().
+ */
+int ob_fw_request_initvals(struct ob_hw *hw, const struct firmware **fw)
+{
+	return ob_fw_request(hw, OB_FW_AC1INITVALS42_NAME, NULL,
+			     OB_FW_AC1INITVALS42_SIZE,
+			     OB_FW_AC1INITVALS42_FNV, fw, NULL);
+}
+
 static void ob_fw_trace_ucode(struct ob_hw *hw, const u8 *data, u32 words)
 {
 	u32 i, v, start;

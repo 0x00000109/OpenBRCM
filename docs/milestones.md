@@ -60,17 +60,16 @@ after the common-initvals applier, which D2A does not run); final
 no DMA/IRQ/PHY/radio/channel init. Post-test state is intentionally partial
 (`PSM_RUN=1`, D11 enabled, `EN_MAC=0`) with no cleanup writes.
 
-## M3.4D2B — rev42 common initvals sequencing (`ANALYSIS ONLY`; NOT implemented)
+## M3.4D2B — rev42 common initvals sequencing (`IMPLEMENTED`/`STATIC TESTED`/`SIGNED`; NOT hardware proven)
 
 Canonical status (exact):
 - M3.4D2A = HARDWARE RUNTIME PROVEN
 - M3.4D2B analysis = COMPLETE
-- M3.4D2B implementation = NOT IMPLEMENTED
+- M3.4D2B implementation = IMPLEMENTED / STATIC TESTED / SIGNED
 - M3.4D2B hardware status = NOT HARDWARE PROVEN
 
-The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe to
-design/implement an isolated D2B test**; it is **not** permission to run
-hardware and **not** a hardware proof.
+The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` cleared the design;
+the code exists but has **not** run on hardware and is **not** a hardware proof.
 
 Full analysis: `docs/m34d2b_common_initvals.md`; machine-generated 610/73-record
 classification in `docs/m34d2b/initvals_classification.{md,json}`
@@ -119,9 +118,32 @@ See `docs/m34d2b_common_initvals.md` (§F1–F14).
   `MACCONTROL=0x04020402`, SHM `0x14=0xb4` (host `xmtfifo_sz` overwrite noted
   for the full path; isolated path keeps table values).
 - Formal decision: **CAN COMMON INITVALS BE ISOLATED SAFELY? YES** — for
-  *designing* an isolated test only. Test design in §F13; still requires
-  explicit human approval. Status remains **ANALYSIS ONLY / NOT IMPLEMENTED /
-  NOT HARDWARE PROVEN**.
+  *designing*/*implementing* an isolated test only; it is **not** permission to
+  run hardware and **not** a hardware proof. Test design in §F13.
+
+### M3.4D2B implementation — isolated common-initvals test
+
+`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN** (branch
+`m34d2b-initvals-test`, Draft PR; not merged). Full detail:
+`docs/m34d2b_initvals_test.md`.
+- New mode `initvals_test_only=1`; at most one isolated mode allowed
+  (`fw_validate_only`/`ucode_test_only`/`initvals_test_only`); any combination
+  returns `-EINVAL` before hardware access.
+- Shared hardware-proven D2A core `ob_ucode_run_d2a()` (src/ob_ucode.c) used by
+  both D2A and D2B — one copy of the register sequence, no silent divergence.
+- Applies exactly the 610 `d11ac1initvals42` records (113 x 16-bit / 497 x
+  32-bit), strict order, terminator excluded; write-count invariant
+  `total=610 w16=113 w32=497` else `-EIO`.
+- Read-only postconditions: `M_FIFOSIZE0..3=01c4/0000/0000/079e`,
+  `MACINTMASK=0`, `MACCONTROL=0x04020402`, SHM `0x14=0xb4`; else `-EIO`.
+- No `request_irq`, no host IRQ routing, no DMA (no `ob_dma_init`/`ob_rx_init`),
+  no PHY/radio/channel, no bsinitvals/`sub_6656c`, no mac80211; dedicated
+  `remove()` guard performs no teardown.
+- Verified statically: `make` + `make hosttest` (8/8 PASS) +
+  `scripts/docs-check.sh` PASS + checkpatch clean + signed as Broadcom Driver
+  MOK (sha256). KUnit **NOT EXECUTED** (no runner).
+- **NOT HARDWARE PROVEN**: never run on hardware; requires explicit human
+  approval in a dedicated task (manual procedure in the impl doc).
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
