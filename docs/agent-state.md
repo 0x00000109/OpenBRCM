@@ -28,10 +28,14 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - **M3.4D3A0** (`dma_test_only=1`) is `HARDWARE RUNTIME PROVEN` on BCM4352
   (candidate `4fa1b57`, runtime `7e68fe24`, signed module SHA256
   `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`). Evidence:
-  `docs/m34d3a0_dma_test.md`; branch `m34d3a0-dma-test`, PR #8, merged to
-  `main` via a normal merge commit.
-- Active analysis branch `m34d3a1-vendor-tail-analysis` (from the post-PR-#8
-  `main`) — M3.4D3A1 vendor-tail recovery, **analysis only**.
+  `docs/m34d3a0_dma_test.md`; PR #8 merged to `main` via a normal merge commit
+  `3bdef76`, so `main == origin/main == 3bdef76` and `4fa1b57`/`7e68fe24`/
+  `5b1b0e8` are ancestors.
+- Analysis branch `m34d3a1-vendor-tail-analysis` (from `3bdef76`) —
+  **M3.4D3A1 vendor-tail recovery, `ANALYSIS COMPLETE` / NOT IMPLEMENTED /
+  NOT HARDWARE PROVEN**, `D3A1 IMPLEMENTATION GO: YES`; report
+  `docs/m34d3a1_vendor_tail.md`. Docs/tooling only, no runtime code, no
+  hardware; merged to `main` via a normal merge commit.
 - Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
@@ -118,6 +122,9 @@ Stated exactly:
 - M3.4D3A0 design = `D3A0 IMPLEMENTATION GO: YES` (analysis, Appendix D)
 - M3.4D3A0 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated DMA lifecycle only; candidate `4fa1b57`)
+- M3.4D3A1 = `ANALYSIS COMPLETE` (vendor post-common / pre-PHY tail; NOT
+  IMPLEMENTED / NOT HARDWARE PROVEN; value-source/struct-field blockers closed;
+  `D3A1 IMPLEMENTATION GO: YES` — analysis decision only)
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
@@ -174,6 +181,49 @@ conflict → `-EINVAL` before hardware). Files: `src/ob_d3a0.{c,h}`,
   this and never frees. Operator rule: **FATAL → do not unbind/rebind → reboot.**
 - STOPS before remaining D3A1 tail / `sub_6656c` / bsinitvals / `wlc_phy_init`
   / PHY / radio / channel / mac80211.
+
+## M3.4D3A1 — vendor post-common / pre-PHY tail (ANALYSIS COMPLETE)
+Status: **`M3.4D3A1 = ANALYSIS COMPLETE` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+`D3A1 IMPLEMENTATION GO: YES` (all value-source / struct-field blockers closed by
+the follow-up in §15: MAC six bytes = `cur_etheraddr`; SCR `0x24` is a
+read-modify-write skipped on the first init; `btc_params`/`btc_flags` absent ⇒
+skip; `M_MAX_ANTCNT = 0x0a`). Report:
+`docs/m34d3a1_vendor_tail.md`. Blob sha256 `352a6e349f…`; read-only RE.
+- **Key correction: the vendor interleaves DMA inside the tail** —
+  `T1 (sub_67efd → MACCONTROL/macphyclk/SCR/SFBL/ifs) → DMA (4× txinit +
+  rxinit + rxfill) → T2 (BTC/NVRAM SHM, 0x78c/0x78e/0x790, switch_macfreq) →
+  STOP before sub_6656c`. Design A (tail→DMA) and Design B (DMA→tail) are both
+  non-vendor-faithful; preserve the interleaving.
+- Ordering (direct control flow, all proven): DMA is **after** `sub_67efd`,
+  MACCONTROL `0x04020402→0x44020402`, and `macphyclk_set`; DMA is **before** the
+  NVRAM/BTC SHM tail, bsinitvals (`0x669bd`) and `wlc_phy_init` (`0x669df`).
+- `sub_67efd` (`0x67efd`): rev42 executes machwcap read + `0x542/0x540` FIFO
+  flush/cmd + 7-entry loop (42 writes) + 42-entry loop (168 writes); the RXE
+  block (`0x42c/0x42e/0x43a/0x43c/0x406`) is gated `phyrev>0x2a` and **not**
+  executed for rev42. No DMA/IRQ/PHY/radio access; two bounded polls. Mandatory
+  on the vendor rev42 path; safe in an isolated no-PHY test.
+- Omitted SHM groups: `M_MBURST_SIZE`(0x80)/`M_MAX_ANTCNT`(0x5c);
+  `M_MACHW_VER`(0x16)/`M_MACHW_CAP_L/H`(0xc0/0xc2); SCR SRL/LRL + SFBL/LFBL;
+  NVRAM `btc_params%d` (119) + 4 fixed BTC values (`0x7530/0x4e20/0x7530/0x753`)
+  and `btc_flags`→`sub_62b79` (mhf ×5); plus the **UNKNOWN** six-byte group
+  `0x78c/0x78e/0x790` sourced from `wlc+8..0xd`.
+- IRQ source: `intrcvlazy[0]=0x01000000` → `macintstatus` W1C `MI_GP1=0x4000` →
+  `intctrlregs[0].intmask=I_RI=0x10000`; `macintmask` stays 0; `MI_DMAINT` not
+  set; host route off. First real PHY op = `wlc_phy_anacore` (`0xbac84`).
+- D3A1 boundary: first included call `sub_67efd` (`0x68bab`), last included
+  `wlc_bmac_switch_macfreq` (`0x695cb`), STOP before `sub_6656c` (`0x695d8`).
+- Blocker closure (§15 of the report): the `0x78c/0x78e/0x790` six bytes are
+  `wlc_pub+8` = `cur_etheraddr` (device MAC) — `wlc_bmac_attach` parses NVRAM
+  `macaddr` → `wlc_hw+0x178`; `wlc_attach` `memcpy(wlc_pub+8, …)`. `r13 =
+  wlc_info`, `r13+0x20 = wlc_info->hw`; the SCR `0x24` write is a
+  read-modify-write of SCR `0x24` (read at `0x68773`), **skipped on the first
+  init** because `wlc_info_init` sets `wlc_info+0x718 = 1`. `getvar` scans a
+  NUL-separated `name=value` per-hw buffer then the global `nvram_get` list
+  (`srom_var_init` SPROM vars + `nvram_init` `nvram.txt`). `btc_params`/
+  `btc_flags` are absent on ASUS PCE-AC56 ⇒ skip (no zero-fill). `M_MAX_ANTCNT`
+  `0x0a` = upstream vanilla `ANTCNT` (antenna swap threshold).
+- Remaining non-blocking unknown: only the **symbolic name** of the SHM
+  `0x78c/0x78e/0x790` slots (value/source proven; microcode-only consumer).
 
 ## M3.4D3 — band-switch initvals + PHY boundary (ANALYSIS ONLY)
 Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
@@ -315,13 +365,17 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-Next: **M3.4D3A1 vendor-tail analysis only** on `m34d3a1-vendor-tail-analysis`
-(recover `sub_67efd` TXE0/FIFO fixup + the runtime NVRAM/BTC/rate/power SHM tail,
-their exact ordering relative to the now-proven DMA lifecycle and to band
-init/bsinitvals, and the safest next isolated boundary). Do not assume D3A0's
-isolated ordering is the final normal-driver order. **No hardware action:** no
-`insmod`, no DMA test, no PHY/radio/channel/mac80211. See
-`docs/d3a0_dma_test_design.md` and `docs/m34d3_bsinitvals.md`.
+**M3.4D3A1 vendor-tail analysis is now COMPLETE** (ANALYSIS COMPLETE / NOT
+IMPLEMENTED / NOT HARDWARE PROVEN) on `m34d3a1-vendor-tail-analysis`; report
+`docs/m34d3a1_vendor_tail.md`. It
+re-proves `sub_67efd` for rev42, recovers the omitted SHM/NVRAM/BTC groups, and
+establishes that the vendor order is **T1 → DMA → T2** (DMA is interleaved, not
+a separate pre- or post-tail stage), with the D3A1 STOP immediately before
+`sub_6656c` (`bsinitvals` → `wlc_phy_init`). The value-source/struct-field
+blockers are now closed and `D3A1 IMPLEMENTATION GO: YES` (analysis decision
+only — **not implemented**). **No hardware action:** no `insmod`, no DMA test,
+no PHY/radio/channel/mac80211. See `docs/d3a0_dma_test_design.md`,
+`docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
