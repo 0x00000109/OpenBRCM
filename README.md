@@ -15,7 +15,9 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > The isolated `fw_validate_only` runtime PASS and the `ucode_test_only`
 > (M3.4D2A) implementation are **working-tree** state, not yet in Git history;
 > see `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
-> MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **6.12 LTS + 7.x**.
+> MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
+> compatibility pending, tracked in
+> [#3](https://github.com/0x00000109/OpenBRCM/issues/3)).
 
 ## Why
 Broadcom's SoftMAC driver ships a thin open OS wrapper plus a large proprietary
