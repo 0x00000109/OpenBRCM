@@ -25,6 +25,8 @@ struct ieee80211_hw;
  * @chip_id:	chip id (e.g. 0x4352)
  * @chip_rev:	chip revision
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
+ * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
+ * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
  * @ieee:	mac80211 hw, once registered
  */
 struct ob_hw {
@@ -34,6 +36,8 @@ struct ob_hw {
 	u16			chip_id;
 	u8			chip_rev;
 	struct bcma_device	*cc;
+	u8			mac[6];
+	bool			mac_valid;
 	struct ieee80211_hw	*ieee;
 };
 

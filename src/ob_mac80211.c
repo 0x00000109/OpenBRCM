@@ -207,6 +207,19 @@ int ob_mac80211_register(struct ob_hw *ob)
 
 	SET_IEEE80211_DEV(ieee, ob->dev);
 
+	/*
+	 * Install the validated external-SPROM MAC as the permanent address
+	 * BEFORE ieee80211_register_hw(). Never use bcma's bus->sprom.il0mac:
+	 * on this rev11 image it is malformed (rev8 offset) — see ob_si.c.
+	 */
+	if (ob->mac_valid) {
+		SET_IEEE80211_PERM_ADDR(ieee, ob->mac);
+		dev_info(ob->dev, "permanent MAC %pM (external SPROM)\n", ob->mac);
+	} else {
+		dev_warn(ob->dev,
+			 "no validated SPROM MAC; using mac80211 default address\n");
+	}
+
 	ieee->wiphy->bands[NL80211_BAND_2GHZ] = &ob_band_2ghz;
 	ieee->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION);
 	ieee->queues = 4;
