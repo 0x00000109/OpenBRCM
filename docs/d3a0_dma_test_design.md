@@ -274,17 +274,22 @@ Prepared but intentionally **not run**. Requires explicit human approval and a
 quiet machine (no other openbrcm activity). Uses only `dma_test_only=1`; no
 `runtime-test.sh`, no combined isolated modes.
 
-Frozen artifacts (this branch). Earlier candidates `c214f5eb…` (commits
-`8a59bf1`+`b33e7e3`) and `76d6ec29…` (commit `90a5ae0`) are **SUPERSEDED**: the
-first lacked the D2B common-initvals entry and the second treated core-reset
-containment as free authorization. Neither must ever be used.
+**Candidate artifacts — NOT YET FROZEN.** Freezing requires explicit human
+approval; this document only prepares the procedure. Earlier candidates
+`c214f5eb…` (commits `8a59bf1`+`b33e7e3`) and `76d6ec29…` (commit `90a5ae0`)
+are **SUPERSEDED** and must never be used: the first lacked the D2B
+common-initvals entry and the second treated core-reset containment as free
+authorization.
 - implementation + docs commit: the commit that contains this document
-- built + signed module: `openbrcm.ko`
+- built + signed module from that commit: `openbrcm.ko`
   SHA256 `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`
   (`signer: Broadcom Driver MOK`, `sig_hashalgo: sha256`)
+- the module build is content-reproducible: docs-only commits do not change the
+  hash. Before any approved run, rebuild+re-sign from the exact approved commit
+  and re-verify the hash.
 
 ```
-# 0. verify the frozen module hash
+# 0. verify the candidate module hash
 sha256sum openbrcm.ko
 #   expect 0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08
 
