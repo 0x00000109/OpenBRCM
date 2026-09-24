@@ -1,6 +1,17 @@
 # M3.4D2B — rev42 common initvals analysis
 
 **Status: `ANALYSIS ONLY` — NOT IMPLEMENTED — NOT HARDWARE PROVEN.**
+
+Canonical status (exact):
+- M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B analysis = COMPLETE
+- M3.4D2B implementation = NOT IMPLEMENTED
+- M3.4D2B hardware status = NOT HARDWARE PROVEN
+
+The formal decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe
+to design/implement an isolated D2B test**; it is **not** permission to run
+hardware and **not** a hardware proof.
+
 No hardware write, no `insmod`/`rmmod`/`modprobe`, no second D2A run. The last
 hardware-proven milestone remains **M3.4D2A** (ucode upload + PSM start only;
 see `docs/ucode_test.md`).

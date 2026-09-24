@@ -62,6 +62,16 @@ no DMA/IRQ/PHY/radio/channel init. Post-test state is intentionally partial
 
 ## M3.4D2B — rev42 common initvals sequencing (`ANALYSIS ONLY`; NOT implemented)
 
+Canonical status (exact):
+- M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B analysis = COMPLETE
+- M3.4D2B implementation = NOT IMPLEMENTED
+- M3.4D2B hardware status = NOT HARDWARE PROVEN
+
+The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe to
+design/implement an isolated D2B test**; it is **not** permission to run
+hardware and **not** a hardware proof.
+
 Full analysis: `docs/m34d2b_common_initvals.md`; machine-generated 610/73-record
 classification in `docs/m34d2b/initvals_classification.{md,json}`
 (`scripts/analyze_initvals.py`, verifies vendor size + sha256 first).

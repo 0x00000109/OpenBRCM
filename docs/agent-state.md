@@ -56,6 +56,17 @@ source of truth; this file records the live working-tree state on top of HEAD.
   vendor 8-byte IV record format (terminator `0xffff`), **not** b43 IV.
 - M3.4D2A: see "Current milestone".
 
+## Canonical milestone status
+Stated exactly (the formal analysis GO must not be confused with hardware proof):
+- M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B analysis = COMPLETE
+- M3.4D2B implementation = NOT IMPLEMENTED
+- M3.4D2B hardware status = NOT HARDWARE PROVEN
+
+The decision `CAN COMMON INITVALS BE ISOLATED SAFELY? YES` means **safe to
+design/implement an isolated D2B test**; it is **not** permission to run
+hardware and **not** a hardware proof.
+
 ## Current milestone
 **M3.4D2B — rev42 common initvals sequencing.**
 Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
