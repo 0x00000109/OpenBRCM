@@ -26,19 +26,12 @@ jobs:
   build-matrix:
     name: build vs ${{ matrix.kernel }}
     runs-on: ubuntu-latest
-    # 6.12 lacks the `radio_idx` argument in ieee80211_ops.config (see #3), so
-    # its build is allowed to fail until compat is added. 7.x is required.
-    continue-on-error: ${{ matrix.experimental }}
+    # 6.12 is intentionally not in the required matrix: its
+    # ieee80211_ops.config lacks radio_idx (ABI incompat, tracked in #3).
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - kernel: "6.12"
-            experimental: true
-          - kernel: "7.0"
-            experimental: false
-          - kernel: "7.2"
-            experimental: false
+        kernel: [ "7.0", "7.2" ]
     steps:
       - uses: actions/checkout@v4
       - name: Install build deps
