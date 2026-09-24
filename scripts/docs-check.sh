@@ -234,6 +234,21 @@ if grep -q 'best-effort' src/ob_d3a1.c src/ob_d3a1.h; then
 else
 	ok "D3A1 has no best-effort arithmetic"
 fi
+# 4f. The 0x530 predicate is whole-word zero and 0x540 is bit0 clear; no 0x8000
+# mask and no 0x0007 special case may creep in.
+if grep -q 'return v == 0u;' src/ob_d3a1.h && \
+   grep -q 'return (v & 0x1u) == 0u;' src/ob_d3a1.h && \
+   ! grep -qE 'v & 0x8000|== 0x0007|0x8000u? *\)' src/ob_d3a1.c src/ob_d3a1.h; then
+	ok "D3A1 poll predicates exact (0x530 word-zero, 0x540 bit0-clear)"
+else
+	bad "D3A1 poll predicate drift (must be 0x530 word-zero / 0x540 bit0-clear)"
+fi
+if grep -q 'fifo_poll_expired' src/ob_d3a1.c && \
+   grep -q 'vendor continues, non-fatal' src/ob_d3a1.c; then
+	ok "D3A1 poll expiry is vendor-non-fatal"
+else
+	bad "D3A1 poll expiry must be vendor-non-fatal (logged, no abort)"
+fi
 
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then

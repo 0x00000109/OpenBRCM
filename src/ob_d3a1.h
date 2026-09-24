@@ -225,9 +225,18 @@ static inline u16 ob_d3a1_fifo42_x536(u32 idx)
 	return (u16)(e > 0x29u ? 0x29u : e);
 }
 
+/*
+ * The vendor computes 0x532 as min(idx+2,0x29) + r13d where r13d is a
+ * loop-carried value initialised to 1 and decremented once per iteration
+ * (`dec r13d`, 0x68265), i.e. r13d == 1 - idx. That reduces exactly to
+ * min(42 - idx, 3): 3 for idx 0..39, then 2, then 1.
+ */
 static inline u16 ob_d3a1_fifo42_x532(u32 idx)
 {
-	return (u16)(ob_d3a1_fifo42_x536(idx) + (idx == 0u ? 1u : 0u));
+	u32 r = (idx < OB_D3A1_FIFO42_ENTRIES) ?
+		(OB_D3A1_FIFO42_ENTRIES - idx) : 0u;
+
+	return (u16)(r > 3u ? 3u : r);
 }
 
 static inline u16 ob_d3a1_fifo42_x530(u32 idx)
@@ -235,11 +244,59 @@ static inline u16 ob_d3a1_fifo42_x530(u32 idx)
 	return (u16)((idx << 4) | 0x8007u);
 }
 
+/* ---- exact sub_67efd completion predicates (proven from the blob) -------- */
+
 /*
- * Bounded vendor poll predicate. The blob loop continues while the completion
- * predicate is false AND the counter has not reached step-1 (`cmp ...,9`).
- * A poll that exits because the counter reached step-1 is a TIMEOUT and must
- * abort the caller.
+ * 0x530: the vendor loop (0x6824d..0x6825e) is
+ *
+ *     mov rdi, r12              ; &0x530
+ *     call osl_readw
+ *     test %ax,%ax              ; 66 85 c0  (FULL 16-bit zero test)
+ *     je   done                 ; 74 06
+ *     cmpl $0x9, counter
+ *     jne  loop
+ *
+ * i.e. completion is the whole 16-bit register reading 0, NOT a bit15 mask.
+ */
+static inline bool ob_d3a1_fifo530_done(u16 v)
+{
+	return v == 0u;
+}
+
+/*
+ * 0x540: the vendor loop (0x68033..0x68044) is
+ *
+ *     mov rdi, [rbp-58h]        ; &0x540
+ *     call osl_readw
+ *     test $0x1,%al             ; a8 01  (bit0 test)
+ *     je   done                 ; 74 06
+ *     cmp  $0x9, r14d
+ *     jne  loop
+ *
+ * i.e. completion is bit0 clear. The two polls do NOT share a predicate.
+ */
+static inline bool ob_d3a1_fifo540_done(u16 v)
+{
+	return (v & 0x1u) == 0u;
+}
+
+enum ob_d3a1_poll_kind {
+	OB_D3A1_POLL_530,
+	OB_D3A1_POLL_540,
+};
+
+static inline bool ob_d3a1_poll_done(enum ob_d3a1_poll_kind kind, u16 v)
+{
+	return kind == OB_D3A1_POLL_530 ? ob_d3a1_fifo530_done(v)
+					: ob_d3a1_fifo540_done(v);
+}
+
+/*
+ * Bounded vendor poll loop condition. The blob loop continues while the
+ * completion predicate is false AND the counter has not reached step-1
+ * (`cmp ...,9`). The blob has NO error path: when the counter reaches step-1
+ * it simply falls through and the caller continues. OpenBRCM reproduces that
+ * bounded, non-fatal behaviour for the sub_67efd polls.
  */
 static inline bool ob_d3a1_poll_continue(bool done, u32 counter)
 {
@@ -524,11 +581,14 @@ struct ob_hw;
  * @fifo_fixed_writes: 0x542/0x540 writes performed
  * @fifo7_writes:      writes performed by the 7-entry loop (must be 42)
  * @fifo42_writes:     writes performed by the 42-entry loop (must be 168)
- * @fifo_poll540_iters: iterations of the 0x540 completion poll (must complete)
+ * @fifo_poll540_iters: iterations of the 0x540 completion poll
  * @fifo_poll530_iters: total iterations across the 42 x 0x530 polls
  * @fifo_poll530_max:  max iterations observed in a single 0x530 poll
  * @fifo_poll_completed: number of 0x530 polls that met the completion predicate
- * @fifo_fail_index:   -1, or the 0x530 table index that timed out
+ * @fifo_poll_expired: number of sub_67efd polls that hit the bound (0x530+0x540)
+ * @fifo_last_expired_index: -1, or the last 0x530 index whose poll hit the bound
+ * @fifo_first_rb:     completion readback for the first 3 entries (diagnostic)
+ * @fifo_first_reads:  read count for the first 3 entries (diagnostic)
  * @machwcap:          machwcap read from D11+0x15c
  * @fastpwrup_dly:     value written to D11+0x6a8
  * @fastpwrup_dly_sw:  vendor software copy (dev+0x192) incl. sub_5fdca delta
@@ -558,7 +618,10 @@ struct ob_d3a1 {
 	u32	fifo_poll530_iters;
 	u32	fifo_poll530_max;
 	u32	fifo_poll_completed;
-	int	fifo_fail_index;
+	u32	fifo_poll_expired;
+	int	fifo_last_expired_index;
+	u16	fifo_first_rb[3];
+	u32	fifo_first_reads[3];
 	u32	machwcap;
 	u16	fastpwrup_dly;
 	u16	fastpwrup_dly_sw;

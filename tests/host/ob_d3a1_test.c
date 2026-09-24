@@ -133,11 +133,49 @@ static void test_sub67efd_model(void)
 	/* 42-entry per-index values */
 	chk("x534[0]", ob_d3a1_fifo42_x534(0), 0);
 	chk("x536[0]", ob_d3a1_fifo42_x536(0), 2);
-	chk("x532[0] (+1)", ob_d3a1_fifo42_x532(0), 3);
-	chk("x532[1] (no +1)", ob_d3a1_fifo42_x532(1), 3);
 	chk("x530[0]", ob_d3a1_fifo42_x530(0), 0x8007);
 	chk("x536 clamp", ob_d3a1_fifo42_x536(41), 0x29);
 	chk("x530[41]", ob_d3a1_fifo42_x530(41), 0x8297);
+
+	/*
+	 * x532 = min(42 - idx, 3): 3 for idx 0..39, then 2, then 1. This is the
+	 * exact reduction of the vendor's min(idx+2,0x29) + (1 - idx) (loop
+	 * counter r13d, `dec r13d` at 0x68265).
+	 */
+	chk("x532[0]", ob_d3a1_fifo42_x532(0), 3);
+	chk("x532[1]", ob_d3a1_fifo42_x532(1), 3);
+	chk("x532[2]", ob_d3a1_fifo42_x532(2), 3);
+	chk("x532[3]", ob_d3a1_fifo42_x532(3), 3);
+	chk("x532[39]", ob_d3a1_fifo42_x532(39), 3);
+	chk("x532[40]", ob_d3a1_fifo42_x532(40), 2);
+	chk("x532[41]", ob_d3a1_fifo42_x532(41), 1);
+}
+
+static void test_fifo_poll_predicates(void)
+{
+	/* 0x530 completes on the WHOLE word reading 0 (test %ax,%ax). */
+	chk("530 done 0x0000", ob_d3a1_fifo530_done(0x0000), true);
+	chk("530 not done 0x8007", ob_d3a1_fifo530_done(0x8007), false);
+	chk("530 not done 0x0007", ob_d3a1_fifo530_done(0x0007), false);
+	chk("530 not done 0x8000", ob_d3a1_fifo530_done(0x8000), false);
+	chk("530 not done 0x0001", ob_d3a1_fifo530_done(0x0001), false);
+
+	/* 0x540 completes on bit0 clear (test $0x1,%al) - different mask. */
+	chk("540 done 0x0000", ob_d3a1_fifo540_done(0x0000), true);
+	chk("540 done 0x0004", ob_d3a1_fifo540_done(0x0004), true);
+	chk("540 done 0x8000", ob_d3a1_fifo540_done(0x8000), true);
+	chk("540 not done 0x0001", ob_d3a1_fifo540_done(0x0001), false);
+	chk("540 not done 0x0007", ob_d3a1_fifo540_done(0x0007), false);
+
+	/* The two registers do NOT share a predicate: 0x0004 differs. */
+	chk("pred differ 0x0004", ob_d3a1_fifo530_done(0x0004) !=
+				  ob_d3a1_fifo540_done(0x0004), true);
+	chk("dispatch 530 0x0007",
+	    ob_d3a1_poll_done(OB_D3A1_POLL_530, 0x0007), false);
+	chk("dispatch 540 0x0007",
+	    ob_d3a1_poll_done(OB_D3A1_POLL_540, 0x0007), false);
+	chk("dispatch 540 0x0004",
+	    ob_d3a1_poll_done(OB_D3A1_POLL_540, 0x0004), true);
 }
 
 static void test_t1_constants(void)
@@ -293,6 +331,7 @@ static void test_poll_model(void)
 	chk("poll stop done", ob_d3a1_poll_continue(true, 0xd1u), 0);
 	chk("poll stop at 9", ob_d3a1_poll_continue(false, 9), 0);
 	chk("poll max iters", OB_D3A1_FIFO_POLL_MAX_ITERS, 20);
+	test_fifo_poll_predicates();
 }
 
 static void test_lifecycle_reuse(void)

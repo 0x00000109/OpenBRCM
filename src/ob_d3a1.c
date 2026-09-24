@@ -105,20 +105,25 @@ static u32 ob_d3a1_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 /* ---- bounded FIFO completion poll (vendor bound 0xd1 / step 10) --------- */
 
 /*
- * Fail-closed bounded poll. Returns 0 ONLY when the completion predicate was
+ * Bounded vendor poll. Returns 0 when the exact vendor completion predicate was
  * observed true; -ETIMEDOUT when the vendor bound expired first. The final
- * register value and the iteration count are reported so a timeout is
- * diagnosable.
+ * register value and the iteration count are reported so an expiry is
+ * diagnosable. The predicate is NOT shared between registers: 0x530 completes
+ * on the whole word reading 0, 0x540 on bit0 clear (see ob_d3a1.h).
+ *
+ * The vendor blob has no error path for these polls: on bound expiry it falls
+ * through and continues. Expiry is therefore non-fatal to the caller; this
+ * helper only reports it.
  */
-static int ob_d3a1_poll16(struct ob_hw *hw, u16 off, bool bit0, u32 *iters,
-			  u16 *last)
+static int ob_d3a1_poll16(struct ob_hw *hw, u16 off,
+			  enum ob_d3a1_poll_kind kind, u32 *iters, u16 *last)
 {
 	u32 counter = OB_D3A1_FIFO_POLL_BOUND;
 	u32 n;
 
 	for (n = 0; n < OB_D3A1_FIFO_POLL_MAX_ITERS + 1u; n++) {
 		u16 v = bcma_read16(hw->core, off);
-		bool done = bit0 ? ((v & 0x1u) == 0u) : (v == 0u);
+		bool done = ob_d3a1_poll_done(kind, v);
 
 		*last = v;
 		if (done) {
@@ -147,18 +152,22 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 	u32 i;
 
 	st->machwcap = machwcap;
-	st->fifo_fail_index = -1;
+	st->fifo_last_expired_index = -1;
 
 	/* 0x542 = v, 0x540 = 5, bounded completion poll on 0x540 bit0 */
 	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOFLUSH, v);
 	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOCMD, 5);
 	st->fifo_fixed_writes += OB_D3A1_FIFO_FIXED_WRITES;
-	if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, true,
+	if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, OB_D3A1_POLL_540,
 			   &st->fifo_poll540_iters, &last)) {
-		dev_err(hw->dev,
-			"d3a1-test: sub_67efd FAIL 0x540 programmed=%04x last=%04x reads=%u xmtfifocmd poll TIMEOUT\n",
-			5, last, st->fifo_poll540_iters);
-		return -ETIMEDOUT;
+		/*
+		 * Vendor has no error path here: it falls through and continues
+		 * after the bounded wait. Record and continue, do not abort.
+		 */
+		st->fifo_poll_expired++;
+		dev_warn(hw->dev,
+			 "d3a1-test: sub_67efd 0x540 poll expired (vendor continues, non-fatal) programmed=%04x last=%04x reads=%u\n",
+			 5, last, st->fifo_poll540_iters);
 	}
 
 	/* exact 7-entry programming loop (42 writes) */
@@ -182,9 +191,12 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 
 	/*
 	 * Exact 42-entry programming loop (168 writes), bounded poll each.
-	 * A timeout aborts immediately and never continues to the next entry.
+	 * The vendor has no error path: a poll that reaches the bound is
+	 * recorded and the loop continues to the next entry. Predicate is the
+	 * exact `readw(0x530) == 0`; no weaker mask, no 0x0007 special case.
 	 */
 	for (i = 0; i < OB_D3A1_FIFO42_ENTRIES; i++) {
+		u16 programmed = ob_d3a1_fifo42_x530(i);
 		u32 iters;
 
 		bcma_write16(hw->core, OB_D3A1_REG_XMT_534,
@@ -193,17 +205,24 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 			     ob_d3a1_fifo42_x536(i));
 		bcma_write16(hw->core, OB_D3A1_REG_XMT_532,
 			     ob_d3a1_fifo42_x532(i));
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_530,
-			     ob_d3a1_fifo42_x530(i));
-		if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMT_530, false,
+		bcma_write16(hw->core, OB_D3A1_REG_XMT_530, programmed);
+		if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMT_530, OB_D3A1_POLL_530,
 				   &iters, &last)) {
-			st->fifo_fail_index = (int)i;
-			dev_err(hw->dev,
-				"d3a1-test: sub_67efd FAIL 0x530 index=%u programmed=%04x last=%04x reads=%u poll TIMEOUT\n",
-				i, ob_d3a1_fifo42_x530(i), last, iters);
-			return -ETIMEDOUT;
+			st->fifo_poll_expired++;
+			st->fifo_last_expired_index = (int)i;
+			dev_warn(hw->dev,
+				 "d3a1-test: sub_67efd 0x530 poll expired (vendor continues, non-fatal) index=%u programmed=%04x last=%04x reads=%u\n",
+				 i, programmed, last, iters);
+		} else {
+			st->fifo_poll_completed++;
+			if (i < 3) {
+				st->fifo_first_rb[i] = last;
+				st->fifo_first_reads[i] = iters;
+				dev_info(hw->dev,
+					 "d3a1-test: sub_67efd 0x530[%u] complete programmed=%04x readback=%04x reads=%u\n",
+					 i, programmed, last, iters);
+			}
 		}
-		st->fifo_poll_completed++;
 		st->fifo_poll530_iters += iters;
 		if (iters > st->fifo_poll530_max)
 			st->fifo_poll530_max = iters;
@@ -213,20 +232,20 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 
 	if (st->fifo_fixed_writes != OB_D3A1_FIFO_FIXED_WRITES ||
 	    st->fifo7_writes != OB_D3A1_FIFO7_WRITES ||
-	    st->fifo42_writes != OB_D3A1_FIFO42_WRITES ||
-	    st->fifo_poll_completed != OB_D3A1_FIFO42_ENTRIES) {
+	    st->fifo42_writes != OB_D3A1_FIFO42_WRITES) {
 		dev_err(hw->dev,
-			"d3a1-test: sub_67efd accounting mismatch fixed=%u loop7=%u loop42=%u completed=%u\n",
+			"d3a1-test: sub_67efd accounting mismatch fixed=%u loop7=%u loop42=%u\n",
 			st->fifo_fixed_writes, st->fifo7_writes,
-			st->fifo42_writes, st->fifo_poll_completed);
+			st->fifo42_writes);
 		return -EIO;
 	}
 
 	dev_info(hw->dev,
-		 "d3a1-test: sub_67efd machwcap=%08x flush=%04x poll540=%u loop7=%u loop42=%u polls530=%u/%u max_iters=%u\n",
+		 "d3a1-test: sub_67efd machwcap=%08x flush=%04x poll540=%u loop7=%u loop42=%u polls530=%u/%u expired=%u max_iters=%u\n",
 		 machwcap, v, st->fifo_poll540_iters, st->fifo7_writes,
 		 st->fifo42_writes, st->fifo_poll_completed,
-		 OB_D3A1_FIFO42_ENTRIES, st->fifo_poll530_max);
+		 OB_D3A1_FIFO42_ENTRIES, st->fifo_poll_expired,
+		 st->fifo_poll530_max);
 	return 0;
 }
 

@@ -109,15 +109,52 @@ Only the operations the blob executes for BCM4352 rev42 (`phyrev == 0x2a`):
   rev42 entries use `rqpri = v - 0x2a`, `0x20`, `def = 0xb`, `0x54e =
   0x1216`, `0x550 = 0x740c`, `0x548 = entry | 0x10`. **42 writes.**
 - Exact 42-entry loop (`idx 0..41`): `0x534 = idx`, `0x536 = min(idx+2,0x29)`,
-  `0x532 = min(idx+2,0x29) + (idx==0 ? 1 : 0)`, `0x530 = (idx<<4)|0x8007`,
-  bounded poll (`0x530 == 0`). **168 writes.**
+  `0x532 = min(42 - idx, 3)` (the vendor's `min(idx+2,0x29) + r13d`, with the
+  loop counter `r13d` initialised to 1 and `dec r13d` per iteration),
+  `0x530 = (idx<<4)|0x8007`, bounded poll (`0x530 == 0`). **168 writes.**
 - Total accounting: `2 + 42 + 168 = 212` writes, asserted at runtime
   (`ob_d3a1` counters). BCM4352/rev42-specific; no generalization.
-- **Fail-closed polls:** `ob_d3a1_poll16()` returns `-ETIMEDOUT` when the
-  vendor bound expires without the completion predicate. A `0x540` timeout
-  fails sub_67efd immediately; a `0x530` timeout logs the exact table index and
-  register value and aborts immediately (never continues to the next entry).
-  Completed-poll count, total and max iterations are tracked.
+
+### 3.1 Completion predicates and timeout semantics (proven from the blob)
+
+Re-derived directly from the machine instructions (object file `wlc_hybrid.o`):
+
+- `0x530` loop `0x6824d..0x6825e`:
+  `call osl_readw` (`rdi = &0x530`), `66 85 c0` = `test %ax,%ax`,
+  `74 06` = `je done`, `cmpl $0x9,counter`, `jne loop`. Completion is the
+  **whole 16-bit word reading 0** (`read == 0`), not a `0x8000` mask.
+- `0x540` loop `0x68033..0x68044`:
+  `call osl_readw` (`rdi = &0x540`), `a8 01` = `test $0x1,%al`,
+  `74 06` = `je done`, `cmp $0x9,%r14d`, `jne loop`. Completion is
+  **bit0 clear** (`(read & 1) == 0`). The two registers do **not** share a
+  predicate.
+- Both loops initialise the counter to `0xd1` and decrement by `10`, exiting
+  when it reaches `9` (21 reads). **The vendor has no error path**: on expiry
+  it falls through and continues; `sub_67efd` always returns 0.
+
+OpenBRCM reproduces the bound and the exact predicates, and treats expiry as a
+recorded, **non-fatal** event (`dev_warn` + `fifo_poll_expired`), matching the
+vendor control flow. `0x62e`/`0x630` readback is not involved here. There is
+**no** `0x8000`-mask predicate and **no** `0x0007` special case.
+
+### 3.2 First hardware attempt (historical provenance — superseded candidate)
+
+- Candidate `1186a9b2479a185c1e438ebb43b4a2bd896fc5b7`, module
+  `ce9b7cc5e7ed3564f402a3af37f4eda99eb41620c191ad309a5e0687233f27a0`.
+- `d11_tail_test_only=1`; board-data preparation PASS (MAC
+  `2c:fd:a1:61:40:25`); D2A PASS (ucode writes 10850, PSM poll PASS,
+  `MI_MACSSPNDD=1`); D2B PASS (common initvals 610, w16 113, w32 497,
+  `MACCONTROL=0x04020402`, `MACINTMASK=0`, `SHM[0x14]=0x00b4`).
+- `sub_67efd` then reported: `0x530 index=0 programmed=0x8007
+  final readback=0x0007 reads=21`, and the candidate aborted with
+  `-ETIMEDOUT` before T1/DMA/T2.
+- Root cause: the `0x530` predicate was already exact (`read == 0`); the
+  candidate aborted on a poll that the vendor treats as a bounded,
+  **non-fatal** wait. The low `0x0007` bits are simply not a state the vendor
+  gate accepts, and the vendor proceeds anyway.
+- This candidate is **historical evidence only**; it is not the frozen
+  candidate and must not be reused. A corrected candidate gets a new commit and
+  a new module SHA256.
 
 ## 4. Exact T1 write order (implemented)
 
@@ -276,7 +313,13 @@ normal driver path is untouched; all pre-existing host tests still pass.
   new **exact** vectors: `ob_d3a1_muladd` (=`a*b+c`), `ob_d3a1_u64_divide`
   (0x80000000/0xbffffc57/0xa0000000/0x00999999/0xb6db7a11 + no-write),
   `ob_d3a1_bb_vcofreq_from_pll` (0x03072580/0x030725ef/0/0), exact
-  `ob_d3a1_tsf_frac`, and the poll-bound predicate.
+  `ob_d3a1_tsf_frac`, and the poll-bound predicate. It also pins the corrected
+  `x532 = min(42-idx,3)` (3 at idx 0/1/2/3/39, 2 at 40, 1 at 41) and the exact
+  per-register completion predicates: `ob_d3a1_fifo530_done` is whole-word
+  zero (`0x0000` done, `0x8007`/`0x0007`/`0x8000` not done) and
+  `ob_d3a1_fifo540_done` is bit0 clear (`0x0004`/`0x8000` done, `0x0001`/
+  `0x0007` not done); `0x0004` is the value that proves the two predicates
+  differ.
 - Static regression guards in `scripts/docs-check.sh`: the D3A1 dispatch must
   call `ob_si_prepare_board_data_for_d3a1(hw)` before `ob_d3a1_test(hw)`; the
   prep must set `hw->cc` and call `ob_si_read_mac`; the prep body must contain
@@ -298,10 +341,10 @@ normal driver path is untouched; all pre-existing host tests still pass.
 | field | value |
 | :--- | :--- |
 | module | `openbrcm.ko` |
-| size | 4164217 B |
-| sha256 | `ce9b7cc5e7ed3564f402a3af37f4eda99eb41620c191ad309a5e0687233f27a0` |
+| size | 4170009 B |
+| sha256 | `6ba2d853adef9860213498c32c8968bdbb027e59ac17ffe8a2c2670503ff5abd` |
 | vermagic | `7.0.0-34-generic SMP preempt mod_unload modversions` |
-| srcversion | `445CB436C3E3107F6C39A64` |
+| srcversion | `011D0C80396320496A86768` |
 | signer | `Broadcom Driver MOK` |
 | depends | `mac80211,bcma` |
 
@@ -330,7 +373,7 @@ No equality postcondition is placed on them.
 | :--- | :--- | :--- | :--- |
 | A. board-data/MAC failure | none | no | return error (`-ENODEV`/`-EINVAL`) |
 | B. D2A/D2B failure | none | no | existing proven policy (return error) |
-| C. sub_67efd poll timeout | partial FIFO | no | return `-ETIMEDOUT`; no same-boot retry; reboot |
+| C. sub_67efd poll expiry | partial FIFO | no | vendor-non-fatal: log + continue; no abort |
 | D. T1 failure before DMA | partial T1 | no | return error; residual D11 state documented |
 | E. DMA/T2/validation failure | full tail | yes | mandatory verified D3A0 teardown |
 | F. DMA reset unverifiable | full tail | yes | fatal latch, retain memory, pin module, reboot only |

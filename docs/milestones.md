@@ -331,9 +331,17 @@ Module built + MOK-signed, **never loaded** (no hardware execution).
   (`Broadcom Driver MOK`), vermagic `7.0.0-34-generic`. Host tests 10/10 PASS.
 - Audit corrections: the isolated dispatch prepares `hw->cc` + the validated
   external-SPROM MAC (`ob_si_prepare_board_data_for_d3a1`) before
-  `ob_d3a1_test`; `sub_67efd` polls are fail-closed (`-ETIMEDOUT` aborts); the
-  `switch_macfreq` BB-VCO / 64-bit divide are exact verbatim ports (no
-  best-effort), and an un-derivable VCO is an error, never a PASS.
+  `ob_d3a1_test`; the `switch_macfreq` BB-VCO / 64-bit divide are exact verbatim
+  ports (no best-effort), and an un-derivable VCO is an error, never a PASS.
+- **First hardware attempt** (candidate `1186a9b`, module `ce9b7cc5…`):
+  board-data/D2A/D2B PASS; `sub_67efd` `0x530` index 0 programmed `0x8007`,
+  readback `0x0007`, aborted under the then-current fail-closed poll.
+- **0x530/0x540 re-derivation**: the blob `0x530` predicate is the whole 16-bit
+  word reading 0 (`test %ax,%ax`), NOT a `0x8000` mask; `0x540` is bit0 clear;
+  both loops have **no error path** and continue on bound expiry. Corrected:
+  expiry is non-fatal (logged), and `x532 = min(42-idx,3)` (the prior
+  `(idx==0?1:0)` misread the decrementing loop counter). Corrected module
+  `6ba2d853…` (4170009 B, srcversion `011D0C80396320496A86768`).
 - Pre-freeze corrections: `switch_macfreq` checks `hw->cc` *before* the PLL
   read; `ob_si_read_mac()`'s errno is preserved by board-data preparation; the
   FIFO timeout logs include the final readback; and the first run records raw

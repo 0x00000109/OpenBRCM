@@ -207,8 +207,10 @@ its vendor position. New: `src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`,
 - `sub_67efd` (`0x67efd`): rev42 executes machwcap read + `0x542/0x540` FIFO
   flush/cmd + 7-entry loop (42 writes) + 42-entry loop (168 writes); the RXE
   block (`0x42c/0x42e/0x43a/0x43c/0x406`) is gated `phyrev>0x2a` and **not**
-  executed for rev42. No DMA/IRQ/PHY/radio access; two bounded polls. Mandatory
-  on the vendor rev42 path; safe in an isolated no-PHY test.
+  executed for rev42. No DMA/IRQ/PHY/radio access; two bounded polls (0x540
+  bit0 clear; 0x530 whole-word zero), both **non-fatal on expiry** in the blob
+  (no error path). Mandatory on the vendor rev42 path; safe in an isolated
+  no-PHY test.
 - Omitted SHM groups: `M_MBURST_SIZE`(0x80)/`M_MAX_ANTCNT`(0x5c);
   `M_MACHW_VER`(0x16)/`M_MACHW_CAP_L/H`(0xc0/0xc2); SCR SRL/LRL + SFBL/LFBL;
   NVRAM `btc_params%d` (119) + 4 fixed BTC values (`0x7530/0x4e20/0x7530/0x753`)

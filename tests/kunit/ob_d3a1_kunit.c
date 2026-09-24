@@ -49,6 +49,9 @@ static void ob_d3a1_fifo_model_test(struct kunit *test)
 	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo7_54e(0), 0x1216);
 	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo7_54e(7), 0x262a);
 	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo42_x532(0), 3u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo42_x532(2), 3u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo42_x532(40), 2u);
+	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo42_x532(41), 1u);
 	KUNIT_EXPECT_EQ(test, ob_d3a1_fifo42_x530(0), 0x8007);
 	KUNIT_EXPECT_EQ(test, OB_D3A1_FIFO7_WRITES, 42u);
 	KUNIT_EXPECT_EQ(test, OB_D3A1_FIFO42_WRITES, 168u);
@@ -124,6 +127,15 @@ static void ob_d3a1_bb_vcofreq_test(struct kunit *test)
 			0u);
 	KUNIT_EXPECT_TRUE(test, ob_d3a1_poll_continue(false, 0xd1u));
 	KUNIT_EXPECT_FALSE(test, ob_d3a1_poll_continue(false, 9));
+
+	/* Exact predicates: 0x530 whole-word zero, 0x540 bit0 clear. */
+	KUNIT_EXPECT_TRUE(test, ob_d3a1_fifo530_done(0x0000));
+	KUNIT_EXPECT_FALSE(test, ob_d3a1_fifo530_done(0x8007));
+	KUNIT_EXPECT_FALSE(test, ob_d3a1_fifo530_done(0x0007));
+	KUNIT_EXPECT_TRUE(test, ob_d3a1_fifo540_done(0x0004));
+	KUNIT_EXPECT_FALSE(test, ob_d3a1_fifo540_done(0x0001));
+	KUNIT_EXPECT_TRUE(test, ob_d3a1_poll_done(OB_D3A1_POLL_540, 0x0007));
+	KUNIT_EXPECT_FALSE(test, ob_d3a1_poll_done(OB_D3A1_POLL_530, 0x0007));
 }
 
 static void ob_d3a1_lifecycle_test(struct kunit *test)
