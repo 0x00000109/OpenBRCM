@@ -266,9 +266,11 @@ core-specific. `ctrl2`: `BC_MASK`=0x7fff (buffer/byte count), `AE`=0x30000
 - **Diagnostics** report the two address spaces separately:
   `dma_aligned_8k=<yes|no> cpu_desc_aligned=<yes|no>`.
 - **Real DMA device:** `core->dma_dev`, which `bcma` sets to `bus->dev` (the
-  PCIe device, `drivers/bcma/main.c:250`). The 64-bit capability is validated
-  with `dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64))`; a rejection fails
-  probe (no DMA32 fallback).
+  PCIe device, `drivers/bcma/main.c:250`). **SUPERSEDED (M3.4A/M3.2.1):** the
+  device discards the high address dword, so the window is constrained to
+  32-bit with `dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32))` and an explicit
+  `upper_32_bits(desc_dma)==0` check. The original M3.2 plan validated a 64-bit
+  mask; that is kept as HISTORICAL context only, not current behaviour.
 - **Descriptor:** `struct ob_dma_desc { __le32 ctrl1, ctrl2, addrlow, addrhigh; }`
   with `_Static_assert(sizeof(...) == 16)`; encoded via `cpu_to_le32` helpers.
 - **Ring:** `struct ob_dma_ring` keeps `desc_cpu`/`desc_dma`, the pool block

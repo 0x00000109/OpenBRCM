@@ -71,6 +71,10 @@ Ucode upload: written to D11 IHR/object memory (`wlc_bmac_write_ihr` during
 - OpenBRCM currently declares `brcm/bcm43xx-0.fw` + `brcm/bcm43xx_hdr-0.fw`
   (C3: brcmsmac `brcms_ucode_download` uses these only for D11 corerev 17/23/24)
   and **does not call `request_firmware()` at all**.
+- **CORRECTION (M3.4D1, current):** OpenBRCM now declares the four rev42 names
+  (`bcm4352-d11ucode42.bin` with the `bcm43xx-ucode.fw` fallback, plus common
+  and band-switch initvals) and calls `request_firmware()` from `ob_fw_probe()`.
+  The statements above describe the pre-M3.4D1 state and are **HISTORICAL**.
 - Those files **do not cover D11 rev42 / acphy**. BCM4352 D11 softmac ucode +
   initvals are not in mainline linux-firmware (it ships *fullmac* PCIe firmware
   for 4352, a different datapath).

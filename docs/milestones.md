@@ -116,7 +116,8 @@ enable, FAST clock/HAVEHT, and mac80211 registration all work.
 - Permanent MAC = **2c:fd:a1:61:40:25**, exposed by both `iw dev` and
   `/sys/class/net/wlp33s0b1/address`.
 - On-chip OTP is reachable only via the opt-in `otp_diag` (default off).
-Next: **M3**, staged — M3.1/M3.2/M3.3 done; M3.4A (RX proof) done and STOPPED
+Next (historical; both corrections below were accepted and implemented in
+M3.4B): **M3**, staged — M3.1/M3.2/M3.3 done; M3.4A (RX proof) done and STOPPED
 pending acceptance of two corrections (`addrhigh=0x80000000`, RX ring=256)
 before M3.4B (safe RX enable).
 
@@ -234,7 +235,7 @@ Recovered the exact BCM4352 / D11 rev42 RX DMA configuration from the blob; see
 - Descriptor: `ctrl1 = EOT@255`, `ctrl2 = 0x0800`, `addrlow = (u32)pa`,
   **`addrhigh = 0x80000000`**.
 - Ring base `addrlow = (u32)ring_dma`, `addrhigh = 0x80000000`;
-  initial `PTR = ring_dma + 0x400`.
+  initial `PTR = 0x400` (rcvptrbase = 0, `PTR = rxout*16`; corrected in M3.4B).
 - Completion `index = (status0 & 0x1fff) >> 4`; RX header = 38 bytes, frame at
   +38; RX FIFO0 intstatus/mask `0x20`/`0x24`, `I_RI = 1<<16`, `MI_DMAINT = 1<<15`.
 
@@ -252,7 +253,8 @@ never hands frames to mac80211.
 - Builds descriptors 0..63 (`ctrl1=0`, `ctrl2=0x0800`, `addrlow=(u32)pa`,
   `addrhigh=0x80000000`) and a structural EOT-only slot at 255 (address 0,
   length 0); `dma_wmb()` before publishing.
-- Programs `addrlow`/`addrhigh`/`PTR=ring+0x400`/`control=0x0000084d`, reads
+- Programs `addrlow`/`addrhigh`/`PTR=0x400` (rcvptrbase=0, rxout*16)/
+  `control=0x0000084d`, reads
   back control/ptr/base/status0/status1 and aborts+disables on mismatch.
 - Enables host routing (`bcma_host_pci_irq_ctl(true)`) then only
   `FIFO0 intmask |= I_RI` and `MACINTMASK |= MI_DMAINT`.

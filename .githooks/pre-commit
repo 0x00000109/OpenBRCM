@@ -1,0 +1,31 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# OpenBRCM pre-commit: documentation governance.
+# Activate with: git config --local core.hooksPath .githooks
+set -eu
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
+
+if [ "${OPENBRCM_SKIP_DOCS_CHECK:-0}" = "1" ]; then
+	echo "pre-commit: docs check skipped (OPENBRCM_SKIP_DOCS_CHECK=1)"
+	exit 0
+fi
+
+./scripts/docs-check.sh || exit 1
+
+# Milestone/source changes must move the state documentation with them.
+staged=$(git diff --cached --name-only)
+if [ -n "$staged" ] && printf '%s\n' "$staged" \
+		| grep -qE '^(src/|Makefile$|Kconfig$|docs/milestones\.md$)'; then
+	if ! printf '%s\n' "$staged" \
+			| grep -qE '^docs/(agent-state|milestones)\.md$'; then
+		echo "pre-commit: source/milestone changes staged without a state-doc update." >&2
+		echo "            Update docs/agent-state.md (or docs/milestones.md) to record the" >&2
+		echo "            milestone status and STOP boundary, then retry." >&2
+		echo "            Intentional bypass: OPENBRCM_SKIP_DOCS_CHECK=1 git commit ..." >&2
+		exit 1
+	fi
+fi
+
+exit 0

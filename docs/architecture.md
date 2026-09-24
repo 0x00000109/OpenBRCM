@@ -20,6 +20,12 @@ Broadcom 43xx silicon and delegates everything generic to the kernel.
    └────────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Implementation note (current):** the diagram and layers describe the
+> **target** architecture. The modules that exist today are `ob_main`,
+> `ob_core`, `ob_si`, `ob_dma`, `ob_irq`, `ob_rx`, `ob_fw`, `ob_ucode`,
+> `ob_mac80211`, `ob_channel`, `ob_rate`. `ob_tx`, `ob_d11`, `ob_phy*` and
+> `ob_osl` do **not** exist yet. See `docs/agent-state.md`.
+
 ## Layers
 - **Bus (`ob_main.c`, bcma):** registered as a `bcma_driver` for the 80211 core
   (revs 17/23/24). ChipCommon provides the CC/PMU/OTP/SPROM window.

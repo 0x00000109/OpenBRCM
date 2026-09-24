@@ -8,10 +8,13 @@ specification and publicly documented silicon behaviour — it contains no code
 from the proprietary `wlc_hybrid.o_shipped` blob and no code copied from other
 drivers. See [`docs/provenance.md`](docs/provenance.md).
 
-> Status: **early** — M0 (bus probe) / M1 (silicon bring-up) /
-> M2 (mac80211 registration, 2.4 GHz capabilities) /
-> **M2.5 (instrumented power-up; MAC recovery blocked on OTP-FSM provenance)**.
-> 5 GHz and interface bring-up are not enabled yet (see `docs/milestones.md`).
+> Status: **early** — M0–M2.5 (bus/silicon/mac80211) and M3.1–M3.4D1
+> (DMA64 model, IRQ plumbing, FIFO0 RX bring-up, exact rev42 firmware
+> acquisition + validation) are present. FIFO0 RX is DMA Level-1 proven; no
+> RX frame completion yet. 5 GHz and interface bring-up are not enabled.
+> The isolated `fw_validate_only` runtime PASS and the `ucode_test_only`
+> (M3.4D2A) implementation are **working-tree** state, not yet in Git history;
+> see `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **6.12 LTS + 7.x**.
 
 ## Why
@@ -35,7 +38,7 @@ See [`docs/architecture.md`](docs/architecture.md).
 ## Build (out-of-tree)
 ```sh
 make            # uses /lib/modules/$(uname -r)/build
-make hosttest   # host unit tests for the pure math (no kernel needed)
+make hosttest   # host unit tests for pure helpers (no kernel needed)
 sudo make install
 ```
 DKMS: see [`dkms.conf`](dkms.conf).
@@ -46,10 +49,11 @@ Requirements: `CONFIG_BCMA`, `CONFIG_MAC80211`, `CONFIG_FW_LOADER`.
 ```
 src/        driver sources (ob_*.c/.h)
   ob_regs.h ob_dma_regs.h ob_rates.h ob_iovar.h ob_wlc.h   # generated from the RE spec
-tests/host/ host unit tests for pure math
+tests/host/ host unit tests for pure helpers
 tests/kunit/ KUnit suite (kernel)
-docs/       architecture, provenance, firmware, milestones
-scripts/    header regeneration / checks
+docs/       architecture, provenance, firmware, milestones, agent state
+scripts/    header regeneration / checks / documentation consistency
+AGENTS.md   binding agent operating + documentation-governance rules
 ```
 
 ## Provenance & clean-room
