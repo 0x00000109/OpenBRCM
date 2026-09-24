@@ -1,6 +1,8 @@
 # M3.4D2A — D11 rev42 ucode upload + PSM start (isolated test mode)
 
-Status: implemented, built, signed. **Not yet run on hardware.**
+Status: **HARDWARE RUNTIME PROVEN on BCM4352** (tested candidate `7265f9d`;
+implementation `47e0883`; base `854e398`). It proves ucode upload + PSM start
+only; initvals/PHY/radio/channel/RX/TX remain unproven.
 Mode: `ucode_test_only=1`. Mutually exclusive with `fw_validate_only=1`.
 
 This milestone intentionally stops *before* common initvals, PHY, radio,
@@ -111,9 +113,12 @@ ever written.
 - SHM FIFO-size diagnostic: `M_FIFOSIZE0..3` at SHM byte offsets
   `0x98/0x9a/0x9c/0x9e`, accessed exactly as `wlc_bmac_read_shm` @0x61910 does:
   write `OBJADDR = 0x10000 | (off>>2)`, read back, then `read16(OBJDATA + (off&2))`.
-  **Ordering caveat:** the vendor's own call sites (`0x68f88..0x68fae`) are
-  *after* the common-initvals applier (`0x68b98`). D2A therefore only **logs**
-  them as a read-only diagnostic and applies **no equality test**.
+   **Ordering caveat:** the vendor's own call sites (`0x68f88..0x68fae`) are
+   *after* the common-initvals applier (`0x68b98`). D2A therefore only **logs**
+   them as a read-only diagnostic and applies **no equality test**.
+   Observed on BCM4352 (D2A run): `M_FIFOSIZE0..3 = 0000 0000 0000 0000`. These
+   zeros are **not** a failure for D2A: the vendor call sites occur after the
+   common-initvals applier, which D2A intentionally does not run.
 
 ## 8. Failure / unwind matrix
 
@@ -153,3 +158,29 @@ initvals (`ob_fw_iv_parse`/appliers), PHY, radio, calibration, channel,
 `ob_dma_init`, `ob_irq_init` (`request_irq`), `I_RI`/`MI_DMAINT`, RX DMA,
 `ob_mac80211_register`/`ieee80211_register_hw`. `nm src/ob_ucode.o` references
 no DMA/IRQ/RX/mac80211 symbol.
+
+## 11. BCM4352 runtime evidence (HARDWARE RUNTIME PROVEN)
+
+Tested candidate `7265f9d`; implementation `47e0883`; base `854e398`. Hardware:
+BCM4352 `14e4:43b1`, chip rev 3, D11 rev 42.
+
+| point | observed |
+|---|---|
+| `insmod` | rc=0 |
+| image | `brcm/bcm43xx-ucode.fw`, `size=43400`, `words=10850` |
+| prep | `host_is_pcie2=1`, `clkctlst=070b0042`, HAVEHT=1, core_enabled=1 |
+| MACCONTROL before | `00000000` |
+| MAC upload state | `04000404` |
+| `OBJADDR` | `30000000` |
+| upload | writes `10850/10850` |
+| first words | `0300104e 0001bc60 02f00e25 0003bfde` |
+| last words | `02f00000 000002de 00000000 00000000` |
+| PSM start MACCONTROL | `04020402` |
+| poll bounds | `delay=10us max_iter=100000 max_total_us=1000000` |
+| PSM poll | PASS `iterations=11`, `MACINTSTATUS=00000001` |
+| SHM `M_FIFOSIZE0..3` | `0000 0000 0000 0000` (diagnostic only) |
+| final | `PASS - stopped before initvals/PHY/radio/DMA` |
+
+No timeout, BUG, Oops, lockup, reset, DMA, IRQ, or PHY/radio/channel
+initialization. Post-test the chip is intentionally left partial
+(`PSM_RUN=1`, D11 core enabled, `EN_MAC=0`); do not repeat the test automatically.

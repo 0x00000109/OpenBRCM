@@ -13,8 +13,10 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > acquisition + validation) are present. FIFO0 RX is DMA Level-1 proven; no
 > RX frame completion yet. 5 GHz and interface bring-up are not enabled.
 > The isolated `fw_validate_only` runtime PASS and the `ucode_test_only`
-> (M3.4D2A) implementation are **working-tree** state, not yet in Git history;
-> see `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
+> (M3.4D2A) **BCM4352 runtime PASS** live on the `m34d2a-ucode-upload` branch
+> (draft PR #2); D2A proves ucode upload + PSM start **only** — initvals, PHY,
+> radio, channel, RX and TX remain unproven. See `docs/agent-state.md`. Agent
+> rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in
 > [#3](https://github.com/0x00000109/OpenBRCM/issues/3)).

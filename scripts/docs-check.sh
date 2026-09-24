@@ -24,18 +24,20 @@ else
 	[ "$fail" -eq 0 ] && ok "AGENTS.md status vocabulary present"
 fi
 
-# 2. No document may claim M3.4D2A / ucode_test_only is hardware-proven.
-if grep -rniE 'M3\.4D2A.*HARDWARE PROVEN' docs/ AGENTS.md 2>/dev/null \
-		| grep -v 'NOT' | grep -q .; then
-	bad "a document claims M3.4D2A HARDWARE PROVEN"
+# 2. M3.4D2A status consistency (BCM4352 runtime pass recorded, 2026).
+#    The runtime pass must be recorded; and no document may claim that D2A
+#    proved initvals/PHY/radio/channel/DMA (those remain unproven).
+if grep -rniE 'M3\.4D2A.*HARDWARE (RUNTIME )?PROVEN' docs/ AGENTS.md 2>/dev/null \
+		| grep -q .; then
+	ok "M3.4D2A hardware status recorded"
+else
+	bad "no document records M3.4D2A hardware status"
 fi
-if grep -rniE 'ucode_test_only.*HARDWARE PROVEN' docs/ AGENTS.md 2>/dev/null \
-		| grep -v 'NOT' | grep -q .; then
-	bad "a document claims ucode_test_only HARDWARE PROVEN"
-fi
-if grep -rniE 'M3\.4D2A.*runtime pass' docs/ AGENTS.md 2>/dev/null \
-		| grep -v 'NOT' | grep -q .; then
-	bad "a document claims M3.4D2A runtime PASS"
+if grep -rniE 'M3\.4D2A.*(initvals|PHY|radio|channel|DMA).*PROVEN' docs/ AGENTS.md 2>/dev/null \
+		| grep -viE 'not|never|unproven|before|skip|stops' | grep -q .; then
+	bad "a document claims D2A proved initvals/PHY/radio/channel/DMA"
+else
+	ok "D2A scope limited to ucode upload + PSM start"
 fi
 
 # 3. The state/handoff document must exist and stay structured.
