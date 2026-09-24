@@ -21,45 +21,88 @@ static void chk(const char *what, long got, long exp)
 /* Mode policy: at most one isolated mode, any pair is a conflict. */
 static void test_mode_conflict(void)
 {
-	chk("mode normal", ob_isolated_mode_count(false, false, false), 0);
-	chk("mode validate only", ob_isolated_mode_count(true, false, false), 1);
-	chk("mode ucode only", ob_isolated_mode_count(false, true, false), 1);
-	chk("mode initvals only", ob_isolated_mode_count(false, false, true), 1);
+	chk("mode normal", ob_isolated_mode_count(false, false, false, false), 0);
+	chk("mode validate only",
+	    ob_isolated_mode_count(true, false, false, false), 1);
+	chk("mode ucode only",
+	    ob_isolated_mode_count(false, true, false, false), 1);
+	chk("mode initvals only",
+	    ob_isolated_mode_count(false, false, true, false), 1);
+	chk("mode dma only",
+	    ob_isolated_mode_count(false, false, false, true), 1);
 
 	chk("select none",
-	    ob_isolated_mode_select(false, false, false), OB_ISOLATED_NONE);
+	    ob_isolated_mode_select(false, false, false, false),
+	    OB_ISOLATED_NONE);
 	chk("select validate",
-	    ob_isolated_mode_select(true, false, false),
+	    ob_isolated_mode_select(true, false, false, false),
 	    OB_ISOLATED_FW_VALIDATE);
 	chk("select ucode",
-	    ob_isolated_mode_select(false, true, false),
+	    ob_isolated_mode_select(false, true, false, false),
 	    OB_ISOLATED_UCODE_TEST);
 	chk("select initvals",
-	    ob_isolated_mode_select(false, false, true),
+	    ob_isolated_mode_select(false, false, true, false),
 	    OB_ISOLATED_INITVALS_TEST);
+	chk("select dma",
+	    ob_isolated_mode_select(false, false, false, true),
+	    OB_ISOLATED_DMA_TEST);
 
 	/* Every multiple-mode combination must be a conflict. */
 	chk("conflict fw+ucode",
 	    ob_isolated_mode_conflict(
-		    ob_isolated_mode_select(true, true, false)), 1);
+		    ob_isolated_mode_select(true, true, false, false)), 1);
 	chk("conflict fw+initvals",
 	    ob_isolated_mode_conflict(
-		    ob_isolated_mode_select(true, false, true)), 1);
+		    ob_isolated_mode_select(true, false, true, false)), 1);
 	chk("conflict ucode+initvals",
 	    ob_isolated_mode_conflict(
-		    ob_isolated_mode_select(false, true, true)), 1);
-	chk("conflict all three",
+		    ob_isolated_mode_select(false, true, true, false)), 1);
+	chk("conflict fw+dma",
 	    ob_isolated_mode_conflict(
-		    ob_isolated_mode_select(true, true, true)), 1);
-	chk("count all three", ob_isolated_mode_count(true, true, true), 3);
+		    ob_isolated_mode_select(true, false, false, true)), 1);
+	chk("conflict ucode+dma",
+	    ob_isolated_mode_conflict(
+		    ob_isolated_mode_select(false, true, false, true)), 1);
+	chk("conflict initvals+dma",
+	    ob_isolated_mode_conflict(
+		    ob_isolated_mode_select(false, false, true, true)), 1);
+	chk("conflict all four",
+	    ob_isolated_mode_conflict(
+		    ob_isolated_mode_select(true, true, true, true)), 1);
+	chk("count all four",
+	    ob_isolated_mode_count(true, true, true, true), 4);
 
-	/* Only the initvals mode applies the common table (D2A regression). */
+	/* Only dma_test_only enters the DMA lifecycle; the others never do. */
+	chk("dma mode uses dma",
+	    ob_isolated_mode_uses_dma(OB_ISOLATED_DMA_TEST), 1);
+	chk("initvals mode no dma",
+	    ob_isolated_mode_uses_dma(OB_ISOLATED_INITVALS_TEST), 0);
+	chk("ucode mode no dma",
+	    ob_isolated_mode_uses_dma(OB_ISOLATED_UCODE_TEST), 0);
+	chk("fw mode no dma",
+	    ob_isolated_mode_uses_dma(OB_ISOLATED_FW_VALIDATE), 0);
+	chk("none mode no dma",
+	    ob_isolated_mode_uses_dma(OB_ISOLATED_NONE), 0);
+
+	/* dma mode must NOT be treated as teardown-skipping. */
+	chk("dma mode not teardown-skip",
+	    ob_isolated_mode_skips_teardown(OB_ISOLATED_DMA_TEST), 0);
+	chk("ucode mode teardown-skip",
+	    ob_isolated_mode_skips_teardown(OB_ISOLATED_UCODE_TEST), 1);
+
+	/*
+	 * The common table is applied by the D2B initvals mode AND by the D3A0
+	 * DMA mode (whose entry state IS the D2B exit); ucode_test_only must
+	 * never apply it (D2A regression).
+	 */
 	chk("ucode mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_UCODE_TEST), 0);
 	chk("fw mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_FW_VALIDATE), 0);
 	chk("initvals mode applies",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_INITVALS_TEST), 1);
+	chk("dma mode applies initvals",
+	    ob_isolated_mode_applies_initvals(OB_ISOLATED_DMA_TEST), 1);
 	chk("none mode no initvals",
 	    ob_isolated_mode_applies_initvals(OB_ISOLATED_NONE), 0);
 }

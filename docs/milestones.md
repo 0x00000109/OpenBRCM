@@ -241,6 +241,54 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   `wlc_phy_init`. OpenBRCM gaps: `ob_dma_quiesce`, 4-channel TX programming,
   out-of-band IRQ route. See report §17/§18 and Appendix C.
 
+## M3.4D3A0 — isolated DMA lifecycle test (`HARDWARE RUNTIME PROVEN` on BCM4352)
+
+**D3A0 TYPE: `ISOLATED DMA LIFECYCLE TEST`** — not a full vendor-prefix
+reproduction; `sub_67efd` (TXE0/FIFO fixup) and the runtime NVRAM/BTC/rate/
+power SHM tail are not pinned and are omitted (D3A1 integration content).
+
+Canonical status (exact):
+- M3.4D2A = HARDWARE RUNTIME PROVEN
+- M3.4D2B = HARDWARE RUNTIME PROVEN
+- M3.4D3 analysis = COMPLETE
+- M3.4D3A0 = HARDWARE RUNTIME PROVEN
+
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME PROVEN`
+on BCM4352** (candidate `4fa1b57`, runtime commit `7e68fe24`, signed module
+SHA256 `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`,
+kernel `7.0.0-34-generic`). The run proved the complete isolated lifecycle
+allocate/map → program → hardware validation → verified stop → release:
+`bring-up validation PASS`; `RX reset PASS` + `TX0..TX3 reset PASS` +
+`all DMA engines stopped` + `rings released` + `PASS - bring-up + teardown
+proven`; no BUG/Oops/WARNING/DMA-API error/lockup/reset timeout/FATAL. Module
+param **`dma_test_only=1`**, mutually exclusive with the other isolated modes.
+Files: `src/ob_d3a0.{c,h}`, `tests/host/ob_d3a0_test.c`,
+`tests/kunit/ob_d3a0_kunit.c`. Evidence: `docs/m34d3a0_dma_test.md`.
+- **Hard blocker found and fixed by the pre-hardware static audit:** the first
+  cut ran only `ob_ucode_run_d2a()` (D2A) before the DMA prefix and skipped the
+  610 common initvals. It now runs the shared `ob_initvals_run_d2b()` (proven
+  D2A core + exactly 610 records, 113 w16 / 497 w32 + postcondition gate), then
+  a live `ob_d3a0_check_d2b_exit` (`MACCONTROL=0x04020402`, `MACINTMASK=0`,
+  FIFO=`0x01c4/0/0/0x079e`, `SHM[0x14]=0xb4`) before the first post-common
+  write. No D2A-only path remains; `ob_ucode_run_d2a()` is not duplicated.
+- Programs the pinned D11/clock/IRQ-source prerequisites before DMA
+  (`MACCONTROL 0x04020402→0x44020402`), the four TX DMA channels
+  (0x200/0x240/0x280/0x2c0; 512x16 B; 8192 align; `ADDRHIGH=0x80000000`;
+  `control = read|XE|PD`; no ptr/descriptors → zero TX payload mappings) and
+  FIFO0 RX (0x220; 256 desc; exactly 64 posted 2048-B buffers; `CONTROL=0x84d`;
+  `PTR=0x400`).
+- Host IRQ delivery impossible (`MACINTMASK=0`, no `request_irq`, no
+  `bcma_host_pci_irq_ctl`, no `MI_DMAINT`); `EN_MAC=0`.
+- **Fail-closed quiesce (corrected):** free only after EVERY programmed engine's
+  own verified normal per-channel reset (`engines_stopped` + `free_allowed`).
+  `bcma_core_disable` containment is attempted after a reset failure and its
+  real `bcma_core_is_enabled()` readback recorded as `core_contained`, but it
+  **never authorizes a free**: the path sets `fatal`, latches, records the
+  retained rings, pins the module and keeps probe successful so the bound device
+  retains the state; reboot required. `ob_remove()` honours this and never frees.
+- STOPS before remaining D3A1 / band init / bsinitvals / `wlc_phy_init` / PHY /
+  radio / channel / mac80211.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

@@ -60,6 +60,25 @@ module_param(initvals_test_only, bool, 0444);
 MODULE_PARM_DESC(initvals_test_only,
 		 "D11 rev42 common initvals + PSM only; stops before bsinitvals/PHY/DMA (default: 0)");
 
+/*
+ * Explicit isolated D3A0 DMA lifecycle test (M3.4D3A0).
+ *
+ * D3A0 TYPE: ISOLATED DMA LIFECYCLE TEST (not a full vendor-prefix
+ * reproduction). When set, probe runs the proven D2B prefix, the
+ * provenance-pinned D11/clock/IRQ-source prerequisites, then the four TX DMA
+ * channels and FIFO0 RX (64 buffers), validates deterministic postconditions,
+ * executes the mandatory verified quiesce and frees the Linux DMA resources
+ * only after every programmed engine had its own verified normal stop. It
+ * never reaches band init/bsinitvals/PHY/radio/channel/mac80211 and never
+ * enables EN_MAC, MACINTMASK, MI_DMAINT or the host IRQ route. Mutually
+ * exclusive with the other isolated modes; any conflict fails probe before
+ * hardware access.
+ */
+static bool dma_test_only;
+module_param(dma_test_only, bool, 0444);
+MODULE_PARM_DESC(dma_test_only,
+		 "isolated D3A0 DMA lifecycle test (4 TX + FIFO0 RX) + verified quiesce; stops before band/PHY/mac80211 (default: 0)");
+
 int ob_probe(struct bcma_device *core)
 {
 	struct ob_hw *hw;
@@ -72,10 +91,10 @@ int ob_probe(struct bcma_device *core)
 
 	/* Explicit mode policy: at most one isolated mode may be selected. */
 	mode = ob_isolated_mode_select(fw_validate_only, ucode_test_only,
-				       initvals_test_only);
+				       initvals_test_only, dma_test_only);
 	if (ob_isolated_mode_conflict(mode)) {
 		dev_err(&core->dev,
-			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only are mutually exclusive\n");
+			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only are mutually exclusive\n");
 		return -EINVAL;
 	}
 
@@ -140,6 +159,42 @@ int ob_probe(struct bcma_device *core)
 		hw->initvals_test_only = true;
 		ret = ob_initvals_test(hw);
 		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
+
+	/*
+	 * dma_test_only: isolated D3A0 DMA lifecycle test. Runs the proven D2B
+	 * prefix, the pinned D11/clock/IRQ-source prerequisites, the four TX +
+	 * FIFO0 RX DMA lifecycle, validation, mandatory verified quiesce and safe
+	 * free. It is not a full vendor-prefix reproduction (see
+	 * docs/d3a0_dma_test_design.md §0) and never reaches band
+	 * init/bsinitvals/PHY/radio/channel, never enables EN_MAC or the host IRQ
+	 * route, and never registers mac80211. On success all DMA resources are
+	 * already released; @remove is still consulted for the fail-closed fatal
+	 * state.
+	 */
+	if (mode == OB_ISOLATED_DMA_TEST) {
+		hw->dma_test_only = true;
+		ret = ob_d3a0_test(hw);
+		if (hw->d3a0.lc.fatal) {
+			/*
+			 * Fail-closed: the DMA engine could not be verified
+			 * stopped. Keep probe SUCCESSFUL so the device stays
+			 * bound and @hw (devres) is retained -- the fatal state
+			 * and the retained DMA memory must not silently
+			 * disappear through a failed probe/unbind. ob_d3a0_test()
+			 * latched a module-wide re-entry block and pinned the
+			 * module; only a reboot clears it.
+			 */
+			dev_crit(hw->dev,
+				 OB_DRV_NAME ": dma-test FATAL unverified quiesce; device kept bound, reboot required\n");
+			return 0;
+		}
+		if (ret) {
+			/* No live DMA resources (teardown ran or none created). */
 			bcma_set_drvdata(core, NULL);
 			return ret;
 		}
@@ -241,6 +296,16 @@ void ob_remove(struct bcma_device *core)
 		dev_info(hw->dev,
 			 OB_DRV_NAME ": removed (initvals-test; no resource teardown, hardware left as-is)\n");
 		bcma_set_drvdata(core, NULL);
+		return;
+	}
+
+	/*
+	 * dma_test_only owns its own DMA lifecycle. ob_d3a0_remove() applies the
+	 * fail-closed policy: it never frees DMA memory while hardware may still
+	 * consume it, and enters a reboot-required fatal state otherwise.
+	 */
+	if (hw->dma_test_only) {
+		ob_d3a0_remove(hw);
 		return;
 	}
 

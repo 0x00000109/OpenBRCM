@@ -113,12 +113,71 @@ if [ -f docs/m34d3_bsinitvals.md ] && \
 else
 	bad "M3.4D3 analysis artifacts missing"
 fi
-if grep -rniE 'M3\.4D3.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+# The band-switch/PHY-boundary analysis M3.4D3 (not the D3A0 subset) must not be
+# claimed hardware proven. `M3.4D3A0` is intentionally excluded from this match.
+if grep -rniE 'M3\.4D3([^0-9A-Za-z]|$).*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
 		| grep -viE 'not|never|before|remain|unproven' | grep -q .; then
-	bad "a document claims M3.4D3 is hardware proven"
+	bad "a document claims M3.4D3 (band-switch/PHY boundary) is hardware proven"
 else
-	ok "M3.4D3 not claimed hardware proven"
+	ok "M3.4D3 (band-switch/PHY boundary) not claimed hardware proven"
 fi
+
+# 4c. D3A0 entry state MUST be the full D2B common-initvals exit (no D2A-only
+#     bypass). The shared applier must carry the exact 610/113/497 shape, and
+#     the D3A0 test must call it, and dma_test_only must be marked as applying
+#     the common table.
+if grep -q 'ob_initvals_run_d2b' src/ob_d3a0.c; then
+	ok "D3A0 runs the shared D2B common-initvals prefix"
+else
+	bad "src/ob_d3a0.c does not run ob_initvals_run_d2b (D2A-only bypass)"
+fi
+if awk '/static inline bool ob_isolated_mode_applies_initvals/,/^}/' \
+		src/ob_ucode.h | grep -q 'OB_ISOLATED_DMA_TEST'; then
+	ok "dma_test_only marked as applying common initvals"
+else
+	bad "ob_isolated_mode_applies_initvals must include OB_ISOLATED_DMA_TEST"
+fi
+grep -qE '^#define[[:space:]]+OB_INITVALS_RECORDS[[:space:]]+610u' src/ob_initvals.h \
+	&& ok "common initvals = 610 records" \
+	|| bad "src/ob_initvals.h common-initvals record count is not 610"
+grep -qE '^#define[[:space:]]+OB_INITVALS_W16[[:space:]]+113u' src/ob_initvals.h \
+	&& ok "common initvals w16 = 113" \
+	|| bad "src/ob_initvals.h common-initvals w16 count is not 113"
+grep -qE '^#define[[:space:]]+OB_INITVALS_W32[[:space:]]+497u' src/ob_initvals.h \
+	&& ok "common initvals w32 = 497" \
+	|| bad "src/ob_initvals.h common-initvals w32 count is not 497"
+# D3A0 is HARDWARE RUNTIME PROVEN on BCM4352, but only for the isolated DMA
+# lifecycle; the analysis/PR must not overclaim the vendor tail/PHY scope.
+if [ -f docs/m34d3a0_dma_test.md ] && \
+   grep -q 'HARDWARE RUNTIME PROVEN' docs/m34d3a0_dma_test.md; then
+	ok "M3.4D3A0 hardware runtime status recorded"
+else
+	bad "docs/m34d3a0_dma_test.md must record M3.4D3A0 hardware runtime proof"
+fi
+if grep -rniE 'M3\.4D3A0.*(vendor tail|post-common|sub_67efd|band init|bsinitvals|PHY|radio|channel|calibration).*PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|unproven|before|skip|stops|remain|proves? .*only' | grep -q .; then
+	bad "a document overclaims M3.4D3A0 scope"
+else
+	ok "D3A0 scope limited to the isolated DMA lifecycle"
+fi
+
+# 4d. D3A0 scope classification and the conservative quiesce model.
+grep -q 'ISOLATED DMA LIFECYCLE TEST' docs/d3a0_dma_test_design.md \
+	&& ok "D3A0 classified as ISOLATED DMA LIFECYCLE TEST" \
+	|| bad "docs/d3a0_dma_test_design.md missing D3A0 scope classification"
+# containment must never be recorded as a free permit
+if grep -q 'core containment verified; safe to free' src/ob_d3a0.c; then
+	bad "src/ob_d3a0.c still treats core containment as free authorization"
+else
+	ok "core containment is not a free authorization"
+fi
+for m in engines_stopped core_contained free_allowed; do
+	grep -q "$m" src/ob_d3a0.h \
+		|| bad "src/ob_d3a0.h lifecycle missing $m"
+done
+grep -q 'free_allowed' src/ob_d3a0.h \
+	&& ok "lifecycle separates stopped/contained/free/fatal" \
+	|| bad "lifecycle flags not separated"
 
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
