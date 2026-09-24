@@ -27,35 +27,38 @@ source of truth; this file records the live working-tree state on top of HEAD.
   (`AGENTS.md` §7).
 
 ## Commit state (IMPORTANT)
-- `main` = `2a7ba1d` — **PR #2 merged** (`85d3013`), **PR #5 merged**
-  (`65d61ce`), **PR #6 merged** (`4146cd8`), and **PR #7 merged**
-  (`2a7ba1d`, normal merge commit of the M3.4D3 analysis). `main` contains
-  M3.4D1 (`2029292`), the isolated modes `fw_validate_only=1` /
-  `ucode_test_only=1` / `initvals_test_only=1`, `src/ob_ucode.{c,h}`,
-  `docs/ucode_test.md`, the M3.4D2A hardware record, the M3.4D2B analysis and
-  **M3.4D2B** (`src/ob_initvals.{c,h}`, shared `ob_ucode_run_d2a()`),
-  HARDWARE RUNTIME PROVEN on BCM4352 (candidate `f27286f`, module SHA256
-  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`), plus the
-  merged M3.4D3 analysis (`docs/m34d3_bsinitvals.md`).
-- **M3.4D3A0** (`dma_test_only=1`) is `HARDWARE RUNTIME PROVEN` on BCM4352
-  (candidate `4fa1b57`, runtime `7e68fe24`, signed module SHA256
-  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`). Evidence:
-  `docs/m34d3a0_dma_test.md`; PR #8 merged to `main` via a normal merge commit
-  `3bdef76`, so `main == origin/main == 3bdef76` and `4fa1b57`/`7e68fe24`/
-  `5b1b0e8` are ancestors.
-- Analysis branch `m34d3a1-vendor-tail-analysis` (from `3bdef76`) —
-  **M3.4D3A1 vendor-tail recovery, `ANALYSIS COMPLETE` / NOT IMPLEMENTED /
-  NOT HARDWARE PROVEN**, `D3A1 IMPLEMENTATION GO: YES`; report
-  `docs/m34d3a1_vendor_tail.md`. Docs/tooling only, no runtime code, no
-  hardware; merged to `main` via a normal merge commit.
-- Implementation branch `m34d3a1-vendor-tail-test` — **M3.4D3A1 =
-  IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN** on BCM4352
-  (candidate `42d74b8`, module `6ba2d853…`); report
-  `docs/m34d3a1_vendor_tail_test.md` (§14.1 proof). New isolated mode
-  `d11_tail_test_only=1`; DMA sub-lifecycle reused from D3A0 in its vendor
-  position; STOPS before `sub_6656c`. Normal unload + DMA teardown proven.
-- Pre-commit documentation-discipline hook is active (`.githooks/`); see
-  `AGENTS.md`.
+- `main` = `6eff1eaa9517fac0135fdfc55c4c2fe7a6d81525` (**PR #12**, branch
+  `scripts/re-tooling-bootstrap`); `main == origin/main`.
+- Merged PR history (oldest → newest): **#2** `85d3013` (M3.4D2A), **#5**
+  `65d61ce` (M3.4D2B analysis), **#6** `4146cd8` (M3.4D2B test), **#7**
+  `2a7ba1d` (M3.4D3 analysis), **#8** `3bdef76` (M3.4D3A0 test), **#9**
+  `12c3e7a` (M3.4D3A1 vendor-tail analysis), **#10** `839f007` (M3.4D3A1
+  isolated test + the first D3B analysis), **#12** `6eff1ea` (tool-first RE
+  bootstrap + OpenCode integration). `main` contains M3.4D1 (`2029292`), the
+  isolated modes `fw_validate_only=1` / `ucode_test_only=1` /
+  `initvals_test_only=1` / `dma_test_only=1` / `d11_tail_test_only=1`,
+  `src/ob_ucode.{c,h}`, `src/ob_initvals.{c,h}`, `src/ob_d3a0.{c,h}`,
+  `src/ob_d3a1.{c,h}`, `docs/ucode_test.md`, `docs/m34d3_bsinitvals.md`,
+  `docs/m34d3a1_vendor_tail{,_test}.md`, `docs/m34d3b_band_init.md`,
+  `docs/re-tooling.md`, `scripts/re-bootstrap.sh`, `scripts/re.sh` and
+  `.opencode/`.
+- **M3.4D2B** (`initvals_test_only=1`, candidate `f27286f`, module SHA256
+  `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`),
+  **M3.4D3A0** (`dma_test_only=1`, candidate `4fa1b57`, runtime `7e68fe24`,
+  signed module SHA256
+  `0282d9b253b40ca13eba3420058b6314be629cdf50d540e549510f726cd6af08`) and
+  **M3.4D3A1** (`d11_tail_test_only=1`, candidate `42d74b8`, module
+  `6ba2d853…`) are all `HARDWARE RUNTIME PROVEN` on BCM4352.
+- **Active D3B analysis branch** `m34d3b-band-init-analysis` (rebased onto
+  `main` @ `6eff1ea`): carries the completed band-0 MHF provenance analysis and
+  sets `D3B IMPLEMENTATION GO: NO` (`VALUE PARTIALLY PROVEN`). Docs/tooling
+  only — no `src/`, `tests/`, `Makefile` or runtime-driver change. Draft PR
+  pending owner review; not merged.
+- Analysis branch `m34d3a1-vendor-tail-analysis` — **M3.4D3A1 vendor-tail
+  recovery, `ANALYSIS COMPLETE`**, `D3A1 IMPLEMENTATION GO: YES`; report
+  `docs/m34d3a1_vendor_tail.md`; merged via PR #9.
+- Pre-commit documentation-discipline hook is active (`.githooks/`);
+  `scripts/re-bootstrap.sh` must PASS before analysis; see `AGENTS.md`.
 
 ## Hardware-proven facts (HARDWARE PROVEN)
 - M2: bcma bind, external SPROM rev11 MAC `2c:fd:a1:61:40:25`, HT 2x2
@@ -123,7 +126,7 @@ source of truth; this file records the live working-tree state on top of HEAD.
 ## Analysis-only facts (not hardware proven here)
 - M3.4C/C.1: exact vendor rev42 images recovered from `wlc_hybrid.o_shipped`;
   vendor 8-byte IV record format (terminator `0xffff`), **not** b43 IV.
-- **M3.4D3 (current):** band-switch initvals (`d11ac1bsinitvals42`, 73 records)
+- **M3.4D3 (analysis, historical):** band-switch initvals (`d11ac1bsinitvals42`, 73 records)
   + PHY boundary. Report `docs/m34d3_bsinitvals.md`; classification
   `docs/m34d3/bsinitvals_classification.{md,json}` via
   `scripts/analyze_bsinitvals.py`. Decisions (corrected, Appendix B):
@@ -138,7 +141,7 @@ source of truth; this file records the live working-tree state on top of HEAD.
   the full vendor prefix; the shipped D3A0 is deliberately **`ISOLATED DMA
   LIFECYCLE TEST`** (see below) because `sub_67efd` and the NVRAM/BTC/rate/power
   SHM tail are not pinned — they remain D3A1 integration content.
-- M3.4D2A: see "Current milestone".
+- M3.4D2A: see the historical M3.4D2B section above.
 
 ## Canonical milestone status
 Stated exactly:
@@ -322,9 +325,15 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   IMPLEMENTATION GO: YES`** (§D.19), still NOT IMPLEMENTED / NOT HARDWARE
   PROVEN.
 
-## Current milestone (just proven)
-**M3.4D2B — isolated rev42 common-initvals test.**
-Status: **`HARDWARE RUNTIME PROVEN` on BCM4352.**
+## Current milestone
+**M3.4D3B — band init / `d11ac1bsinitvals42` (analysis/design).**
+Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN**;
+`D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY PROVEN`, blocked on the band-0
+MHF runtime input values (see "Current next action"). The last hardware-proven
+milestone is **M3.4D3A1** (see "Last completed hardware test"); the D2B detail
+below is retained as the historical common-initvals result.
+
+### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
   `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
   `main` @ `65d61ce`; PR #6.
@@ -346,8 +355,20 @@ Status: **`HARDWARE RUNTIME PROVEN` on BCM4352.**
   reception, TX. Do not broaden this milestone.
 
 ## Last hardware-proven milestone
-**M3.4D2B — isolated rev42 common-initvals test (see "Current milestone").**
-Prior: **M3.4D2A — D11 rev42 ucode upload + PSM start only.**
+**M3.4D3A1 — isolated vendor post-common / pre-PHY D11 tail test.**
+Status: **`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME
+PROVEN` on BCM4352** (candidate `42d74b8`, module
+`6ba2d853adef9860213498c32c8968bdbb027e59ac17ffe8a2c2670503ff5abd`). The
+one-shot isolated `d11_tail_test_only=1` reproduced the exact rev42 tail
+(`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`), reused the proven D3A0 DMA
+lifecycle in its vendor position, validated the deterministic postconditions,
+ran the verified DMA teardown, unloaded cleanly (`rmmod`), and STOPPED before
+`sub_6656c`. Scope: post-common / pre-PHY D11 tail only; band init, bsinitvals,
+AC PHY, radio, calibration, channel and real RX/TX remain **unproven**.
+Prior: **M3.4D3A0** (isolated DMA lifecycle, candidate `4fa1b57`) and
+**M3.4D2B** (isolated rev42 common initvals, candidate `f27286f`) — both
+`HARDWARE RUNTIME PROVEN`.
+Prior historical: **M3.4D2A — D11 rev42 ucode upload + PSM start only.**
 Status: **`HARDWARE PROVEN` — HARDWARE RUNTIME PROVEN on BCM4352** (tested
 candidate `7265f9d`, implementation `47e0883`, base `854e398`), now merged to
 `main` (`85d3013`). This proves the ucode upload + PSM start **only**;
@@ -409,8 +430,8 @@ word; `intrcvlazy[0]=0x01000000`; `dma_txreset 0xf64a`/`dma_rxreset 0xf5ef`;
 quiesce = per-channel reset + `bcma_core_disable`).
 
 **D3A0 is now HARDWARE RUNTIME PROVEN on BCM4352** on `m34d3a0-dma-test`
-(candidate `4fa1b57`, runtime `7e68fe24`; PR #8, being merged to `main` via a
-normal merge commit). It was classified/exercised as an **`ISOLATED DMA
+(candidate `4fa1b57`, runtime `7e68fe24`; PR #8, merged to `main` via a normal
+merge commit). It was classified/exercised as an **`ISOLATED DMA
 LIFECYCLE TEST`** (not a full vendor-prefix reproduction); the run proved the
 complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
@@ -476,14 +497,22 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Documentation task for the runtime result: STOP after committing the
-evidence-only update, marking PR #6 Ready and merging via a normal merge commit.
-No `insmod`, no D2A/D2B repeat, no initvals write to hardware.
+Current (D3B state reconciliation, analysis-only): STOP after the docs
+reconciliation commit and branch update; **no D3B implementation**, no
+`insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering.
 
-Runtime STOP (both D2A/D2B): the code returns after the shared D2A core (D2A
-also reads the SHM diagnostic; D2B applies the 610 records and reads the
-postconditions). Neither path may reach bsinitvals/`sub_6656c`/PHY/radio/
-channel/DMA/IRQ/mac80211.
+Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
+returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the
+verified DMA teardown, and **before `sub_6656c`** / bsinitvals / PHY / radio /
+channel / mac80211.
+
+Next runtime STOP (D3B, **not implemented**): after the `sub_60f67` applier
+return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e. before
+`wlc_phy_anacore` and any PHY-indirect/radio window. D3B may not be implemented
+while `D3B IMPLEMENTATION GO: NO`.
+
+D2A/D2B historical STOP: neither earlier path reaches bsinitvals/`sub_6656c`/
+PHY/radio/channel/DMA/IRQ/mac80211.
 
 ## Do NOT change blindly
 - `src/ob_rx.c` / `ob_rx.h`: RX PTR model (`rcvptrbase=0`, `PTR=rxout*16`),
@@ -495,7 +524,7 @@ channel/DMA/IRQ/mac80211.
 - `src/ob_initvals.{c,h}`: exact 610/113/497 shape + postcondition constants.
 - `MOC/` signing material (outside this repo): never modify/read the private key.
 
-## Branch contents (`m34d2b-initvals-test`, Draft PR, not merged)
+## Historical branch contents (`m34d2b-initvals-test`, merged via PR #6)
 Implementation: `src/ob_initvals.{c,h}`, `src/ob_ucode.{c,h}` (shared D2A core +
 mode policy), `src/ob_core.{c,h}` (mode param/guards), `src/ob_fw.{c,h}`
 (initvals request), `Makefile`. Tests: `tests/host/ob_initvals_test.c`,
