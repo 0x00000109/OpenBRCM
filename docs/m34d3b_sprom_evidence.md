@@ -142,7 +142,10 @@ returns before `ob_fw_probe`/`ob_dma_init`/`ob_irq_init`/`ob_rx_init`/
 Exact future one-shot command — **NOT EXECUTED** (no hardware was accessed):
 
 ```sh
-# candidate commit <hash>, module sha256 <sha>, signer "Broadcom Driver MOK"
+# frozen candidate: commit 739273c857d185f861467536a639fad4aa5b0bee
+#   openbrcm.ko sha256 538588e29634287971abcd568aae208281b22055ed1aa3e1ae6699eaed4741d5
+#   srcversion AC97164D23C815F7BF5D349  vermagic 7.0.0-34-generic SMP preempt mod_unload modversions
+#   signer "Broadcom Driver MOK"
 sudo dmesg -C
 sudo insmod openbrcm.ko sprom_evidence_only=1
 sudo dmesg | grep -E 'openbrcm: sprom11:|sprom-evidence'
