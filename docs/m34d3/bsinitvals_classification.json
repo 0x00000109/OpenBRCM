@@ -1,0 +1,1939 @@
+{
+ "comparison_vs_common": {
+  "direct_offset_overlap": [],
+  "overrides": 3,
+  "rows": [
+   {
+    "bs_values": [
+     20
+    ],
+    "byte": 16,
+    "common_values": [
+     0
+    ],
+    "override": true,
+    "space": "SHM"
+   },
+   {
+    "bs_values": [
+     387
+    ],
+    "byte": 28,
+    "common_values": [
+     6553600
+    ],
+    "override": true,
+    "space": "SHM"
+   },
+   {
+    "bs_values": [
+     500
+    ],
+    "byte": 148,
+    "common_values": [
+     3276800
+    ],
+    "override": true,
+    "space": "SHM"
+   }
+  ],
+  "shared_targets": 3
+ },
+ "direct_writes": 5,
+ "hardware_access": false,
+ "image": {
+  "path": "/lib/firmware/brcm/bcm4352-d11ac1bsinitvals42.bin",
+  "records": 73,
+  "sha256": "e81a645c79f55557c87f4662702d7c57599918c9b2340bc4e440ce1bdbd014da",
+  "size": 592
+ },
+ "indirect_transactions": 34,
+ "milestone": "M3.4D3",
+ "record_format": "{u16 offset, u16 width, u32 value}, terminator 0xffff",
+ "records": [
+  {
+   "category": "IHR",
+   "confidence": "C2 (offset/value); region C3; field UNKNOWN",
+   "index": 0,
+   "kind": "direct",
+   "name": "UNKNOWN",
+   "offset": 1670,
+   "repeat": 1,
+   "side_effect": "timing/IFS configuration",
+   "space": "IHR/IFS",
+   "target": "IHR/IFS",
+   "target_offset": null,
+   "value": 2512,
+   "width": 2
+  },
+  {
+   "category": "IHR",
+   "confidence": "C2 (offset/value); region C3; field UNKNOWN",
+   "index": 1,
+   "kind": "direct",
+   "name": "UNKNOWN",
+   "offset": 1664,
+   "repeat": 1,
+   "side_effect": "timing/IFS configuration",
+   "space": "IHR/IFS",
+   "target": "IHR/IFS",
+   "target_offset": null,
+   "value": 15934,
+   "width": 2
+  },
+  {
+   "category": "IHR",
+   "confidence": "C2 (offset/value); region C3; field UNKNOWN",
+   "index": 2,
+   "kind": "direct",
+   "name": "UNKNOWN",
+   "offset": 1666,
+   "repeat": 1,
+   "side_effect": "timing/IFS configuration",
+   "space": "IHR/IFS",
+   "target": "IHR/IFS",
+   "target_offset": null,
+   "value": 574,
+   "width": 2
+  },
+  {
+   "category": "IHR",
+   "confidence": "C2 (offset/value); region C3; field UNKNOWN",
+   "index": 3,
+   "kind": "direct",
+   "name": "UNKNOWN",
+   "offset": 1792,
+   "repeat": 1,
+   "side_effect": "unknown side effect",
+   "space": "IHR/NAV",
+   "target": "IHR/NAV",
+   "target_offset": null,
+   "value": 60,
+   "width": 2
+  },
+  {
+   "category": "IHR",
+   "confidence": "C2 (offset/value); region C3; field UNKNOWN",
+   "index": 4,
+   "kind": "direct",
+   "name": "UNKNOWN",
+   "offset": 1668,
+   "repeat": 1,
+   "side_effect": "timing/IFS configuration",
+   "space": "IHR/IFS",
+   "target": "IHR/IFS",
+   "target_offset": null,
+   "value": 530,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 5,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x000c, no auto-inc",
+   "target_offset": 12,
+   "value": 65539,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 6,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x000c (low half)",
+   "target_offset": 12,
+   "value": 192,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 7,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x000c, no auto-inc",
+   "target_offset": 12,
+   "value": 65539,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 8,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x000c (high half)",
+   "target_offset": 12,
+   "value": 10,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 9,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0010, no auto-inc",
+   "target_offset": 16,
+   "value": 65540,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 10,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0010 (low half)",
+   "target_offset": 16,
+   "value": 20,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 11,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x001c, no auto-inc",
+   "target_offset": 28,
+   "value": 65543,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 12,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x001c (low half)",
+   "target_offset": 28,
+   "value": 387,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 13,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0094, no auto-inc",
+   "target_offset": 148,
+   "value": 65573,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 14,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0094 (low half)",
+   "target_offset": 148,
+   "value": 500,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 15,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x17d0, no auto-inc",
+   "target_offset": 6096,
+   "value": 67060,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 16,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x17d0 (high half)",
+   "target_offset": 6096,
+   "value": 1067,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 17,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x17d4, no auto-inc",
+   "target_offset": 6100,
+   "value": 67061,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 18,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x17d4 (low half)",
+   "target_offset": 6100,
+   "value": 256,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 19,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0990, no auto-inc",
+   "target_offset": 2448,
+   "value": 66148,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 20,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0990 (high half)",
+   "target_offset": 2448,
+   "value": 60,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 21,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x099c, no auto-inc",
+   "target_offset": 2460,
+   "value": 66151,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 22,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x099c (low half)",
+   "target_offset": 2460,
+   "value": 84,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 23,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x099c, no auto-inc",
+   "target_offset": 2460,
+   "value": 66151,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 24,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x099c (high half)",
+   "target_offset": 2460,
+   "value": 68,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 25,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09a0, no auto-inc",
+   "target_offset": 2464,
+   "value": 66152,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 26,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09a0 (low half)",
+   "target_offset": 2464,
+   "value": 20,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 27,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09a0, no auto-inc",
+   "target_offset": 2464,
+   "value": 66152,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 28,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09a0 (high half)",
+   "target_offset": 2464,
+   "value": 463,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 29,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09a4, no auto-inc",
+   "target_offset": 2468,
+   "value": 66153,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 30,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09a4 (low half)",
+   "target_offset": 2468,
+   "value": 2,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 31,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09a4, no auto-inc",
+   "target_offset": 2468,
+   "value": 66153,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 32,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09a4 (high half)",
+   "target_offset": 2468,
+   "value": 52,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 33,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09b0, no auto-inc",
+   "target_offset": 2480,
+   "value": 66156,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 34,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09b0 (low half)",
+   "target_offset": 2480,
+   "value": 68,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 35,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09b0, no auto-inc",
+   "target_offset": 2480,
+   "value": 66156,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 36,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09b0 (high half)",
+   "target_offset": 2480,
+   "value": 60,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 37,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09b8, no auto-inc",
+   "target_offset": 2488,
+   "value": 66158,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 38,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09b8 (high half)",
+   "target_offset": 2488,
+   "value": 48,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 39,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09c4, no auto-inc",
+   "target_offset": 2500,
+   "value": 66161,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 40,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09c4 (low half)",
+   "target_offset": 2500,
+   "value": 60,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 41,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09c4, no auto-inc",
+   "target_offset": 2500,
+   "value": 66161,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 42,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09c4 (high half)",
+   "target_offset": 2500,
+   "value": 52,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 43,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09cc, no auto-inc",
+   "target_offset": 2508,
+   "value": 66163,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 44,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09cc (high half)",
+   "target_offset": 2508,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 45,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09d8, no auto-inc",
+   "target_offset": 2520,
+   "value": 66166,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 46,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09d8 (low half)",
+   "target_offset": 2520,
+   "value": 52,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 47,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09d8, no auto-inc",
+   "target_offset": 2520,
+   "value": 66166,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 48,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09d8 (high half)",
+   "target_offset": 2520,
+   "value": 48,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 49,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09e0, no auto-inc",
+   "target_offset": 2528,
+   "value": 66168,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 50,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09e0 (high half)",
+   "target_offset": 2528,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 51,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09ec, no auto-inc",
+   "target_offset": 2540,
+   "value": 66171,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 52,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09ec (low half)",
+   "target_offset": 2540,
+   "value": 48,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 53,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09ec, no auto-inc",
+   "target_offset": 2540,
+   "value": 66171,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 54,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09ec (high half)",
+   "target_offset": 2540,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 55,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x09f4, no auto-inc",
+   "target_offset": 2548,
+   "value": 66173,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 56,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x09f4 (high half)",
+   "target_offset": 2548,
+   "value": 40,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 57,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a00, no auto-inc",
+   "target_offset": 2560,
+   "value": 66176,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 58,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a00 (low half)",
+   "target_offset": 2560,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 59,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a00, no auto-inc",
+   "target_offset": 2560,
+   "value": 66176,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 60,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a00 (high half)",
+   "target_offset": 2560,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 61,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a08, no auto-inc",
+   "target_offset": 2568,
+   "value": 66178,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 62,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a08 (high half)",
+   "target_offset": 2568,
+   "value": 40,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 63,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a14, no auto-inc",
+   "target_offset": 2580,
+   "value": 66181,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 64,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a14 (low half)",
+   "target_offset": 2580,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 65,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a14, no auto-inc",
+   "target_offset": 2580,
+   "value": 66181,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 66,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a14 (high half)",
+   "target_offset": 2580,
+   "value": 40,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 67,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a1c, no auto-inc",
+   "target_offset": 2588,
+   "value": 66183,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 68,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a1c (high half)",
+   "target_offset": 2588,
+   "value": 40,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 69,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a28, no auto-inc",
+   "target_offset": 2600,
+   "value": 66186,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 70,
+   "kind": "obj_data",
+   "name": "OBJDATA",
+   "offset": 356,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a28 (low half)",
+   "target_offset": 2600,
+   "value": 44,
+   "width": 2
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 71,
+   "kind": "obj_sel",
+   "name": "OBJADDR selector",
+   "offset": 352,
+   "repeat": 0,
+   "side_effect": "object-memory selector",
+   "space": "SHM",
+   "target": "SHM window, base byte offset 0x0a28, no auto-inc",
+   "target_offset": 2600,
+   "value": 66186,
+   "width": 4
+  },
+  {
+   "category": "OBJ",
+   "confidence": "C2/C3",
+   "index": 72,
+   "kind": "obj_data",
+   "name": "OBJDATA+2",
+   "offset": 358,
+   "repeat": 0,
+   "side_effect": "SHM state (config)",
+   "space": "SHM",
+   "target": "SHM byte offset 0x0a28 (high half)",
+   "target_offset": 2600,
+   "value": 40,
+   "width": 2
+  }
+ ],
+ "side_effect_accounting": {
+  "SHM state (config)": 34,
+  "object-memory selector": 34,
+  "timing/IFS configuration": 4,
+  "unknown side effect": 1
+ },
+ "status": "ANALYSIS ONLY",
+ "summary": {
+  "by_category": {
+   "IHR": 5,
+   "OBJ": 68
+  },
+  "by_kind": {
+   "direct": 5,
+   "obj_data": 34,
+   "obj_sel": 34
+  },
+  "by_side_effect": {
+   "SHM state (config)": 34,
+   "object-memory selector": 34,
+   "timing/IFS configuration": 4,
+   "unknown side effect": 1
+  },
+  "by_space": {
+   "IHR/IFS": 4,
+   "IHR/NAV": 1,
+   "SHM": 68
+  },
+  "records": 73
+ },
+ "table": "d11ac1bsinitvals42",
+ "terminator_index": 73,
+ "transaction_count": 39,
+ "transactions": [
+  {
+   "kind": "direct",
+   "offset": 1670,
+   "record_index": 0,
+   "space": "IHR/IFS",
+   "value": 2512,
+   "width": 2
+  },
+  {
+   "kind": "direct",
+   "offset": 1664,
+   "record_index": 1,
+   "space": "IHR/IFS",
+   "value": 15934,
+   "width": 2
+  },
+  {
+   "kind": "direct",
+   "offset": 1666,
+   "record_index": 2,
+   "space": "IHR/IFS",
+   "value": 574,
+   "width": 2
+  },
+  {
+   "kind": "direct",
+   "offset": 1792,
+   "record_index": 3,
+   "space": "IHR/NAV",
+   "value": 60,
+   "width": 2
+  },
+  {
+   "kind": "direct",
+   "offset": 1668,
+   "record_index": 4,
+   "space": "IHR/IFS",
+   "value": 530,
+   "width": 2
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    6
+   ],
+   "kind": "indirect",
+   "record_index": 5,
+   "selector": 65539,
+   "space": "SHM",
+   "target_offset": 12,
+   "value": 192,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 12,
+     "half": "low",
+     "record_index": 6,
+     "value": 192
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    8
+   ],
+   "kind": "indirect",
+   "record_index": 7,
+   "selector": 65539,
+   "space": "SHM",
+   "target_offset": 12,
+   "value": 10,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 14,
+     "half": "high",
+     "record_index": 8,
+     "value": 10
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    10
+   ],
+   "kind": "indirect",
+   "record_index": 9,
+   "selector": 65540,
+   "space": "SHM",
+   "target_offset": 16,
+   "value": 20,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 16,
+     "half": "low",
+     "record_index": 10,
+     "value": 20
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    12
+   ],
+   "kind": "indirect",
+   "record_index": 11,
+   "selector": 65543,
+   "space": "SHM",
+   "target_offset": 28,
+   "value": 387,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 28,
+     "half": "low",
+     "record_index": 12,
+     "value": 387
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    14
+   ],
+   "kind": "indirect",
+   "record_index": 13,
+   "selector": 65573,
+   "space": "SHM",
+   "target_offset": 148,
+   "value": 500,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 148,
+     "half": "low",
+     "record_index": 14,
+     "value": 500
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    16
+   ],
+   "kind": "indirect",
+   "record_index": 15,
+   "selector": 67060,
+   "space": "SHM",
+   "target_offset": 6096,
+   "value": 1067,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 6098,
+     "half": "high",
+     "record_index": 16,
+     "value": 1067
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    18
+   ],
+   "kind": "indirect",
+   "record_index": 17,
+   "selector": 67061,
+   "space": "SHM",
+   "target_offset": 6100,
+   "value": 256,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 6100,
+     "half": "low",
+     "record_index": 18,
+     "value": 256
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    20
+   ],
+   "kind": "indirect",
+   "record_index": 19,
+   "selector": 66148,
+   "space": "SHM",
+   "target_offset": 2448,
+   "value": 60,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2450,
+     "half": "high",
+     "record_index": 20,
+     "value": 60
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    22
+   ],
+   "kind": "indirect",
+   "record_index": 21,
+   "selector": 66151,
+   "space": "SHM",
+   "target_offset": 2460,
+   "value": 84,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2460,
+     "half": "low",
+     "record_index": 22,
+     "value": 84
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    24
+   ],
+   "kind": "indirect",
+   "record_index": 23,
+   "selector": 66151,
+   "space": "SHM",
+   "target_offset": 2460,
+   "value": 68,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2462,
+     "half": "high",
+     "record_index": 24,
+     "value": 68
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    26
+   ],
+   "kind": "indirect",
+   "record_index": 25,
+   "selector": 66152,
+   "space": "SHM",
+   "target_offset": 2464,
+   "value": 20,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2464,
+     "half": "low",
+     "record_index": 26,
+     "value": 20
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    28
+   ],
+   "kind": "indirect",
+   "record_index": 27,
+   "selector": 66152,
+   "space": "SHM",
+   "target_offset": 2464,
+   "value": 463,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2466,
+     "half": "high",
+     "record_index": 28,
+     "value": 463
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    30
+   ],
+   "kind": "indirect",
+   "record_index": 29,
+   "selector": 66153,
+   "space": "SHM",
+   "target_offset": 2468,
+   "value": 2,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2468,
+     "half": "low",
+     "record_index": 30,
+     "value": 2
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    32
+   ],
+   "kind": "indirect",
+   "record_index": 31,
+   "selector": 66153,
+   "space": "SHM",
+   "target_offset": 2468,
+   "value": 52,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2470,
+     "half": "high",
+     "record_index": 32,
+     "value": 52
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    34
+   ],
+   "kind": "indirect",
+   "record_index": 33,
+   "selector": 66156,
+   "space": "SHM",
+   "target_offset": 2480,
+   "value": 68,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2480,
+     "half": "low",
+     "record_index": 34,
+     "value": 68
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    36
+   ],
+   "kind": "indirect",
+   "record_index": 35,
+   "selector": 66156,
+   "space": "SHM",
+   "target_offset": 2480,
+   "value": 60,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2482,
+     "half": "high",
+     "record_index": 36,
+     "value": 60
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    38
+   ],
+   "kind": "indirect",
+   "record_index": 37,
+   "selector": 66158,
+   "space": "SHM",
+   "target_offset": 2488,
+   "value": 48,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2490,
+     "half": "high",
+     "record_index": 38,
+     "value": 48
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    40
+   ],
+   "kind": "indirect",
+   "record_index": 39,
+   "selector": 66161,
+   "space": "SHM",
+   "target_offset": 2500,
+   "value": 60,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2500,
+     "half": "low",
+     "record_index": 40,
+     "value": 60
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    42
+   ],
+   "kind": "indirect",
+   "record_index": 41,
+   "selector": 66161,
+   "space": "SHM",
+   "target_offset": 2500,
+   "value": 52,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2502,
+     "half": "high",
+     "record_index": 42,
+     "value": 52
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    44
+   ],
+   "kind": "indirect",
+   "record_index": 43,
+   "selector": 66163,
+   "space": "SHM",
+   "target_offset": 2508,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2510,
+     "half": "high",
+     "record_index": 44,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    46
+   ],
+   "kind": "indirect",
+   "record_index": 45,
+   "selector": 66166,
+   "space": "SHM",
+   "target_offset": 2520,
+   "value": 52,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2520,
+     "half": "low",
+     "record_index": 46,
+     "value": 52
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    48
+   ],
+   "kind": "indirect",
+   "record_index": 47,
+   "selector": 66166,
+   "space": "SHM",
+   "target_offset": 2520,
+   "value": 48,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2522,
+     "half": "high",
+     "record_index": 48,
+     "value": 48
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    50
+   ],
+   "kind": "indirect",
+   "record_index": 49,
+   "selector": 66168,
+   "space": "SHM",
+   "target_offset": 2528,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2530,
+     "half": "high",
+     "record_index": 50,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    52
+   ],
+   "kind": "indirect",
+   "record_index": 51,
+   "selector": 66171,
+   "space": "SHM",
+   "target_offset": 2540,
+   "value": 48,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2540,
+     "half": "low",
+     "record_index": 52,
+     "value": 48
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    54
+   ],
+   "kind": "indirect",
+   "record_index": 53,
+   "selector": 66171,
+   "space": "SHM",
+   "target_offset": 2540,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2542,
+     "half": "high",
+     "record_index": 54,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    56
+   ],
+   "kind": "indirect",
+   "record_index": 55,
+   "selector": 66173,
+   "space": "SHM",
+   "target_offset": 2548,
+   "value": 40,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2550,
+     "half": "high",
+     "record_index": 56,
+     "value": 40
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    58
+   ],
+   "kind": "indirect",
+   "record_index": 57,
+   "selector": 66176,
+   "space": "SHM",
+   "target_offset": 2560,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2560,
+     "half": "low",
+     "record_index": 58,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    60
+   ],
+   "kind": "indirect",
+   "record_index": 59,
+   "selector": 66176,
+   "space": "SHM",
+   "target_offset": 2560,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2562,
+     "half": "high",
+     "record_index": 60,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    62
+   ],
+   "kind": "indirect",
+   "record_index": 61,
+   "selector": 66178,
+   "space": "SHM",
+   "target_offset": 2568,
+   "value": 40,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2570,
+     "half": "high",
+     "record_index": 62,
+     "value": 40
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    64
+   ],
+   "kind": "indirect",
+   "record_index": 63,
+   "selector": 66181,
+   "space": "SHM",
+   "target_offset": 2580,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2580,
+     "half": "low",
+     "record_index": 64,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    66
+   ],
+   "kind": "indirect",
+   "record_index": 65,
+   "selector": 66181,
+   "space": "SHM",
+   "target_offset": 2580,
+   "value": 40,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2582,
+     "half": "high",
+     "record_index": 66,
+     "value": 40
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    68
+   ],
+   "kind": "indirect",
+   "record_index": 67,
+   "selector": 66183,
+   "space": "SHM",
+   "target_offset": 2588,
+   "value": 40,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2590,
+     "half": "high",
+     "record_index": 68,
+     "value": 40
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    70
+   ],
+   "kind": "indirect",
+   "record_index": 69,
+   "selector": 66186,
+   "space": "SHM",
+   "target_offset": 2600,
+   "value": 44,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2600,
+     "half": "low",
+     "record_index": 70,
+     "value": 44
+    }
+   ]
+  },
+  {
+   "auto_inc": true,
+   "data": [
+    72
+   ],
+   "kind": "indirect",
+   "record_index": 71,
+   "selector": 66186,
+   "space": "SHM",
+   "target_offset": 2600,
+   "value": 40,
+   "width": 2,
+   "writes": [
+    {
+     "byte": 2602,
+     "half": "high",
+     "record_index": 72,
+     "value": 40
+    }
+   ]
+  }
+ ]
+}

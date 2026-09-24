@@ -102,6 +102,24 @@ if [ -f src/ob_ucode.h ]; then
 	fi
 fi
 
+# 4b. M3.4D3 analysis consistency (band-switch initvals / PHY boundary).
+#     The analysis must be present and must stay ANALYSIS ONLY.
+if [ -f docs/m34d3_bsinitvals.md ] && \
+   [ -f docs/m34d3/bsinitvals_classification.json ] && \
+   [ -f scripts/analyze_bsinitvals.py ]; then
+	grep -qE 'ANALYSIS ONLY' docs/m34d3_bsinitvals.md \
+		&& ok "M3.4D3 analysis present" \
+		|| bad "docs/m34d3_bsinitvals.md is not marked ANALYSIS ONLY"
+else
+	bad "M3.4D3 analysis artifacts missing"
+fi
+if grep -rniE 'M3\.4D3.*HARDWARE (RUNTIME )?PROVEN' docs/ 2>/dev/null \
+		| grep -viE 'not|never|before|remain|unproven' | grep -q .; then
+	bad "a document claims M3.4D3 is hardware proven"
+else
+	ok "M3.4D3 not claimed hardware proven"
+fi
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"

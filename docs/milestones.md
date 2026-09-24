@@ -167,6 +167,48 @@ Implementation notes (unchanged):
 - **HARDWARE RUNTIME PROVEN** on BCM4352 (see the runtime evidence above); the
   isolated test is **ONE SHOT** and must not be repeated.
 
+## M3.4D3 — band-switch initvals + PHY boundary (`ANALYSIS ONLY`)
+
+Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
+Last hardware-proven milestone remains **M3.4D2B**. Full report:
+`docs/m34d3_bsinitvals.md`; machine-generated classification:
+`docs/m34d3/bsinitvals_classification.{md,json}`
+(`scripts/analyze_bsinitvals.py`, read-only, deterministic).
+
+- Exact post-common vendor path re-proven in `wlc_bmac_init` (`0x6828a`):
+  common applier `0x68b98` -> D11 setup tail (`0x68bab..0x695cb`) -> band-init
+  helper `sub_6656c` (`0x695d8`) -> `d11ac1bsinitvals42` -> `wlc_phy_init`
+  (`0x669df`).
+- Consumer: `sub_60f67` (8-byte records, terminator `0xffff`, width2 ->
+  `osl_writew`, width4 -> `osl_writel` at `D11 base + offset`). Table
+  `d11ac1bsinitvals42` referenced at `0x66613`; selected when
+  `[dev+0x84]==0x2A` (PHY rev 42) and `[[dev+0xE8]+0x1C]==0xB` (AC PHY type).
+- Shape reconfirmed: 592 B, **73** records, terminator 73, **39 x 16-bit /
+  34 x 32-bit**. All 73 are D11/MAC-side: 68 SHM (`OBJADDR 0x0001xxxx`, no
+  auto-inc) + 5 direct IHR (`0x680/0x682/0x684/0x686` IFS, `0x700` NAV).
+  Side-effect accounting reconciles to 73 (SHM state 34, selector 34, timing 4,
+  NAV 1). `IRQ ENABLE EFFECT = NONE`; `DMA ENABLE EFFECT = NONE`; no PHY/radio.
+- C3 (`brcmsmac/main.c brcms_c_ucode_bsinit`): band-switch initvals are the
+  "band-specific ucode IHR, SHM, and SCR inits", applied with the band's MHF
+  host flags immediately before `wlc_phy_init`; called on initial bring-up and
+  on band switch (same table for 2.4/5 GHz; band values written separately).
+- Common vs band-switch: SHM-only for bs; no direct-offset overlap; **3 shared
+  SHM bytes overridden** by bs (`0x0010=0x14`, `0x001c=0x183`,
+  `0x0094=0x1f4`).
+- Real PHY boundary: `wlc_phy_init` (`0xbabf5`) -> `wlc_phy_anacore`
+  (`0xbac84`, first PHY indirect MMIO via `D11+0x3e0/0x3fc/0x3fe`) ->
+  `wlc_phy_switch_radio` (`0xbad44`) -> `call *[pi+0x28]` = `wlc_phy_init_aphy`
+  (`0x8c3f9`, installed at `0x899dd`). Note the full vendor path already calls
+  `wlc_phy_switch_radio` at `0x69594` **before** band init.
+- **Formal decision: `CAN BSINITVALS BE ISOLATED SAFELY BEFORE REAL PHY INIT?
+  NOT YET.** Blockers: post-common entry state not isolated (incl. `MACCONTROL`
+  change at `0x69047`), band/MHF dependency, rev/type selection, no clean PHY
+  separation, unproven postconditions.
+- Proposed smallest safe boundary (design only, do not implement): reproduce
+  the post-common D11 setup tail through band init, stopping before
+  `wlc_phy_switch_radio`/`wlc_phy_init`. See report §17/§18 for the AC PHY
+  follow-on roadmap.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.
