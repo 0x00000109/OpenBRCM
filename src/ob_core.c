@@ -10,6 +10,39 @@
 #include "ob_core.h"
 #include "ob_si.h"
 #include "ob_mac80211.h"
+#include "ob_ucode.h"
+
+/*
+ * Explicit firmware-validation-only mode.
+ *
+ * When set, probe binds through BCMA, performs the read-only identity check
+ * below, acquires/hashes/parses the three rev42 images and returns
+ * successfully. It deliberately skips every later bring-up stage: no
+ * OpenBRCM MMIO access at all (not even reads), no bcma_host_pci_up(),
+ * bcma_core_enable()/reset, DMA/IRQ/RX setup, and no mac80211 registration.
+ * ob_remove() recognises hw->validate_only and skips teardown of resources
+ * that were never initialized.
+ *
+ * Read-only via sysfs; set at load time:  insmod openbrcm.ko fw_validate_only=1
+ */
+static bool fw_validate_only;
+module_param(fw_validate_only, bool, 0444);
+MODULE_PARM_DESC(fw_validate_only,
+		 "validate rev42 firmware only; skip all hardware bring-up (default: 0)");
+
+/*
+ * Explicit D11 rev42 ucode-upload + PSM-start hardware test (M3.4D2A).
+ *
+ * When set, probe performs the minimum proven core preparation, uploads the
+ * validated rev42 ucode, starts the PSM and waits (bounded) for MI_MACSSPNDD,
+ * then STOPS. It never applies initvals and never reaches PHY/radio/channel,
+ * RX/TX DMA, IRQ registration or mac80211. Mutually exclusive with
+ * fw_validate_only (mode policy is explicit; conflicting modes fail probe).
+ */
+static bool ucode_test_only;
+module_param(ucode_test_only, bool, 0444);
+MODULE_PARM_DESC(ucode_test_only,
+		 "D11 rev42 ucode upload + PSM start only; stops before initvals/PHY/DMA (default: 0)");
 
 int ob_probe(struct bcma_device *core)
 {
@@ -19,6 +52,13 @@ int ob_probe(struct bcma_device *core)
 	if (core->id.manuf != BCMA_MANUF_BCM ||
 	    core->id.id != BCMA_CORE_80211)
 		return -ENODEV;
+
+	/* Explicit mode policy: the two isolated modes must never combine. */
+	if (ob_ucode_mode_conflict(fw_validate_only, ucode_test_only)) {
+		dev_err(&core->dev,
+			OB_DRV_NAME ": fw_validate_only and ucode_test_only are mutually exclusive\n");
+		return -EINVAL;
+	}
 
 	hw = devm_kzalloc(&core->dev, sizeof(*hw), GFP_KERNEL);
 	if (!hw)
@@ -35,6 +75,40 @@ int ob_probe(struct bcma_device *core)
 	dev_info(hw->dev,
 		 OB_DRV_NAME ": chip 0x%04x rev %u, d11 core rev %u\n",
 		 hw->chip_id, hw->chip_rev, core->id.rev);
+
+	/*
+	 * fw_validate_only: BCMA has bound the device and the identity check
+	 * above passed. Validate the rev42 images and return. ob_fw_probe() only
+	 * calls request_firmware()/release_firmware() and the size-bounded
+	 * parsers; it never touches an OpenBRCM register. No mac80211.
+	 */
+	if (fw_validate_only) {
+		hw->validate_only = true;
+		ret = ob_fw_probe(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		dev_info(hw->dev,
+			 "fw: validation-only complete; hardware bring-up skipped\n");
+		return 0;
+	}
+
+	/*
+	 * ucode_test_only: isolated D11 ucode upload + PSM start. Performs only
+	 * the minimum core prep and the recovered upload/start sequence, then
+	 * returns before any normal OpenBRCM bring-up (no ob_si_probe, no DMA,
+	 * no IRQ, no RX, no mac80211).
+	 */
+	if (ucode_test_only) {
+		hw->ucode_test_only = true;
+		ret = ob_ucode_test(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
 
 	ret = ob_si_probe(hw);
 	if (ret)
@@ -98,6 +172,29 @@ void ob_remove(struct bcma_device *core)
 
 	if (!hw)
 		return;
+
+	/*
+	 * fw_validate_only never initialized mac80211, DMA, IRQ or RX. Skip
+	 * every teardown step so no uninitialized resource is touched.
+	 */
+	if (hw->validate_only) {
+		dev_info(hw->dev,
+			 OB_DRV_NAME ": removed (validation-only; nothing to tear down)\n");
+		bcma_set_drvdata(core, NULL);
+		return;
+	}
+
+	/*
+	 * ucode_test_only never initialized mac80211, IRQ, DMA or RX; skip all
+	 * teardown. No MAC/PHY register is restored because no recovery write is
+	 * provenance-backed for this partial state (see docs/milestones.md).
+	 */
+	if (hw->ucode_test_only) {
+		dev_info(hw->dev,
+			 OB_DRV_NAME ": removed (ucode-test; no resource teardown, hardware left as-is)\n");
+		bcma_set_drvdata(core, NULL);
+		return;
+	}
 
 	ob_mac80211_unregister(hw);
 	/*

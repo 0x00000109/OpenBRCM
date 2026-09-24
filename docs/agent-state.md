@@ -15,14 +15,14 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - mac80211 SoftMAC integration
 
 ## Commit state (IMPORTANT)
-- `HEAD` = `2029292` "M3.4D1: rev42 firmware acquisition + validation (no
-  hardware writes)". It contains `ob_fw.{c,h}` and calls `ob_fw_probe()` from
-  **normal** probe (after `ob_si_probe`).
-- The isolated modes `fw_validate_only=1` and `ucode_test_only=1`, plus
-  `src/ob_ucode.{c,h}`, `docs/ucode_test.md`, the `docs/milestones.md` D2A
-  section and this file's feature status are **uncommitted working-tree
-  changes**. They are not in Git history yet.
-- A pre-commit documentation-discipline hook now exists (`.githooks/`); see
+- `main` = `089e413` (governance + GitHub workflow). Its M3.4D1 commit `2029292`
+  adds `ob_fw.{c,h}` and calls `ob_fw_probe()` from **normal** probe (after
+  `ob_si_probe`); `main` has **no** isolated mode.
+- Branch `m34d2a-ucode-upload` (this branch, **draft PR, not merged**) adds the
+  isolated modes `fw_validate_only=1` and `ucode_test_only=1`, plus
+  `src/ob_ucode.{c,h}`, `docs/ucode_test.md` and the `docs/milestones.md` D2A
+  section. `main` is unchanged until review/merge.
+- Pre-commit documentation-discipline hook is active (`.githooks/`); see
   `AGENTS.md`.
 
 ## Hardware-proven facts (HARDWARE PROVEN)
@@ -37,7 +37,8 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `ctrl2=0x0800`, `addrhigh=0x80000000`, `rcvptrbase=0`, initial
   `PTR=0x400`, `RX CONTROL=0x84d`, engine reached IDLE, host IRQ route + masks
   programmed. No real RX completion/frame proven yet.
-- M3.4D1 (working-tree isolated mode): `fw_validate_only=1` **runtime PASS** —
+- M3.4D1 (isolated mode, branch `m34d2a-ucode-upload`): `fw_validate_only=1`
+  **runtime PASS** —
   primary `brcm/bcm4352-d11ucode42.bin` absent, fallback
   `brcm/bcm43xx-ucode.fw` used (`size=43400`, `words=10850`); common initvals
   `4888`/`610`; band-switch initvals `592`/`73`; all validated; "hardware
@@ -51,6 +52,7 @@ source of truth; this file records the live working-tree state on top of HEAD.
 ## Current milestone
 **M3.4D2A — D11 rev42 ucode upload + PSM start only.**
 Status: `IMPLEMENTED` + `STATIC TESTED` + signed. **NOT `HARDWARE PROVEN`.**
+- Branch `m34d2a-ucode-upload` (draft PR, not merged to `main`).
 - Isolated mode `ucode_test_only=1`; mutually exclusive with `fw_validate_only=1`
   (conflict -> `-EINVAL`, no hardware access).
 - Minimum prep (`bcma_host_pci_up` + D11 `bcma_core_enable` + FAST clock) ->
@@ -97,8 +99,9 @@ PHY/radio/channel/DMA/IRQ/mac80211.
 - `src/ob_ucode.{c,h}`: recovered MACCONTROL/OBJADDR/poll constants.
 - `MOC/` signing material (outside this repo): never modify/read the private key.
 
-## Working-tree inventory (uncommitted)
-`M Makefile`, `M src/ob_core.{c,h}`, `M src/ob_fw.{c,h}`, `M tests/host/Makefile`,
-`M docs/milestones.md`; untracked `src/ob_ucode.{c,h}`,
-`tests/host/ob_ucode_test.c`, `tests/kunit/ob_ucode_kunit.c`,
-`docs/ucode_test.md`, `scripts/runtime-test.sh`.
+## Branch contents (`m34d2a-ucode-upload`, draft PR, not merged)
+`src/ob_ucode.{c,h}`, `src/ob_core.{c,h}`, `src/ob_fw.{c,h}`, `Makefile`,
+`tests/host/Makefile`, `tests/host/ob_ucode_test.c`,
+`tests/kunit/ob_ucode_kunit.c`, `docs/ucode_test.md`, `docs/milestones.md`,
+`docs/agent-state.md`. Note: `scripts/runtime-test.sh` and `.opencode/` remain
+untracked local tooling.

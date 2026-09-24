@@ -192,6 +192,7 @@ static inline int ob_fw_iv_at(const u8 *data, size_t size, u32 i,
 
 #ifdef __KERNEL__
 struct ob_hw;
+struct firmware;
 
 /**
  * struct ob_fw - rev42 firmware validation state (M3.4D1)
@@ -214,6 +215,14 @@ struct ob_fw {
 };
 
 int ob_fw_probe(struct ob_hw *hw);
+
+/*
+ * Acquire + size/FNV-validate only the rev42 ucode image (primary name with the
+ * documented legacy fallback). The caller owns *fw and must release_firmware().
+ * Used by the isolated ucode_test_only path (M3.4D2A).
+ */
+int ob_fw_request_ucode(struct ob_hw *hw, const struct firmware **fw,
+			const char **used);
 #endif /* __KERNEL__ */
 
 #endif /* _OB_FW_H_ */

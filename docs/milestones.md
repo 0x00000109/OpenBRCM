@@ -27,6 +27,25 @@ hardware writes.
   `MACCONTROL=0x04020402` (PSM_RUN), poll `MI_MACSSPNDD` → common initvals →
   STOP before band init/PHY. bsinitvals deferred (applied with `wlc_phy_init`).
 
+## M3.4D2A — D11 rev42 ucode upload + PSM start only (implemented, not yet run)
+
+Isolated mode `ucode_test_only=1` (mutually exclusive with `fw_validate_only`).
+Gate (to be observed on hardware): upload `writes=10850`, PSM start, bounded
+poll `MI_MACSSPNDD`, then STOP before initvals/PHY/radio/DMA.
+- Minimum prep only: `bcma_host_pci_up` + D11 `bcma_core_enable` + FAST clock
+  (the proven M2.5 A/B/C subset), then the vendor upload sequence.
+- `MACCONTROL=0x04000404` (IHR_EN|PSM_JMP0|WAKE) via masked RMW -> OBJADDR
+  `0x03000000` (auto-inc) + 10850 raw LE OBJDATA writes with a write-count
+  invariant -> `MACINTSTATUS=0xffffffff` -> `MACCONTROL=0x04020402`
+  (IHR_EN|INFRA|PSM_RUN|WAKE, no EN_MAC) -> poll `MI_MACSSPNDD`
+  (10 us x <=100000 => <=1.0 s). No initvals applier, no EN_MAC.
+- SHM `M_FIFOSIZE0..3` (0x98..0x9e) are read with the vendor windowed
+  `wlc_bmac_read_shm` access, logged only (the vendor reads them after common
+  initvals). No revision string is invented (vendor reads none).
+- Full call graph, MMIO chronology, unwind matrix and timing:
+  `docs/ucode_test.md`. `remove()` has its own ucode_test_only guard and calls
+  no RX/IRQ/DMA/mac80211 teardown. No cleanup register writes on any failure.
+
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
 `bcma_core_pci_power_save+0x25` (`RAX=0`), called from `ob_si_powerup`.

@@ -28,6 +28,12 @@ struct ieee80211_hw;
  * @bus:	the silicon backplane bus
  * @chip_id:	chip id (e.g. 0x4352)
  * @chip_rev:	chip revision
+ * @validate_only: true when probe ran with fw_validate_only=1: the device is
+ *		bound and the rev42 images were validated, but no OpenBRCM
+ *		hardware bring-up happened and @remove must skip all teardown
+ * @ucode_test_only: true when probe ran with ucode_test_only=1: the device is
+ *		bound, minimum core prep + ucode upload + PSM start ran, and
+ *		@remove must skip all RX/IRQ/DMA/mac80211 teardown
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
@@ -43,6 +49,8 @@ struct ob_hw {
 	struct bcma_bus		*bus;
 	u16			chip_id;
 	u8			chip_rev;
+	bool			validate_only;
+	bool			ucode_test_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;
