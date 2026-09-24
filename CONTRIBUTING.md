@@ -35,6 +35,8 @@ For a KUnit-enabled build, add `tests/kunit/ob_math_kunit.c` per kernel docs.
 - describe the milestone it advances (see `docs/milestones.md`)
 - include the command output that demonstrates the gate where applicable
 - update `docs/` if behaviour or interfaces change
+- follow [`docs/github-workflow.md`](docs/github-workflow.md) for branching,
+  commit format, review and release rules
 
 ## Reporting issues
 Use the GitHub issue templates. For security, see [`SECURITY.md`](SECURITY.md).

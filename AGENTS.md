@@ -83,3 +83,8 @@ documentation says which status it reached.
 milestone, last completed hardware test, last failure/reset, active safety
 constraints, current next action and the exact STOP boundary. Always read it
 before acting, and update it when the state changes.
+
+## 6. Repository hosting
+
+Branching, commit format, pull-request/review rules, releases and SSH-key
+handling are defined in [`docs/github-workflow.md`](docs/github-workflow.md).

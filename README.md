@@ -62,5 +62,11 @@ Implementation is specification-driven. `src/ob_regs.h`, `ob_dma_regs.h`,
 engineering specification and must not be hand-edited. See
 [`docs/provenance.md`](docs/provenance.md).
 
+## Contributing
+Maintainer: [`@0x00000109`](https://github.com/0x00000109). See [`AGENTS.md`](AGENTS.md)
+for the agent/documentation rules and
+[`docs/github-workflow.md`](docs/github-workflow.md) for the branch, commit,
+pull-request, review and release process.
+
 ## License
 GPL-2.0-only. See [`COPYING`](COPYING).

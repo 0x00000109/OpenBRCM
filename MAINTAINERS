@@ -1,8 +1,9 @@
 OpenBRCM
 ========
 
-M:  OpenBRCM maintainers <openbrcm@example.invalid>
-L:  https://github.com/<your-org>/OpenBRCM
+M:  0x00000109 <0x00000109@users.noreply.github.com>
+L:  https://github.com/0x00000109/OpenBRCM
+W:  https://github.com/0x00000109/OpenBRCM
 S:  Maintained
 F:  Documentation/driver-api/80211/
 
@@ -13,6 +14,7 @@ Files:
   src/ob_channel.c     channel/frequency math
   src/ob_rate.c        802.11 legacy + MCS rate math
   docs/                architecture, provenance, firmware, milestones
+  docs/github-workflow.md  branch/commit/PR/review/release process
 
 Note: this is an early skeleton; entries will be split as modules appear
 (dma, d11, tx, rx, phy).
