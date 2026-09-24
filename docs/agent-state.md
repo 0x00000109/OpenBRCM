@@ -74,11 +74,13 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - **M3.4D3 (current):** band-switch initvals (`d11ac1bsinitvals42`, 73 records)
   + PHY boundary. Report `docs/m34d3_bsinitvals.md`; classification
   `docs/m34d3/bsinitvals_classification.{md,json}` via
-  `scripts/analyze_bsinitvals.py`. Decision (corrected): `wlc_phy_switch_radio`
-  does **not** precede bsinitvals on the BCM4352/AC path (the `0x69594` call is
-  NPHY/HT-gated, and `wlc_bmac_mute` is skipped), so a vendor-ordered
-  bsinitvals test can stop before real PHY/RF writes: **YES**. The isolated unit
-  is the full vendor prefix, not the 73 records alone.
+  `scripts/analyze_bsinitvals.py`. Decisions (corrected, Appendix B):
+  `wlc_phy_switch_radio` does **not** precede bsinitvals on the BCM4352/AC path
+  (the `0x69594` call is NPHY/HT-gated; `wlc_bmac_mute` is skipped), so a
+  vendor-ordered test can stop before real PHY/RF writes: **YES**. But the
+  post-common tail is **not D11-only** (it inits DMA engines and writes
+  interrupt-source masks), so **D3A and D3B are NOT YET**. The isolated unit is
+  the full vendor prefix, not the 73 records alone.
 - M3.4D2A: see "Current milestone".
 
 ## Canonical milestone status
@@ -98,11 +100,11 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   selected when `[dev+0x84]==0x2A` (PHY rev 42) and
   `[[dev+0xE8]+0x1C]==0xB` (AC phy type); `sub_6656c` is called from
   `wlc_bmac_init` `0x695d8` (initial up) and `wlc_bmac_set_chanspec` `0x67bd0`.
-- Table: 592 B, **73** records (39 x 16-bit / 34 x 32-bit), 68 SHM + 5 direct
-  IHR; side effects reconcile to 73; `IRQ ENABLE EFFECT = NONE`,
-  `DMA ENABLE EFFECT = NONE`, no PHY/radio. C3: "band-specific ucode IHR, SHM,
-  and SCR inits", applied before `wlc_phy_init`; called on up and band switch;
-  same table for 2.4/5 GHz.
+- Table: 592 B, **73** records (34 x OBJADDR w4 + 15 x OBJDATA-lo w2 +
+  19 x OBJDATA-hi w2 + 5 x direct IHR w2); 68 SHM + 5 direct IHR; `IRQ ENABLE
+  EFFECT = NONE`, `DMA ENABLE EFFECT = NONE`, no PHY/radio (for the table
+  itself). C3: "band-specific ucode IHR, SHM, and SCR inits", applied before
+  `wlc_phy_init`; called on up and band switch; same table for 2.4/5 GHz.
 - Common vs bs: SHM-only for bs; no direct-offset overlap; 3 SHM bytes
   overridden (`0x0010=0x14`, `0x001c=0x183`, `0x0094=0x1f4`).
 - PHY boundary (corrected): `wlc_phy_init (0xbabf5)` -> `wlc_phy_anacore
@@ -112,11 +114,18 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
   (0x8c3f9)` via `call *[pi+0x28]`. The `wlc_bmac_init` `0x69594`
   `wlc_phy_switch_radio` is `phy_type==7` (NPHY/HT) gated and **not taken for
   AC**; `wlc_bmac_mute` `0x6957b` is skipped (`wlc_bmac_init` arg#3=0).
-- Corrected decision **YES** (vendor-ordered bsinitvals can stop before real
-  PHY/RF writes). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`; `macphyclk_set` =
-  D11 core cflags bit4; `switch_macfreq` writes D11 `0x62e/0x630` from PMU VCO.
-  Smallest faithful boundary in report §17/§A.8: full `wlc_bmac_init` prefix ->
-  bsinitvals, STOP before `wlc_phy_init`. No implementation.
+- Tail reversal (Appendix B, NEW): for rev42 the legacy
+  `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped** (`phyrev <= 0x27`
+  gate); the rev42 FIFO stage is `sub_67efd` (TXE0 fixup, safe). The tail also
+  writes `intrcvlazy[0]`/`intctrlregs[0].intmask=I_RI` and **inits DMA engines**
+  (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill`) at `0x6921c` — so it is **not**
+  D11/SHM-only.
+- Decisions: PHY/RF boundary **YES** (no PHY/radio writes before bsinitvals);
+  **D3A = NOT YET, D3B = NOT YET** (DMA-engine init / IRQ-source masks exceed
+  the D2B envelope). `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ`;
+  `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
+  writes D11 `0x62e/0x630` from PMU VCO. Report §0, §16/§17, Appendix B. No
+  implementation.
 
 ## Current milestone (just proven)
 **M3.4D2B — isolated rev42 common-initvals test.**
@@ -190,16 +199,17 @@ mode; M3.4D1 then passed. Do not repeat the combined normal-probe test.
 - Do not commit the proprietary blob or firmware images.
 
 ## Current next action
-M3.4D3 analysis is recorded and the ordering contradiction is resolved (see
-"Ordering resolution" §0 and Appendix A of `docs/m34d3_bsinitvals.md`):
-`wlc_phy_switch_radio` does **not** precede bsinitvals on the AC path, so a
-vendor-ordered bsinitvals test can stop before real PHY/RF writes (**YES**).
-Next: review the M3.4D3 Draft PR and, if accepted, design the **D3A/D3B**
-vendor-ordered prefix (full `wlc_bmac_init` tail -> 73 bsinitvals, stop before
-`wlc_phy_init`) as a new analysis/design step, or close the remaining §19
-unknowns first. **No hardware action:** no `insmod`, no initvals/bsinitvals
-write, no PHY/radio/channel/DMA/IRQ/mac80211. See `docs/m34d3_bsinitvals.md`
-and, for D2B runtime evidence, `docs/m34d2b_initvals_test.md`.
+M3.4D3 analysis is recorded (Appendix A ordering + Appendix B tail reversal of
+`docs/m34d3_bsinitvals.md`). The PHY/RF ordering is resolved: the HA/AC path has
+no PHY/radio writes before bsinitvals (**YES** for the PHY/RF boundary). But the
+rev42 post-common tail also initializes the DMA engines and writes
+interrupt-source masks, so **D3A and D3B are NOT YET**. Next: resolve the open
+**D3A0** decision — how the driver's DMA bring-up (M3.2/M3.3/M3.4B) maps onto
+the vendor tail's `dma_txinit`/`dma_rxinit`/`dma_rxfill`, and whether
+`intrcvlazy`/`intctrlregs` are acceptable with `macintmask=0`. **No hardware
+action:** no `insmod`, no initvals/bsinitvals write, no PHY/radio/channel/DMA/
+IRQ/mac80211. See `docs/m34d3_bsinitvals.md` and, for D2B runtime evidence,
+`docs/m34d2b_initvals_test.md`.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256

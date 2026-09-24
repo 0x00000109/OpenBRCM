@@ -204,19 +204,27 @@ Last hardware-proven milestone remains **M3.4D2B**. Full report:
   `0x69594` before band init was wrong for AC:** that call is inside
   `if ([[dev+0xE8]+0x1C] == 7)` (NPHY/HT only) and `wlc_bmac_mute` `0x6957b` is
   skipped (`wlc_bmac_init` arg#3 = 0).
-- **Formal decision (revised): `CAN A VENDOR-ORDERED BSINITVALS TEST STOP BEFORE
-  REAL PHY/RF WRITES? YES`** for BCM4352/AC: the vendor prefix
-  `wlc_init -> wlc_bmac_init -> sub_6656c -> bsinitvals` contains only
-  D11/MAC/SHM/si accesses (no PHY-indirect write, no radio write). The isolated
-  unit is the full vendor prefix, not the 73 records alone.
+- **Formal PHY/RF decision: `CAN A VENDOR-ORDERED BSINITVALS TEST STOP BEFORE
+  REAL PHY/RF WRITES? YES`** for BCM4352/AC (no PHY-indirect/radio writes before
+  bsinitvals). The isolated unit is the full vendor prefix, not the 73 records
+  alone.
+- **SECOND CORRECTION (Appendix B): the post-common tail is NOT D11-only.**
+  For rev42 the legacy `xmtfifo_sz`/`M_FIFOSIZE`/TX-flush block is **skipped**
+  (`phyrev <= 0x27`; the rev42 FIFO stage is `sub_67efd`, safe), but the tail
+  also writes interrupt-source config (`intrcvlazy[0]`,
+  `intctrlregs[0].intmask=I_RI`) and **initializes the DMA engines**
+  (`dma_txinit` x6, `dma_rxinit`, `dma_rxfill` at `0x6921c`).
+- **D3A = NOT YET, D3B = NOT YET** (DMA-engine init / IRQ-source masks exceed
+  the D2B envelope). PHY/RF boundary = YES. See report §0, §16/§17, Appendix B.
 - Resolved: `MACCONTROL` bit30 = `MCTL_DISCARD_PMQ` (`0x69047`
   `mctrl(mask=0x40060000, val=0x40020000)` -> `0x44020402` from the D2B state);
-  `macphyclk_set` = D11 core cflags bit4; `switch_macfreq` writes D11
-  `0x62e/0x630` from the PMU BB VCO. See report §0/§16/§17 and Appendix A.
-- Smallest faithful boundary (design only, do not implement): full
-  `wlc_bmac_init` D11 prefix (`0x68bab..0x695d8`) -> `sub_6656c` through the 73
-  bsinitvals records, STOP before `wlc_phy_init`. See report §17 and §18 for the
-  revised AC PHY roadmap.
+  `macphyclk_set` = D11 core cflags bit4 (`SICF_MPCLKE`); `switch_macfreq`
+  writes D11 `0x62e/0x630` (TSF clock frac) from the PMU BB VCO. See report §0,
+  §A.3/§A.4/§A.6, §B.5/§B.6/§B.8.
+- Smallest faithful boundary (design only, do not implement): full rev42
+  `wlc_bmac_init` prefix (`sub_67efd` + `0x68fe2..0x695d8`, incl. DMA init) ->
+  `sub_6656c` through the 73 bsinitvals records, STOP before `wlc_phy_init`.
+  Must first resolve the **D3A0** DMA/IRQ decision. See report §17 and §18.
 
 ## M2.5b — eliminate the BCM4352 power-up Oops (historical)
 Symptom: `BUG: kernel NULL pointer dereference, address 0x…0c` at
