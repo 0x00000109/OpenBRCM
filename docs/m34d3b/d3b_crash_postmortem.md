@@ -409,3 +409,172 @@ brcmsmac/{main.c,aiutils.c,d11.h}` and `drivers/bcma/{host_pci.c,core.c}`.
   (whole-blob immediate search required `objdump`) — same gap as T7/T3.
 - `re fn <fn> --asm` prints unresolved `? + 0x0` for some MMIO offsets
   (`wlc_bmac_init` `0x6906b`); the raw asm `lea rsi,[r12+18Ch]` is used.
+
+---
+
+# PART A — DEVICE-LOST FAIL-SAFE (implemented, host-tested)
+
+## A1/A2. Central state and the post-DMA MMIO call graph
+
+Central, monotonic state: `struct ob_hw::dev_lost` (`src/ob_core.h`), never
+cleared in a module lifetime. Latched by `ob_dev_lost_latch()` which also sets
+`d3a0.lc.fatal` and calls `ob_d3a0_latch_fatal()` (retain memory, `__module_get`,
+reboot required).
+
+Reads/writes reachable after DMA bring-up, by isolated mode (all ultimately
+`bcma_read32/16`, `bcma_write32/16`, `bcma_aread32/awrite32`):
+
+```
+ob_d3b_test (band init, DMA live)
+  ob_d3a1_run_prefix
+    ob_initvals_run_d2b -> ob_ucode_run_d2a        (ucode/OBJADDR/OBJDATA, PSM poll)
+    ob_d3a1_check_d2b_exit  (reads)
+    ob_d3a1_fifo_fixup      (RMW + 0x530/0x540 polls)
+    ob_d3a1_t1              (SHM/OBJ, MACCONTROL RMW, intrcvlazy, TSF, intmasks)
+    ob_d3a0_bringup         (DMA register RMW/program; dma_pool/alloc/map)
+    ob_d3a1_t2              (BTC/NVRAM SHM, 0x78c..0x790, switch_macfreq)
+    ob_d3a1_validate        (direct reads + SHM reads)
+  ob_d3b_apply_mhf          (SHM OBJ writes)
+  ob_d3b_apply_bs           (direct IHR w2/w4 + OBJADDR/OBJDATA)
+  ob_d3b_read_post          (direct reads + SHM reads)   <-- detection point
+  ob_d3b_validate
+  ob_d3a0_teardown -> ob_d3a0_quiesce -> {rx_reset, tx_reset, core_contain}
+                   -> ob_d3a0_free_mem (dma_unmap/free)
+ob_d3b_remove / ob_d3a1_remove / ob_d3a0_remove
+```
+
+Classes: direct reads (MACCONTROL/MACINTMASK/INTRCVLAZY/intmask/MACHWCAP/IOCTL/
+RX control+status/TX control+addr+status), direct writes (intmask RMW, DMA TX/RX
+control, TSF/IFS, MACCONTROL RMW), SHM/OBJ indirect (OBJADDR `0x160` + OBJDATA
+`0x164/0x166`), core reset/disable helpers (`bcma_core_disable`,
+`bcma_core_is_enabled`, `bcma_core_wait_value`), DMA unmap/free.
+
+## A3/A4. Detection rule and vendor/upstream predicates
+
+Detection is limited to **trusted direct 32-bit D11 reads == `0xffffffff`**
+(`ob_d3a0_mmio_is_all_ones`) — MACCONTROL, MACINTMASK, RX/TX STATUS0, and the
+`0x24` intmask read. Arbitrary SHM/OBJDATA 16-bit payloads are **never**
+classified as device loss. The vendor predicate is also available and tested:
+`ob_d3a0_maccontrol_present(m) = ((m & 0x404) == 0x400)` — exactly
+`wlc_hw_deviceremoved` (`0x79847`: `read32(hw->d11core + 0x120)`).
+
+Vendor/upstream behaviour (from the post-mortem): the vendor checks
+accessibility first and skips all hardware when removed; upstream brcmsmac
+treats `0xffffffff` as "dead chip" and aborts. No BAR/config access happens
+after an all-ones observation in the fail-safe path; shutdown/unload honours the
+latch (`fatal` -> no free, no teardown, reconnect/reboot required).
+
+## A5/A6/A7. Invariant, D3B failure path, state table
+
+Invariant enforced once `dev_lost` is latched: no D11 MMIO write, no DMA reset
+write, no SHM/OBJ access, no interrupt write, no `bcma_core_disable` free
+authorization, no `dma_unmap`/free/ring free, no retry.
+
+D3B failure path is now: trusted all-ones read (in `ob_d3b_read_post`, read
+FIRST as MACCONTROL/MACINTMASK) -> `ob_dev_lost_latch` -> `ob_d3b_test` returns
+via `fail_after_dma` **without** `ob_d3a0_teardown()`; `ob_d3b_remove` sees
+`fatal` and does not free. `ob_d3a0_teardown`/`ob_d3a0_quiesce`/`ob_d3a0_rx_reset`/
+`ob_d3a0_tx_reset` all refuse to run when `dev_lost`.
+
+| state | DMA state | free? | further MMIO | recovery |
+| :--- | :--- | :--- | :--- | :--- |
+| NORMAL | stopped/verified | yes | normal | — |
+| DMA_ERROR_DEVICE_ACCESSIBLE | programmed | no | verified teardown allowed | module reload |
+| DEVICE_LOST | programmed/unknown | **no** | **none** | reboot (pinned) |
+| RESET_UNVERIFIED | programmed | no | containment only | reboot |
+| CORE_CONTAINED | programmed | no | none | reboot |
+| FATAL_REBOOT_REQUIRED | any | no | none | reboot |
+
+## A8. Host tests (no hardware)
+
+`tests/host/ob_d3a0_test.c::test_device_lost`: all-ones detection, vendor
+present predicate, monotonic latch (false->true, idempotent, never clears),
+fatal cannot free. Build + `make hosttest` PASS (11 suites). No runtime change
+to the previously proven normal teardown path (its behaviour when
+`dev_lost == false` is byte-for-byte the same).
+
+---
+
+# PART B — D3B/D4 BOUNDARY RE-EVALUATION
+
+## B9/B10/B11/B13. Is STOP-before-wlc_phy_init vendor-stable?
+
+**No.** Vendor `sub_6656c` (band=0 path) is:
+
+```
+0x669bd call sub_60f67            ; bsinitvals42 (last D3B write)
+0x669c2 test r13b,r13b / je 0x669d0
+0x669d0 mov rax,[rbx+0E8h]
+0x669d7 movzx esi,r12w
+0x669db mov rdi,[rax+28h]
+0x669df call wlc_phy_init         ; immediate, no sync
+```
+
+`wlc_phy_init` (`0xbabf5`, size 738) then, in strict order: reads
+`D11+0x120 MACCONTROL` via the cached hw pointer (`0xbac44`), sets phy flags,
+`wlc_phy_chanspec_shm_set` (`0xbac31`, writes **SHM `0xa0`**), `wlc_phy_anacore
+(pi,1)` (`0xbac84` — first PHY-indirect MMIO via `[pi+0x118]` or
+`writew(D11+0x3e6)`), `wlapi_bmac_bw_set`, `wlc_phy_switch_radio(pi,1)`
+(`0xbad44` — first radio-window writes; reads `D11+0x120`), `call [pi+0x28]`,
+`wlc_phy_do_dummy_tx`, `phy_reg_read` ×2 (`0xb2f34`: `writew(0x3fc); readw(0x3fe)`),
+`wlc_phy_txpower_update_shm`, `wlc_phy_ant_rxdiv_set`, `sub_b740d`, and ends with
+`wlapi_bmac_read_shm(dev, 0x92)` (`0xbae6e`). There is **no delay, poll,
+handshake or readback** between the applier return and the first PHY/radio
+write, and no vendor state treats the intermediate point as stable.
+
+## B12. bsinitvals target consumers vs wlc_phy_init
+
+| target | name | host writers | host readers | microcode / relation to wlc_phy_init |
+| :--- | :--- | :--- | :--- | :--- |
+| SHM `0x10` | `M_DOT11_SLOT` | bsinitvals; `brcms_b_update_slot_timing` AFTER phy init | ucode | default refined post-PHY |
+| SHM `0x1c` | `M_BCN_TXTSF_OFFSET` | bsinitvals | ucode | beacon/TSF timing |
+| SHM `0x94` | `M_SYNTHPU_DLY` (=500) | bsinitvals; `brcms_b_upd_synthpu` AFTER phy init | ucode | **synth/clock pre-wakeup; refined from PHY type post-PHY** |
+| `0x990..0xa28` | band/rate/power tables | bsinitvals | ucode | consumed on demand |
+| `0x17d0/0x17d4` | UNKNOWN (outside modelled SHM) | bsinitvals | unknown | unknown |
+| IHR `0x680/0x682/0x684/0x686/0x700` | IFS SIFS/slot/NAV | bsinitvals; slot timing AFTER phy init | MAC/ucode | MAC timing |
+
+Upstream `brcms_b_bsinit` (`main.c:1659`) = `brcms_c_ucode_bsinit` (MHF +
+band initvals) -> **immediately** `wlc_phy_init` -> `brcms_c_ucode_txant_set` ->
+cwmin/cwmax -> slot timing -> `M_PHYTYPE`/`M_PHYVER` -> ofdm pctl1 ->
+`brcms_b_upd_synthpu` (which REWRITES `M_SYNTHPU_DLY`). So `M_DOT11_SLOT` and
+`M_SYNTHPU_DLY` are placeholders until after PHY init; stopping before
+`wlc_phy_init` leaves the ucode holding pre-PHY defaults while the PSM runs.
+
+## B14/B15. Upstream corroboration and hypothesis reassessment
+
+Upstream treats the bsinitvals->PHY-init interval as **transient**: there is no
+stable state and no synchronization. This strengthens **H1** (PSM + band SHM +
+no PHY) and **H3** (subtle state divergence) over **H2** (the table is the
+vendor table for this chip) and does not by itself implicate a specific record.
+**H4/H5** remain unresolved (whether the device was already failing, and whether
+the quiesce writes merely produced the visible flood) — the Part A fail-safe
+removes our contribution, so a future bounded run can distinguish them.
+
+**Hypothesis confidences:** H1 medium; H2 low (table is vendor/provenance);
+H3 medium; H4 low-medium; H5 medium. Exact missing fact for all: whether the
+D11/PCIe went inaccessible before or after the fail-safe-relevant moment (the
+first all-ones read), which requires persistent logging + AER on a future run.
+
+## B16. Milestone decision
+
+**STOP-before-`wlc_phy_init` is not a vendor-stable state.** Retire D3B as a
+standalone hardware milestone. Next hardware milestone proposal:
+
+> **M3.4D3+4 — band init + minimal D4 prefix to the first vendor-stable PHY
+> boundary:** run the proven D2A/D2B/D3A1 prefix + the D3B `sub_6656c` slice
+> **and continue through `wlc_phy_init`** (through the return at `0x669e4`),
+> then STOP. This is the first point at which the PHY has completed its own
+> init and the PSM cannot be left with band SHM and an uninitialised PHY.
+
+The exact STOP (after `wlc_phy_init` return vs after the full `sub_6656c`),
+the calibration/PHY-table scope, and the bounded teardown must be analysed and
+host-tested before any hardware request. Hardware test GO remains **NO**.
+
+## B17. Documentation status terms (must stay distinct)
+
+- **D3B TABLE WRITE LOOP** = hardware reached and completed (73/39/34).
+- **D3B STANDALONE STATE** = not proven / **possibly invalid boundary**.
+- **D3B POSTCONDITIONS** = not proven.
+- **DEVICE LOSS** = observed after the D3B writes (all-ones).
+- **TEARDOWN-AFTER-DEVICE-LOSS BUG** = fixed by the Part A fail-safe.
+- **HARDWARE RETEST** = forbidden pending Parts A (done) and B (boundary).

@@ -184,13 +184,34 @@ static void ob_d3b_read_post(struct ob_hw *hw, struct ob_d3b *st)
 	struct ob_d3b_post *p = &st->post;
 	u32 i;
 
-	for (i = 0; i < OB_D3B_MHF_COUNT; i++)
-		p->mhf[i] = ob_ucode_read_shm16(hw, ob_d3b_mhf_shm[i]);
-	p->shm_10 = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_10);
-	p->shm_1c = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_1C);
-	p->shm_94 = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_94);
+	/*
+	 * Device-lost fail-safe: detect with a trusted direct D11 read
+	 * (MACCONTROL) BEFORE any SHM/OBJ access. If the window is all-ones,
+	 * latch and stop immediately - no further MMIO.
+	 */
 	p->maccontrol = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
+	if (ob_dev_lost_observe32(hw, "D3B postcondition MACCONTROL",
+				  p->maccontrol))
+		return;
 	p->macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
+	if (ob_dev_lost_observe32(hw, "D3B postcondition MACINTMASK",
+				  p->macintmask))
+		return;
+
+	for (i = 0; i < OB_D3B_MHF_COUNT; i++) {
+		if (hw->dev_lost)
+			return;
+		p->mhf[i] = ob_ucode_read_shm16(hw, ob_d3b_mhf_shm[i]);
+	}
+	if (hw->dev_lost)
+		return;
+	p->shm_10 = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_10);
+	if (hw->dev_lost)
+		return;
+	p->shm_1c = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_1C);
+	if (hw->dev_lost)
+		return;
+	p->shm_94 = ob_d3b_read_shm32(hw, OB_D3B_SHM_OVR_94);
 	p->records = st->bs_records;
 	p->w16 = st->bs_w16;
 	p->w32 = st->bs_w32;
@@ -350,6 +371,16 @@ int ob_d3b_test(struct ob_hw *hw)
 fail_after_dma:
 	release_firmware(biv);
 	st->fatal_seen = true;
+	/*
+	 * Device-lost fail-safe: if a trusted direct D11 read was all-ones,
+	 * NO further MMIO (no interrupt/DMA reset writes). Retain the DMA
+	 * memory, mark reboot-required and return.
+	 */
+	if (ob_dev_lost_is_latched(hw)) {
+		dev_crit(hw->dev,
+			 "d3b-test: DEVICE LOST - skipping teardown; DMA memory retained; reboot required\n");
+		return ret;
+	}
 	/*
 	 * D3B ran after the DMA engines became live; any failure must run the
 	 * mandatory verified D3A0 teardown. A teardown failure latches the

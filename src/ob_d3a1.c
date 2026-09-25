@@ -587,23 +587,40 @@ static int ob_d3a1_t2(struct ob_hw *hw)
 static int ob_d3a1_validate(struct ob_hw *hw)
 {
 	struct ob_d3a1 *st = &hw->d3a1;
-	u32 mctrl = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
-	u32 macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
-	u32 intrcvlazy = bcma_read32(hw->core, OB_D3A1_REG_INTRCVLAZY0);
-	u32 intmask0 = bcma_read32(hw->core, OB_D3A1_REG_INTCONTROL0_MASK);
-	u32 machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
-	u32 ioc = bcma_aread32(hw->core, BCMA_IOCTL);
-	u16 mburst = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MBURST);
-	u16 maxant = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MAXANTCNT);
-	u16 machwver = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWVER);
-	u16 capl = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_L);
-	u16 caph = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_H);
-	u32 rx_control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
-	u32 rx_high = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
-	u32 rx_s0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-	u32 rx_s1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	u32 mctrl, macintmask;
+	u32 intrcvlazy, intmask0, machwcap;
+	u32 ioc, mburst, maxant, machwver, capl, caph;
+	u32 rx_control, rx_high, rx_s0, rx_s1;
 	u32 i;
 	int ret = 0;
+
+	/*
+	 * Device-lost fail-safe: read the two trusted direct D11 control
+	 * registers FIRST; an all-ones value latches the central device-lost
+	 * state and skips the rest of the validation (no further MMIO).
+	 */
+	mctrl = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
+	if (ob_dev_lost_observe32(hw, "D3A1 validate MACCONTROL", mctrl))
+		return -EIO;
+	macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
+	if (ob_dev_lost_observe32(hw, "D3A1 validate MACINTMASK", macintmask))
+		return -EIO;
+
+	intrcvlazy = bcma_read32(hw->core, OB_D3A1_REG_INTRCVLAZY0);
+	intmask0 = bcma_read32(hw->core, OB_D3A1_REG_INTCONTROL0_MASK);
+	machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
+	ioc = bcma_aread32(hw->core, BCMA_IOCTL);
+	mburst = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MBURST);
+	maxant = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MAXANTCNT);
+	machwver = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWVER);
+	capl = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_L);
+	caph = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_H);
+	rx_control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
+	rx_high = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
+	rx_s0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
+	rx_s1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	if (ob_dev_lost_observe32(hw, "D3A1 validate RX_STATUS0", rx_s0))
+		return -EIO;
 
 	if (mctrl != OB_D3A1_MACCONTROL_EXPECTED) {
 		dev_err(hw->dev, "d3a1-test: MACCONTROL=%08x expected %08x\n",

@@ -180,6 +180,13 @@ Stated exactly:
   `2917ca9`/`88971029…`) applied all 73 bsinitvals records, then every post-D3B
   D11 read returned `0xffffffff`; the platform reset with an AMD data-fabric
   sync flood during `ob_d3a0_teardown()`. Not proven; `HARDWARE RETEST: NO`.**
+  **BOUNDARY RETIRED:** STOP-before-`wlc_phy_init` is **not vendor-stable**
+  (vendor `sub_6656c` goes straight from `sub_60f67` `0x669bd` to `wlc_phy_init`
+  `0x669df`; upstream `brcms_b_bsinit` identical). D3B is retired as a standalone
+  milestone; proposed successor **M3.4D3+4** (band init + minimal D4 prefix
+  through `wlc_phy_init`). Device-lost fail-safe `hw->dev_lost` (monotonic,
+  no MMIO/free/retry after a trusted all-ones direct read) is `IMPLEMENTED` /
+  `STATIC TESTED`; see `docs/m34d3b/d3b_crash_postmortem.md` Parts A/B.
   `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
   `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
   capture)
@@ -546,9 +553,10 @@ the `tsf_cfpstart` (`0x18c`) equality gate was invalid and is removed; the rest
 of the proof stands (`docs/m34d3a1_vendor_tail_test.md` §17). See
 `docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md`.
 
-**Next action — D3B attempt made, postcondition fixed; retest BLOCKED by the
-platform crash; D4 after.** M3.4D3B (band init / `d11ac1bsinitvals42`) is
-analyzed in
+**Next action — D3B standalone RETIRED (boundary not vendor-stable); next
+milestone M3.4D3+4 (band init + minimal D4 prefix through `wlc_phy_init`);
+retest BLOCKED; device-lost fail-safe shipped.** M3.4D3B (band init /
+`d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
@@ -603,26 +611,28 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B band-init implementation, attempts made + postcondition fix): the
-isolated `bsinitvals_test_only=1` implementation is `IMPLEMENTED` /
+Current (D3B band-init, attempts made + postcondition fix + boundary re-eval):
+the isolated `bsinitvals_test_only=1` implementation is `IMPLEMENTED` /
 `STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT HARDWARE PROVEN**;
 attempt 1 stopped at the pre-D3B `tsf_cfpstart` gate (fixed); attempt 2 applied
 all 73 bsinitvals records and then the platform crashed (AMD data-fabric sync
 flood) during `ob_d3a0_teardown()` after the D11 window returned `0xffffffff`.
 **`HARDWARE RETEST: NO`.** STOP — **no `insmod`/`rmmod`/`modprobe`, no
-hardware**. Retest requires the prerequisites in
-`docs/m34d3b/d3b_crash_postmortem.md` §15 (device-loss handling + bound
-mechanism).
+hardware**. Two defects are now fixed/analysed: (A) the device-lost fail-safe is
+`IMPLEMENTED` / `STATIC TESTED`; (B) STOP-before-`wlc_phy_init` was re-evaluated
+and is **not vendor-stable**, so D3B standalone is retired. Retest requires the
+successor milestone (D3B + minimal D4 prefix through `wlc_phy_init`) to be
+analysed and host-tested first; see
+`docs/m34d3b/d3b_crash_postmortem.md` Parts A/B.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the
 verified DMA teardown, and **before `sub_6656c`** / bsinitvals / PHY / radio /
 channel / mac80211.
 
-Next runtime STOP (D3B, **implemented, not yet run**): after the `sub_60f67`
-applier return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e.
-before `wlc_phy_anacore` and any PHY-indirect/radio window. D3B is implemented
-in `bsinitvals_test_only=1` and may only run with explicit owner approval.
+Next runtime STOP (proposed, M3.4D3+4): after `wlc_phy_init` returns
+(`0x669e4`), before the rest of the `sub_6656c` band-init tail — the first point
+at which the PHY has completed its own init. Not implemented; not proven.
 
 D2A/D2B historical STOP: neither earlier path reaches bsinitvals/`sub_6656c`/
 PHY/radio/channel/DMA/IRQ/mac80211.

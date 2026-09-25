@@ -135,6 +135,41 @@ static void ob_d3a0_latch_fatal(struct ob_hw *hw)
 		 &ob_d3a0_fatal_rec.tx_ring[3]);
 }
 
+/* ---- device-lost fail-safe (central, monotonic) ------------------------ */
+
+bool ob_dev_lost_is_latched(const struct ob_hw *hw)
+{
+	return hw && hw->dev_lost;
+}
+
+void ob_dev_lost_latch(struct ob_hw *hw, const char *where)
+{
+	if (!hw || hw->dev_lost)
+		return;
+
+	hw->dev_lost = true;
+	/* Reuse the module-wide fail-closed path: no free, module pinned. */
+	hw->d3a0.lc.fatal = true;
+	hw->d3a0.lc.engines_stopped = false;
+	hw->d3a0.lc.free_allowed = false;
+	ob_d3a0_latch_fatal(hw);
+
+	dev_crit(hw->dev,
+		 "openbrcm: DEVICE LOST (%s) - D11/BCMA/PCIe inaccessible; no further D11 MMIO; DMA memory retained; reboot required\n",
+		 where ? where : "all-ones direct read");
+}
+
+bool ob_dev_lost_observe32(struct ob_hw *hw, const char *where, u32 val)
+{
+	if (!hw || hw->dev_lost)
+		return hw && hw->dev_lost;
+	if (ob_d3a0_mmio_is_all_ones(val)) {
+		ob_dev_lost_latch(hw, where);
+		return true;
+	}
+	return false;
+}
+
 /*
  * ---- pinned D11/clock/IRQ-source prerequisites for the DMA test ---------
  * (provenance-pinned register values; NOT the complete vendor prefix order)
@@ -393,6 +428,8 @@ static int ob_d3a0_rx_program(struct ob_hw *hw)
 	if ((control & OB_D3A0_RC_RE) == 0 || lo != ring_lo ||
 	    hi != OB_DMA_PCIE_H32 || status0 == 0xffffffffu ||
 	    ob_d3a0_rx_disabled(status0) || (status1 & OB_D11_RS1_RE_MASK)) {
+		if (status0 == 0xffffffffu)
+			ob_dev_lost_latch(hw, "D3A0 RX program status0");
 		dev_err(hw->dev,
 			"dma-test: RX programming readback inconsistent\n");
 		return -EIO;
@@ -418,6 +455,8 @@ static int ob_d3a0_validate(struct ob_hw *hw, const u32 *tx_old)
 		if (!ob_d3a0_tx_control_ok(tx_old[ch], control) ||
 		    lo != ring_lo || hi != OB_DMA_PCIE_H32 ||
 		    s0 == 0xffffffffu || ob_d3a0_rx_disabled(s0)) {
+			if (s0 == 0xffffffffu)
+				ob_dev_lost_latch(hw, "D3A0 TX validate status0");
 			dev_err(hw->dev,
 				"dma-test: TX%u postcondition fail control=%08x lo=%08x hi=%08x status0=%08x\n",
 				ch, control, lo, hi, s0);
@@ -480,6 +519,8 @@ static int ob_d3a0_tx_reset(struct ob_hw *hw, u32 ch)
 	u16 base = ob_d3a0_tx_base(ch);
 	u32 remaining, s0;
 
+	if (hw->dev_lost)
+		return -EIO;
 	bcma_write32(hw->core, base + OB_D3A0_D64_CONTROL, OB_D3A0_XC_SE);
 	remaining = OB_D3A0_RESET_TIMEOUT;
 	for (;;) {
@@ -511,6 +552,8 @@ static int ob_d3a0_rx_reset(struct ob_hw *hw)
 {
 	u32 remaining, s0;
 
+	if (hw->dev_lost)
+		return -EIO;
 	bcma_write32(hw->core, OB_D11_RX_CONTROL, 0);
 	remaining = OB_D3A0_RESET_TIMEOUT;
 	for (;;) {
@@ -539,12 +582,35 @@ static int ob_d3a0_quiesce(struct ob_hw *hw)
 {
 	struct ob_d3a0_lifecycle *lc = &hw->d3a0.lc;
 	bool all_ok = true;
-	u32 ch;
+	u32 ch, intmask0;
 
+	/*
+	 * Device-lost fail-safe: NEVER write an interrupt/DMA register after the
+	 * D11 window was observed all-ones. Latch fatal and retain everything.
+	 */
+	if (hw->dev_lost) {
+		dev_crit(hw->dev,
+			 "dma-test: refusing quiesce after device loss; DMA memory retained; reboot required\n");
+		lc->engines_stopped = false;
+		lc->free_allowed = false;
+		lc->fatal = true;
+		return -EIO;
+	}
+
+	/*
+	 * The first access is a read; an all-ones result means device loss and
+	 * must abort BEFORE the read-modify-write below (no garbage write).
+	 */
+	intmask0 = bcma_read32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK);
+	if (ob_dev_lost_observe32(hw, "D3A0 quiesce intmask0", intmask0)) {
+		lc->engines_stopped = false;
+		lc->free_allowed = false;
+		lc->fatal = true;
+		return -EIO;
+	}
 	/* mask the per-FIFO source; MACINTMASK stays 0 (host route disabled) */
 	bcma_write32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK,
-		     bcma_read32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK) &
-		     ~OB_D3A0_I_RI);
+		     intmask0 & ~OB_D3A0_I_RI);
 	bcma_write32(hw->core, OB_D3A0_REG_MACINTMASK, 0);
 
 	if (lc->rx == OB_D3A0_PROGRAMMED) {
@@ -651,6 +717,18 @@ static int ob_d3a0_free_mem(struct ob_hw *hw)
 
 int ob_d3a0_teardown(struct ob_hw *hw)
 {
+	/*
+	 * Device-lost fail-safe: no MMIO at all once the D11 window read
+	 * all-ones. Latch fatal, retain DMA memory, require reboot.
+	 */
+	if (hw->dev_lost) {
+		dev_crit(hw->dev,
+			 "dma-test: refusing teardown after device loss; DMA memory retained; reboot required\n");
+		hw->d3a0.lc.engines_stopped = false;
+		hw->d3a0.lc.free_allowed = false;
+		hw->d3a0.lc.fatal = true;
+		return -EIO;
+	}
 	dev_info(hw->dev, "dma-test: quiesce begin\n");
 	if (ob_d3a0_quiesce(hw))
 		return -EIO;	/* fatal set; never free */

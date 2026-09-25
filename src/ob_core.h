@@ -96,6 +96,8 @@ struct ob_hw {
 	struct ob_d3a0		d3a0;
 	struct ob_d3a1		d3a1;
 	struct ob_d3b		d3b;
+	/* monotonic device-lost latch (D11/BCMA/PCIe inaccessible) */
+	bool			dev_lost;
 };
 
 int ob_probe(struct bcma_device *core);

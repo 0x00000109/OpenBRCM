@@ -321,6 +321,18 @@ Canonical status (exact):
   closed earlier; **MHF3** closed by the 2026-09 read-only hardware SPROM
   capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/provenance blocker
   remains, but a new **safety** blocker exists: device-loss handling.
+  **BOUNDARY RETIRED (2026-09):** STOP-before-`wlc_phy_init` is **not a
+  vendor-stable state** (vendor goes straight from `sub_60f67` at `0x669bd` to
+  `wlc_phy_init` at `0x669df`; upstream `brcms_b_bsinit` does the same). D3B is
+  retired as a standalone hardware milestone. It is replaced by the proposed
+  **M3.4D3+4** (band init + minimal D4 prefix through `wlc_phy_init`). A
+  central **device-lost fail-safe** (`hw->dev_lost`, monotonic) is now
+  `IMPLEMENTED` / `STATIC TESTED`: once a trusted direct D11 read is all-ones,
+  no further MMIO/free/retry occurs and reboot is required. See
+  `docs/m34d3b/d3b_crash_postmortem.md` Part A/B.
+- M3.4D3+4 (band init + minimal D4 prefix) = **PROPOSED / NOT STARTED /
+  NOT HARDWARE PROVEN**; proposed STOP = after `wlc_phy_init` returns
+  (`0x669e4`); exact scope and bounded teardown are not yet analysed.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
