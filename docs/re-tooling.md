@@ -153,11 +153,16 @@ When invoking the binary directly (only from the tooling workspace), pass
 | regression self-check | `re regress --db re.db` |
 | verifier | `re verify --db re.db` |
 
-`re db build` now also populates the v3 tables (`mmio_sites`, `imm_sites`,
+`re db build` now also populates the v4 tables (`mmio_sites`, `imm_sites`,
 `field_sites`, `indirect_targets`, `const_props`, `phy_ops`, `reg_tables`,
-`reg_table_ops`) via the in-tree `re_support` module. `re regress` must PASS
-(reproduces the 610/113/497 common-initvals and 73/39/34 bsinitvals shapes,
-sub_67efd 0x530/0x540, switch_macfreq 0x62e/0x630, DMA/MAC access facts).
+`reg_table_ops`) via the in-tree `re_support` module. v4 adds provenance
+`confidence` (`mmio_sites`, `field_sites`) and `confidence,candidates`
+(`const_props`): relocated immediates are exposed as symbols (never literal
+zero) and a linearly-ambiguous value is `CONDITIONAL` with a candidate set,
+never `EXACT`. `re regress` must PASS (reproduces the 610/113/497
+common-initvals and 73/39/34 bsinitvals shapes, sub_67efd 0x530/0x540,
+switch_macfreq 0x62e/0x630, DMA/MAC access facts, the `phy+0xF8` relocation
+fixture, and the `dma_attach` non-EXACT fixture).
 
 Machine-readable evidence: append `--json` (e.g. `re fn <fn> --json`,
 `re switch <fn> --json`). Use that output in evidence packets.

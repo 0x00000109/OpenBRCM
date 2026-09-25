@@ -397,6 +397,33 @@ Canonical status (exact):
   by `AGENTS.md` §7 before manual disassembly. Artifacts
   `docs/m34d4b/ghidra_augmentation.{md,json}`; `D4 IMPLEMENTATION GO: NO`
   (unchanged), `HARDWARE TEST GO: NO`.
+- **M3.4D4B Phase 0 — `re` false-positive fixes** (`ANALYSIS ONLY`, tooling
+  commit `f334e21`): (A) **relocation-covered immediates** are no longer literal
+  zero — `text_relocs()` + a `V::R` symbolic variant; `phy+0xF8` resolves to
+  `&wlc_phy_btc_adjust_acphy` (`R_X86_64_32S` @`0xa3059`). (B) **linear-dataflow
+  false exactness** removed — a value is `EXACT` only with a single dominating
+  definition before any conditional branch, else `CONDITIONAL` + candidate set;
+  `const_props` for `dma_attach` now has 0 `EXACT` rows. `re.db` schema **v4**
+  (adds `confidence`/`candidates`); `re regress` PASS with the two new
+  fixtures. Report `docs/m34d4b/re_false_positive_fixes.md`.
+- **M3.4D4B resume — actual AC-PHY init lineage** = **`ANALYSIS ONLY`**:
+  `wlc_phy_attach_acphy` = software+board+caps with **1** live callback
+  (`+0xF8`→`wlc_phy_btc_adjust_acphy`, consumed by `wlc_phy_watchdog`); the
+  generic vtable slots `+0x28/+0x30/+0x38/+0x40/+0xC0/+0xC8/+0xD0/+0x100` and
+  `+0x110/+0x118` are **INTENTIONALLY_NULL** (construction-proven); **UNRESOLVED
+  = 0**. Earliest substantial AC hardware entry = `wlc_phy_switch_radio_acphy`
+  (`0xaa782`) via `wlc_phy_attach` → `wlc_phy_switch_radio` (radio **off** at
+  attach); first hardware op = `wlc_phy_anacore` (`0xbabee`, D11 `0x3e6`). The
+  post-bsinitvals continuation for AC is **band/MAC SHM** (`wlc_phy_init` is a
+  no-op: `+0x28`=0 → `je 0xbaecE`), not PHY programming. Path counts (not
+  whole-blob): PHY 186, RADIO 301, PHY_TABLE 3, `osl_delay` 17. Calibration is
+  **not** on the attach/band path. Earliest stable state after mandatory setup =
+  **CP-A3** (end of `wlc_phy_attach`, `STRONG proposed`, no live hardware
+  postcondition yet); `dev_lost` coverage is structurally coverable by the
+  existing monotonic invariant. `D4 IMPLEMENTATION GO: NO` (runtime-derived
+  `val=?` on the executed callbacks), `HARDWARE TEST GO: NO`. Report
+  `docs/m34d4b/d4b_resume_analysis.md`, updated
+  `docs/m34d4b/acphy_function_table.json`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
