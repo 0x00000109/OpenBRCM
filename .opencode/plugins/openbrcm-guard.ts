@@ -25,10 +25,14 @@ import { join, resolve, sep } from "node:path"
 
 const REPO = "/media/kartashoff/Storage/opensource/driver/OpenBRCM"
 const MOC = "/media/kartashoff/Storage/opensource/iced/MOC"
+// Canonical RE tooling workspace (Rust `re`, re.db pipeline). Narrowly added
+// for the "RE TOOLING D4 ACCELERATION" milestone so the agent can extend and
+// test the canonical tool. MOC lives one level up (iced/MOC) and stays blocked.
+const TOOLING = "/media/kartashoff/Storage/opensource/iced/test"
 const STATE_FILE = join(REPO, "docs/agent-state.md")
 
 // Writes are permitted only under these roots (scratch under /tmp allowed).
-const ALLOWED_WRITE_ROOTS = [REPO, "/tmp"]
+const ALLOWED_WRITE_ROOTS = [REPO, TOOLING, "/tmp"]
 
 const KO_NAME = "openbrcm.ko"
 const EXPECTED_SIGNER = "Broadcom Driver MOK"

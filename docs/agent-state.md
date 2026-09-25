@@ -196,6 +196,18 @@ Stated exactly:
   `docs/m34d4/d4a_decomposition.md`. Earliest vendor-stable checkpoint = after
   `wlc_phy_init` returns (CP-F). Unknown-blocker write values remain ->
   **`D4 IMPLEMENTATION GO: NO`**. `dev_lost` BAR-MMIO invariant re-audited: holds.
+- **RE TOOLING D4 ACCELERATION** (`re` v3, `re.db` schema v3, in
+  `iced/test/binary_analyzer`): `re mmio`, `re imm`, `re field-writers`,
+  `re indirect`, `re table`, `re regtables`, `re const`, `re phyops`,
+  `re dump --json`, `re regress`. `re regress` **PASS** (initvals/bsinitvals
+  exact, sub_67efd, switch_macfreq, DMA/MAC). `IMPLEMENTED` / `STATIC TESTED`.
+- **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
+  zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
+  body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but
+  unreachable. `wlc_phy_init` is **not** the AC PHY-init point; scope must be
+  re-derived from `wlc_phy_attach_acphy`. CP-F stable but not an AC PHY-init
+  checkpoint. `D4 GO: NO`. Artifacts `docs/m34d4/*_v2.json`,
+  `docs/m34d4/d4_checkpoint_analysis_v2.md`.
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

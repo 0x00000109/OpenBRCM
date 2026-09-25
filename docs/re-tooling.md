@@ -112,7 +112,22 @@ When invoking the binary directly (only from the tooling workspace), pass
 | reachability from an entry | `re reach <fn> --db re.db` |
 | per-function value provenance | `re fn <fn> --values --db re.db` |
 | stage pipelines (4–8) | `re stage4` … `re stage8 --db re.db` |
+| whole-blob MMIO search | `re mmio [--offset 0xOFF] [--fn F] [--access read\|write] --db re.db` |
+| whole-blob immediate search | `re imm 0xV --db re.db` |
+| struct-field writers | `re field-writers --field 0xOFF [--base-load 0xLOAD] [--arg N] --db re.db` |
+| indirect call/branch targets + candidates | `re indirect [fn] [--field 0xOFF] --db re.db` |
+| register-program tables (initvals family) | `re table <name\|0xADDR>` · `re regtables [--consumer FN]` |
+| constant arguments reaching a callee | `re const --callee FN` |
+| normalized PHY/radio ops | `re phyops [fn] [--class PHY\|RADIO\|PHY_TABLE]` |
+| per-function JSON evidence packet | `re dump <fn> --json` |
+| regression self-check | `re regress --db re.db` |
 | verifier | `re verify --db re.db` |
+
+`re db build` now also populates the v3 tables (`mmio_sites`, `imm_sites`,
+`field_sites`, `indirect_targets`, `const_props`, `phy_ops`, `reg_tables`,
+`reg_table_ops`) via the in-tree `re_support` module. `re regress` must PASS
+(reproduces the 610/113/497 common-initvals and 73/39/34 bsinitvals shapes,
+sub_67efd 0x530/0x540, switch_macfreq 0x62e/0x630, DMA/MAC access facts).
 
 Machine-readable evidence: append `--json` (e.g. `re fn <fn> --json`,
 `re switch <fn> --json`). Use that output in evidence packets.

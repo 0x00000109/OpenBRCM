@@ -342,6 +342,25 @@ Canonical status (exact):
   PHY/radio opcode tables, `[pi+0x28]`/`[pi+0x118]` targets), so
   **`D4 IMPLEMENTATION GO: NO`** and `HARDWARE TEST GO: NO`. The `dev_lost`
   BAR-MMIO invariant was re-audited and holds.
+- **RE TOOLING D4 ACCELERATION** (canonical `re` v3 + `re.db` schema v3,
+  `iced/test/binary_analyzer`): whole-blob `re mmio` / `re imm`,
+  `re field-writers`, `re indirect` (candidate + confidence
+  EXACT/CONDITIONAL/UNRESOLVED), `re table` / `re regtables`,
+  `re const`, `re phyops`, `re dump --json`, and `re regress`.
+  `re regress` **PASS** (initvals 610/113/497, bsinitvals 73/39/34 exact;
+  sub_67efd 0x530/0x540; switch_macfreq 0x62e/0x630; DMA/MAC facts).
+  Status `IMPLEMENTED` / `STATIC TESTED` (db rebuild 3.5 s; db 17.1 MB).
+- **M3.4D4A v2** (re-run with the new tooling) = **`ANALYSIS ONLY`**: the two
+  previously-unresolved targets are located; `[phy+0x28]` is proven **zero for
+  rev42 AC** (`wlc_phy_attach_acphy` `0xa3001` unconditional store), so the
+  whole `wlc_phy_init` body is skipped at band init (`je 0xbaecE`), and
+  `[phy+0x118]` is `UNRESOLVED` but unreachable on the AC path. Therefore
+  `wlc_phy_init` is **not** the AC PHY-init point; the real AC init is
+  `wlc_phy_attach_acphy` (+ acphy callees). CP-F is a stable return boundary but
+  **not** an AC PHY-init checkpoint. `D4 IMPLEMENTATION GO: NO`; scope must be
+  re-derived from `wlc_phy_attach_acphy`. Artifacts:
+  `docs/m34d4/{wlc_phy_init_rev42_flow_v2,phy_operations_rev42,radio_operations_rev42}.json`,
+  `docs/m34d4/d4_checkpoint_analysis_v2.md`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256

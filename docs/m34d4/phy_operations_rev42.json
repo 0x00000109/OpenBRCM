@@ -1,0 +1,3142 @@
+{
+  "milestone": "M3.4D4A-v2",
+  "class": "PHY",
+  "note": "AC rev42 does not execute the wlc_phy_init body; actual AC PHY setup is in wlc_phy_attach_acphy (+ its acphy callees) and the anacore/radio helpers. Included here for scope accounting.",
+  "functions": {
+    "wlc_phy_attach_acphy": {
+      "addr": "0xa194f",
+      "fields": [
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 312,
+          "kind": "store",
+          "site": "0xa1997",
+          "value": "?",
+          "width": 64
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 812,
+          "kind": "store",
+          "site": "0xa19c2",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 816,
+          "kind": "store",
+          "site": "0xa19d5",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 824,
+          "kind": "store",
+          "site": "0xa19e5",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 0,
+          "kind": "store",
+          "site": "0xa19ee",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 825,
+          "kind": "store",
+          "site": "0xa19f3",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 826,
+          "kind": "store",
+          "site": "0xa19fc",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 827,
+          "kind": "store",
+          "site": "0xa1a05",
+          "value": "0xc",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 820,
+          "kind": "store",
+          "site": "0xa1a13",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1098,
+          "kind": "store",
+          "site": "0xa1a22",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3977,
+          "kind": "store",
+          "site": "0xa1a2b",
+          "value": "0x2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3978,
+          "kind": "store",
+          "site": "0xa1a32",
+          "value": "0x5",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2273,
+          "kind": "store",
+          "site": "0xa1a3b",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3115,
+          "kind": "store",
+          "site": "0xa1a44",
+          "value": "0xff",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 828,
+          "kind": "store",
+          "site": "0xa1a4b",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 829,
+          "kind": "store",
+          "site": "0xa1a54",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 830,
+          "kind": "store",
+          "site": "0xa1a5d",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 832,
+          "kind": "store",
+          "site": "0xa1a66",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 833,
+          "kind": "store",
+          "site": "0xa1a6f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2270,
+          "kind": "store",
+          "site": "0xa1a78",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2271,
+          "kind": "store",
+          "site": "0xa1a81",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2272,
+          "kind": "store",
+          "site": "0xa1a8a",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2276,
+          "kind": "store",
+          "site": "0xa1a93",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2278,
+          "kind": "store",
+          "site": "0xa1a9c",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2279,
+          "kind": "store",
+          "site": "0xa1aa5",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2280,
+          "kind": "store",
+          "site": "0xa1aae",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 66,
+          "kind": "store",
+          "site": "0xa1abe",
+          "value": "0x36",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2286,
+          "kind": "store",
+          "site": "0xa1ad6",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2288,
+          "kind": "store",
+          "site": "0xa1af2",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2290,
+          "kind": "store",
+          "site": "0xa1b0e",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2282,
+          "kind": "store",
+          "site": "0xa1b2a",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2284,
+          "kind": "store",
+          "site": "0xa1b46",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2292,
+          "kind": "store",
+          "site": "0xa1b62",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2294,
+          "kind": "store",
+          "site": "0xa1b7e",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2296,
+          "kind": "store",
+          "site": "0xa1b9a",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2298,
+          "kind": "store",
+          "site": "0xa1bb6",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2300,
+          "kind": "store",
+          "site": "0xa1bcd",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2303,
+          "kind": "store",
+          "site": "0xa1be2",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2328,
+          "kind": "store",
+          "site": "0xa1beb",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 356,
+          "kind": "store",
+          "site": "0xa1bf4",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2310,
+          "kind": "store",
+          "site": "0xa1bfb",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2312,
+          "kind": "store",
+          "site": "0xa1c04",
+          "value": "0x5",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2318,
+          "kind": "store",
+          "site": "0xa1c0f",
+          "value": "0xf3",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2319,
+          "kind": "store",
+          "site": "0xa1c18",
+          "value": "0xf1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2314,
+          "kind": "store",
+          "site": "0xa1c21",
+          "value": "0x1f",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2316,
+          "kind": "store",
+          "site": "0xa1c2c",
+          "value": "0x1f",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2322,
+          "kind": "store",
+          "site": "0xa1c37",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 554,
+          "kind": "store",
+          "site": "0xa1c45",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2304,
+          "kind": "store",
+          "site": "0xa1c4c",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2305,
+          "kind": "store",
+          "site": "0xa1c55",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2306,
+          "kind": "store",
+          "site": "0xa1c5e",
+          "value": "0x404e",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2308,
+          "kind": "store",
+          "site": "0xa1c69",
+          "value": "0xfff",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3108,
+          "kind": "store",
+          "site": "0xa1c81",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1114,
+          "kind": "store",
+          "site": "0xa1c87",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1115,
+          "kind": "store",
+          "site": "0xa1c97",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1116,
+          "kind": "store",
+          "site": "0xa1ca0",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1117,
+          "kind": "store",
+          "site": "0xa1cac",
+          "value": "0x80",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1610,
+          "kind": "store",
+          "site": "0xa1cb8",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1611,
+          "kind": "store",
+          "site": "0xa1cc3",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1612,
+          "kind": "store",
+          "site": "0xa1cce",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1613,
+          "kind": "store",
+          "site": "0xa1cd9",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1615,
+          "kind": "store",
+          "site": "0xa1ce4",
+          "value": "0x8",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1614,
+          "kind": "store",
+          "site": "0xa1ced",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 76,
+          "kind": "store",
+          "site": "0xa1d15",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 76,
+          "kind": "store",
+          "site": "0xa1d1b",
+          "value": "0x4",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 176,
+          "kind": "store",
+          "site": "0xa1d4d",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 176,
+          "kind": "store",
+          "site": "0xa1d56",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 172,
+          "kind": "store",
+          "site": "0xa1d8b",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 172,
+          "kind": "store",
+          "site": "0xa1d94",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 834,
+          "kind": "store",
+          "site": "0xa1dc2",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 834,
+          "kind": "store",
+          "site": "0xa1dcc",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 835,
+          "kind": "store",
+          "site": "0xa1e01",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 838,
+          "kind": "store",
+          "site": "0xa1e11",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 839,
+          "kind": "store",
+          "site": "0xa1e21",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 844,
+          "kind": "store",
+          "site": "0xa1e34",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 841,
+          "kind": "store",
+          "site": "0xa1e44",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 840,
+          "kind": "store",
+          "site": "0xa1e57",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 837,
+          "kind": "store",
+          "site": "0xa1e67",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 846,
+          "kind": "store",
+          "site": "0xa1e77",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 845,
+          "kind": "store",
+          "site": "0xa1e8a",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 847,
+          "kind": "store",
+          "site": "0xa1e9a",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 853,
+          "kind": "store",
+          "site": "0xa1eb5",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 852,
+          "kind": "store",
+          "site": "0xa1ebd",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 835,
+          "kind": "store",
+          "site": "0xa1ec7",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 838,
+          "kind": "store",
+          "site": "0xa1ed0",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 839,
+          "kind": "store",
+          "site": "0xa1ed9",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 844,
+          "kind": "store",
+          "site": "0xa1ee2",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 841,
+          "kind": "store",
+          "site": "0xa1eeb",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 840,
+          "kind": "store",
+          "site": "0xa1ef4",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 837,
+          "kind": "store",
+          "site": "0xa1efd",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 845,
+          "kind": "store",
+          "site": "0xa1f06",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 846,
+          "kind": "store",
+          "site": "0xa1f0f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 847,
+          "kind": "store",
+          "site": "0xa1f18",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 852,
+          "kind": "store",
+          "site": "0xa1f21",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 853,
+          "kind": "store",
+          "site": "0xa1f2a",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 204,
+          "kind": "store",
+          "site": "0xa1f5a",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 204,
+          "kind": "store",
+          "site": "0xa1f64",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 206,
+          "kind": "store",
+          "site": "0xa1f95",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 206,
+          "kind": "store",
+          "site": "0xa1f9f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 208,
+          "kind": "store",
+          "site": "0xa1fd0",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 208,
+          "kind": "store",
+          "site": "0xa1fda",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 210,
+          "kind": "store",
+          "site": "0xa200b",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 210,
+          "kind": "store",
+          "site": "0xa2015",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 212,
+          "kind": "store",
+          "site": "0xa2046",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 212,
+          "kind": "store",
+          "site": "0xa2050",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 214,
+          "kind": "store",
+          "site": "0xa2081",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 214,
+          "kind": "store",
+          "site": "0xa208a",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 215,
+          "kind": "store",
+          "site": "0xa20b9",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 215,
+          "kind": "store",
+          "site": "0xa20c2",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 836,
+          "kind": "store",
+          "site": "0xa20e0",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 843,
+          "kind": "store",
+          "site": "0xa20f2",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 842,
+          "kind": "store",
+          "site": "0xa2107",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1040,
+          "kind": "store",
+          "site": "0xa2128",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1040,
+          "kind": "store",
+          "site": "0xa2132",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1041,
+          "kind": "store",
+          "site": "0xa215e",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1041,
+          "kind": "store",
+          "site": "0xa2168",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2302,
+          "kind": "store",
+          "site": "0xa2194",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2302,
+          "kind": "store",
+          "site": "0xa219e",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 360,
+          "kind": "store",
+          "site": "0xa21bb",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 360,
+          "kind": "store",
+          "site": "0xa21e3",
+          "value": "0x2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3136,
+          "kind": "store",
+          "site": "0xa21f8",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 4000,
+          "kind": "store",
+          "site": "0xa21ff",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 548,
+          "kind": "store",
+          "site": "0xa2206",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 67,
+          "kind": "store",
+          "site": "0xa2234",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 68,
+          "kind": "store",
+          "site": "0xa223f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xa224a",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 24,
+          "kind": "store",
+          "site": "0xa2293",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 25,
+          "kind": "store",
+          "site": "0xa229e",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 26,
+          "kind": "store",
+          "site": "0xa22a9",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 24,
+          "kind": "store",
+          "site": "0xa22c7",
+          "value": "0xe2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 25,
+          "kind": "store",
+          "site": "0xa22d3",
+          "value": "0xe2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 26,
+          "kind": "store",
+          "site": "0xa22df",
+          "value": "0xe2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 832,
+          "kind": "store",
+          "site": "0xa22fe",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 833,
+          "kind": "store",
+          "site": "0xa2312",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 0,
+          "kind": "lea",
+          "site": "0xa232e",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 992,
+          "kind": "lea",
+          "site": "0xa2332",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 992,
+          "kind": "store",
+          "site": "0xa2339",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1304,
+          "field_offset": 993,
+          "kind": "store",
+          "site": "0xa2341",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1304,
+          "field_offset": 994,
+          "kind": "store",
+          "site": "0xa2345",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1304,
+          "field_offset": 1004,
+          "kind": "store",
+          "site": "0xa2349",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1304,
+          "field_offset": 1005,
+          "kind": "store",
+          "site": "0xa234d",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1304,
+          "field_offset": 1006,
+          "kind": "store",
+          "site": "0xa2351",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1008,
+          "kind": "lea",
+          "site": "0xa2355",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1016,
+          "kind": "store",
+          "site": "0xa235c",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1017,
+          "kind": "store",
+          "site": "0xa2360",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1018,
+          "kind": "store",
+          "site": "0xa2364",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1024,
+          "kind": "lea",
+          "site": "0xa2368",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1028,
+          "kind": "store",
+          "site": "0xa236f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1029,
+          "kind": "store",
+          "site": "0xa2373",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1030,
+          "kind": "store",
+          "site": "0xa2377",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 832,
+          "kind": "store",
+          "site": "0xa237b",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 994,
+          "kind": "store",
+          "site": "0xa240b",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 993,
+          "kind": "store",
+          "site": "0xa2452",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 833,
+          "kind": "store",
+          "site": "0xa245a",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1004,
+          "kind": "store",
+          "site": "0xa24a7",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1006,
+          "kind": "store",
+          "site": "0xa24ea",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1005,
+          "kind": "store",
+          "site": "0xa2531",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 833,
+          "kind": "store",
+          "site": "0xa2539",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 0,
+          "kind": "lea",
+          "site": "0xa262c",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1008,
+          "kind": "lea",
+          "site": "0xa2630",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1016,
+          "kind": "store",
+          "site": "0xa2641",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1018,
+          "kind": "store",
+          "site": "0xa2647",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1005,
+          "field_offset": 8,
+          "kind": "lea",
+          "site": "0xa2655",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1008,
+          "kind": "lea",
+          "site": "0xa2661",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1016,
+          "kind": "store",
+          "site": "0xa2669",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1018,
+          "kind": "store",
+          "site": "0xa266d",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1017,
+          "kind": "store",
+          "site": "0xa2671",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 833,
+          "kind": "store",
+          "site": "0xa2674",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 0,
+          "kind": "lea",
+          "site": "0xa2767",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1024,
+          "kind": "lea",
+          "site": "0xa276b",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1028,
+          "kind": "store",
+          "site": "0xa277d",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1030,
+          "kind": "store",
+          "site": "0xa2784",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1017,
+          "field_offset": 8,
+          "kind": "lea",
+          "site": "0xa2793",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1320,
+          "field_offset": 1008,
+          "kind": "lea",
+          "site": "0xa2797",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1024,
+          "kind": "lea",
+          "site": "0xa279f",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1028,
+          "kind": "store",
+          "site": "0xa27a7",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1030,
+          "kind": "store",
+          "site": "0xa27ab",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 1336,
+          "field_offset": 1029,
+          "kind": "store",
+          "site": "0xa27af",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 528,
+          "kind": "store",
+          "site": "0xa280e",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2268,
+          "kind": "store",
+          "site": "0xa2815",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 487,
+          "kind": "store",
+          "site": "0xa2874",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 487,
+          "kind": "store",
+          "site": "0xa2885",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 483,
+          "kind": "store",
+          "site": "0xa288f",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 484,
+          "kind": "store",
+          "site": "0xa28a3",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 485,
+          "kind": "store",
+          "site": "0xa28b1",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 492,
+          "kind": "store",
+          "site": "0xa291c",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 492,
+          "kind": "store",
+          "site": "0xa292d",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 488,
+          "kind": "store",
+          "site": "0xa2937",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 489,
+          "kind": "store",
+          "site": "0xa2949",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 490,
+          "kind": "store",
+          "site": "0xa295c",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 497,
+          "kind": "store",
+          "site": "0xa29cd",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 497,
+          "kind": "store",
+          "site": "0xa29de",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 493,
+          "kind": "store",
+          "site": "0xa29e8",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 494,
+          "kind": "store",
+          "site": "0xa29fa",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 495,
+          "kind": "store",
+          "site": "0xa2a0d",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 502,
+          "kind": "store",
+          "site": "0xa2a7e",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 502,
+          "kind": "store",
+          "site": "0xa2a8f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 498,
+          "kind": "store",
+          "site": "0xa2a99",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 499,
+          "kind": "store",
+          "site": "0xa2aab",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 500,
+          "kind": "store",
+          "site": "0xa2abe",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 507,
+          "kind": "store",
+          "site": "0xa2b2e",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 507,
+          "kind": "store",
+          "site": "0xa2b3f",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 503,
+          "kind": "store",
+          "site": "0xa2b49",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 504,
+          "kind": "store",
+          "site": "0xa2b54",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 505,
+          "kind": "store",
+          "site": "0xa2b64",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 507,
+          "kind": "store",
+          "site": "0xa2b72",
+          "value": "0xba",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 508,
+          "kind": "store",
+          "site": "0xa2ba5",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 509,
+          "kind": "store",
+          "site": "0xa2bc5",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 510,
+          "kind": "store",
+          "site": "0xa2be6",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 511,
+          "kind": "store",
+          "site": "0xa2bef",
+          "value": "0xba",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 512,
+          "kind": "store",
+          "site": "0xa2c27",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 513,
+          "kind": "store",
+          "site": "0xa2c4d",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 514,
+          "kind": "store",
+          "site": "0xa2c73",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 515,
+          "kind": "store",
+          "site": "0xa2c7e",
+          "value": "0xba",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 516,
+          "kind": "store",
+          "site": "0xa2cbc",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 517,
+          "kind": "store",
+          "site": "0xa2ce5",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 518,
+          "kind": "store",
+          "site": "0xa2d0b",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 519,
+          "kind": "store",
+          "site": "0xa2d16",
+          "value": "0xba",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 520,
+          "kind": "store",
+          "site": "0xa2d54",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 521,
+          "kind": "store",
+          "site": "0xa2d7d",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 522,
+          "kind": "store",
+          "site": "0xa2da2",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 523,
+          "kind": "store",
+          "site": "0xa2dab",
+          "value": "0xba",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 524,
+          "kind": "store",
+          "site": "0xa2dea",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 525,
+          "kind": "store",
+          "site": "0xa2e13",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 526,
+          "kind": "store",
+          "site": "0xa2e30",
+          "value": "?",
+          "width": 8
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 844,
+          "kind": "store",
+          "site": "0xa2e3e",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 856,
+          "kind": "store",
+          "site": "0xa2e7b",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 876,
+          "kind": "store",
+          "site": "0xa2ebb",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 896,
+          "kind": "store",
+          "site": "0xa2efb",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 916,
+          "kind": "store",
+          "site": "0xa2f38",
+          "value": "?",
+          "width": 32
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2274,
+          "kind": "store",
+          "site": "0xa2fc3",
+          "value": "?",
+          "width": 16
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2277,
+          "kind": "store",
+          "site": "0xa2fdf",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2277,
+          "kind": "store",
+          "site": "0xa2fea",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1622,
+          "kind": "lea",
+          "site": "0xa2ff7",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 40,
+          "kind": "store",
+          "site": "0xa3001",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 48,
+          "kind": "store",
+          "site": "0xa3009",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 56,
+          "kind": "store",
+          "site": "0xa3016",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 64,
+          "kind": "store",
+          "site": "0xa301e",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 256,
+          "kind": "store",
+          "site": "0xa3026",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 192,
+          "kind": "store",
+          "site": "0xa3031",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 208,
+          "kind": "store",
+          "site": "0xa303c",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 200,
+          "kind": "store",
+          "site": "0xa3047",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 248,
+          "kind": "store",
+          "site": "0xa3052",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 128,
+          "kind": "store",
+          "site": "0xa305d",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1631,
+          "kind": "lea",
+          "site": "0xa306c",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1640,
+          "kind": "lea",
+          "site": "0xa3080",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2228,
+          "kind": "lea",
+          "site": "0xa3094",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1736,
+          "kind": "lea",
+          "site": "0xa30a8",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1649,
+          "kind": "store",
+          "site": "0xa30b7",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 1976,
+          "kind": "lea",
+          "site": "0xa30c5",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2216,
+          "kind": "store",
+          "site": "0xa30d9",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 2224,
+          "kind": "store",
+          "site": "0xa30e5",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 4453,
+          "kind": "store",
+          "site": "0xa3100",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 312,
+          "field_offset": 846,
+          "kind": "store",
+          "site": "0xa3107",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 242,
+          "kind": "lea",
+          "site": "0xa311d",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 242,
+          "kind": "store",
+          "site": "0xa3131",
+          "value": "0xf",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 242,
+          "kind": "store",
+          "site": "0xa3149",
+          "value": "0x9",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 242,
+          "kind": "store",
+          "site": "0xa315c",
+          "value": "0xa",
+          "width": 0
+        }
+      ],
+      "function": "wlc_phy_attach_acphy",
+      "indirect": [],
+      "meta": {
+        "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+        "schema_version": 3
+      },
+      "mmio": [],
+      "phy_ops": [
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1ac9",
+          "reg": "0x739",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1ae5",
+          "reg": "0x73a",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b01",
+          "reg": "0x725",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b1d",
+          "reg": "0x729",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b39",
+          "reg": "0x721",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b55",
+          "reg": "0x728",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b71",
+          "reg": "0x720",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1b8d",
+          "reg": "0x408",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1ba9",
+          "reg": "0x417",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa1bc5",
+          "reg": "0x416",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_read",
+          "op": "READ",
+          "pc": "0xa21af",
+          "reg": "0xb",
+          "value": "val=? mask=a3",
+          "window": "a0"
+        }
+      ],
+      "register_tables": [],
+      "size": 6189
+    },
+    "wlc_phy_anacore": {
+      "addr": "0xbaad1",
+      "fields": [],
+      "function": "wlc_phy_anacore",
+      "indirect": [
+        {
+          "base_arg": 0,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "field_offset": 280,
+          "operand": "call rax",
+          "provenance": "no-installer-at-field",
+          "site": "0xbabc7"
+        }
+      ],
+      "meta": {
+        "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+        "schema_version": 3
+      },
+      "mmio": [
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1996,
+          "site": "0xbabee",
+          "value": "0xf4",
+          "width": 16
+        }
+      ],
+      "phy_ops": [
+        {
+          "class": "PHY",
+          "helper": "phy_reg_write_array",
+          "op": "WRITE",
+          "pc": "0xbab1c",
+          "reg": "0x0",
+          "value": "val=0xc mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_write",
+          "op": "WRITE",
+          "pc": "0xbab30",
+          "reg": "0xa5",
+          "value": "val=0x7fff mask=a3",
+          "window": "a0"
+        }
+      ],
+      "register_tables": [],
+      "size": 292
+    },
+    "wlc_phy_anacore_htphy": {
+      "addr": "0xc8551",
+      "fields": [],
+      "function": "wlc_phy_anacore_htphy",
+      "indirect": [],
+      "meta": {
+        "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+        "schema_version": 3
+      },
+      "mmio": [],
+      "phy_ops": [
+        {
+          "class": "PHY",
+          "helper": "phy_reg_write",
+          "op": "WRITE",
+          "pc": "0xc8593",
+          "reg": "?",
+          "value": "val=0xcd mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_write",
+          "op": "WRITE",
+          "pc": "0xc85da",
+          "reg": "?",
+          "value": "val=0x7ff mask=a3",
+          "window": "a0"
+        },
+        {
+          "class": "PHY",
+          "helper": "phy_reg_write",
+          "op": "WRITE",
+          "pc": "0xc8604",
+          "reg": "?",
+          "value": "val=0xfd mask=a3",
+          "window": "a0"
+        }
+      ],
+      "register_tables": [],
+      "size": 210
+    },
+    "wlc_phy_do_dummy_tx": {
+      "addr": "0xba5af",
+      "fields": [
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1384,
+          "kind": "lea",
+          "site": "0xba613",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1984,
+          "kind": "lea",
+          "site": "0xba626",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 40,
+          "kind": "store",
+          "site": "0xba62d",
+          "value": "0xa",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1292,
+          "kind": "lea",
+          "site": "0xba645",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1300,
+          "kind": "lea",
+          "site": "0xba67c",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1288,
+          "kind": "lea",
+          "site": "0xba68d",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1290,
+          "kind": "lea",
+          "site": "0xba69b",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1356,
+          "kind": "lea",
+          "site": "0xba6a9",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1386,
+          "kind": "lea",
+          "site": "0xba6b7",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1384,
+          "kind": "lea",
+          "site": "0xba6c8",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1280,
+          "kind": "lea",
+          "site": "0xba6d9",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1282,
+          "kind": "lea",
+          "site": "0xba735",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1282,
+          "kind": "lea",
+          "site": "0xba746",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1282,
+          "kind": "lea",
+          "site": "0xba760",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1294,
+          "kind": "lea",
+          "site": "0xba770",
+          "value": "",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 328,
+          "field_offset": 1294,
+          "kind": "lea",
+          "site": "0xba7b0",
+          "value": "",
+          "width": 0
+        }
+      ],
+      "function": "wlc_phy_do_dummy_tx",
+      "indirect": [],
+      "meta": {
+        "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+        "schema_version": 3
+      },
+      "mmio": [
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1384,
+          "site": "0xba61c",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1984,
+          "site": "0xba63c",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1292,
+          "site": "0xba651",
+          "value": "0x41",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1300,
+          "site": "0xba688",
+          "value": "0x1a02",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1288,
+          "site": "0xba696",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1290,
+          "site": "0xba6a4",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1356,
+          "site": "0xba6b2",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1386,
+          "site": "0xba6c3",
+          "value": "0x14",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1384,
+          "site": "0xba6d4",
+          "value": "0x826",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1280,
+          "site": "0xba6e2",
+          "value": "0x0",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "write",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_writew",
+          "offset": 1282,
+          "site": "0xba75b",
+          "value": "0x30",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "read",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_readw",
+          "offset": 1282,
+          "site": "0xba767",
+          "value": "",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "read",
+          "base": "?",
+          "io": "osl_readw",
+          "offset": 0,
+          "site": "0xba7a4",
+          "value": "",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "read",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_readw",
+          "offset": 1294,
+          "site": "0xba7cf",
+          "value": "",
+          "width": 16
+        },
+        {
+          "abs": null,
+          "access": "read",
+          "base": "*(a0 + 0x148)",
+          "io": "osl_readw",
+          "offset": 1680,
+          "site": "0xba7fe",
+          "value": "",
+          "width": 16
+        }
+      ],
+      "phy_ops": [],
+      "register_tables": [],
+      "size": 667
+    },
+    "sub_b740d": {
+      "addr": "0xb740d",
+      "fields": [
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3064,
+          "kind": "store",
+          "site": "0xb7428",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3068,
+          "kind": "store",
+          "site": "0xb7432",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 356,
+          "kind": "store",
+          "site": "0xb7440",
+          "value": "0x2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb744e",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb746d",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb748b",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb74a4",
+          "value": "0xa886",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb74d0",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb7561",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb757a",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb75be",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 356,
+          "kind": "store",
+          "site": "0xb75e0",
+          "value": "0x2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb75ed",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb760f",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3084,
+          "kind": "store",
+          "site": "0xb7626",
+          "value": "0xfffffffffffffffe",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb7647",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3084,
+          "kind": "store",
+          "site": "0xb7650",
+          "value": "0xfffffffffffffffe",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3070,
+          "kind": "store",
+          "site": "0xb7666",
+          "value": "0x0",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb7686",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb76f0",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3070,
+          "kind": "store",
+          "site": "0xb7703",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3084,
+          "kind": "store",
+          "site": "0xb7729",
+          "value": "0x1",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb7774",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb77ae",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 382,
+          "kind": "store",
+          "site": "0xb77d6",
+          "value": "0xc000",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 60,
+          "kind": "store",
+          "site": "0xb77fe",
+          "value": "0x4313",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 352,
+          "kind": "store",
+          "site": "0xb7842",
+          "value": "0xb",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 128,
+          "kind": "store",
+          "site": "0xb7881",
+          "value": "0x2",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 32,
+          "field_offset": 128,
+          "kind": "store",
+          "site": "0xb78a0",
+          "value": "0x4",
+          "width": 0
+        },
+        {
+          "base_arg": 0,
+          "base_load": 0,
+          "field_offset": 3132,
+          "kind": "store",
+          "site": "0xb78b6",
+          "value": "?",
+          "width": 32
+        }
+      ],
+      "function": "sub_b740d",
+      "indirect": [],
+      "meta": {
+        "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+        "schema_version": 3
+      },
+      "mmio": [],
+      "phy_ops": [],
+      "register_tables": [],
+      "size": 1207
+    }
+  },
+  "summary": {
+    "attach_acphy_phy_ops": 11,
+    "anacore_phy_ops": 2,
+    "do_dummy_tx_phy_ops": 0,
+    "b740d_phy_ops": 0
+  }
+}
