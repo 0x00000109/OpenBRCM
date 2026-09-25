@@ -353,6 +353,32 @@ else
 	ok "no proprietary firmware tracked"
 fi
 
+# 6. current-context integrity (Part F): the generated compact index must
+#    validate (artifact references resolve, no duplicate fact IDs, no PROVEN
+#    fact pointing at a SUPERSEDED ledger record, milestone exists, schema
+#    supported). The staleness check is skipped when the canonical RE tooling
+#    is absent (CI has no external iced/test workspace).
+if command -v python3 >/dev/null 2>&1 && [ -f docs/state/current-state.json ]; then
+	if python3 scripts/generate-current-context.py --validate >/dev/null 2>&1; then
+		ok "current-context integrity validates"
+	else
+		bad "current-context integrity check failed (run: scripts/generate-current-context.py --validate)"
+	fi
+	RE_BIN=${RE_BIN:-/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/target/release/re}
+	RE_DB=${RE_DB:-/media/kartashoff/Storage/opensource/iced/test/re.db}
+	if [ -x "$RE_BIN" ] && [ -f "$RE_DB" ]; then
+		if python3 scripts/generate-current-context.py --check >/dev/null 2>&1; then
+			ok "current-context is fresh (sources_hash matches)"
+		else
+			bad "docs/current-context.json is STALE (regenerate: scripts/generate-current-context.py)"
+		fi
+	else
+		ok "current-context stale-check skipped (canonical RE tooling absent)"
+	fi
+else
+	printf '  note: current-context checks skipped (python3 or state file absent)\n'
+fi
+
 if [ "$fail" -eq 0 ]; then
 	echo "== docs-check PASS =="
 else

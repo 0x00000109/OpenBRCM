@@ -898,3 +898,18 @@ never hands frames to mac80211.
   TEST GO: NO`.** Reports `docs/m34d4/tooling_gap_closure.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
+
+- **Token-efficient context infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
+  (2026-09). `docs/current-context.json` is a generated compact index (≤8 KiB,
+  never a source of truth) produced deterministically by
+  `scripts/generate-current-context.py` from the hand-maintained
+  `docs/state/current-state.json`, `docs/artifact-ledger.json` and the
+  binary/tooling identity; `--check` reports staleness, `--validate` enforces
+  artifact-reference integrity (no duplicate fact IDs, no `PROVEN` fact
+  pointing at a `SUPERSEDED` record, milestone must exist, supported `re.db`
+  schema, size bound). The canonical `re` tool gains an **additive** bounded
+  `re packet` command (`iced/test`), and `AGENTS.md` §8-§11 add PROVEN-fact
+  immutability, one-blocker/one-task scope, token-efficient startup and
+  delta-only final-output rules. Existing subcommands, Ghidra tiers, OpenCode
+  hooks/skills and re.db lineage are unchanged (`re regress`/`re verify` PASS).
+  Tests: `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`.

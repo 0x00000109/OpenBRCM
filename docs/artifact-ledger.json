@@ -4,26 +4,28 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "db151c89c7dd1e8550d1c72db73489ee0e5e4391",
+      "head": "fd2f8009db94ad1c3f356abc998e461d434edea6",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 17,
-      "ahead_of_origin_branch": 0,
+      "ahead_of_origin_main": 20,
+      "ahead_of_origin_branch": 2,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "the entire D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D chain is UNMERGED relative to main; the branch is pushed (origin/m34d3b-band-init-test == db151c8 at the time this ledger was generated)"
+      "note": "snapshot before the CONTEXT-INFRA commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
-      "head": "f334e21b703472089f48f0908d26c5c7d42a2574",
+      "head": "064026509ae630fc2b2cf763362e1e107c243a23",
       "branch": "master",
       "re_db": {
         "tracked": false,
         "gitignored": true,
-        "sha256_current": "185f0bd84c2441379939ada95a4aba2e70c632f1175c41d759f9bd411b6ae449",
-        "schema": "v4",
-        "note": "generated/ignored; rebuild with `re db build`; docs citing 44dae60d are now stale"
+        "sha256_current": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+        "schema": "v5",
+        "note": "generated/ignored; rebuild with `re db build`; schema v5 (unchanged by the packet command)"
       },
-      "re_binary_sha256_current": "f6601944dd347e207fbd5c33df0a7815315068edad17f0cf8712f96871a491b1",
-      "untracked": ["html/index.html", "re.db-shm"]
+      "re_binary_sha256_current": "77e9ec5a97aedf54b10b59efd281a790a3ce04e5422bce4ef4742952d4634618",
+      "untracked": [
+        "html/"
+      ]
     }
   },
   "records": [
@@ -34,7 +36,10 @@
       "status": "HARDWARE RUNTIME PROVEN",
       "evidence_class": "hardware-proven",
       "merged": true,
-      "artifacts": ["docs/agent-state.md", "docs/milestones.md"]
+      "artifacts": [
+        "docs/agent-state.md",
+        "docs/milestones.md"
+      ]
     },
     {
       "id": "M3.4D1",
@@ -42,114 +47,231 @@
       "status": "RUNTIME PASS",
       "merged": true,
       "commit": "2029292",
-      "artifacts": ["docs/ucode_test.md", "src/ob_fw.c", "src/ob_ucode.c"]
+      "artifacts": [
+        "docs/ucode_test.md",
+        "src/ob_fw.c",
+        "src/ob_ucode.c"
+      ]
     },
     {
       "id": "M3.4D2A",
       "milestone": "M3.4D2A ucode upload + PSM start",
       "status": "HARDWARE RUNTIME PROVEN",
-      "merged": true, "pr": 2, "commit": "85d3013",
-      "artifacts": ["docs/ucode_test.md", "src/ob_ucode.c", "src/ob_ucode.h", "tests/"]
+      "merged": true,
+      "pr": 2,
+      "commit": "85d3013",
+      "artifacts": [
+        "docs/ucode_test.md",
+        "src/ob_ucode.c",
+        "src/ob_ucode.h",
+        "tests/"
+      ]
     },
     {
       "id": "M3.4D2B",
       "milestone": "M3.4D2B isolated common initvals",
       "status": "HARDWARE RUNTIME PROVEN",
-      "merged": true, "pr": 6, "commit": "4146cd8",
-      "artifacts": ["docs/m34d2b_initvals_test.md", "docs/m34d2b_common_initvals.md", "docs/m34d2b/", "src/ob_initvals.c", "src/ob_initvals.h", "tests/"]
+      "merged": true,
+      "pr": 6,
+      "commit": "4146cd8",
+      "artifacts": [
+        "docs/m34d2b_initvals_test.md",
+        "docs/m34d2b_common_initvals.md",
+        "docs/m34d2b/",
+        "src/ob_initvals.c",
+        "src/ob_initvals.h",
+        "tests/"
+      ]
     },
     {
       "id": "M3.4D3",
       "milestone": "M3.4D3 bsinitvals + PHY boundary",
       "status": "ANALYSIS ONLY",
-      "merged": true, "pr": 7, "commit": "2a7ba1d",
-      "artifacts": ["docs/m34d3_bsinitvals.md", "docs/m34d3/bsinitvals_classification.md", "docs/m34d3/bsinitvals_classification.json", "scripts/analyze_bsinitvals.py"]
+      "merged": true,
+      "pr": 7,
+      "commit": "2a7ba1d",
+      "artifacts": [
+        "docs/m34d3_bsinitvals.md",
+        "docs/m34d3/bsinitvals_classification.md",
+        "docs/m34d3/bsinitvals_classification.json",
+        "scripts/analyze_bsinitvals.py"
+      ]
     },
     {
       "id": "M3.4D3A0",
       "milestone": "M3.4D3A0 isolated DMA lifecycle",
       "status": "HARDWARE RUNTIME PROVEN",
-      "merged": true, "pr": 8, "commit": "3bdef76",
-      "artifacts": ["docs/m34d3a0_dma_test.md", "docs/d3a0_dma_test_design.md", "src/ob_d3a0.c", "src/ob_d3a0.h", "tests/host/ob_d3a0_test.c", "tests/kunit/ob_d3a0_kunit.c"]
+      "merged": true,
+      "pr": 8,
+      "commit": "3bdef76",
+      "artifacts": [
+        "docs/m34d3a0_dma_test.md",
+        "docs/d3a0_dma_test_design.md",
+        "src/ob_d3a0.c",
+        "src/ob_d3a0.h",
+        "tests/host/ob_d3a0_test.c",
+        "tests/kunit/ob_d3a0_kunit.c"
+      ]
     },
     {
       "id": "M3.4D3A1",
       "milestone": "M3.4D3A1 vendor post-common tail",
       "status": "HARDWARE RUNTIME PROVEN",
-      "merged": true, "pr": [9, 10], "commits": ["12c3e7a", "839f007"],
-      "artifacts": ["docs/m34d3a1_vendor_tail.md", "docs/m34d3a1_vendor_tail_test.md", "src/ob_d3a1.c", "src/ob_d3a1.h", "tests/host/ob_d3a1_test.c", "tests/kunit/ob_d3a1_kunit.c"]
+      "merged": true,
+      "pr": [
+        9,
+        10
+      ],
+      "commits": [
+        "12c3e7a",
+        "839f007"
+      ],
+      "artifacts": [
+        "docs/m34d3a1_vendor_tail.md",
+        "docs/m34d3a1_vendor_tail_test.md",
+        "src/ob_d3a1.c",
+        "src/ob_d3a1.h",
+        "tests/host/ob_d3a1_test.c",
+        "tests/kunit/ob_d3a1_kunit.c"
+      ]
     },
     {
       "id": "TOOLING-BOOTSTRAP",
       "milestone": "tool-first RE bootstrap + OpenCode integration",
       "status": "IMPLEMENTED / STATIC TESTED",
-      "merged": true, "pr": 12, "commit": "6eff1ea",
+      "merged": true,
+      "pr": 12,
+      "commit": "6eff1ea",
       "repo": "openbrcm",
-      "artifacts": ["docs/re-tooling.md", "scripts/re-bootstrap.sh", "scripts/re.sh", ".opencode/", "AGENTS.md"]
+      "artifacts": [
+        "docs/re-tooling.md",
+        "scripts/re-bootstrap.sh",
+        "scripts/re.sh",
+        ".opencode/",
+        "AGENTS.md"
+      ]
     },
     {
       "id": "D3B-MHF-ANALYSIS",
       "milestone": "M3.4D3B band init / MHF provenance",
       "status": "ANALYSIS ONLY",
-      "merged": true, "pr": 11, "commit": "06bbd60",
-      "artifacts": ["docs/m34d3b_band_init.md"]
+      "merged": true,
+      "pr": 11,
+      "commit": "06bbd60",
+      "artifacts": [
+        "docs/m34d3b_band_init.md"
+      ]
     },
     {
       "id": "D3B-MHF-CLOSURE",
       "milestone": "M3.4D3B band-0 MHF value closure",
       "status": "ANALYSIS ONLY",
-      "merged": true, "pr": 13, "commit": "5f6c3d2",
-      "artifacts": ["docs/m34d3b_band_init.md", "docs/m34d3b/evidence.jsonl"]
+      "merged": true,
+      "pr": 13,
+      "commit": "5f6c3d2",
+      "artifacts": [
+        "docs/m34d3b_band_init.md",
+        "docs/m34d3b/evidence.jsonl"
+      ]
     },
     {
       "id": "SPROM-FIELD-MAP",
       "milestone": "rev11 SPROM field recovery",
       "status": "ANALYSIS ONLY / STATIC TESTED",
-      "merged": true, "pr": 15, "commit": "29d8028",
-      "artifacts": ["docs/m34d3b/rev11_sprom_fields.json", "scripts/srom_var_table.py", "tests/host/test_srom_var_table.py", "docs/m34d3b_band_init.md"]
+      "merged": true,
+      "pr": 15,
+      "commit": "29d8028",
+      "artifacts": [
+        "docs/m34d3b/rev11_sprom_fields.json",
+        "scripts/srom_var_table.py",
+        "tests/host/test_srom_var_table.py",
+        "docs/m34d3b_band_init.md"
+      ]
     },
     {
       "id": "SPROM-EVIDENCE",
       "milestone": "read-only external-SPROM evidence capture (MHF3)",
       "status": "HARDWARE RUNTIME PROVEN",
-      "merged": true, "pr": 14, "commit": "8b64b61",
-      "artifacts": ["docs/m34d3b_sprom_evidence.md", "docs/m34d3b/d3b_sprom_capture.json", "scripts/sprom11_decode.py", "src/ob_si.c"]
+      "merged": true,
+      "pr": 14,
+      "commit": "8b64b61",
+      "artifacts": [
+        "docs/m34d3b_sprom_evidence.md",
+        "docs/m34d3b/d3b_sprom_capture.json",
+        "scripts/sprom11_decode.py",
+        "src/ob_si.c"
+      ]
     },
     {
       "id": "D3B-IMPL",
       "milestone": "M3.4D3B isolated band-init implementation",
       "status": "SIGNED / HARDWARE ATTEMPTED / NOT PROVEN",
-      "merged": false, "branch": "m34d3b-band-init-test",
-      "commits": ["b8bec51", "5fa5e5b", "ffa2a54", "2917ca9"],
-      "artifacts": ["src/ob_d3b.c", "src/ob_d3b.h", "docs/m34d3b_band_init_test.md", "docs/m34d3b_implementation_plan.md"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commits": [
+        "b8bec51",
+        "5fa5e5b",
+        "ffa2a54",
+        "2917ca9"
+      ],
+      "artifacts": [
+        "src/ob_d3b.c",
+        "src/ob_d3b.h",
+        "docs/m34d3b_band_init_test.md",
+        "docs/m34d3b_implementation_plan.md"
+      ]
     },
     {
       "id": "D3B-POSTMORTEM",
       "milestone": "D3B platform crash post-mortem",
       "status": "ANALYSIS ONLY / EVIDENCE",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "bcc53cf",
-      "artifacts": ["docs/m34d3b/d3b_crash_postmortem.md"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "bcc53cf",
+      "artifacts": [
+        "docs/m34d3b/d3b_crash_postmortem.md"
+      ]
     },
     {
       "id": "DEV-LOST",
       "milestone": "device-lost fail-safe + retire D3B standalone",
       "status": "IMPLEMENTED / STATIC TESTED",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "c244e98",
-      "artifacts": ["src/ob_d3a0.c", "src/ob_d3a1.c", "docs/m34d3b/d3b_crash_postmortem.md"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "c244e98",
+      "artifacts": [
+        "src/ob_d3a0.c",
+        "src/ob_d3a1.c",
+        "docs/m34d3b/d3b_crash_postmortem.md"
+      ]
     },
     {
       "id": "RE-TOOLING-V3",
       "milestone": "Rust re D4-acceleration expansion",
       "status": "IMPLEMENTED / STATIC TESTED",
-      "repo": "iced/test", "branch": "master", "commits": ["beee02f", "82994d0"],
-      "artifacts": ["/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re.rs", "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re_support/mod.rs", "/media/kartashoff/Storage/opensource/iced/test/scripts/"]
+      "repo": "iced/test",
+      "branch": "master",
+      "commits": [
+        "beee02f",
+        "82994d0"
+      ],
+      "artifacts": [
+        "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re.rs",
+        "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re_support/mod.rs",
+        "/media/kartashoff/Storage/opensource/iced/test/scripts/"
+      ]
     },
     {
       "id": "RE-FALSE-POSITIVE-FIX",
       "milestone": "re relocated-immediate + linear-exactness fixes (schema v4)",
       "status": "IMPLEMENTED / STATIC TESTED",
-      "repo": "iced/test", "branch": "master", "commit": "f334e21",
-      "artifacts": ["/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re_support/mod.rs", "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re.rs"],
+      "repo": "iced/test",
+      "branch": "master",
+      "commit": "f334e21",
+      "artifacts": [
+        "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re_support/mod.rs",
+        "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re.rs"
+      ],
       "doc": "docs/m34d4b/re_false_positive_fixes.md",
       "regression": "re regress PASS (phy+0xF8 reloc install; dma_attach consts not EXACT)"
     },
@@ -157,31 +279,72 @@
       "id": "GHIDRA-AUG",
       "milestone": "Ghidra tier-2 augmentation",
       "status": "ANALYSIS ONLY / IMPLEMENTED",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "7d2daf9",
-      "artifacts": ["docs/m34d4b/ghidra_augmentation.md", "docs/m34d4b/ghidra_augmentation.json", "scripts/ghidra_headless.sh", "scripts/ghidra/Decompile.java", "scripts/ghidra/Refs.java", "scripts/ghidra/Vtable.java", "scripts/ghidra/README.md", "docs/re-tooling.md", "AGENTS.md"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "7d2daf9",
+      "artifacts": [
+        "docs/m34d4b/ghidra_augmentation.md",
+        "docs/m34d4b/ghidra_augmentation.json",
+        "scripts/ghidra_headless.sh",
+        "scripts/ghidra/Decompile.java",
+        "scripts/ghidra/Refs.java",
+        "scripts/ghidra/Vtable.java",
+        "scripts/ghidra/README.md",
+        "docs/re-tooling.md",
+        "AGENTS.md"
+      ]
     },
     {
       "id": "D4A-DECOMP",
       "milestone": "D4A wlc_phy_init decomposition",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commits": ["21e83a0", "95ccdff"],
-      "artifacts": ["docs/m34d4/d4a_decomposition.md", "docs/m34d4/wlc_phy_init_rev42_flow.json", "docs/m34d4/d4_checkpoint_analysis_v2.md"],
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commits": [
+        "21e83a0",
+        "95ccdff"
+      ],
+      "artifacts": [
+        "docs/m34d4/d4a_decomposition.md",
+        "docs/m34d4/wlc_phy_init_rev42_flow.json",
+        "docs/m34d4/d4_checkpoint_analysis_v2.md"
+      ],
       "superseded_by": "D4A-REACHABILITY"
     },
     {
       "id": "D4B-RESUME",
       "milestone": "D4B AC-PHY init lineage",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "83e542b",
-      "artifacts": ["docs/m34d4b/acphy_init_analysis.md", "docs/m34d4b/acphy_function_table.json", "docs/m34d4b/acphy_attach_callgraph.json", "docs/m34d4b/acphy_hw_init_flow.json", "docs/m34d4b/acphy_phy_ops.json", "docs/m34d4b/acphy_radio_ops.json", "docs/m34d4b/acphy_tables.json", "docs/m34d4b/d4b_resume_analysis.md", "docs/m34d4b/re_false_positive_fixes.md"],
-      "superseded_by": ["D4B-CLOSURE", "D4C"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "83e542b",
+      "artifacts": [
+        "docs/m34d4b/acphy_init_analysis.md",
+        "docs/m34d4b/acphy_function_table.json",
+        "docs/m34d4b/acphy_attach_callgraph.json",
+        "docs/m34d4b/acphy_hw_init_flow.json",
+        "docs/m34d4b/acphy_phy_ops.json",
+        "docs/m34d4b/acphy_radio_ops.json",
+        "docs/m34d4b/acphy_tables.json",
+        "docs/m34d4b/d4b_resume_analysis.md",
+        "docs/m34d4b/re_false_positive_fixes.md"
+      ],
+      "superseded_by": [
+        "D4B-CLOSURE",
+        "D4C"
+      ]
     },
     {
       "id": "D4B-CLOSURE",
       "milestone": "D4B value-provenance closure + CP-A3 proof",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "84f9073",
-      "artifacts": ["docs/m34d4b/d4b_value_provenance_closure.md", "docs/m34d4b/d4b_value_provenance.json"],
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "84f9073",
+      "artifacts": [
+        "docs/m34d4b/d4b_value_provenance_closure.md",
+        "docs/m34d4b/d4b_value_provenance.json"
+      ],
       "key_facts": [
         "sub_a4adc NOT reached on initial on=0 path",
         "sub_9591e NOT reached on initial on=0 path",
@@ -190,41 +353,90 @@
         "attach = 12 PHY writes + 8 radio RMWs + 12 reads + ~19 source records",
         "CP-A3 = LOGICALLY STABLE / RADIO OFF / NON-OPERATIONAL / NOT DIRECTLY OBSERVABLE / NOT A HARDWARE MILESTONE"
       ],
-      "superseded_by": ["D4C", "LIFECYCLE", "D4A-REACHABILITY"]
+      "superseded_by": [
+        "D4C",
+        "LIFECYCLE",
+        "D4A-REACHABILITY"
+      ]
     },
     {
       "id": "D4C",
       "milestone": "D4C radio-OFF attach -> first operational AC state",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "e8946a1",
-      "artifacts": ["docs/m34d4b/d4c_radio_on_transition.md", "docs/m34d4b/d4c_radio_on_transition.json"],
-      "key_facts": ["whole family 272 PHY / 304 RADIO / 8 TABLE", "attach on=0 = 12 / 8 / 0", "radio-ON = 242 / 296 / 8", "old 186/301 is whole-family, NOT attach"],
-      "errata": ["CP-O2 withdrawn (see LIFECYCLE erratum)"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "e8946a1",
+      "artifacts": [
+        "docs/m34d4b/d4c_radio_on_transition.md",
+        "docs/m34d4b/d4c_radio_on_transition.json"
+      ],
+      "key_facts": [
+        "whole family 272 PHY / 304 RADIO / 8 TABLE",
+        "attach on=0 = 12 / 8 / 0",
+        "radio-ON = 242 / 296 / 8",
+        "old 186/301 is whole-family, NOT attach"
+      ],
+      "errata": [
+        "CP-O2 withdrawn (see LIFECYCLE erratum)"
+      ]
     },
     {
       "id": "LIFECYCLE",
       "milestone": "M3.4 lifecycle reconstruction",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "00f22d8",
-      "artifacts": ["docs/lifecycle/bcm4352_rev42_lifecycle.md", "docs/lifecycle/bcm4352_rev42_lifecycle.json", "docs/m34d4b/d4c_radio_on_transition.md (erratum)"],
-      "key_facts": ["wlc_bmac_radio_hw = RPC target (WLRPC_WLC_BMAC_RADIO_HW_ID), no in-corpus caller", "no vendor-time CP-O2", "MODEL A supported; MODEL B unsupported", "H_NEW NOT SUPPORTED"]
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "00f22d8",
+      "artifacts": [
+        "docs/lifecycle/bcm4352_rev42_lifecycle.md",
+        "docs/lifecycle/bcm4352_rev42_lifecycle.json",
+        "docs/m34d4b/d4c_radio_on_transition.md (erratum)"
+      ],
+      "key_facts": [
+        "wlc_bmac_radio_hw = RPC target (WLRPC_WLC_BMAC_RADIO_HW_ID), no in-corpus caller",
+        "no vendor-time CP-O2",
+        "MODEL A supported; MODEL B unsupported",
+        "H_NEW NOT SUPPORTED"
+      ]
     },
     {
       "id": "D4A-REACHABILITY",
       "milestone": "M3.4D4A actual rev42 PHY-init reachability",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test", "commit": "7999966",
-      "artifacts": ["docs/m34d4/d4a_reachability_recovery.md", "docs/m34d4/wlc_phy_init_bcm4352_reachable.json"],
-      "key_facts": ["RPC radio_hw = OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT", "wlc_phy_init NO-OP for AC ([pi+0x28]==0) [SUPERSEDED: see D4D-POST-D3B]", "real entry = wlc_phy_cal_perical(pi,6) from wlc_init @0x3cde0 -> wlc_phy_cals_acphy [PARTIALLY SUPERSEDED: wlc_phy_init runs first]", "0 unresolved indirects [SUPERSEDED: wlc_bmac_init [rax+0xA0]/[rax+0xD8] unresolved]", "smallest unit = D3B + bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical"],
-      "supersedes": ["D4A-DECOMP"],
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "commit": "7999966",
+      "artifacts": [
+        "docs/m34d4/d4a_reachability_recovery.md",
+        "docs/m34d4/wlc_phy_init_bcm4352_reachable.json"
+      ],
+      "key_facts": [
+        "RPC radio_hw = OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT",
+        "wlc_phy_init NO-OP for AC ([pi+0x28]==0) [SUPERSEDED: see D4D-POST-D3B]",
+        "real entry = wlc_phy_cal_perical(pi,6) from wlc_init @0x3cde0 -> wlc_phy_cals_acphy [PARTIALLY SUPERSEDED: wlc_phy_init runs first]",
+        "0 unresolved indirects [SUPERSEDED: wlc_bmac_init [rax+0xA0]/[rax+0xD8] unresolved]",
+        "smallest unit = D3B + bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical"
+      ],
+      "supersedes": [
+        "D4A-DECOMP"
+      ],
       "superseded_by": "D4D-POST-D3B (reachability correction)"
     },
     {
       "id": "D4D-POST-D3B",
       "milestone": "M3.4D4 post-D3B operational PHY/radio timeline",
       "status": "ANALYSIS ONLY",
-      "merged": false, "branch": "m34d3b-band-init-test",
-      "artifacts": ["docs/m34d4/post_d3b_operational_timeline.md", "docs/m34d4/operational_callgraph.json", "docs/m34d4/radio_on_transition.json", "docs/m34d4/initial_chanspec_provenance.json", "docs/m34d4/calibration_path.json", "docs/m34d4/operational_checkpoint_analysis.md", "docs/m34d4/evidence_post_d3b_reachability.json"],
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "artifacts": [
+        "docs/m34d4/post_d3b_operational_timeline.md",
+        "docs/m34d4/operational_callgraph.json",
+        "docs/m34d4/radio_on_transition.json",
+        "docs/m34d4/initial_chanspec_provenance.json",
+        "docs/m34d4/calibration_path.json",
+        "docs/m34d4/operational_checkpoint_analysis.md",
+        "docs/m34d4/evidence_post_d3b_reachability.json"
+      ],
       "key_facts": [
         "pi_fptr slots installed by wlc_phy_attach_acphy via relocation-covered imm32 (NOT NULL): pi+0x28=sub_b018f, +0x30=sub_8e77a, +0x38=sub_a7089, +0x40=sub_9949f, +0xc0=sub_97e2b, +0xc8=sub_92e67, +0xd0=sub_99528, +0x100=sub_9737d, +0xf8=wlc_phy_btc_adjust_acphy",
         "wlc_phy_init is the real AC PHY/radio init entry, reached from sub_6656c @0x669df (dl=0 on initial up)",
@@ -236,14 +448,28 @@
         "EARLIEST STRONG CHECKPOINT = NONE; best candidate CP-F after wlc_phy_cal_perical (WEAK)",
         "D4 IMPLEMENTATION GO = NO; HARDWARE TEST GO = NO"
       ],
-      "supersedes": ["D4A-REACHABILITY", "D4B-CLOSURE (attach interpretation)", "D4C", "acphy_function_table.json NULL slots"]
+      "supersedes": [
+        "D4A-REACHABILITY",
+        "D4B-CLOSURE (attach interpretation)",
+        "D4C",
+        "acphy_function_table.json NULL slots"
+      ]
     },
     {
       "id": "D4D-CLOSURE",
       "milestone": "M3.4D4D tooling-gap closure + Phases 3-7",
       "status": "ANALYSIS ONLY / IMPLEMENTED (tooling, iced/test f5d03da + cf9738e)",
-      "merged": false, "branch": "m34d3b-band-init-test",
-      "artifacts": ["docs/m34d4/tooling_gap_closure.md", "docs/m34d4/tooling_gap_closure.json", "docs/m34d4/indirect_resolution.json", "docs/m34d4/value_provenance.json", "docs/m34d4/pll_synth_path.md", "docs/m34d4/dev_lost_access_map.json", "docs/m34d4/operational_checkpoint_analysis.md"],
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "artifacts": [
+        "docs/m34d4/tooling_gap_closure.md",
+        "docs/m34d4/tooling_gap_closure.json",
+        "docs/m34d4/indirect_resolution.json",
+        "docs/m34d4/value_provenance.json",
+        "docs/m34d4/pll_synth_path.md",
+        "docs/m34d4/dev_lost_access_map.json",
+        "docs/m34d4/operational_checkpoint_analysis.md"
+      ],
       "key_facts": [
         "re v5 (f5d03da + store-vs-read follow-up cf9738e): base-aware indirect resolution, fragment-size and store-vs-read fixes; all gates PASS",
         "wlc_bmac_init 0x6923d [rax+0xa0] and 0x6924a [rax+0xd8] = UNRESOLVED runtime ops-table dispatch through *(*(wlc_hw+0x20)); 0x69260/0x6926d gated phyrev==4 (not rev42)",
@@ -253,21 +479,106 @@
         "dev_lost latch not wired to the new D3B->cal path",
         "no STRONG checkpoint; D4 IMPLEMENTATION GO=NO; HARDWARE TEST GO=NO"
       ],
-      "supersedes": ["D4D-POST-D3B (pi+0x16e writers {0,1,2}; first radio write 0xaa80f)"]
+      "supersedes": [
+        "D4D-POST-D3B (pi+0x16e writers {0,1,2}; first radio write 0xaa80f)"
+      ]
+    },
+    {
+      "id": "CONTEXT-INFRA",
+      "milestone": "token-efficient current-context index + re packet + governance rules",
+      "status": "IMPLEMENTED / STATIC TESTED",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "tooling": {
+        "repo": "iced/test",
+        "commits": [
+          "f5d03da",
+          "cf9738e"
+        ]
+      },
+      "artifacts": [
+        "docs/current-context.json",
+        "docs/state/current-state.json",
+        "scripts/generate-current-context.py",
+        "tests/host/test_current_context.py",
+        "tests/host/test_re_packet.py",
+        "AGENTS.md",
+        "docs/re-tooling.md",
+        ".opencode/plugins/openbrcm-re.ts",
+        ".opencode/skills/openbrcm-re/SKILL.md",
+        "scripts/re-bootstrap.sh",
+        "scripts/docs-check.sh"
+      ],
+      "key_facts": [
+        "docs/current-context.json is a generated compact index (<=8 KiB), never a source of truth",
+        "generator is deterministic; --check detects stale sources_hash / binary identity",
+        "--validate rejects duplicate fact IDs, broken refs, PROVEN->SUPERSEDED, missing milestone, unsupported schema",
+        "re packet is additive, bounded, deterministic; existing subcommands unchanged; re regress/verify PASS",
+        "AGENTS.md adds PROVEN-fact immutability, one-blocker-one-task, startup/current-context, delta-only output"
+      ]
     }
   ],
   "supersession_map": [
-    {"old": "D4 initial attach = 186 PHY + 301 RADIO", "new": "attach on=0 = 12 PHY + 8 RADIO", "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md, docs/m34d4b/d4c_radio_on_transition.md"},
-    {"old": "CP-A3 operational / hardware milestone", "new": "CP-A3 NON-OPERATIONAL, radio OFF, not a hardware milestone", "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md"},
-    {"old": "sub_a4adc / sub_9591e are initial-attach blockers", "new": "radio-ON only, NOT reached at attach", "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md"},
-    {"old": "phy+0xf8 = ambiguous / literal 0", "new": "EXACT relocation to wlc_phy_btc_adjust_acphy", "correcting_artifact": "docs/m34d4b/re_false_positive_fixes.md, docs/m34d4b/ghidra_augmentation.md"},
-    {"old": "D4 follows D3B via wlc_phy_init", "new": "wlc_phy_init is a no-op for AC; real path is wlc_phy_cal_perical", "correcting_artifact": "docs/m34d4/d4a_reachability_recovery.md"},
-    {"old": "CP-O2 (radio enable) at init", "new": "RPC-only, no vendor-time CP-O2", "correcting_artifact": "docs/lifecycle/bcm4352_rev42_lifecycle.md"},
-    {"old": "wlc_phy_init is a no-op for AC; [pi+0x28]/[pi+0x30]/... are NULL", "new": "wlc_phy_init runs; pi_fptr slots are relocation-installed (pi+0x28=sub_b018f, etc.)", "correcting_artifact": "docs/m34d4/evidence_post_d3b_reachability.json, docs/m34d4/post_d3b_operational_timeline.md"},
-    {"old": "radio-ON is RPC-only; no vendor-time radio-ON", "new": "first vendor-executed radio-ON = wlc_phy_init @0xbad44 -> switch_radio(ON)", "correcting_artifact": "docs/m34d4/radio_on_transition.json"},
-    {"old": "D4 real entry is wlc_phy_cal_perical only", "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path", "correcting_artifact": "docs/m34d4/operational_callgraph.json"},
-    {"old": "pi+0x16e writers are {0,1,2}", "new": "those were cmp reads; the real store is wlc_phy_attach @0xbeff8 (radio reg 0x3da revision)", "correcting_artifact": "docs/m34d4/value_provenance.json"},
-    {"old": "first radio write is mod_radio_reg(0x80b,0x80,0x80) @0xaa80f", "new": "that write is inside sequence A (pi+0x16e==1) and may not execute", "correcting_artifact": "docs/m34d4/pll_synth_path.md"},
-    {"old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction", "new": "runtime ops-table dispatch; UNRESOLVED", "correcting_artifact": "docs/m34d4/indirect_resolution.json"}
+    {
+      "old": "D4 initial attach = 186 PHY + 301 RADIO",
+      "new": "attach on=0 = 12 PHY + 8 RADIO",
+      "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md, docs/m34d4b/d4c_radio_on_transition.md"
+    },
+    {
+      "old": "CP-A3 operational / hardware milestone",
+      "new": "CP-A3 NON-OPERATIONAL, radio OFF, not a hardware milestone",
+      "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md"
+    },
+    {
+      "old": "sub_a4adc / sub_9591e are initial-attach blockers",
+      "new": "radio-ON only, NOT reached at attach",
+      "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md"
+    },
+    {
+      "old": "phy+0xf8 = ambiguous / literal 0",
+      "new": "EXACT relocation to wlc_phy_btc_adjust_acphy",
+      "correcting_artifact": "docs/m34d4b/re_false_positive_fixes.md, docs/m34d4b/ghidra_augmentation.md"
+    },
+    {
+      "old": "D4 follows D3B via wlc_phy_init",
+      "new": "wlc_phy_init is a no-op for AC; real path is wlc_phy_cal_perical",
+      "correcting_artifact": "docs/m34d4/d4a_reachability_recovery.md"
+    },
+    {
+      "old": "CP-O2 (radio enable) at init",
+      "new": "RPC-only, no vendor-time CP-O2",
+      "correcting_artifact": "docs/lifecycle/bcm4352_rev42_lifecycle.md"
+    },
+    {
+      "old": "wlc_phy_init is a no-op for AC; [pi+0x28]/[pi+0x30]/... are NULL",
+      "new": "wlc_phy_init runs; pi_fptr slots are relocation-installed (pi+0x28=sub_b018f, etc.)",
+      "correcting_artifact": "docs/m34d4/evidence_post_d3b_reachability.json, docs/m34d4/post_d3b_operational_timeline.md"
+    },
+    {
+      "old": "radio-ON is RPC-only; no vendor-time radio-ON",
+      "new": "first vendor-executed radio-ON = wlc_phy_init @0xbad44 -> switch_radio(ON)",
+      "correcting_artifact": "docs/m34d4/radio_on_transition.json"
+    },
+    {
+      "old": "D4 real entry is wlc_phy_cal_perical only",
+      "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path",
+      "correcting_artifact": "docs/m34d4/operational_callgraph.json"
+    },
+    {
+      "old": "pi+0x16e writers are {0,1,2}",
+      "new": "those were cmp reads; the real store is wlc_phy_attach @0xbeff8 (radio reg 0x3da revision)",
+      "correcting_artifact": "docs/m34d4/value_provenance.json"
+    },
+    {
+      "old": "first radio write is mod_radio_reg(0x80b,0x80,0x80) @0xaa80f",
+      "new": "that write is inside sequence A (pi+0x16e==1) and may not execute",
+      "correcting_artifact": "docs/m34d4/pll_synth_path.md"
+    },
+    {
+      "old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction",
+      "new": "runtime ops-table dispatch; UNRESOLVED",
+      "correcting_artifact": "docs/m34d4/indirect_resolution.json"
+    }
   ]
 }

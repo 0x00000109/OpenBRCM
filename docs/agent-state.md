@@ -4,6 +4,12 @@ Authoritative handoff. Read with `AGENTS.md`. Repository + Git history are the
 source of truth; this file records the live working-tree state on top of HEAD.
 
 ## Persistence index
+- **Startup first-read:** [`docs/current-context.json`](current-context.json) —
+  the generated compact index (current milestone, active blocker, proven facts,
+  superseded claims, call path, tooling paths, exact evidence). Verify freshness
+  with `scripts/generate-current-context.py --check`, regenerate with
+  `scripts/generate-current-context.py` (never hand-edit). Its hand-maintained
+  source is [`docs/state/current-state.json`](state/current-state.json).
 - Read [`artifact-ledger.md`](artifact-ledger.md) **before re-deriving any
   fact**: it indexes every recent milestone/report by commit + path and lists
   superseded facts.
@@ -347,6 +353,16 @@ Stated exactly:
   NO`; `HARDWARE TEST GO: NO`.** Artifacts `docs/m34d4/tooling_gap_closure.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
+- **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
+  (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
+  never a source of truth) + `scripts/generate-current-context.py`
+  (`--check`/`--validate`/`--scan-links`) over the machine-readable
+  `docs/state/current-state.json`, the artifact ledger and the binary/tooling
+  identity; the additive `re packet` command (iced/test) for bounded one-target
+  evidence; and `AGENTS.md` §8-§11 (PROVEN-fact immutability, one-blocker
+  = one task, token-efficient startup, delta-only output). Tests
+  `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`.
+  No hardware, no runtime C change.
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

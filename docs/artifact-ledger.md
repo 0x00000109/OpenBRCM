@@ -9,14 +9,16 @@ Generated 2026-09-25. Repository of record:
 
 ## 0. Persistence status (important)
 
-- **OpenBRCM HEAD** `db151c8` on branch `m34d3b-band-init-test`, **17 commits
-  ahead of `origin/main`** (`main` = `06d60d6`). **The D3B-implementation and
-  the whole D4/D4B/D4C/lifecycle/D4A/D4D chain are UNMERGED**; the branch is
-  **pushed** (`origin/m34d3b-band-init-test` == `db151c8`).
-- **RE tooling** `iced/test` HEAD `f334e21` on `master`; `re.db` is
+- **OpenBRCM HEAD** `fd2f800` on branch `m34d3b-band-init-test`, **20 commits
+  ahead of `origin/main`** (`main` = `5f6c3d2`). **The D3B-implementation and
+  the whole D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA chain are UNMERGED**;
+  the branch is pushed (`origin/m34d3b-band-init-test` == `db151c8`, the
+  CONTEXT-INFRA commit is local).
+- **RE tooling** `iced/test` HEAD `0640265` on `master`; `re.db` is
   **gitignored** (generated). Current `re.db` sha256
-  `185f0bd84c2441379939ada95a4aba2e70c632f1175c41d759f9bd411b6ae449`
-  (schema v4). Hashes cited in earlier docs (`44dae60d…`) are **stale**.
+  `f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633`
+  (schema v5). Hashes cited in earlier docs (`44dae60d…`, `185f0bd8…`) are
+  **stale**.
 - Untracked local helper: `scripts/runtime-test.sh` (not a result artifact).
 
 ## 1. Hardware-proven milestones (merged to `main`)
@@ -57,6 +59,7 @@ Generated 2026-09-25. Repository of record:
 | D4A-REACHABILITY | actual rev42 reachability | `7999966` | ANALYSIS (partially superseded) | `docs/m34d4/d4a_reachability_recovery.md`, `wlc_phy_init_bcm4352_reachable.json` |
 | D4D-POST-D3B | post-D3B operational PHY/radio timeline | `593061d` | ANALYSIS | `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`, `radio_on_transition.json`, `initial_chanspec_provenance.json`, `calibration_path.json`, `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json` |
 | D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da`/`cf9738e` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
+| CONTEXT-INFRA | current-context index + `re packet` + governance | (this commit) | IMPLEMENTED / STATIC TESTED | `docs/current-context.json`, `docs/state/current-state.json`, `scripts/generate-current-context.py`, `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`, `AGENTS.md`, `docs/re-tooling.md`, `.opencode/` |
 
 ## 4. Required knowledge → persistent location
 
@@ -92,11 +95,13 @@ Generated 2026-09-25. Repository of record:
 
 ## 6. Open persistence risks
 
-1. **Unmerged work** — 18 commits on `m34d3b-band-init-test` ahead of
-   `origin/main`; the branch was pushed at `db151c8` and this D4D-closure
-   commit is one ahead. A fresh agent on `main` cannot see the D4 chain;
-   merge/PR required for durability.
+1. **Unmerged work** — 20 commits on `m34d3b-band-init-test` ahead of
+   `origin/main`; the branch was pushed at `db151c8` and the D4D-closure +
+   CONTEXT-INFRA commits are ahead. A fresh agent on `main` cannot see the D4
+   chain; merge/PR required for durability.
 2. **`re.db` is generated/ignored** — the **v5** index is not in Git; rebuild
-   with `re db build --elf wlc_hybrid.o_shipped --db re.db` (tooling `f5d03da`/`cf9738e`).
-3. **Stale hashes in docs** — several D4B docs cite `44dae60d…`/`0c7cf875…`;
-   the current build is `185f0bd8…`/`f6601944…`.
+   with `re db build --elf wlc_hybrid.o_shipped --db re.db` (tooling `0640265`).
+3. **Stale hashes in docs** — several D4B docs cite `44dae60d…`/`0c7cf875…`
+   and the ledger previously cited `185f0bd8…`/`f6601944…`; the current build
+   is `f4b86669…`/re binary `77e9ec5a…`. Prefer
+   `docs/current-context.json` for the live identity.

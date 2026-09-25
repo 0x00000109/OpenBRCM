@@ -150,6 +150,7 @@ When invoking the binary directly (only from the tooling workspace), pass
 | constant arguments reaching a callee | `re const --callee FN` |
 | normalized PHY/radio ops | `re phyops [fn] [--class PHY\|RADIO\|PHY_TABLE]` |
 | per-function JSON evidence packet | `re dump <fn> --json` |
+| bounded one-target evidence packet | `re packet --fn <name\|0xADDR> [--callers] [--callees] [--fields] [--mmio] [--phy] [--radio] [--tables] [--branches] [--indirect] [--constants] [--provenance]` |
 | regression self-check | `re regress --db re.db` |
 | verifier | `re verify --db re.db` |
 
@@ -246,6 +247,49 @@ docs/<milestone>/evidence.jsonl    # one JSON object per fact
 Each record: `{ "claim": ..., "command": "re ... --json", "result": {...},
 "gate": "verify_edges PASS" }`. The milestone document cites the packet and the
 `re` commands used. Do not paste raw disassembly as the primary evidence.
+
+## 8.1 Current-context index and `re packet` (token efficiency)
+
+`docs/current-context.json` is a **generated compact index**, not a source of
+truth. It is produced deterministically by `scripts/generate-current-context.py`
+from `docs/state/current-state.json` (the small hand-maintained machine-readable
+state), `docs/artifact-ledger.json` and the binary/tooling identity. It names the
+current milestone, the active blocker, proven facts, superseded claims, the
+relevant call path, tooling paths and the exact evidence files, and stays within
+8 KiB. Authoritative evidence is never moved into it.
+
+```sh
+scripts/generate-current-context.py            # regenerate (deterministic)
+scripts/generate-current-context.py --check    # non-zero if stale
+scripts/generate-current-context.py --validate # integrity only
+scripts/generate-current-context.py --scan-links <md files>
+```
+
+`--check` fails when `integrity.sources_hash` (companion + ledger + blob
+identity + re.db schema) or the binary identity changed. `--validate` resolves
+every referenced artifact path, rejects duplicate fact IDs, rejects a `PROVEN`
+fact whose ledger `record` is `SUPERSEDED`, requires the current milestone in
+`agent-state.md`/`milestones.md`, and requires a supported `re.db` schema. A
+source conflict fails generation rather than being silently resolved.
+
+`re packet` is an **additive** subcommand that emits one bounded, deterministic,
+machine-readable evidence packet for a single function/address, composed only
+from the existing re.db tables (plus the same linear branch pass `re switch`
+uses). It carries the index confidence/provenance verbatim and never upgrades
+it. Every list is wrapped as `{total, shown, truncated, items}` so truncation is
+explicit.
+
+```sh
+scripts/re.sh packet --fn wlc_phy_switch_radio_acphy                 # all sections
+scripts/re.sh packet --fn sub_67efd --mmio --branches --max-sites 20 # selective
+scripts/re.sh packet --addr 0x6923d --indirect --max-sites 10        # by address
+```
+
+Flags: `--callers --callees --fields --mmio --phy --radio --tables --branches
+--indirect --constants --provenance`, bounded by `--max-callers --max-callees
+--max-sites --max-branches` (defaults 30/40/40/30). With no section flag every
+section is included. It does not replace `fn`/`card`/`dump`; use `packet` for a
+compact blocker-scoped question and the older commands for full dumps.
 
 ## 9. Filing tooling gaps
 

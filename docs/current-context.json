@@ -1,0 +1,248 @@
+{
+  "active_blocker": {
+    "evidence": [
+      "docs/m34d4/indirect_resolution.json",
+      "docs/m34d4/tooling_gap_closure.md"
+    ],
+    "id": "d4.indirect.wlc_bmac_init.vtable",
+    "summary": "wlc_bmac_init 0x6923d [rax+0xa0] / 0x6924a [rax+0xd8] dispatch via a runtime ops table; targets UNRESOLVED."
+  },
+  "artifact_references": [
+    "docs/agent-state.md",
+    "docs/m34d2b_initvals_test.md",
+    "docs/m34d3a0_dma_test.md",
+    "docs/m34d3a1_vendor_tail_test.md",
+    "docs/m34d3b_band_init.md",
+    "docs/m34d3b_sprom_evidence.md",
+    "docs/m34d4/dev_lost_access_map.json",
+    "docs/m34d4/indirect_resolution.json",
+    "docs/m34d4/operational_checkpoint_analysis.md",
+    "docs/m34d4/pll_synth_path.md",
+    "docs/m34d4/post_d3b_operational_timeline.md",
+    "docs/m34d4/tooling_gap_closure.md",
+    "docs/m34d4/value_provenance.json",
+    "docs/ucode_test.md"
+  ],
+  "binary_identity": {
+    "blob_path": "/media/kartashoff/Storage/opensource/iced/test/wlc_hybrid.o_shipped",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "re_db": {
+      "exists": true,
+      "file_sha256": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+      "meta_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+      "path": "/media/kartashoff/Storage/opensource/iced/test/re.db",
+      "schema_version": "5"
+    },
+    "tooling_commit": "064026509ae630fc2b2cf763362e1e107c243a23"
+  },
+  "canonical_sources": [
+    "AGENTS.md",
+    "docs/agent-state.md",
+    "docs/artifact-ledger.json",
+    "docs/artifact-ledger.md",
+    "docs/milestones.md",
+    "docs/re-tooling.md",
+    "docs/state/current-state.json"
+  ],
+  "current_call_path": [
+    "wlc_init@0x3c6f1",
+    "wlc_bmac_init",
+    "sub_6656c@0x695d8",
+    "sub_60f67(d11ac1bsinitvals42)@0x669bd",
+    "wlc_phy_init@0x669df",
+    "wlc_phy_anacore",
+    "wlc_phy_switch_radio(ON=1)@0xbad44",
+    "wlc_phy_switch_radio_acphy@0xaa782",
+    "sub_b018f@0xbad4c",
+    "wlc_set_home_chanspec",
+    "wlc_phy_cal_perical(pi,6)"
+  ],
+  "current_git": {
+    "branch": "m34d3b-band-init-test",
+    "dirty_tracked": true,
+    "head": "fd2f8009db94ad1c3f356abc998e461d434edea6"
+  },
+  "current_milestone": {
+    "artifact": "docs/m34d4/tooling_gap_closure.md",
+    "id": "M3.4D4",
+    "status": "ANALYSIS ONLY"
+  },
+  "generated_from_head": "fd2f8009db94ad1c3f356abc998e461d434edea6",
+  "hardware_test_go": "NO",
+  "integrity": {
+    "sources_hash": "17741ba5b5d24336469ce673e94646147f0b36cbcac03e3db9c1ccb42faf2282"
+  },
+  "last_hardware_proven_milestone": {
+    "evidence": "docs/m34d3a1_vendor_tail_test.md",
+    "id": "M3.4D3A1"
+  },
+  "open_blockers": [
+    {
+      "evidence": [
+        "docs/m34d4/operational_checkpoint_analysis.md"
+      ],
+      "id": "d4.checkpoint.none",
+      "summary": "No STRONG operational checkpoint; D4 GO = NO; HARDWARE TEST GO = NO."
+    },
+    {
+      "evidence": [
+        "docs/m34d4/dev_lost_access_map.json"
+      ],
+      "id": "d4.dev_lost.coverage",
+      "summary": "dev_lost latch not wired to the D3B -> wlc_phy_cal_perical path."
+    },
+    {
+      "evidence": [
+        "docs/m34d4/indirect_resolution.json"
+      ],
+      "id": "d4.indirect.wlc_bmac_init.vtable",
+      "summary": "Resolve the runtime ops-table dispatch at 0x6923d/0x6924a (needs V5-G1/V5-G2)."
+    },
+    {
+      "evidence": [
+        "docs/m34d4/pll_synth_path.md",
+        "docs/m34d4/value_provenance.json"
+      ],
+      "id": "d4.pll_synth.rev42.branch",
+      "summary": "First PLL/synth selector is the hardware radio revision; rev42 branch UNKNOWN."
+    }
+  ],
+  "project": "OpenBRCM",
+  "proven_facts": [
+    {
+      "class": "analysis",
+      "id": "d4d.first.radio_on",
+      "record": "D4D-POST-D3B",
+      "source": "docs/m34d4/post_d3b_operational_timeline.md",
+      "status": "PROVEN",
+      "summary": "First radio-ON = wlc_phy_init@0xbad44 -> switch_radio(ON) -> switch_radio_acphy@0xaa782 -> sub_b018f@0xbad4c."
+    },
+    {
+      "class": "analysis",
+      "id": "d4d.pi_fptr.installed",
+      "record": "D4D-CLOSURE",
+      "source": "docs/m34d4/tooling_gap_closure.md",
+      "status": "PROVEN",
+      "summary": "pi_fptr slots relocation-installed (NOT NULL): +0x28=sub_b018f ... +0xf8=btc_adjust; +0x110/+0x118 uninstalled."
+    },
+    {
+      "class": "hardware",
+      "id": "m2.bcma.sprom.mac",
+      "record": "M2-M3.4B",
+      "source": "docs/agent-state.md",
+      "status": "PROVEN",
+      "summary": "bcma bind; external SPROM rev11 MAC 2c:fd:a1:61:40:25; HT 2x2."
+    },
+    {
+      "class": "hardware",
+      "id": "m34b.fifo0.rx.dma",
+      "record": "M2-M3.4B",
+      "source": "docs/agent-state.md",
+      "status": "PROVEN",
+      "summary": "FIFO0 RX DMA L1: ring 256, buf 2048, off 38, ctrl2=0x0800, addrhigh=0x80000000, PTR=0x400, RX CONTROL=0x84d."
+    },
+    {
+      "class": "hardware",
+      "id": "m34d2a.ucode.psm",
+      "record": "M3.4D2A",
+      "source": "docs/ucode_test.md",
+      "status": "PROVEN",
+      "summary": "D11 rev42 ucode upload 10850 writes + PSM start; poll iterations=11 MACINTSTATUS=0x1."
+    },
+    {
+      "class": "hardware",
+      "id": "m34d2b.common.initvals",
+      "record": "M3.4D2B",
+      "source": "docs/m34d2b_initvals_test.md",
+      "status": "PROVEN",
+      "summary": "d11ac1initvals42 = 610 records (w16=113, w32=497); postconditions FIFO0..3=01c4/0/0/079e, MACCONTROL=0x04020402, SHM14=0xb4."
+    },
+    {
+      "class": "hardware",
+      "id": "m34d3a0.dma.lifecycle",
+      "record": "M3.4D3A0",
+      "source": "docs/m34d3a0_dma_test.md",
+      "status": "PROVEN",
+      "summary": "D3A0 isolated DMA lifecycle: 4 TX (0x200/0x240/0x280/0x2c0) + FIFO0 RX; verified reset/teardown PASS."
+    },
+    {
+      "class": "hardware",
+      "id": "m34d3a1.vendor.tail",
+      "record": "M3.4D3A1",
+      "source": "docs/m34d3a1_vendor_tail_test.md",
+      "status": "PROVEN",
+      "summary": "rev42 tail sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq, STOP before sub_6656c."
+    },
+    {
+      "class": "analysis",
+      "id": "m34d3b.mhf.vector",
+      "record": "D3B-MHF-CLOSURE",
+      "source": "docs/m34d3b_band_init.md",
+      "status": "PROVEN",
+      "summary": "Band-0 MHF vector mhfs[0..4] = {0x0100,0,0,0,0x0080}; all five proven."
+    },
+    {
+      "class": "hardware",
+      "id": "m34d3b.mhf3.antsel0",
+      "record": "SPROM-EVIDENCE",
+      "source": "docs/m34d3b_sprom_evidence.md",
+      "status": "PROVEN",
+      "summary": "rev11 SPROM capture: antswitch=0 => antsel_type=0 => MHF3=0x0000."
+    }
+  ],
+  "schema_version": 1,
+  "superseded_claims": [
+    {
+      "claim": "D4A-DECOMP",
+      "superseded_by": "D4A-REACHABILITY"
+    },
+    {
+      "claim": "D4B-RESUME",
+      "superseded_by": "D4B-CLOSURE"
+    },
+    {
+      "claim": "D4B-RESUME",
+      "superseded_by": "D4C"
+    },
+    {
+      "claim": "D4B-CLOSURE",
+      "superseded_by": "D4C"
+    },
+    {
+      "claim": "D4B-CLOSURE",
+      "superseded_by": "LIFECYCLE"
+    },
+    {
+      "claim": "D4B-CLOSURE",
+      "superseded_by": "D4A-REACHABILITY"
+    },
+    {
+      "claim": "D4A-REACHABILITY",
+      "superseded_by": "D4D-POST-D3B (reachability correction)"
+    }
+  ],
+  "tooling": {
+    "ghidra": {
+      "available": true,
+      "path": "/home/kartashoff/projects/ghidra",
+      "wrapper": "scripts/ghidra_headless.sh",
+      "wrapper_present": true
+    },
+    "re": {
+      "exists": true,
+      "path": "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/target/release/re",
+      "sha256": "77e9ec5a97aedf54b10b59efd281a790a3ce04e5422bce4ef4742952d4634618"
+    },
+    "re_bootstrap": {
+      "present": true,
+      "script": "scripts/re-bootstrap.sh"
+    },
+    "re_db": {
+      "exists": true,
+      "file_sha256": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+      "meta_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+      "path": "/media/kartashoff/Storage/opensource/iced/test/re.db",
+      "schema_version": "5"
+    }
+  }
+}
