@@ -235,6 +235,48 @@ else
 	bad "docs/m34d3b_sprom_evidence.md must record the SPROM-evidence HARDWARE RUNTIME PROVEN result with MHF3 = 0x0000"
 fi
 
+# 4g. D3B band-init implementation (M3.4D3B): IMPLEMENTED / STATIC TESTED /
+#     SIGNED / NOT HARDWARE PROVEN. The isolated mode must reuse the D3A1
+#     prefix (DMA left live), apply exactly 73/39/34 bsinitvals42 records and
+#     never reach PHY/radio or enable EN_MAC.
+if [ -f src/ob_d3b.c ] && [ -f src/ob_d3b.h ] && \
+   grep -q 'ob_d3a1_run_prefix' src/ob_d3b.c && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_RECORDS[[:space:]]+73u' src/ob_d3b.h && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_W16[[:space:]]+39u' src/ob_d3b.h && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_W32[[:space:]]+34u' src/ob_d3b.h; then
+	ok "D3B implementation present (prefix reuse, bsinitvals 73/39/34)"
+else
+	bad "M3.4D3B implementation missing (src/ob_d3b.{c,h}, prefix reuse, 73/39/34)"
+fi
+for pair in "OB_D3B_MHF_SHM0 0x005eu" "OB_D3B_MHF_SHM1 0x0060u" \
+	    "OB_D3B_MHF_SHM2 0x0062u" "OB_D3B_MHF_SHM3 0x0078u" \
+	    "OB_D3B_MHF_SHM4 0x00d4u"; do
+	set -- $pair
+	grep -qE "^#define[[:space:]]+$1[[:space:]]+$2" src/ob_d3b.h \
+		|| bad "src/ob_d3b.h $1 != $2"
+done
+if grep -qE 'wlc_phy_init[[:space:]]*\(|wlc_phy_anacore[[:space:]]*\(|wlc_phy_switch_radio[[:space:]]*\(|request_irq[[:space:]]*\(' src/ob_d3b.c; then
+	bad "src/ob_d3b.c calls a forbidden PHY/IRQ stage"
+else
+	ok "D3B code does not reach PHY/radio/IRQ setup"
+fi
+if grep -q 'OB_ISOLATED_D3B_TEST' src/ob_ucode.h && \
+   grep -q 'ob_isolated_mode_select6' src/ob_core.c && \
+   grep -q 'bsinitvals_test_only' src/ob_core.c && \
+   grep -q 'ob_d3b_remove' src/ob_core.c; then
+	ok "bsinitvals_test_only isolated mode wired (mutual exclusion + remove hook)"
+else
+	bad "bsinitvals_test_only mode not wired (select6 / ob_d3b_remove)"
+fi
+if [ -f docs/m34d3b_band_init_test.md ] && \
+   grep -q 'IMPLEMENTED' docs/m34d3b_band_init_test.md && \
+   grep -q 'STATIC TESTED' docs/m34d3b_band_init_test.md && \
+   grep -q 'NOT HARDWARE PROVEN' docs/m34d3b_band_init_test.md; then
+	ok "D3B band-init test record present (IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN)"
+else
+	bad "docs/m34d3b_band_init_test.md must record D3B IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN"
+fi
+
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
 if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
 		| grep -q 'hw->cc = hw->bus->drv_cc.core' && \

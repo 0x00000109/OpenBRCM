@@ -741,10 +741,83 @@ static int ob_d3a1_validate(struct ob_hw *hw)
 
 /* ---- top-level bring-up ------------------------------------------------- */
 
-int ob_d3a1_test(struct ob_hw *hw)
+/*
+ * Reusable vendor prefix shared by D3A1 and D3B: from the proven D2B exit run
+ * sub_67efd -> T1 -> DMA (bring-up) -> T2 -> the D3A1 postcondition gate, and
+ * return with the D3A0 DMA engines LEFT LIVE (the vendor T1 -> DMA -> T2 order).
+ * On any failure after DMA bring-up it performs the mandatory verified D3A0
+ * teardown; a teardown failure latches the module-wide fatal state and the
+ * caller must not free. @tag is the D2B log prefix. The caller owns the
+ * hw->d3a0 / hw->d3a1 reset and the final teardown.
+ */
+int ob_d3a1_run_prefix(struct ob_hw *hw, const char *tag)
 {
 	struct ob_ucode_run run;
 	struct ob_initvals_post post;
+	int ret;
+
+	/* D2B: shared hardware-proven D2A core + 610 common initvals + gate */
+	ret = ob_initvals_run_d2b(hw, tag, &run, &post);
+	if (ret)
+		return ret;
+	if (!ob_d3a0_d2b_state_ok(&post)) {
+		dev_err(hw->dev,
+			"%s: D2B postconditions not satisfied; D3A1 prefix forbidden\n",
+			tag);
+		return -EIO;
+	}
+
+	/* live D2B exit re-check before the first new post-common write */
+	ret = ob_d3a1_check_d2b_exit(hw);
+	if (ret)
+		return ret;
+
+	ret = ob_d3a1_fifo_fixup(hw);
+	if (ret) {
+		dev_err(hw->dev,
+			"%s: sub_67efd FAIL ret=%d; TX FIFO state unproven - capture logs and REBOOT before retry\n",
+			tag, ret);
+		return ret;
+	}
+
+	ret = ob_d3a1_t1(hw);
+	if (ret) {
+		dev_err(hw->dev, "%s: T1 FAIL ret=%d\n", tag, ret);
+		return ret;
+	}
+
+	/* DMA in the exact vendor position: T1 -> DMA -> T2. */
+	ret = ob_d3a0_bringup(hw);
+	if (ret) {
+		dev_err(hw->dev,
+			"%s: DMA bring-up FAIL ret=%d; tearing down\n", tag,
+			ret);
+		ob_d3a0_teardown(hw);
+		return ret;
+	}
+
+	ret = ob_d3a1_t2(hw);
+	if (ret) {
+		dev_err(hw->dev, "%s: T2 FAIL ret=%d; tearing down\n", tag,
+			ret);
+		ob_d3a0_teardown(hw);
+		return ret;
+	}
+
+	ret = ob_d3a1_validate(hw);
+	if (ret) {
+		dev_err(hw->dev,
+			"%s: validation FAIL ret=%d; tearing down\n", tag, ret);
+		ob_d3a0_teardown(hw);
+		return ret;
+	}
+
+	/* success: the caller decides the next vendor stage (D3A1 STOP vs D3B) */
+	return 0;
+}
+
+int ob_d3a1_test(struct ob_hw *hw)
+{
 	int ret;
 
 	/* never re-enter after an unverified quiesce; only a reboot clears it */
@@ -777,72 +850,10 @@ int ob_d3a1_test(struct ob_hw *hw)
 
 	dev_info(hw->dev, "d3a1-test: BEGIN\n");
 
-	/* D2B: shared hardware-proven D2A core + 610 common initvals + gate */
-	ret = ob_initvals_run_d2b(hw, "d3a1-test", &run, &post);
+	/* exact vendor prefix (D2B -> sub_67efd -> T1 -> DMA -> T2 -> gate) */
+	ret = ob_d3a1_run_prefix(hw, "d3a1-test");
 	if (ret)
 		return ret;
-	if (!ob_d3a0_d2b_state_ok(&post)) {
-		dev_err(hw->dev,
-			"d3a1-test: D2B postconditions not satisfied; D3A1 forbidden\n");
-		return -EIO;
-	}
-
-	/* live D2B exit re-check before the first new D3A1 write */
-	ret = ob_d3a1_check_d2b_exit(hw);
-	if (ret)
-		return ret;
-
-	ret = ob_d3a1_fifo_fixup(hw);
-	if (ret) {
-		/*
-		 * sub_67efd mutates TX FIFO hardware before DMA begins. On a
-		 * completion-poll timeout the hardware state is NOT proven.
-		 * No DMA memory is live yet, so returning an error is safe, but
-		 * the operator MUST NOT retry the isolated test in the same
-		 * boot: capture the logs, then reboot before another attempt.
-		 * No unproven FIFO/core reset recovery is attempted here.
-		 */
-		dev_err(hw->dev,
-			"d3a1-test: sub_67efd FAIL ret=%d; TX FIFO state unproven - capture logs and REBOOT before retry\n",
-			ret);
-		return ret;
-	}
-
-	ret = ob_d3a1_t1(hw);
-	if (ret) {
-		dev_err(hw->dev, "d3a1-test: T1 FAIL ret=%d\n", ret);
-		return ret;
-	}
-
-	/*
-	 * DMA in the exact vendor position: T1 -> DMA -> T2. Reuse the
-	 * hardware-proven D3A0 lifecycle unchanged.
-	 */
-	ret = ob_d3a0_bringup(hw);
-	if (ret) {
-		dev_err(hw->dev,
-			"d3a1-test: DMA bring-up FAIL ret=%d; tearing down\n",
-			ret);
-		ob_d3a0_teardown(hw);
-		return ret;
-	}
-
-	ret = ob_d3a1_t2(hw);
-	if (ret) {
-		dev_err(hw->dev,
-			"d3a1-test: T2 FAIL ret=%d; tearing down\n", ret);
-		ob_d3a0_teardown(hw);
-		return ret;
-	}
-
-	ret = ob_d3a1_validate(hw);
-	if (ret) {
-		dev_err(hw->dev,
-			"d3a1-test: validation FAIL ret=%d; tearing down\n",
-			ret);
-		ob_d3a0_teardown(hw);
-		return ret;
-	}
 
 	/* mandatory same-run teardown of the reused D3A0 lifecycle */
 	ret = ob_d3a0_teardown(hw);

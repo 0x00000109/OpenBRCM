@@ -114,6 +114,7 @@
 int  ob_si_probe(struct ob_hw *hw);
 int  ob_si_sprom_evidence(struct ob_hw *hw);
 int  ob_si_prepare_board_data_for_d3a1(struct ob_hw *hw);
+int  ob_si_prepare_board_data_for_d3b(struct ob_hw *hw);
 int  ob_si_powerup(struct ob_hw *hw);
 void ob_si_dump(struct ob_hw *hw);
 u32  ob_si_cc_read(struct ob_hw *hw, u16 off);

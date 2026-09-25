@@ -167,6 +167,22 @@ int ob_si_read_mac(struct ob_hw *hw, u8 mac[6])
 		return -ENODATA;
 	}
 
+	/*
+	 * Proven rev11 board fields (boardtype/boardflags/aa2g/aa5g/antswitch)
+	 * decoded from the SAME already-read, CRC-validated image: no extra
+	 * MMIO. Only rev11 carries the recovered field map; other revisions
+	 * leave board.valid=false.
+	 */
+	hw->board.valid = false;
+	if (rev == 11 &&
+	    ob_d3b_decode_rev11_board(sp, words, &hw->board)) {
+		dev_info(hw->dev,
+			 "boarddata: boardtype=0x%04x boardflags=0x%08x aa2g=%u aa5g=%u antswitch=%u(present=%d)\n",
+			 hw->board.boardtype, hw->board.boardflags,
+			 hw->board.aa2g, hw->board.aa5g, hw->board.antswitch,
+			 hw->board.antswitch_present);
+	}
+
 	/* rev11 moved the first MAC to +0x90; rev8 uses +0x8C. */
 	off = (rev == 11) ? OB_SPROM11_IL0MAC : OB_SPROM8_IL0MAC;
 	raw[0] = sp[(off + 0) / 2];
@@ -895,6 +911,27 @@ int ob_si_prepare_board_data_for_d3a1(struct ob_hw *hw)
 	dev_info(hw->dev,
 		 "d3a1-test: board data prepared (cc=%p mac_valid=%d mac=%pM)\n",
 		 hw->cc, hw->mac_valid, hw->mac);
+	return 0;
+}
+
+/*
+ * Minimal board-data preparation for the isolated D3B band-init test.
+ *
+ * Identical read-only preparation to the D3A1 path, but D3B additionally needs
+ * the proven rev11 board fields (boardtype/boardflags/aa2g/aa5g/antswitch),
+ * which ob_si_read_mac() now decodes from the same already-read image into
+ * hw->board (no extra MMIO). A non-rev11/unvalidated image leaves
+ * hw->board.valid=false and ob_d3b_test() refuses.
+ */
+int ob_si_prepare_board_data_for_d3b(struct ob_hw *hw)
+{
+	int ret = ob_si_prepare_board_data_for_d3a1(hw);
+
+	if (ret)
+		return ret;
+	if (!hw->board.valid)
+		dev_warn(hw->dev,
+			 "d3b-test: rev11 board data not available (board.valid=0)\n");
 	return 0;
 }
 

@@ -76,6 +76,19 @@ u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off)
 	return bcma_read16(hw->core, OB_UCODE_REG_OBJDATA + (off & 0x2));
 }
 
+/*
+ * Vendor SHM 16-bit write (wlc_bmac_write_shm equivalent): select the SHM
+ * window in OBJADDR, barrier, then write the 16-bit half selected by offset
+ * bit1 into OBJDATA. offset is a byte offset. Reused by the D3B MHF writes.
+ */
+void ob_ucode_write_shm16(struct ob_hw *hw, u16 off, u16 val)
+{
+	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
+		     OB_UCODE_OBJADDR_SHM_SEL | ((u32)off >> 2));
+	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);
+	bcma_write16(hw->core, OB_UCODE_REG_OBJDATA + (off & 0x2), val);
+}
+
 /* Masked MACCONTROL update, mirroring wlc_bmac_mctrl(dev, mask, val). */
 static u32 ob_ucode_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 {

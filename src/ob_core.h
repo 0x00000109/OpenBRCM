@@ -18,6 +18,7 @@
 #include "ob_fw.h"
 #include "ob_d3a0.h"
 #include "ob_d3a1.h"
+#include "ob_d3b.h"
 
 #define OB_DRV_NAME	"openbrcm"
 
@@ -50,6 +51,12 @@ struct ieee80211_hw;
  *		post-common tail (sub_67efd + T1 + DMA in vendor position + T2 +
  *		switch_macfreq) ran and STOPPED before sub_6656c/bsinitvals/PHY;
  *		@remove handles the fail-closed DMA lifecycle via ob_d3a1_remove()
+ * @bsinitvals_test_only: true when probe ran with bsinitvals_test_only=1: the
+ *		device is bound, the proven D2A/D2B core and the exact D3A1
+ *		vendor prefix ran with the D3A0 DMA engines left LIVE, then the
+ *		exact sub_6656c MHF + d11ac1bsinitvals42 (73 records) ran and
+ *		STOPPED before wlc_phy_init; @remove handles the fail-closed DMA
+ *		lifecycle via ob_d3b_remove()
  * @sprom_evidence_only: true when probe ran with sprom_evidence_only=1: the
  *		device is bound and only the READ-ONLY external-SPROM diagnostic
  *		runs (it emits the already-read 234-word rev11 image); no power-up,
@@ -75,10 +82,12 @@ struct ob_hw {
 	bool			initvals_test_only;
 	bool			dma_test_only;
 	bool			d3a1_test_only;
+	bool			bsinitvals_test_only;
 	bool			sprom_evidence_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;
+	struct ob_sprom_board	board;
 	struct ieee80211_hw	*ieee;
 	struct ob_dma		dma;
 	struct ob_irq		irq;
@@ -86,6 +95,7 @@ struct ob_hw {
 	struct ob_fw		fw;
 	struct ob_d3a0		d3a0;
 	struct ob_d3a1		d3a1;
+	struct ob_d3b		d3b;
 };
 
 int ob_probe(struct bcma_device *core);

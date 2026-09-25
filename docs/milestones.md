@@ -296,13 +296,15 @@ Canonical status (exact):
 - M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
   normal unload + DMA teardown + STOP boundary proven)
-- M3.4D3B = ANALYSIS ONLY / NOT IMPLEMENTED / NOT HARDWARE PROVEN; design
-  `docs/m34d3b_band_init.md`, `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY
-  PROVEN`: all MHF write expressions, gate semantics and all five band-0 MHF
-  values are resolved — `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`
-  (MHF1/MHF2/MHF4/MHF5 closed earlier; **MHF3** closed by the 2026-09 read-only
-  hardware SPROM capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/
-  provenance/safety blocker remains.
+- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
+  (isolated `bsinitvals_test_only=1` band init + `d11ac1bsinitvals42`); design
+  `docs/m34d3b_band_init.md`, implementation `docs/m34d3b_band_init_test.md`,
+  `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`: all MHF write
+  expressions, gate semantics and all five band-0 MHF values are resolved —
+  `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}` (MHF1/MHF2/MHF4/MHF5
+  closed earlier; **MHF3** closed by the 2026-09 read-only hardware SPROM
+  capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/provenance/safety
+  blocker remains.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
@@ -315,6 +317,14 @@ Canonical status (exact):
   gap **T7 closed**: `srom_var_init 0x9704` walks a 24-byte descriptor table at
   `.rodata+0x1b00` (not `srom_parsecis`); tool `scripts/srom_var_table.py`,
   artifact `docs/m34d3b/rev11_sprom_fields.json`.
+- M3.4D3B band-init implementation (branch `m34d3b-band-init-test`) =
+  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN: isolated
+  `bsinitvals_test_only=1` reuses the D3A1 prefix with the D3A0 DMA engines left
+  live (`ob_d3a1_run_prefix()`), writes MHF1..5 derived from the rev11 board
+  fields, applies 73 `d11ac1bsinitvals42` records (39 x w2 + 34 x w4), validates
+  the deterministic postconditions and performs the verified D3A0 teardown;
+  STOPS before `wlc_phy_init`. Files `src/ob_d3b.{c,h}`; proof
+  `docs/m34d3b_band_init_test.md`.
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated

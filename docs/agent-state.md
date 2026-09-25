@@ -169,9 +169,10 @@ Stated exactly:
   reuses the proven D3A0 DMA lifecycle in its vendor position; STOPS before
   `sub_6656c`; candidate `42d74b8`, module `6ba2d853…`; normal unload + DMA
   teardown proven)
-- M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
-  / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; `D3B
-  IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
+- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
+  (isolated `bsinitvals_test_only=1` band init + `d11ac1bsinitvals42`; design
+  `docs/m34d3b_band_init.md`; implementation `docs/m34d3b_band_init_test.md`;
+  `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
   `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
   capture)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
@@ -358,6 +359,19 @@ the already-read, CRC-validated 234-word rev11 image (`sprom_evidence_only=1`,
 **MHF3 = `0x0000`**. Evidence: `docs/m34d3b/d3b_sprom_capture.json`,
 `docs/m34d3b_sprom_evidence.md`.
 
+**D3B band-init implementation** (`m34d3b-band-init-test`, from `main` @
+`06d60d6`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN**.
+Isolated mode `bsinitvals_test_only=1` runs the proven D2A/D2B core and the
+exact D3A1 vendor prefix with the D3A0 DMA engines **left live** (new reusable
+`ob_d3a1_run_prefix()`), then the exact `sub_6656c` slice (read-only
+`D11+0x3e0`; MHF1..5 via `sub_62766` -> SHM `0x5e/0x60/0x62/0x78/0xd4`;
+`d11ac1bsinitvals42` 73 records / 39 x w2 + 34 x w4), validates the
+deterministic postconditions and performs the mandatory verified D3A0 teardown;
+it STOPS before `wlc_phy_init`/PHY/radio. MHF values are derived from the
+rev11 board fields (`ob_si_read_mac` decode: `boardtype`/`boardflags`/`aa2g`/
+`aa5g`/`antswitch` -> `antsel_type` -> vector), not board-hard-coded. Files
+`src/ob_d3b.{c,h}`; proof `docs/m34d3b_band_init_test.md`.
+
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
   `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
@@ -473,8 +487,8 @@ verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
 `sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
-**Next action — D3B unblocked (`GO: YES`); D4 after.** M3.4D3B (band init /
-`d11ac1bsinitvals42`) is analyzed in
+**Next action — D3B implemented (awaiting hardware test); D4 after.** M3.4D3B
+(band init / `d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
@@ -489,9 +503,12 @@ MHF3 `0x0000` (hardware capture: `boardtype=0x85ba`, `boardflags & 0x8 = 0`,
 `antswitch=0` => `antsel_type=0`);
 MHF4 `0x0000` (4313-only site skipped);
 MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
-No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES`. D4
-(AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO)
-follows. Neither D3B nor D4 has code or hardware proof yet.
+No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES` and the
+isolated `bsinitvals_test_only=1` implementation (`src/ob_d3b.{c,h}`) is
+`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` but **NOT HARDWARE PROVEN**
+(`docs/m34d3b_band_init_test.md`). Next: the one-shot D3B hardware run (owner
+approval); then D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first
+PHY-indirect MMIO), which has no code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -523,21 +540,21 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B MHF3 SPROM-evidence capture, static-only): the one-shot read-only
-`sprom_evidence_only=1` run is **DONE** (`HARDWARE RUNTIME PROVEN`); STOP after
-the evidence/docs commit; **no D3B implementation**, no further
-`insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering. The
-MHF3 input is resolved; D3B implementation awaits its own planning branch.
+Current (D3B band-init implementation, static-only): the isolated
+`bsinitvals_test_only=1` implementation is `IMPLEMENTED` / `STATIC TESTED` /
+`SIGNED` / **NOT HARDWARE PROVEN**; STOP before any hardware run — **no
+`insmod`/`rmmod`/`modprobe`, no hardware**. The next action (owner approval) is
+the one-shot D3B hardware run, which must stop before `wlc_phy_init`.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the
 verified DMA teardown, and **before `sub_6656c`** / bsinitvals / PHY / radio /
 channel / mac80211.
 
-Next runtime STOP (D3B, **not implemented**): after the `sub_60f67` applier
-return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e. before
-`wlc_phy_anacore` and any PHY-indirect/radio window. `D3B IMPLEMENTATION GO:
-YES`, but D3B may only be implemented in a dedicated (planning-first) milestone.
+Next runtime STOP (D3B, **implemented, not yet run**): after the `sub_60f67`
+applier return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e.
+before `wlc_phy_anacore` and any PHY-indirect/radio window. D3B is implemented
+in `bsinitvals_test_only=1` and may only run with explicit owner approval.
 
 D2A/D2B historical STOP: neither earlier path reaches bsinitvals/`sub_6656c`/
 PHY/radio/channel/DMA/IRQ/mac80211.

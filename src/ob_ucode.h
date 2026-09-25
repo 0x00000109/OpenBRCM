@@ -108,6 +108,7 @@ enum ob_isolated_mode {
 	OB_ISOLATED_INITVALS_TEST,
 	OB_ISOLATED_DMA_TEST,
 	OB_ISOLATED_D3A1_TEST,
+	OB_ISOLATED_D3B_TEST,
 	OB_ISOLATED_CONFLICT,
 };
 
@@ -140,6 +141,42 @@ ob_isolated_mode_select5(bool fw_validate_only, bool ucode_test_only,
 		return OB_ISOLATED_DMA_TEST;
 	if (d11_tail_test_only)
 		return OB_ISOLATED_D3A1_TEST;
+	return OB_ISOLATED_NONE;
+}
+
+static inline unsigned int
+ob_isolated_mode_count6(bool fw_validate_only, bool ucode_test_only,
+			bool initvals_test_only, bool dma_test_only,
+			bool d11_tail_test_only, bool bsinitvals_test_only)
+{
+	return ob_isolated_mode_count5(fw_validate_only, ucode_test_only,
+				       initvals_test_only, dma_test_only,
+				       d11_tail_test_only) +
+	       (bsinitvals_test_only ? 1u : 0u);
+}
+
+static inline enum ob_isolated_mode
+ob_isolated_mode_select6(bool fw_validate_only, bool ucode_test_only,
+			 bool initvals_test_only, bool dma_test_only,
+			 bool d11_tail_test_only, bool bsinitvals_test_only)
+{
+	if (ob_isolated_mode_count6(fw_validate_only, ucode_test_only,
+				    initvals_test_only, dma_test_only,
+				    d11_tail_test_only,
+				    bsinitvals_test_only) > 1)
+		return OB_ISOLATED_CONFLICT;
+	if (fw_validate_only)
+		return OB_ISOLATED_FW_VALIDATE;
+	if (ucode_test_only)
+		return OB_ISOLATED_UCODE_TEST;
+	if (initvals_test_only)
+		return OB_ISOLATED_INITVALS_TEST;
+	if (dma_test_only)
+		return OB_ISOLATED_DMA_TEST;
+	if (d11_tail_test_only)
+		return OB_ISOLATED_D3A1_TEST;
+	if (bsinitvals_test_only)
+		return OB_ISOLATED_D3B_TEST;
 	return OB_ISOLATED_NONE;
 }
 
@@ -178,7 +215,8 @@ static inline bool ob_isolated_mode_applies_initvals(enum ob_isolated_mode mode)
 {
 	return mode == OB_ISOLATED_INITVALS_TEST ||
 	       mode == OB_ISOLATED_DMA_TEST ||
-	       mode == OB_ISOLATED_D3A1_TEST;
+	       mode == OB_ISOLATED_D3A1_TEST ||
+	       mode == OB_ISOLATED_D3B_TEST;
 }
 
 /*
@@ -202,7 +240,8 @@ static inline bool ob_isolated_mode_skips_teardown(enum ob_isolated_mode mode)
 static inline bool ob_isolated_mode_uses_dma(enum ob_isolated_mode mode)
 {
 	return mode == OB_ISOLATED_DMA_TEST ||
-	       mode == OB_ISOLATED_D3A1_TEST;
+	       mode == OB_ISOLATED_D3A1_TEST ||
+	       mode == OB_ISOLATED_D3B_TEST;
 }
 
 /* A validated flat ucode image is exactly size/4 32-bit words. */
@@ -293,6 +332,12 @@ int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag,
  * reused by the D2B postcondition gate.
  */
 u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off);
+
+/*
+ * Vendor SHM 16-bit write (OBJADDR SHM window + OBJDATA half), byte @off.
+ * Exact wlc_bmac_write_shm equivalent; reused by the D3B MHF writes.
+ */
+void ob_ucode_write_shm16(struct ob_hw *hw, u16 off, u16 val);
 
 int ob_ucode_test(struct ob_hw *hw);
 #endif /* __KERNEL__ */

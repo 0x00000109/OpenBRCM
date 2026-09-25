@@ -84,6 +84,17 @@ int ob_fw_request_initvals(struct ob_hw *hw, const struct firmware **fw)
 			     OB_FW_AC1INITVALS42_FNV, fw, NULL);
 }
 
+/*
+ * Acquire + size/FNV-validate the rev42 band-switch initvals table for the
+ * isolated D3B band-init test (M3.4D3B). Same strictness as ob_fw_probe().
+ */
+int ob_fw_request_bsinitvals(struct ob_hw *hw, const struct firmware **fw)
+{
+	return ob_fw_request(hw, OB_FW_AC1BSINITVALS42_NAME, NULL,
+			     OB_FW_AC1BSINITVALS42_SIZE,
+			     OB_FW_AC1BSINITVALS42_FNV, fw, NULL);
+}
+
 static void ob_fw_trace_ucode(struct ob_hw *hw, const u8 *data, u32 words)
 {
 	u32 i, v, start;

@@ -645,6 +645,14 @@ struct ob_d3a1 {
 };
 
 /*
+ * Reusable vendor prefix (D2B -> sub_67efd -> T1 -> DMA bring-up -> T2 -> the
+ * D3A1 postcondition gate). Returns 0 with the D3A0 DMA engines LEFT LIVE, so
+ * D3B can execute in the exact vendor position before the mandatory teardown.
+ * On any failure after DMA bring-up it performs the verified D3A0 teardown.
+ */
+int ob_d3a1_run_prefix(struct ob_hw *hw, const char *tag);
+
+/*
  * Run the isolated D3A1 vendor-ordered tail test. Real MMIO; requires explicit
  * human approval. It reuses the proven D2A/D2B core and the D3A0 DMA lifecycle
  * and STOPS before sub_6656c. It is never run automatically.
