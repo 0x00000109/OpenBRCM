@@ -456,6 +456,18 @@ Canonical status (exact):
   NO`; `HARDWARE TEST GO: NO`. Report `docs/m34d4b/d4c_radio_on_transition.md`.
   **The old "186 PHY / 301 RADIO" is whole-family/radio-ON-inclusive and MUST
   NOT be quoted as the attach scope.**
+- **M3.4 lifecycle reconstruction** = **`ANALYSIS ONLY`**. Resolves the CP-O2
+  contradiction: `wlc_bmac_radio_hw` is an **RPC-dispatched** function
+  (`WLRPC_WLC_BMAC_RADIO_HW_ID`, present in wl7/wl10) with **no caller in
+  `wlc_hybrid.o_shipped` or `wl.ko`** (re + Ghidra + `readelf -r` + unique
+  LOCAL symbol). It is **not** executed by the vendor Linux attach/init, so
+  there is **no vendor-time CP-O2** and the D4C "PSM running / DMA initialized"
+  CP-O2 state is withdrawn. H_NEW (missed early radio init caused D3B) is **NOT
+  SUPPORTED**: no vendor early-radio call exists to omit. MODEL A (board → D2 →
+  D3 → later PHY) is the evidence-supported host lifecycle; no pre-D2 milestone
+  is required. Reports `docs/lifecycle/bcm4352_rev42_lifecycle.{md,json}`;
+  erratum in `docs/m34d4b/d4c_radio_on_transition.md`. `D4 IMPLEMENTATION GO:
+  NO`; `HARDWARE TEST GO: NO`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256

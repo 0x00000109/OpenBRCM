@@ -273,3 +273,15 @@ corrected.
 - **D4 IMPLEMENTATION GO?** **NO** (radio-ON entry is an external hw-layer API;
   runtime-derived values not yet scoped).
 - **HARDWARE TEST GO = NO.**
+
+## ERRATUM (M3.4 lifecycle reconstruction, commit follows `e8946a1`)
+
+The CP-O2 section above is **withdrawn**. `wlc_bmac_radio_hw` is an
+**RPC-dispatched** function (`WLRPC_WLC_BMAC_RADIO_HW_ID`) with **no caller in
+`wlc_hybrid.o_shipped` or `wl.ko`**; `wlc_phy_init`'s on=1 is AC-unreachable.
+The radio-ON branch is therefore **code-reachable but not vendor-executed** in
+this corpus, so there is no vendor-time CP-O2 and its claimed "PSM running /
+DMA initialized" state is not orderable. See
+[`../lifecycle/bcm4352_rev42_lifecycle.md`](../lifecycle/bcm4352_rev42_lifecycle.md).
+Everything else in this report (reachability, counts, tables, channel,
+calibration) stands.

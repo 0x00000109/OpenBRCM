@@ -318,3 +318,14 @@ see `docs/m34d4b/d4b_value_provenance_closure.md`):
   the initial attach path) required manual control-flow over `re --asm` +
   Ghidra. Desired: a `re path-reach <fn> --arg <n>=<v>` or branch-predicate
   annotation on call edges.
+
+Tooling gap filed during the M3.4 lifecycle reconstruction (analysis only; see
+`docs/lifecycle/bcm4352_rev42_lifecycle.md`):
+
+- **L-C1 — external / cross-binary / RPC-dispatch call edges.** `re`/`re.db`
+  models only in-object call edges. `wlc_bmac_radio_hw` is an RPC-dispatched
+  target (`WLRPC_WLC_BMAC_RADIO_HW_ID`) with no in-object caller; this fact has
+  no DB representation. A future `external_symbols` / `cross_image_calls`
+  table (external symbol/API, candidate caller, normalized function identity,
+  confidence/provenance) would prevent re-deriving it by four-tool
+  cross-checking. Not implemented (not required for this analysis).

@@ -238,6 +238,18 @@ Stated exactly:
   NO`. Report `docs/m34d4b/d4c_radio_on_transition.md`.
   **"186 PHY / 301 RADIO" is whole-family/radio-ON-inclusive — NOT the attach
   scope.**
+- **M3.4 lifecycle reconstruction** = **`ANALYSIS ONLY`** (commit follows
+  `e8946a1`): `wlc_bmac_radio_hw` is an **RPC-dispatched** function
+  (`WLRPC_WLC_BMAC_RADIO_HW_ID`; present in wl7/wl10 strings) with **no caller
+  in `wlc_hybrid.o_shipped` or `wl.ko`** (re + Ghidra + readelf + unique LOCAL
+  symbol). It is **not executed** by the vendor Linux attach/init → **no
+  vendor-time CP-O2**; the D4C CP-O2 state (PSM running / DMA initialized) is
+  **withdrawn**. **H_NEW NOT SUPPORTED** (no vendor early-radio call exists to
+  omit). **MODEL A** (board → D2 → D3 → later PHY) is the evidence-supported
+  lifecycle; **no pre-D2 milestone required**; "186/301" never the attach
+  scope. `docs/lifecycle/bcm4352_rev42_lifecycle.{md,json}`; erratum in
+  `docs/m34d4b/d4c_radio_on_transition.md`. `D4 IMPLEMENTATION GO: NO`;
+  `HARDWARE TEST GO: NO`.
 - **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
   zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
   body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but
