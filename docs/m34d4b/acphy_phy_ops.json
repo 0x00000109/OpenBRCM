@@ -1,0 +1,2488 @@
+{
+  "milestone": "M3.4D4B",
+  "class": "PHY",
+  "functions": {
+    "wlc_phy_attach_acphy": [
+      {
+        "pc": 662217,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x739",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662245,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x73a",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662273,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x725",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662301,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x729",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662329,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x721",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662357,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662385,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x720",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662413,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662441,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x417",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 662469,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x416",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 663983,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0xb",
+        "value": "val=? mask=a3"
+      }
+    ],
+    "wlc_phy_anacore": [
+      {
+        "pc": 764700,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0xc mask=a3"
+      },
+      {
+        "pc": 764720,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0xa5",
+        "value": "val=0x7fff mask=a3"
+      }
+    ],
+    "wlc_phy_switch_radio": [
+      {
+        "pc": 762841,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0x6 mask=?"
+      },
+      {
+        "pc": 762894,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0xc mask=?"
+      },
+      {
+        "pc": 762940,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0x6 mask=?"
+      },
+      {
+        "pc": 763004,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0xf mask=?"
+      },
+      {
+        "pc": 763109,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0x9 mask=?"
+      },
+      {
+        "pc": 763156,
+        "helper": "phy_reg_write_array",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x0",
+        "value": "val=0x15 mask=?"
+      }
+    ],
+    "wlc_phy_switch_radio_acphy": [
+      {
+        "pc": 699399,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x16b",
+        "value": "val=0x400 mask=0x0"
+      },
+      {
+        "pc": 699424,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x175",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 701525,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x173e",
+        "value": "val=0x1c00 mask=?"
+      },
+      {
+        "pc": 701586,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1739",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 701647,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x173a",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 701711,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1725",
+        "value": "val=0x1fff mask=?"
+      },
+      {
+        "pc": 701772,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1729",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 701836,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1721",
+        "value": "val=0xffff mask=?"
+      },
+      {
+        "pc": 701897,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1728",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 701961,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1720",
+        "value": "val=0x3ff mask=?"
+      },
+      {
+        "pc": 701981,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 701996,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x417",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 702014,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x416",
+        "value": "val=0x1 mask=?"
+      }
+    ],
+    "sub_9fb72": [
+      {
+        "pc": 654219,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=a2 mask=a3"
+      },
+      {
+        "pc": 654235,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=a2 mask=a3"
+      },
+      {
+        "pc": 654263,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x415",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 654278,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x40e",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 654300,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x40c",
+        "value": "val=0x2000 mask=a3"
+      },
+      {
+        "pc": 654316,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0xfc38 mask=a3"
+      },
+      {
+        "pc": 654331,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x417",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 654349,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x416",
+        "value": "val=0xd mask=a3"
+      },
+      {
+        "pc": 654371,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=0x7e7f mask=a3"
+      },
+      {
+        "pc": 654384,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x720",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 654404,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x720",
+        "value": "val=0x180 mask=a3"
+      },
+      {
+        "pc": 654420,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0xfc38 mask=a3"
+      },
+      {
+        "pc": 654442,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0x1 mask=a3"
+      },
+      {
+        "pc": 654468,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0xfc38 mask=a3"
+      },
+      {
+        "pc": 656335,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0x6 mask=?"
+      },
+      {
+        "pc": 656438,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x417",
+        "value": "val=0xd mask=?"
+      },
+      {
+        "pc": 656461,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x408",
+        "value": "val=0x2 mask=?"
+      },
+      {
+        "pc": 656478,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=0x180 mask=?"
+      },
+      {
+        "pc": 656506,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x417",
+        "value": "val=0x4 mask=?"
+      },
+      {
+        "pc": 656528,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=0xfeff mask=?"
+      }
+    ],
+    "sub_a7089": [
+      {
+        "pc": 684487,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x40a",
+        "value": "val=0x200 mask=0x200"
+      },
+      {
+        "pc": 684642,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 684662,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 684692,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 684715,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 684828,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x16a",
+        "value": "val=0xfe mask=?"
+      },
+      {
+        "pc": 684854,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x16a",
+        "value": "val=0xff mask=?"
+      },
+      {
+        "pc": 684915,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3",
+        "value": "val=0x100 mask=0x0"
+      },
+      {
+        "pc": 685063,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=0x100 mask=0x100"
+      },
+      {
+        "pc": 685093,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x728",
+        "value": "val=0x100 mask=0x0"
+      },
+      {
+        "pc": 697321,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 697348,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 697723,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x40a",
+        "value": "val=0x200 mask=0x200"
+      },
+      {
+        "pc": 697886,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1641",
+        "value": "val=0x7f00 mask=0x4350"
+      },
+      {
+        "pc": 697970,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0xb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 698189,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x400",
+        "value": "val=0x1 mask=0x0"
+      }
+    ],
+    "sub_a4adc": [
+      {
+        "pc": 674690,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x8 mask=0x0"
+      },
+      {
+        "pc": 674710,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x380 mask=0x0"
+      },
+      {
+        "pc": 674763,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x8 mask=0x0"
+      },
+      {
+        "pc": 674804,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x40 mask=0x0"
+      },
+      {
+        "pc": 674845,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 674886,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x80 mask=0x0"
+      },
+      {
+        "pc": 674927,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x7 mask=0x0"
+      },
+      {
+        "pc": 674971,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x20 mask=0x0"
+      },
+      {
+        "pc": 675126,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19a",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675147,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675170,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19c",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675193,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x199",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675214,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a1",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675235,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a2",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675258,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a3",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675281,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a0",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675499,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1603",
+        "value": "val=? mask=0xc"
+      },
+      {
+        "pc": 675567,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1602",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675635,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1607",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675703,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1606",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 675796,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x8 mask=0x8"
+      },
+      {
+        "pc": 675816,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x380 mask=0x0"
+      },
+      {
+        "pc": 675861,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x8 mask=0x8"
+      },
+      {
+        "pc": 675905,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x40 mask=0x40"
+      },
+      {
+        "pc": 675942,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 675986,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x80 mask=0x80"
+      },
+      {
+        "pc": 676026,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x93a",
+        "value": "val=0x7 mask=0x1"
+      },
+      {
+        "pc": 676073,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x925",
+        "value": "val=0x20 mask=0x20"
+      },
+      {
+        "pc": 676372,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x8 mask=0x8"
+      },
+      {
+        "pc": 676395,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x380 mask=0x100"
+      },
+      {
+        "pc": 676413,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19a",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676432,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676451,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19c",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676470,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a1",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676489,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a2",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676508,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1a3",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676576,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1603",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676644,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1602",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676712,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1607",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676780,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1606",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676793,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x601",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 676860,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1601",
+        "value": "val=? mask=0x4350"
+      },
+      {
+        "pc": 677115,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=*(a0 + 0x168) mask=?"
+      },
+      {
+        "pc": 677142,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 677482,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 677645,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 677665,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 677695,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 677718,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 678546,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 678573,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 678602,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x371",
+        "value": "val=*(a4 + 0x52) mask=?"
+      },
+      {
+        "pc": 678620,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x372",
+        "value": "val=*(a4 + 0x54) mask=?"
+      },
+      {
+        "pc": 678638,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x373",
+        "value": "val=*(a4 + 0x56) mask=?"
+      },
+      {
+        "pc": 678656,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x374",
+        "value": "val=*(a4 + 0x58) mask=?"
+      },
+      {
+        "pc": 678674,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x375",
+        "value": "val=*(a4 + 0x5a) mask=?"
+      },
+      {
+        "pc": 678734,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x371",
+        "value": "val=*(a2 + 0x52) mask=?"
+      },
+      {
+        "pc": 678752,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x372",
+        "value": "val=*(a2 + 0x54) mask=?"
+      },
+      {
+        "pc": 678770,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x373",
+        "value": "val=*(a2 + 0x56) mask=?"
+      },
+      {
+        "pc": 678788,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x374",
+        "value": "val=*(a2 + 0x58) mask=?"
+      },
+      {
+        "pc": 678806,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x375",
+        "value": "val=*(a2 + 0x5a) mask=?"
+      },
+      {
+        "pc": 678840,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x371",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 678864,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x372",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 678888,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x373",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 678912,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x374",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 678936,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x375",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 678976,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x371",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679000,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x372",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679024,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x373",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679048,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x374",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679072,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x375",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679096,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x376",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679209,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x164",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 679252,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x164",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 679272,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x30f",
+        "value": "val=0xc000 mask=0x0"
+      },
+      {
+        "pc": 679392,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x31c",
+        "value": "val=0x80 mask=?"
+      },
+      {
+        "pc": 679408,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x31d",
+        "value": "val=0x80 mask=?"
+      },
+      {
+        "pc": 679424,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x31e",
+        "value": "val=0x80 mask=?"
+      },
+      {
+        "pc": 679440,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x31f",
+        "value": "val=0x80 mask=?"
+      },
+      {
+        "pc": 679600,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679623,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=0x7f mask=0x3f"
+      },
+      {
+        "pc": 679646,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=0x800 mask=0x800"
+      },
+      {
+        "pc": 679678,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=0x800 mask=0x0"
+      },
+      {
+        "pc": 679693,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 679738,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=0x7f mask=0x3f"
+      },
+      {
+        "pc": 679782,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x3a9",
+        "value": "val=0x800 mask=0xb"
+      }
+    ],
+    "sub_8fb39": [
+      {
+        "pc": 588628,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x830",
+        "value": "val=0x7 mask=0x3"
+      },
+      {
+        "pc": 588651,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x830",
+        "value": "val=0x38 mask=0x18"
+      },
+      {
+        "pc": 588674,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x830",
+        "value": "val=0x1c0 mask=0xc0"
+      },
+      {
+        "pc": 588697,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x830",
+        "value": "val=0xe00 mask=0x600"
+      },
+      {
+        "pc": 588720,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x830",
+        "value": "val=0x7000 mask=0x4000"
+      },
+      {
+        "pc": 588743,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x831",
+        "value": "val=0x7 mask=0x4"
+      },
+      {
+        "pc": 588766,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x831",
+        "value": "val=0x38 mask=0x20"
+      },
+      {
+        "pc": 588789,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x831",
+        "value": "val=0x1c0 mask=0x100"
+      },
+      {
+        "pc": 588812,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x831",
+        "value": "val=0xe00 mask=0x600"
+      },
+      {
+        "pc": 588835,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x831",
+        "value": "val=0x7000 mask=0x3000"
+      },
+      {
+        "pc": 588858,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x832",
+        "value": "val=0x7 mask=0x3"
+      },
+      {
+        "pc": 588881,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x832",
+        "value": "val=0x38 mask=0x18"
+      },
+      {
+        "pc": 588904,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x833",
+        "value": "val=0x7 mask=0x3"
+      },
+      {
+        "pc": 588927,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x832",
+        "value": "val=0x1c0 mask=0xc0"
+      },
+      {
+        "pc": 588950,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x832",
+        "value": "val=0xe00 mask=0x600"
+      },
+      {
+        "pc": 588973,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x833",
+        "value": "val=0x1c0 mask=0xc0"
+      },
+      {
+        "pc": 588996,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x833",
+        "value": "val=0x38 mask=0x18"
+      },
+      {
+        "pc": 589019,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x833",
+        "value": "val=0xe00 mask=0x600"
+      },
+      {
+        "pc": 589042,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x833",
+        "value": "val=0x7000 mask=0x3000"
+      },
+      {
+        "pc": 589065,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x834",
+        "value": "val=0x7 mask=0x4"
+      },
+      {
+        "pc": 589088,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x834",
+        "value": "val=0x38 mask=0x20"
+      },
+      {
+        "pc": 589111,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x834",
+        "value": "val=0x1c0 mask=0x100"
+      },
+      {
+        "pc": 589134,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x834",
+        "value": "val=0xe00 mask=0x800"
+      },
+      {
+        "pc": 589157,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x835",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 589177,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x835",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 589200,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x835",
+        "value": "val=0x1ffc mask=0x100"
+      },
+      {
+        "pc": 589223,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0xf mask=0xd"
+      },
+      {
+        "pc": 589246,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 589269,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x3c0 mask=0x2c0"
+      },
+      {
+        "pc": 589292,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x3c00 mask=0x3c00"
+      },
+      {
+        "pc": 589312,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x4000 mask=0x0"
+      },
+      {
+        "pc": 589335,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0xf mask=0xe"
+      },
+      {
+        "pc": 589358,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0xf0 mask=0xb0"
+      },
+      {
+        "pc": 589381,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x200 mask=0x200"
+      },
+      {
+        "pc": 589404,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x400 mask=0x400"
+      },
+      {
+        "pc": 589424,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x800 mask=0x0"
+      },
+      {
+        "pc": 589444,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf000 mask=0x0"
+      },
+      {
+        "pc": 589464,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x1000 mask=0x0"
+      },
+      {
+        "pc": 589484,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83a",
+        "value": "val=0xff mask=0x0"
+      },
+      {
+        "pc": 589507,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83b",
+        "value": "val=0xff mask=0xc"
+      },
+      {
+        "pc": 589530,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83b",
+        "value": "val=0xff00 mask=0xc00"
+      },
+      {
+        "pc": 589553,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83c",
+        "value": "val=0xff mask=0xff"
+      },
+      {
+        "pc": 589576,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83c",
+        "value": "val=0xff00 mask=0xc00"
+      },
+      {
+        "pc": 589599,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83d",
+        "value": "val=0xff mask=0x99"
+      },
+      {
+        "pc": 589622,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83d",
+        "value": "val=0xff00 mask=0x8b00"
+      },
+      {
+        "pc": 589645,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83e",
+        "value": "val=0xff mask=0x8b"
+      },
+      {
+        "pc": 589668,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83e",
+        "value": "val=0xff00 mask=0x8f00"
+      },
+      {
+        "pc": 589691,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83f",
+        "value": "val=0x7f mask=0x34"
+      },
+      {
+        "pc": 589714,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x83f",
+        "value": "val=0x7f80 mask=0x3000"
+      },
+      {
+        "pc": 589734,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 589754,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 589774,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x4 mask=0x0"
+      },
+      {
+        "pc": 589794,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x8 mask=0x0"
+      },
+      {
+        "pc": 589814,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 589834,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x850",
+        "value": "val=0x20 mask=0x0"
+      },
+      {
+        "pc": 589857,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x851",
+        "value": "val=0xf mask=0x2"
+      },
+      {
+        "pc": 589880,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x851",
+        "value": "val=0xf0 mask=0x80"
+      },
+      {
+        "pc": 589903,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x851",
+        "value": "val=0xf00 mask=0x800"
+      },
+      {
+        "pc": 589926,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x852",
+        "value": "val=0xf mask=0x8"
+      },
+      {
+        "pc": 589949,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x852",
+        "value": "val=0xf0 mask=0x70"
+      },
+      {
+        "pc": 589972,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x852",
+        "value": "val=0xf00 mask=0x400"
+      },
+      {
+        "pc": 589995,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x853",
+        "value": "val=0xf mask=0x8"
+      },
+      {
+        "pc": 590018,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x853",
+        "value": "val=0xf0 mask=0x80"
+      },
+      {
+        "pc": 590041,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x853",
+        "value": "val=0xf00 mask=0x800"
+      },
+      {
+        "pc": 590064,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x853",
+        "value": "val=0xf000 mask=0x8000"
+      },
+      {
+        "pc": 590087,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x854",
+        "value": "val=0xf mask=0x6"
+      },
+      {
+        "pc": 590110,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x854",
+        "value": "val=0xf0 mask=0x60"
+      },
+      {
+        "pc": 590133,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x854",
+        "value": "val=0xf00 mask=0x600"
+      },
+      {
+        "pc": 590156,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x854",
+        "value": "val=0xf000 mask=0x6000"
+      },
+      {
+        "pc": 590179,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x855",
+        "value": "val=0xff mask=0x4"
+      },
+      {
+        "pc": 590202,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x855",
+        "value": "val=0xff00 mask=0x800"
+      },
+      {
+        "pc": 590225,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x856",
+        "value": "val=0xff mask=0x10"
+      },
+      {
+        "pc": 590248,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x856",
+        "value": "val=0xff00 mask=0x2000"
+      },
+      {
+        "pc": 590271,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf mask=0x9"
+      },
+      {
+        "pc": 590294,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0x700 mask=0x300"
+      },
+      {
+        "pc": 590317,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf0 mask=0x60"
+      },
+      {
+        "pc": 590340,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf00 mask=0xf00"
+      },
+      {
+        "pc": 590360,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x20 mask=0x0"
+      },
+      {
+        "pc": 590383,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x1e0 mask=0x40"
+      },
+      {
+        "pc": 590406,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0xf800 mask=0xb000"
+      },
+      {
+        "pc": 590429,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x1f mask=0xc"
+      },
+      {
+        "pc": 590452,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x8000 mask=0x8000"
+      }
+    ],
+    "sub_9027d": [
+      {
+        "pc": 590485,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x4000 mask=0x0"
+      },
+      {
+        "pc": 590508,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x852",
+        "value": "val=0xf mask=0x8"
+      },
+      {
+        "pc": 590531,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf mask=0x9"
+      },
+      {
+        "pc": 590554,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0x700 mask=0x300"
+      },
+      {
+        "pc": 590577,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf0 mask=0x60"
+      },
+      {
+        "pc": 590600,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x839",
+        "value": "val=0xf00 mask=0xf00"
+      },
+      {
+        "pc": 590620,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x20 mask=0x0"
+      },
+      {
+        "pc": 590643,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x1e0 mask=0x40"
+      },
+      {
+        "pc": 590666,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x837",
+        "value": "val=0xf800 mask=0xb000"
+      },
+      {
+        "pc": 590689,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x838",
+        "value": "val=0x1f mask=0xc"
+      },
+      {
+        "pc": 590712,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x836",
+        "value": "val=0x8000 mask=0x8000"
+      }
+    ],
+    "sub_a04c2": [
+      {
+        "pc": 656617,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x77 mask=a3"
+      },
+      {
+        "pc": 656656,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x749",
+        "value": "val=0x3 mask=a3"
+      },
+      {
+        "pc": 656717,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x173e",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 656778,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1725",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 656839,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1722",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 656900,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1723",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 656961,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1724",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657022,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1725",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657083,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1726",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657144,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1727",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657205,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1750",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657278,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1728",
+        "value": "val=0x4080 mask=a3"
+      },
+      {
+        "pc": 657394,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1728",
+        "value": "val=0x80 mask=a3"
+      },
+      {
+        "pc": 657458,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1720",
+        "value": "val=0x180 mask=a3"
+      },
+      {
+        "pc": 657519,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1729",
+        "value": "val=0x0 mask=a3"
+      },
+      {
+        "pc": 657583,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1721",
+        "value": "val=0x5000 mask=a3"
+      },
+      {
+        "pc": 657596,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x73a",
+        "value": "val=? mask=a3"
+      },
+      {
+        "pc": 657668,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x173a",
+        "value": "val=0x1 mask=0x4350"
+      },
+      {
+        "pc": 657681,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x725",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 657753,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1725",
+        "value": "val=0x4 mask=0x4350"
+      },
+      {
+        "pc": 657766,
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 657792,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 658164,
+        "helper": "phy_reg_mod",
+        "op": "RMW",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x19e",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 658228,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x1645",
+        "value": "val=0x25c mask=?"
+      },
+      {
+        "pc": 658334,
+        "helper": "phy_reg_write",
+        "op": "WRITE",
+        "class": "PHY",
+        "window": "a0",
+        "reg": "0x164c",
+        "value": "val=0x25c mask=?"
+      }
+    ]
+  },
+  "counts": {
+    "wlc_phy_attach": 0,
+    "wlc_phy_attach_acphy": 11,
+    "wlc_phy_anacore": 2,
+    "wlc_phy_switch_radio": 6,
+    "wlc_phy_switch_radio_acphy": 13,
+    "sub_9fb72": 20,
+    "sub_a7089": 16,
+    "sub_a4adc": 86,
+    "sub_8fb39": 82,
+    "sub_9027d": 11,
+    "sub_9591e": 0,
+    "sub_a04c2": 25
+  }
+}

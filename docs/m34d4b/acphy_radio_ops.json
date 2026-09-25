@@ -1,0 +1,2767 @@
+{
+  "milestone": "M3.4D4B",
+  "class": "RADIO",
+  "functions": {
+    "wlc_phy_switch_radio_acphy": [
+      {
+        "pc": 698383,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x80 mask=0x80"
+      },
+      {
+        "pc": 698445,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 698507,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x8 mask=0x8"
+      },
+      {
+        "pc": 698569,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x4 mask=0x4"
+      },
+      {
+        "pc": 698631,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 698661,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 698723,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 698785,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x100 mask=0x100"
+      },
+      {
+        "pc": 698847,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 698909,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x20 mask=0x20"
+      },
+      {
+        "pc": 698971,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x2000 mask=0x2000"
+      },
+      {
+        "pc": 699033,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x4000 mask=0x4000"
+      },
+      {
+        "pc": 699070,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 699133,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x4000 mask=0x0"
+      },
+      {
+        "pc": 699192,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x80b",
+        "value": "val=0x2000 mask=0x0"
+      },
+      {
+        "pc": 699234,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x60c",
+        "value": "val=0x9e mask=?"
+      },
+      {
+        "pc": 699262,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x60c",
+        "value": "val=0xbe mask=?"
+      },
+      {
+        "pc": 699280,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x60c",
+        "value": "val=0x20be mask=?"
+      },
+      {
+        "pc": 699298,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x60c",
+        "value": "val=0x60be mask=?"
+      },
+      {
+        "pc": 699332,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0xb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 699349,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x20b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 699371,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x60c",
+        "value": "val=0xbe mask=?"
+      },
+      {
+        "pc": 699577,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x40 mask=0x40"
+      },
+      {
+        "pc": 699639,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x80 mask=0x80"
+      },
+      {
+        "pc": 699698,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ed",
+        "value": "val=0x600 mask=0x0"
+      },
+      {
+        "pc": 699757,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ed",
+        "value": "val=0x1800 mask=0x0"
+      },
+      {
+        "pc": 699810,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x15b",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 699834,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x75c",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699849,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x75d",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699864,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x75e",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699879,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x75f",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699894,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x960",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699909,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x961",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 699924,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x963",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 700015,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x548",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 700086,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x549",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 700157,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x54a",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 700228,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x54b",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 700299,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x54c",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 700416,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40b",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 700558,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40b",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 700672,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40b",
+        "value": "val=0xb mask=?"
+      },
+      {
+        "pc": 700799,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40b",
+        "value": "val=0x400 mask=?"
+      },
+      {
+        "pc": 700842,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x15b",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 700929,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x548",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 700988,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x40 mask=0x0"
+      },
+      {
+        "pc": 701047,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x80 mask=0x0"
+      },
+      {
+        "pc": 701167,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40b",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 701264,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x7",
+        "value": "val=0xf0 mask=0x4"
+      },
+      {
+        "pc": 701285,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x171",
+        "value": "val=0x4 mask=0x4"
+      },
+      {
+        "pc": 701303,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x171",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 701344,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x807",
+        "value": "val=0xf0 mask=0x4"
+      },
+      {
+        "pc": 701367,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x971",
+        "value": "val=0x4 mask=0x4"
+      },
+      {
+        "pc": 701387,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x971",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 702054,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 702113,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 702172,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 702231,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x100 mask=0x0"
+      },
+      {
+        "pc": 702290,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x40 mask=0x0"
+      },
+      {
+        "pc": 702349,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x80 mask=0x0"
+      },
+      {
+        "pc": 702408,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 702491,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8f2",
+        "value": "val=0x200 mask=0x0"
+      }
+    ],
+    "sub_9fb72": [
+      {
+        "pc": 654691,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x100 mask=0x100"
+      },
+      {
+        "pc": 654767,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96b",
+        "value": "val=0x800 mask=0x800"
+      },
+      {
+        "pc": 654829,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96b",
+        "value": "val=0x4000 mask=0x4000"
+      },
+      {
+        "pc": 654891,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96c",
+        "value": "val=0x800 mask=0x800"
+      },
+      {
+        "pc": 654953,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96b",
+        "value": "val=0x8000 mask=0x8000"
+      },
+      {
+        "pc": 655015,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96b",
+        "value": "val=0x1000 mask=0x1000"
+      },
+      {
+        "pc": 655105,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x4000 mask=0x4000"
+      },
+      {
+        "pc": 655128,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x980",
+        "value": "val=0x800 mask=0x800"
+      },
+      {
+        "pc": 655151,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x800 mask=0x800"
+      },
+      {
+        "pc": 655174,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x8000 mask=0x8000"
+      },
+      {
+        "pc": 655197,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x1000 mask=0x1000"
+      },
+      {
+        "pc": 655220,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x97f",
+        "value": "val=0x4 mask=0x4"
+      },
+      {
+        "pc": 655252,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x970",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 655270,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x792",
+        "value": "val=0x1 mask=?"
+      },
+      {
+        "pc": 655293,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x992",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 655385,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40c",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 655408,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x970",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 655456,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98a",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 655527,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x407",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 655615,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x55e",
+        "value": "val=0x10 mask=0x10"
+      },
+      {
+        "pc": 655701,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x12f",
+        "value": "val=0x300 mask=0x100"
+      },
+      {
+        "pc": 655769,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x12f",
+        "value": "val=0x3 mask=0x2"
+      },
+      {
+        "pc": 655834,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x6f",
+        "value": "val=0x4 mask=0x0"
+      },
+      {
+        "pc": 655899,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x6f",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 655964,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x6f",
+        "value": "val=0x2 mask=0x0"
+      },
+      {
+        "pc": 656029,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x6d",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 656148,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x3d",
+        "value": "val=0x2 mask=0x2"
+      },
+      {
+        "pc": 656232,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x96e",
+        "value": "val=0x8 mask=0x8"
+      },
+      {
+        "pc": 656313,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40c",
+        "value": "val=0x10 mask=0x0"
+      },
+      {
+        "pc": 656420,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x40c",
+        "value": "val=0x10 mask=0x10"
+      }
+    ],
+    "sub_a7089": [
+      {
+        "pc": 685373,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e0",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685436,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e1",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685499,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dd",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685562,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685625,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685688,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685744,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c4",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685800,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685863,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685919,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8eb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 685982,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686059,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x113",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686122,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8db",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686185,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8da",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686248,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686311,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x885",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686374,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x886",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686437,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x887",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686500,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686563,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686622,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686681,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ca",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686740,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686796,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686855,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686914,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 686977,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687054,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x112",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687117,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x629",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687180,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687243,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687306,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x668",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687383,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11a",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687460,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687537,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x115",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687600,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x630",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687663,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65c",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687726,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x662",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687792,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x66d",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 687866,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x4d",
+        "value": "val=0x7000 mask=0x7000"
+      },
+      {
+        "pc": 687937,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11d",
+        "value": "val=0x1000 mask=0x1000"
+      },
+      {
+        "pc": 688012,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d1",
+        "value": "val=0xff mask=0x8"
+      },
+      {
+        "pc": 688102,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e0",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688162,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e1",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688222,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dd",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688282,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688342,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688402,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688462,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c4",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688522,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688582,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688642,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8eb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688702,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688776,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x113",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688836,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8db",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688896,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8da",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 688956,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689016,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x885",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689076,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x886",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689136,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x887",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689196,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689256,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689316,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689376,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ca",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689436,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689496,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689556,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689616,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689676,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689750,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x112",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689810,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x29",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689870,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689930,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 689990,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x68",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690064,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11a",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690138,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690198,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x119",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690258,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x30",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690318,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5c",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690378,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x62",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690442,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e0",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690502,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e1",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690562,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dd",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690622,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690682,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690742,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690802,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c4",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690862,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690922,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e5",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 690982,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8eb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691042,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x909",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691102,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d6",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691176,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x113",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691236,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8db",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691296,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8da",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691356,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691416,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x885",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691476,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x886",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691536,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x887",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691596,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691656,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691716,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c9",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691776,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ca",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691836,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cc",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691896,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c7",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 691956,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c8",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692016,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692076,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cb",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692150,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x112",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692210,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x29",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692270,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692330,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5e",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692390,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x68",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692464,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11a",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692538,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11b",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692598,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x119",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692658,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x30",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692718,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x5c",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692778,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x62",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692838,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x6d",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 692903,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e0",
+        "value": "val=*(a0 + 0x4) mask=?"
+      },
+      {
+        "pc": 692963,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e1",
+        "value": "val=*(a0 + 0x6) mask=?"
+      },
+      {
+        "pc": 693023,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dd",
+        "value": "val=*(a0 + 0x8) mask=?"
+      },
+      {
+        "pc": 693083,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8dc",
+        "value": "val=*(a0 + 0xa) mask=?"
+      },
+      {
+        "pc": 693143,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e6",
+        "value": "val=*(a0 + 0xc) mask=?"
+      },
+      {
+        "pc": 693203,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e7",
+        "value": "val=*(a0 + 0xe) mask=?"
+      },
+      {
+        "pc": 693263,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c4",
+        "value": "val=*(a0 + 0x10) mask=?"
+      },
+      {
+        "pc": 693323,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c5",
+        "value": "val=*(a0 + 0x12) mask=?"
+      },
+      {
+        "pc": 693383,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8e5",
+        "value": "val=*(a0 + 0x14) mask=?"
+      },
+      {
+        "pc": 693443,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8eb",
+        "value": "val=*(a0 + 0x16) mask=?"
+      },
+      {
+        "pc": 693503,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d6",
+        "value": "val=*(a0 + 0x18) mask=?"
+      },
+      {
+        "pc": 693577,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x113",
+        "value": "val=*(a0 + 0x1a) mask=?"
+      },
+      {
+        "pc": 693637,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8db",
+        "value": "val=*(a0 + 0x1c) mask=?"
+      },
+      {
+        "pc": 693697,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8da",
+        "value": "val=*(a0 + 0x1e) mask=?"
+      },
+      {
+        "pc": 693757,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d7",
+        "value": "val=*(a0 + 0x20) mask=?"
+      },
+      {
+        "pc": 693817,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x885",
+        "value": "val=*(a0 + 0x22) mask=?"
+      },
+      {
+        "pc": 693877,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x886",
+        "value": "val=*(a0 + 0x24) mask=?"
+      },
+      {
+        "pc": 693937,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x887",
+        "value": "val=*(a0 + 0x26) mask=?"
+      },
+      {
+        "pc": 693997,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d9",
+        "value": "val=*(a0 + 0x28) mask=?"
+      },
+      {
+        "pc": 694057,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d8",
+        "value": "val=*(a0 + 0x2a) mask=?"
+      },
+      {
+        "pc": 694117,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c9",
+        "value": "val=*(a0 + 0x2c) mask=?"
+      },
+      {
+        "pc": 694177,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ca",
+        "value": "val=*(a0 + 0x2e) mask=?"
+      },
+      {
+        "pc": 694237,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8cc",
+        "value": "val=*(a0 + 0x30) mask=?"
+      },
+      {
+        "pc": 694297,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c7",
+        "value": "val=*(a0 + 0x32) mask=?"
+      },
+      {
+        "pc": 694357,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8c8",
+        "value": "val=*(a0 + 0x34) mask=?"
+      },
+      {
+        "pc": 694417,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=*(a0 + 0x36) mask=?"
+      },
+      {
+        "pc": 694491,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x894",
+        "value": "val=*(a0 + 0x38) mask=?"
+      },
+      {
+        "pc": 694565,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x895",
+        "value": "val=*(a0 + 0x3a) mask=?"
+      },
+      {
+        "pc": 694639,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x896",
+        "value": "val=*(a0 + 0x3c) mask=?"
+      },
+      {
+        "pc": 694713,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x897",
+        "value": "val=*(a0 + 0x3e) mask=?"
+      },
+      {
+        "pc": 694787,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x899",
+        "value": "val=*(a0 + 0x40) mask=?"
+      },
+      {
+        "pc": 694861,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x89a",
+        "value": "val=*(a0 + 0x42) mask=?"
+      },
+      {
+        "pc": 694935,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x89b",
+        "value": "val=*(a0 + 0x44) mask=?"
+      },
+      {
+        "pc": 695009,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x89c",
+        "value": "val=*(a0 + 0x46) mask=?"
+      },
+      {
+        "pc": 695083,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x112",
+        "value": "val=*(a0 + 0x48) mask=?"
+      },
+      {
+        "pc": 695143,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x629",
+        "value": "val=*(a0 + 0x4a) mask=?"
+      },
+      {
+        "pc": 695203,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65b",
+        "value": "val=*(a0 + 0x4c) mask=?"
+      },
+      {
+        "pc": 695263,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65e",
+        "value": "val=*(a0 + 0x4e) mask=?"
+      },
+      {
+        "pc": 695323,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x668",
+        "value": "val=*(a0 + 0x50) mask=?"
+      },
+      {
+        "pc": 695397,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11a",
+        "value": "val=*(a0 + 0x52) mask=?"
+      },
+      {
+        "pc": 695471,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11b",
+        "value": "val=*(a0 + 0x54) mask=?"
+      },
+      {
+        "pc": 695531,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x719",
+        "value": "val=*(a0 + 0x56) mask=?"
+      },
+      {
+        "pc": 695591,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x630",
+        "value": "val=*(a0 + 0x58) mask=?"
+      },
+      {
+        "pc": 695651,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x65c",
+        "value": "val=*(a0 + 0x5a) mask=?"
+      },
+      {
+        "pc": 695711,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x662",
+        "value": "val=*(a0 + 0x5c) mask=?"
+      },
+      {
+        "pc": 695771,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x66d",
+        "value": "val=*(a0 + 0x5e) mask=?"
+      },
+      {
+        "pc": 695831,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x893",
+        "value": "val=*(a0 + 0x60) mask=?"
+      },
+      {
+        "pc": 695905,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x145",
+        "value": "val=*(a0 + 0x62) mask=?"
+      },
+      {
+        "pc": 695979,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x146",
+        "value": "val=*(a0 + 0x64) mask=?"
+      },
+      {
+        "pc": 696039,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x723",
+        "value": "val=*(a0 + 0x66) mask=?"
+      },
+      {
+        "pc": 696109,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x323",
+        "value": "val=0x3e9 mask=?"
+      },
+      {
+        "pc": 696166,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x523",
+        "value": "val=0x3e9 mask=?"
+      },
+      {
+        "pc": 696228,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=0xff00 mask=0xa000"
+      },
+      {
+        "pc": 696291,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8d6",
+        "value": "val=0xce4 mask=?"
+      },
+      {
+        "pc": 696353,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ec",
+        "value": "val=0x70 mask=0x50"
+      },
+      {
+        "pc": 696415,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x645",
+        "value": "val=0x7000 mask=0x7000"
+      },
+      {
+        "pc": 696508,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x723",
+        "value": "val=0x83e0 mask=?"
+      },
+      {
+        "pc": 696579,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x892",
+        "value": "val=0xff00 mask=0xe000"
+      },
+      {
+        "pc": 696679,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x79",
+        "value": "val=0x8484 mask=?"
+      },
+      {
+        "pc": 696707,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98d",
+        "value": "val=0x1df3 mask=?"
+      },
+      {
+        "pc": 696725,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98e",
+        "value": "val=0x1ffc mask=?"
+      },
+      {
+        "pc": 696743,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98f",
+        "value": "val=0x78 mask=?"
+      },
+      {
+        "pc": 696769,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x18b",
+        "value": "val=0x0 mask=?"
+      },
+      {
+        "pc": 696791,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x18b",
+        "value": "val=0xffff mask=?"
+      },
+      {
+        "pc": 696825,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98d",
+        "value": "val=0x1df3 mask=?"
+      },
+      {
+        "pc": 696843,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98e",
+        "value": "val=0x1ffc mask=?"
+      },
+      {
+        "pc": 696861,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x98f",
+        "value": "val=0x78 mask=?"
+      }
+    ],
+    "sub_a4adc": [
+      {
+        "pc": 676162,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x145",
+        "value": "val=0xf mask=0x8"
+      },
+      {
+        "pc": 676238,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x146",
+        "value": "val=0x1e0 mask=0x100"
+      },
+      {
+        "pc": 676321,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x146",
+        "value": "val=0xf mask=0x8"
+      }
+    ],
+    "sub_9591e": [
+      {
+        "pc": 612846,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x80 mask=0x80"
+      },
+      {
+        "pc": 612908,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ed",
+        "value": "val=0x600 mask=0x400"
+      },
+      {
+        "pc": 613027,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x1000 mask=0xc"
+      },
+      {
+        "pc": 613111,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x18 mask=0x7f8"
+      },
+      {
+        "pc": 613192,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x411",
+        "value": "val=0xff00 mask=0x8"
+      },
+      {
+        "pc": 613260,
+        "helper": "write_radio_reg",
+        "op": "WRITE",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x412",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 613355,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x11d",
+        "value": "val=0x4 mask=0x0"
+      },
+      {
+        "pc": 613450,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x1f5",
+        "value": "val=0x2000 mask=0x2000"
+      },
+      {
+        "pc": 613536,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 613617,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 613698,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x411",
+        "value": "val=0x1 mask=0x1"
+      },
+      {
+        "pc": 613775,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x413",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 613876,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x411",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 613960,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x414",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 614025,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x415",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 614134,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x416",
+        "value": "val=? mask=?"
+      },
+      {
+        "pc": 614235,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x12f",
+        "value": "val=0x1f mask=?"
+      },
+      {
+        "pc": 614308,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "?",
+        "value": "val=0x1f mask=?"
+      },
+      {
+        "pc": 614386,
+        "helper": "read_radio_reg",
+        "op": "READ",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x416",
+        "value": "val=*(a0 + 0x168) mask=?"
+      },
+      {
+        "pc": 614505,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x179",
+        "value": "val=0x2000 mask=0x0"
+      },
+      {
+        "pc": 614592,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x410",
+        "value": "val=0x1 mask=0x0"
+      },
+      {
+        "pc": 614682,
+        "helper": "mod_radio_reg",
+        "op": "RMW",
+        "class": "RADIO",
+        "window": "a0",
+        "reg": "0x8ea",
+        "value": "val=0x80 mask=0x0"
+      }
+    ]
+  },
+  "counts": {
+    "wlc_phy_attach": 0,
+    "wlc_phy_attach_acphy": 0,
+    "wlc_phy_anacore": 0,
+    "wlc_phy_switch_radio": 0,
+    "wlc_phy_switch_radio_acphy": 62,
+    "sub_9fb72": 30,
+    "sub_a7089": 187,
+    "sub_a4adc": 3,
+    "sub_8fb39": 0,
+    "sub_9027d": 0,
+    "sub_9591e": 22,
+    "sub_a04c2": 0
+  },
+  "representation": "literal register/value sequence (mod_radio_reg/write_radio_reg/read_radio_reg) + osl_delay; not a table/opcode stream"
+}

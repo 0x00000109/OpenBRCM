@@ -361,6 +361,24 @@ Canonical status (exact):
   re-derived from `wlc_phy_attach_acphy`. Artifacts:
   `docs/m34d4/{wlc_phy_init_rev42_flow_v2,phy_operations_rev42,radio_operations_rev42}.json`,
   `docs/m34d4/d4_checkpoint_analysis_v2.md`.
+- **M3.4D4B — AC-PHY initialization lineage** = **`ANALYSIS ONLY`** (2026-09,
+  tool-first): `wlc_phy_attach_acphy` (`0xa194f`) is proven to be
+  **software object construction + capability discovery + board/NVRAM/OTP
+  parsing** (0 MMIO writes, 11 `phy_reg_read`, 238 field writes, 1 callback
+  install `btc_adjust@+0xF8`); it zeroes the generic `+0x28` (init) and `+0x30`
+  (cal) callbacks, so `wlc_phy_init`/`wlc_phy_cal_init` are **no-ops for rev42
+  AC**. The AC hardware programming is in the caller `wlc_phy_attach`
+  (`0xbe426`, called from `wlc_bmac_attach`) → `wlc_phy_anacore` (first write,
+  D11 `0x3e6`) → direct `0x3d8/0x3f6` window writes → `wlc_phy_switch_radio`
+  (`0xba395` AC branch) → `wlc_phy_switch_radio_acphy` (**62 literal radio
+  RMW/write ops + delays + enable-MAC**, not a table/opcode stream). AC init
+  runs **at probe/attach**, not at channel up. Earliest true checkpoint =
+  **CP-A0** after `wlc_phy_attach_acphy` returns (pre-hardware, post-object);
+  first "PHY initialised" = **CP-A3** after `wlc_phy_attach` returns.
+  Unknown runtime-derived write values (`sub_a4adc`/`sub_9591e` `val=?`,
+  `si_pmu_otp_power`) ⇒ **`D4 IMPLEMENTATION GO: NO`**, `HARDWARE TEST GO: NO`.
+  Artifacts `docs/m34d4b/{acphy_attach_callgraph,acphy_function_table,acphy_hw_init_flow,acphy_phy_ops,acphy_radio_ops,acphy_tables}.json`,
+  `docs/m34d4b/acphy_init_analysis.md`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256

@@ -1,0 +1,1364 @@
+{
+  "milestone": "M3.4D4B",
+  "root": "wlc_phy_attach_acphy",
+  "note": "AC-reachable via internal call edges from the family attach; parents (wlc_phy_attach/wlc_bmac_attach) are recorded in the analysis document as the hardware-init continuation.",
+  "node_count": 73,
+  "nodes": [
+    {
+      "name": "wlc_phy_attach_acphy",
+      "id": 697,
+      "addr": "0xa194f",
+      "size": 6189,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 11,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 1,
+        "field_stores": 238,
+        "tables_consumed": 0
+      },
+      "installers": [
+        {
+          "src_id": 697,
+          "store_disp": 248,
+          "dst_name": "wlc_phy_btc_adjust_acphy",
+          "dst_addr": 628233,
+          "site": 667736
+        }
+      ],
+      "indirect": []
+    },
+    {
+      "name": "osl_malloc",
+      "external": true
+    },
+    {
+      "name": "osl_memset",
+      "external": true
+    },
+    {
+      "name": "phy_reg_read",
+      "id": 2238,
+      "addr": "0xb2f34",
+      "size": 63,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "wlc_phy_hirssi_elnabypass_init_acphy",
+      "id": 1684,
+      "addr": "0x92555",
+      "size": 119,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 6,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_alp_clock",
+      "id": 688,
+      "addr": "0x1f1d5",
+      "size": 63,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "phy_getvar_fabid",
+      "id": 2299,
+      "addr": "0xbceaf",
+      "size": 11,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "phy_getintvar",
+      "id": 239,
+      "addr": "0xbd032",
+      "size": 13,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "wlc_phy_txpwr_srom11_read",
+      "id": 2203,
+      "addr": "0xbf3e8",
+      "size": 3719,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 171,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "getintvararray",
+      "id": 2251,
+      "addr": "0xb9c3",
+      "size": 87,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "phy_getintvararray",
+      "id": 2672,
+      "addr": "0xbcffb",
+      "size": 13,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_a1604",
+      "id": 3089,
+      "addr": "0xa1604",
+      "size": 843,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 50,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_get_sromctl",
+      "id": 2501,
+      "addr": "0x1f4c5",
+      "size": 68,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_set_sromctl",
+      "id": 460,
+      "addr": "0x20869",
+      "size": 91,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "otp_read_word",
+      "id": 2262,
+      "addr": "0x3362",
+      "size": 157,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "wlc_phy_hwaci_init_acphy",
+      "id": 454,
+      "addr": "0x927c8",
+      "size": 509,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 61,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_snprintf",
+      "external": true
+    },
+    {
+      "name": "osl_writew",
+      "external": true
+    },
+    {
+      "name": "osl_readw",
+      "external": true
+    },
+    {
+      "name": "wlc_phy_hirssi_elnabypass_set_ucode_params_acphy",
+      "id": 1786,
+      "addr": "0x923f2",
+      "size": 270,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "wlapi_bmac_write_shm",
+      "id": 1384,
+      "addr": "0x152af2",
+      "size": 17,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_pmu_alp_clock",
+      "id": 397,
+      "addr": "0x11c28",
+      "size": 656,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 3,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_bcded",
+      "id": 3139,
+      "addr": "0xbcded",
+      "size": 194,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "phy_getintvar_default",
+      "id": 908,
+      "addr": "0xbd008",
+      "size": 42,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_be37f",
+      "id": 3547,
+      "addr": "0xbe37f",
+      "size": 167,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 9,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "getvar",
+      "id": 2692,
+      "addr": "0xb807",
+      "size": 112,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "bcm_strtoul",
+      "id": 2717,
+      "addr": "0xa5f4",
+      "size": 249,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "phy_getintvararray_default",
+      "id": 27,
+      "addr": "0xbceba",
+      "size": 321,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_setcoreidx",
+      "id": 1529,
+      "addr": "0x1f447",
+      "size": 35,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_readl",
+      "external": true
+    },
+    {
+      "name": "si_corerev",
+      "id": 376,
+      "addr": "0x20846",
+      "size": 35,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_writel",
+      "external": true
+    },
+    {
+      "name": "si_is_otp_powered",
+      "id": 1050,
+      "addr": "0x1e987",
+      "size": 23,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_otp_power",
+      "id": 1745,
+      "addr": "0x1e964",
+      "size": 35,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_is_otp_disabled",
+      "id": 170,
+      "addr": "0x1e29b",
+      "size": 180,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "otp_init",
+      "id": 1427,
+      "addr": "0x329f",
+      "size": 195,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "wlc_bmac_write_shm",
+      "id": 466,
+      "addr": "0x61fb0",
+      "size": 19,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_coreidx",
+      "id": 520,
+      "addr": "0x1df28",
+      "size": 12,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_11bc9",
+      "id": 3214,
+      "addr": "0x11bc9",
+      "size": 95,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_strlen",
+      "external": true
+    },
+    {
+      "name": "phy_getvar",
+      "id": 1577,
+      "addr": "0xbcd81",
+      "size": 108,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 1,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_mfree",
+      "external": true
+    },
+    {
+      "name": "nvram_get",
+      "id": 1215,
+      "addr": "0x19916",
+      "size": 135,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_memcmp",
+      "external": true
+    },
+    {
+      "name": "getintvararraysize",
+      "id": 1073,
+      "addr": "0xb978",
+      "size": 75,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sb_setcoreidx",
+      "id": 2346,
+      "addr": "0x1c69a",
+      "size": 47,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "ai_setcoreidx",
+      "id": 2344,
+      "addr": "0x1bf6",
+      "size": 305,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 11,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sb_corerev",
+      "id": 1642,
+      "addr": "0x1bf5e",
+      "size": 40,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "ai_corerev",
+      "id": 2319,
+      "addr": "0x116f",
+      "size": 108,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_pmu_is_otp_powered",
+      "id": 1961,
+      "addr": "0x11763",
+      "size": 399,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 4,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_pmu_otp_power",
+      "id": 1714,
+      "addr": "0x12a8d",
+      "size": 667,
+      "class": "BOARD-DATA",
+      "counts": {
+        "mmio_read": 4,
+        "mmio_write": 2,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_delay",
+      "external": true
+    },
+    {
+      "name": "si_osh",
+      "id": 2554,
+      "addr": "0x1dec7",
+      "size": 10,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_61ed5",
+      "id": 3237,
+      "addr": "0x61ed5",
+      "size": 143,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 2,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_10924",
+      "id": 3079,
+      "addr": "0x10924",
+      "size": 230,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_10a0a",
+      "id": 3305,
+      "addr": "0x10a0a",
+      "size": 255,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_1c5aa",
+      "id": 3380,
+      "addr": "0x1c5aa",
+      "size": 240,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_pci_write_config",
+      "external": true
+    },
+    {
+      "name": "osl_reg_map",
+      "external": true
+    },
+    {
+      "name": "sub_1bd84",
+      "id": 2943,
+      "addr": "0x1bd84",
+      "size": 220,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 2,
+        "indirect_unresolved": 2,
+        "installs": 0,
+        "field_stores": 4,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": [
+        {
+          "src_id": 2943,
+          "site": 114117,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 120,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        },
+        {
+          "src_id": 2943,
+          "site": 114256,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 128,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        }
+      ]
+    },
+    {
+      "name": "sub_118f2",
+      "id": 3346,
+      "addr": "0x118f2",
+      "size": 161,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 1,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_111b0",
+      "id": 3508,
+      "addr": "0x111b0",
+      "size": 1040,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 11,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "tcm_sem_enter",
+      "id": 15,
+      "addr": "0x7eb0b",
+      "size": 100,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 3,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "tcm_sem_exit",
+      "id": 2483,
+      "addr": "0x7eb6f",
+      "size": 46,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "osl_pcmcia_write_attr",
+      "external": true
+    },
+    {
+      "name": "si_corereg",
+      "id": 288,
+      "addr": "0x1f265",
+      "size": 39,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_pmu_chipcontrol",
+      "id": 2254,
+      "addr": "0x1116b",
+      "size": 69,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "si_pcie_get_L1substate",
+      "id": 1074,
+      "addr": "0x1eb4c",
+      "size": 37,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 2,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sb_corereg",
+      "id": 1657,
+      "addr": "0x1c8b8",
+      "size": 586,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 2,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 1,
+        "indirect_unresolved": 1,
+        "installs": 0,
+        "field_stores": 7,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": [
+        {
+          "src_id": 1657,
+          "site": 117466,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 128,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        }
+      ]
+    },
+    {
+      "name": "ai_corereg",
+      "id": 940,
+      "addr": "0x1d27",
+      "size": 502,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 2,
+        "mmio_write": 1,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 1,
+        "indirect_unresolved": 1,
+        "installs": 0,
+        "field_stores": 7,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": [
+        {
+          "src_id": 940,
+          "site": 7927,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 128,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        }
+      ]
+    },
+    {
+      "name": "pcie_get_L1substate",
+      "id": 526,
+      "addr": "0x17f01",
+      "size": 46,
+      "class": "SOFTWARE-ONLY",
+      "counts": {
+        "mmio_read": 0,
+        "mmio_write": 0,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 0,
+        "indirect_unresolved": 0,
+        "installs": 0,
+        "field_stores": 0,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": []
+    },
+    {
+      "name": "sub_1bfdf",
+      "id": 3111,
+      "addr": "0x1bfdf",
+      "size": 286,
+      "class": "PHY-MMIO",
+      "counts": {
+        "mmio_read": 2,
+        "mmio_write": 3,
+        "phy": 0,
+        "radio": 0,
+        "phy_table": 0,
+        "indirect": 2,
+        "indirect_unresolved": 2,
+        "installs": 0,
+        "field_stores": 5,
+        "tables_consumed": 0
+      },
+      "installers": [],
+      "indirect": [
+        {
+          "src_id": 3111,
+          "site": 114725,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 120,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        },
+        {
+          "src_id": 3111,
+          "site": 114928,
+          "operand": "call rax",
+          "base_arg": 0,
+          "field_offset": 128,
+          "candidate_name": null,
+          "candidate_target": null,
+          "confidence": "UNRESOLVED",
+          "provenance": "no-installer-at-field"
+        }
+      ]
+    },
+    {
+      "name": "osl_pci_read_config",
+      "external": true
+    }
+  ]
+}

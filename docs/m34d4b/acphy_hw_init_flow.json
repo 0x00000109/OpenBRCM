@@ -1,0 +1,693 @@
+{
+  "milestone": "M3.4D4B",
+  "lineage": [
+    {
+      "step": 1,
+      "fn": "wlc_attach",
+      "addr": "0x37d10",
+      "note": "driver attach"
+    },
+    {
+      "step": 2,
+      "fn": "wlc_bmac_attach",
+      "addr": "0x6984f",
+      "note": "backplane/MAC attach; indirect [obj+0x108]/[obj+0x118]"
+    },
+    {
+      "step": 3,
+      "fn": "wlc_phy_attach",
+      "addr": "0xbe426",
+      "note": "generic PHY attach = AC hardware-init continuation"
+    },
+    {
+      "step": 4,
+      "fn": "wlc_phy_attach_acphy",
+      "addr": "0xa194f",
+      "site": "0xbec39",
+      "note": "family attach: software object + capability reads + board parse + btc_adjust@0xF8; zeroes +0x28/+0x30"
+    },
+    {
+      "step": 5,
+      "fn": "wlc_phy_anacore",
+      "addr": "0xbaad1",
+      "site": "0xbed84",
+      "note": "first PHY write (D11+0x3e6 fallback) and/or [phy+0x118]"
+    },
+    {
+      "step": 6,
+      "fn": "wlc_phy_attach (direct writes)",
+      "site": "0xbedb1..",
+      "note": "D11 PHY/radio window writes abs 0x3d8/0x3da/0x3f6/0x3fa/0x3f8"
+    },
+    {
+      "step": 7,
+      "fn": "wlc_phy_switch_radio",
+      "addr": "0xba302",
+      "site": "0xbf113",
+      "note": "AC branch 0xba395->0xba3a1"
+    },
+    {
+      "step": 8,
+      "fn": "wlc_phy_switch_radio_acphy",
+      "addr": "0xaa782",
+      "note": "62 literal radio RMW/write ops + delays + acphy sub-callbacks"
+    }
+  ],
+  "wlc_phy_attach_calls": [
+    {
+      "site": 779360,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "si_core_sflags",
+      "dst_addr": 127690
+    },
+    {
+      "site": 779436,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_txpwr_srom_read_lcnphy",
+      "dst_addr": 935181
+    },
+    {
+      "site": 779463,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlapi_bmac_corereset",
+      "dst_addr": 1387198
+    },
+    {
+      "site": 779488,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_malloc",
+      "dst_addr": 0
+    },
+    {
+      "site": 779515,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_memset",
+      "dst_addr": 0
+    },
+    {
+      "site": 779646,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "sub_be37f",
+      "dst_addr": 779135
+    },
+    {
+      "site": 779687,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlapi_bmac_corereset",
+      "dst_addr": 1387198
+    },
+    {
+      "site": 779706,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 779723,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "si_fabid",
+      "dst_addr": 148245
+    },
+    {
+      "site": 780891,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "sub_bcded",
+      "dst_addr": 773613
+    },
+    {
+      "site": 780915,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar",
+      "dst_addr": 774194
+    },
+    {
+      "site": 780941,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar",
+      "dst_addr": 774194
+    },
+    {
+      "site": 781246,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_abgphy",
+      "dst_addr": 563511
+    },
+    {
+      "site": 781304,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlapi_init_timer",
+      "dst_addr": 1387357
+    },
+    {
+      "site": 781339,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_nphy",
+      "dst_addr": 1199402
+    },
+    {
+      "site": 781354,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_htphy",
+      "dst_addr": 882998
+    },
+    {
+      "site": 781369,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_acphy",
+      "dst_addr": 661839
+    },
+    {
+      "site": 781384,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_lpphy",
+      "dst_addr": 1084978
+    },
+    {
+      "site": 781399,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_sslpnphy",
+      "dst_addr": 1431143
+    },
+    {
+      "site": 781417,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_lcnphy",
+      "dst_addr": 942868
+    },
+    {
+      "site": 781432,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_attach_lcn40phy",
+      "dst_addr": 1035077
+    },
+    {
+      "site": 781471,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar",
+      "dst_addr": 774194
+    },
+    {
+      "site": 781595,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar",
+      "dst_addr": 774194
+    },
+    {
+      "site": 781678,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "sub_b7337",
+      "dst_addr": 750391
+    },
+    {
+      "site": 781700,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_anacore",
+      "dst_addr": 764625
+    },
+    {
+      "site": 781745,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 781764,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 781792,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 781811,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 781855,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 781874,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 781917,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 781936,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782024,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 782043,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782071,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 782090,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782138,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 782157,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782213,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_writew",
+      "dst_addr": 0
+    },
+    {
+      "site": 782232,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782258,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_readw",
+      "dst_addr": 0
+    },
+    {
+      "site": 782611,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "wlc_phy_switch_radio",
+      "dst_addr": 762626
+    },
+    {
+      "site": 782667,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar_default",
+      "dst_addr": 774152
+    },
+    {
+      "site": 782693,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar_default",
+      "dst_addr": 774152
+    },
+    {
+      "site": 782716,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar_default",
+      "dst_addr": 774152
+    },
+    {
+      "site": 782742,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar_default",
+      "dst_addr": 774152
+    },
+    {
+      "site": 782774,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvar_default",
+      "dst_addr": 774152
+    },
+    {
+      "site": 782809,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782839,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782883,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782914,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782942,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782973,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 782999,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 783029,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray_default",
+      "dst_addr": 773818
+    },
+    {
+      "site": 783072,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray",
+      "dst_addr": 774139
+    },
+    {
+      "site": 783112,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "phy_getintvararray",
+      "dst_addr": 774139
+    },
+    {
+      "site": 783266,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_memcpy",
+      "dst_addr": 0
+    },
+    {
+      "site": 783293,
+      "kind": "call",
+      "target_kind": "internal",
+      "target": "ppr_delete",
+      "dst_addr": 1466450
+    },
+    {
+      "site": 783311,
+      "kind": "call",
+      "target_kind": "external",
+      "target": "osl_mfree",
+      "dst_addr": 0
+    }
+  ],
+  "wlc_phy_attach_mmio": [
+    {
+      "site": 779706,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 992,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 781745,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x0"
+    },
+    {
+      "site": 781764,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 781792,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x1"
+    },
+    {
+      "site": 781811,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 781855,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x0"
+    },
+    {
+      "site": 781874,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 781917,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x1"
+    },
+    {
+      "site": 781936,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 782024,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x0"
+    },
+    {
+      "site": 782043,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 782071,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x1"
+    },
+    {
+      "site": 782090,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 782138,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 984,
+      "access": "write",
+      "value": "0x2"
+    },
+    {
+      "site": 782157,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 986,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 782213,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 1014,
+      "access": "write",
+      "value": "0x1"
+    },
+    {
+      "site": 782232,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 1018,
+      "access": "read",
+      "value": ""
+    },
+    {
+      "site": 782258,
+      "io": "osl_readw",
+      "width": 16,
+      "base": "",
+      "offset": 0,
+      "abs": 1016,
+      "access": "read",
+      "value": ""
+    }
+  ],
+  "wlc_phy_anacore_mmio": [
+    {
+      "site": 764910,
+      "io": "osl_writew",
+      "width": 16,
+      "base": "*(a0 + 0x148)",
+      "offset": 1996,
+      "abs": null,
+      "access": "write",
+      "value": "0xf4"
+    }
+  ],
+  "acphy_attach_zeroing": [
+    {
+      "writer": "wlc_phy_attach_acphy",
+      "site": 667649,
+      "field_offset": 40,
+      "value": "0x0"
+    },
+    {
+      "writer": "wlc_phy_attach_acphy",
+      "site": 667657,
+      "field_offset": 48,
+      "value": "0x0"
+    }
+  ]
+}

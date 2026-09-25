@@ -1,0 +1,83 @@
+{
+  "milestone": "M3.4D4B",
+  "function_table": {
+    "family": "acphy",
+    "vtable_installs_by_other_families": {
+      "-0x1": "wlc_scb_ratesel_rssi_enable",
+      "0x0": "wlc_ol_up",
+      "0x8": "wlc_scan_down",
+      "0x28": "wlc_phy_init_sslpnphy",
+      "0x30": "wlc_phy_cal_init_sslpnphy",
+      "0x38": "wlc_phy_chanspec_set_sslpnphy",
+      "0x40": "wlc_sslpnphy_txpower_recalc_target",
+      "0xe8": "wlc_phy_tpc_iovar_isenabled_lcn40phy",
+      "0x120": "wlc_lcnphy_write_table",
+      "0x128": "wlc_lcnphy_read_table",
+      "0x130": "wlc_lcnphy_calib_modes",
+      "0x50": "wlc_sslpnphy_get_tx_iqcc",
+      "0x60": "wlc_sslpnphy_set_tx_iqcc",
+      "0x70": "wlc_sslpnphy_get_tx_locc",
+      "0x90": "wlc_sslpnphy_get_radio_loft",
+      "0x98": "wlc_lcnphy_set_radio_loft",
+      "0xc0": "wlc_phy_detach_sslpnphy",
+      "0xd8": "wlc_lcnphy_set_tx_pwr_ctrl",
+      "0xf0": "wlc_lcnphy_set_tx_pwr_by_index",
+      "0xb8": "wlc_phy_rx_signal_power_lpphy",
+      "0x100": "wlc_phy_watchdog_sslpnphy"
+    },
+    "acphy_attach_installs": [
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "store_disp": 248,
+        "dst_name": "wlc_phy_btc_adjust_acphy",
+        "dst_addr": 628233,
+        "site": 667736
+      }
+    ],
+    "acphy_zeroed_slots": [
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "site": 667649,
+        "field_offset": 40,
+        "value": "0x0"
+      },
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "site": 667657,
+        "field_offset": 48,
+        "value": "0x0"
+      }
+    ],
+    "generic_slot_names": {
+      "0x28": "init",
+      "0x30": "cal_init",
+      "0x38": "chanspec_set",
+      "0x40": "txpower_recalc",
+      "0xc0": "detach"
+    },
+    "unresolved_callbacks": {
+      "phy+0x110": {
+        "used_by": "wlc_phy_switch_radio (0xba532 call rax)",
+        "installer": "none in address_taken/field_sites",
+        "rev42_ac_reachable": false,
+        "note": "AC takes the explicit 0xba3a1 branch to wlc_phy_switch_radio_acphy, so +0x110 is not used for AC"
+      },
+      "phy+0x118": {
+        "used_by": "wlc_phy_anacore (0xbabc7 call rax)",
+        "installer": "none in .text",
+        "rev42_ac_reachable": true,
+        "note": "if null, anacore uses the D11+0x3e6 fallback write"
+      },
+      "phy+0x30": {
+        "used_by": "wlc_phy_cal_init (0xb1bc9 call rax)",
+        "installer": "zeroed by attach_acphy 0xa3009",
+        "rev42_ac_reachable": false
+      },
+      "phy+0x28": {
+        "used_by": "wlc_phy_init (0xbad4c call r13)",
+        "installer": "zeroed by attach_acphy 0xa3001",
+        "rev42_ac_reachable": false
+      }
+    }
+  }
+}

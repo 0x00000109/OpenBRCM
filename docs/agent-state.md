@@ -208,6 +208,17 @@ Stated exactly:
   re-derived from `wlc_phy_attach_acphy`. CP-F stable but not an AC PHY-init
   checkpoint. `D4 GO: NO`. Artifacts `docs/m34d4/*_v2.json`,
   `docs/m34d4/d4_checkpoint_analysis_v2.md`.
+- **M3.4D4B — AC-PHY init lineage** = **`ANALYSIS ONLY`** (2026-09, tool-first):
+  `wlc_phy_attach_acphy` is software/board/capability only (0 MMIO writes, 11
+  `phy_reg_read`, 1 callback `btc_adjust@+0xF8`); it zeroes `+0x28`/`+0x30`, so
+  `wlc_phy_init`/`wlc_phy_cal_init` are no-ops for rev42 AC. Real AC init is in
+  the caller `wlc_phy_attach` at probe: `wlc_phy_anacore` (first write, D11
+  `0x3e6`) → direct `0x3d8/0x3f6` writes → `wlc_phy_switch_radio` →
+  `wlc_phy_switch_radio_acphy` (62 literal radio ops + delays + enable-MAC).
+  Earliest checkpoint **CP-A0** (after `wlc_phy_attach_acphy` returns,
+  pre-hardware); first "PHY initialised" **CP-A3** (after `wlc_phy_attach`
+  returns). Unknown runtime-derived write values ⇒ `D4 GO: NO`,
+  `HARDWARE TEST GO: NO`. Artifacts `docs/m34d4b/*`.
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

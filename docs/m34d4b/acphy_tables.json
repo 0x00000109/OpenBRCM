@@ -1,0 +1,83 @@
+{
+  "milestone": "M3.4D4B",
+  "initvals_family_tables_consumed": [],
+  "phy_table_ops": {
+    "sub_a7089": [
+      {
+        "pc": 697003,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x3",
+        "value": "val=0x1 mask=*(a0 + 0x8be)"
+      },
+      {
+        "pc": 697038,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x3",
+        "value": "val=0x1 mask=*(a0 + 0x8bf)"
+      },
+      {
+        "pc": 697252,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x3",
+        "value": "val=0x1 mask=*(a0 + 0x8be)"
+      }
+    ],
+    "sub_a4adc": [
+      {
+        "pc": 677355,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x7",
+        "value": "val=0x1 mask=?"
+      },
+      {
+        "pc": 677435,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x7",
+        "value": "val=0x1 mask=0x3d2"
+      },
+      {
+        "pc": 678055,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x8",
+        "value": "val=0x1 mask=0x6"
+      },
+      {
+        "pc": 678407,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x8",
+        "value": "val=0x1 mask=0x7"
+      },
+      {
+        "pc": 678467,
+        "helper": "wlc_phy_table_write_acphy",
+        "op": "WRITE",
+        "class": "PHY_TABLE",
+        "window": "a0",
+        "reg": "0x8",
+        "value": "val=0x1 mask=0x1"
+      }
+    ]
+  },
+  "note": "Initvals-family reg_tables are NOT consumed on the AC PHY attach path. AC table programming is via wlc_phy_table_write_acphy calls inside switch_radio_acphy sub-callbacks (argument-passed tables, not yet indexed as reg_tables)."
+}
