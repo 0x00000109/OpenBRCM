@@ -190,7 +190,13 @@ Stated exactly:
   `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
   `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
   capture)
-- M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
+- M3.4D4A (AC-PHY `wlc_phy_init` decomposition) = **`ANALYSIS ONLY`**
+  (2026-09): phases D4.0..D4.6, callee table, first-op trace, sync points;
+  `docs/m34d4/wlc_phy_init_rev42_flow.json` +
+  `docs/m34d4/d4a_decomposition.md`. Earliest vendor-stable checkpoint = after
+  `wlc_phy_init` returns (CP-F). Unknown-blocker write values remain ->
+  **`D4 IMPLEMENTATION GO: NO`**. `dev_lost` BAR-MMIO invariant re-audited: holds.
+- M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.

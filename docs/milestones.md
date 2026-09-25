@@ -333,6 +333,15 @@ Canonical status (exact):
 - M3.4D3+4 (band init + minimal D4 prefix) = **PROPOSED / NOT STARTED /
   NOT HARDWARE PROVEN**; proposed STOP = after `wlc_phy_init` returns
   (`0x669e4`); exact scope and bounded teardown are not yet analysed.
+- M3.4D4A (AC-PHY `wlc_phy_init` decomposition) = **`ANALYSIS ONLY`**
+  (2026-09): `wlc_phy_init` (`0xbabf5`) decomposed into phases D4.0..D4.6 with
+  callee table, first-op trace and sync points; artifact
+  `docs/m34d4/wlc_phy_init_rev42_flow.json`, report
+  `docs/m34d4/d4a_decomposition.md`. Earliest vendor-stable checkpoint = **after
+  `wlc_phy_init` returns** (CP-F). Unknown-blocker write values remain (indirect
+  PHY/radio opcode tables, `[pi+0x28]`/`[pi+0x118]` targets), so
+  **`D4 IMPLEMENTATION GO: NO`** and `HARDWARE TEST GO: NO`. The `dev_lost`
+  BAR-MMIO invariant was re-audited and holds.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
