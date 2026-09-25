@@ -303,3 +303,18 @@ is recorded in the milestone document:
     subcommand that resolves section-relative data relocations and prints the
     targeted strings, i.e. the exact step `srom_var_table.py` performs now.
 
+
+Tooling gaps filed during the M3.4D4B value-provenance closure (analysis only;
+see `docs/m34d4b/d4b_value_provenance_closure.md`):
+
+- **D4B-G1 — `re field-writers` store-vs-read misclassification.**
+  `0xab3d8` is `cmp byte ptr [r12+32Dh],0` (a read), yet `re field-writers
+  --field 0x32d` reports it as a store. Desired: confirm the operand is a write
+  (store/`lea`) before emitting a `field_sites` row.
+- **D4B-G2 — path-sensitive reachability.** `re` reports a function's callees
+  but not *which* callees execute for a given argument/branch. Determining that
+  `wlc_phy_attach` takes the **radio-OFF** branch of
+  `wlc_phy_switch_radio_acphy` (so `sub_9591e`/`sub_a4adc` are not executed on
+  the initial attach path) required manual control-flow over `re --asm` +
+  Ghidra. Desired: a `re path-reach <fn> --arg <n>=<v>` or branch-predicate
+  annotation on call edges.

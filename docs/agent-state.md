@@ -211,6 +211,19 @@ Stated exactly:
   → `&wlc_phy_btc_adjust_acphy`) and linearly-ambiguous values are
   `CONDITIONAL` with a candidate set (`dma_attach` has 0 `EXACT`). `re regress`
   **PASS**. `IMPLEMENTED` / `STATIC TESTED`.
+- **M3.4D4B value-provenance closure + CP-A3 proof** = **`ANALYSIS ONLY`**
+  (commit follows `83e542b`): the three "UNKNOWN executed write values" are
+  **not executed on the initial attach path** — `wlc_phy_attach` enters the
+  **radio-OFF** branch of `wlc_phy_switch_radio_acphy`
+  (`wlc_phy_switch_radio(phy,0)`), while `sub_9591e`/`sub_a4adc` live only in
+  the **radio-ON** branch (`phy+0x32d` gate). `sub_a4adc` is
+  `rx_farrow_tbl*`-table-driven; `sub_9591e` is a static-descriptor radio
+  calibration loop; `si_pmu_otp_power` is a conditional RMW. Executed attach
+  write set = **12 PHY writes + 8 radio RMWs**, all `STATIC`, **UNKNOWN = 0**;
+  AC skips the NPHY `0x3d8` block. **CP-A3 = `LOGICALLY STABLE / NOT DIRECTLY
+  OBSERVABLE`** (radio OFF, PSM not running); operational state needs the later
+  radio-ON checkpoint. `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`.
+  `docs/m34d4b/d4b_value_provenance_closure.md`.
 - **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
   zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
   body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but

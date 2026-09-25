@@ -1,0 +1,172 @@
+{
+  "milestone": "M3.4D4B value-provenance closure + CP-A3 checkpoint proof",
+  "status": "ANALYSIS ONLY",
+  "baseline": {
+    "re": "0c7cf87538b9391283f3f26f1ce36bf077b21ce4dccceb8f6a6433f94c8f3137",
+    "re_db": "44dae60d232b08bc8990e446220eaaf684d7fa180f728559114643f27f71c4af",
+    "schema": "v4",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "analysis_commit": "83e542b"
+  },
+  "corrected_path_model": {
+    "attach_call": "wlc_phy_attach(phy,0) @0xbe426, sole caller wlc_bmac_attach @0x6a138",
+    "radio_on_off": "0xbf10a xor esi,esi -> wlc_phy_switch_radio(phy,0) @0xbf113",
+    "radio_switch_dispatch": "wlc_phy_switch_radio_acphy(phy,on): 0xaa796 test sil,sil; 0xaa7a0 je 0xab413 => on==0 takes OFF branch",
+    "on_branch_range": "0xaa7a6..0xab412 (radio ON: calibration/farrow/radio power-up)",
+    "off_branch_range": "0xab413..0xab82b (PHY/radio register configuration, radio stays OFF)",
+    "dma_attach_after_phy_attach": "wlc_bmac_attach: wlc_phy_attach @0x6a138 then dma_attach @0x6a3d6/0x6a4c6/0x6a565/0x6a65d",
+    "phy_version_source": "wlc_phy_attach @0xbe5ba osl_readw(d11base+0x3e0); +0x160=(v&0xf00)>>8 phy_type; +0x164=v&0xf phy_rev (upstream PV_PV_MASK=0xf, PV_PT_MASK=0xf00)"
+  },
+  "reachability": [
+    {
+      "function": "sub_9591e",
+      "caller": "wlc_phy_switch_radio_acphy @0xab3d3",
+      "call_chain": "wlc_phy_attach(on=0) -> wlc_phy_switch_radio(0) -> switch_radio_acphy -> [ON branch only]",
+      "branch_predicate": "0xaa796 test sil,sil; at 0xab413 on==0 is taken, skipping 0xab3d3",
+      "path_predicate": "radio ON (sil != 0)",
+      "executed_on_initial_attach": false,
+      "verdict": "REMOVED FROM D4 BLOCKER (radio-ON only)"
+    },
+    {
+      "function": "sub_a4adc",
+      "caller": "sub_a7089 @0xaa491 (via wlc_phy_switch_radio_acphy @0xab3f5)",
+      "call_chain": "attach(on=0) -> ... -> [ON branch only]",
+      "branch_predicate": "0xaa796 test sil,sil (ON only) AND 0xab3d8 cmp byte [phy+0x32d],0; je 0xab3fa (skip when 0); 0xaa46d..0xaa480 all four table pointers non-null",
+      "path_predicate": "radio ON AND phy+0x32d != 0 AND coeff pointers non-null",
+      "executed_on_initial_attach": false,
+      "verdict": "REMOVED FROM D4 BLOCKER (radio-ON only)"
+    },
+    {
+      "function": "sub_a7089",
+      "caller": "wlc_phy_switch_radio_acphy @0xab3f5",
+      "branch_predicate": "0xab3d8 cmp byte [phy+0x32d],0; je 0xab3fa",
+      "executed_on_initial_attach": false,
+      "verdict": "REMOVED FROM D4 BLOCKER"
+    },
+    {
+      "function": "sub_a04c2",
+      "caller": "wlc_phy_switch_radio_acphy @0xab3e6",
+      "branch_predicate": "same phy+0x32d gate as sub_a7089",
+      "executed_on_initial_attach": false,
+      "verdict": "REMOVED FROM D4 BLOCKER"
+    },
+    {
+      "function": "si_pmu_otp_power",
+      "caller": "si_otp_power @0x1e976",
+      "call_chain": "wlc_phy_attach_acphy -> otp_read_word @0xa2f97/0xa3124 -> si_otp_power -> si_pmu_otp_power",
+      "branch_predicate": "si_otp_power 0x1e965 test byte [sih+0x1b],0x10; je skip. Inside si_pmu_otp_power: si_is_otp_disabled() returns early if OTP disabled",
+      "path_predicate": "sih+0x1b bit4 set AND OTP not disabled",
+      "executed_on_initial_attach": "CONDITIONAL (chip/BT-coexistence OTP present)",
+      "verdict": "RESOLVED to RMW (not a literal); not an UNKNOWN"
+    }
+  ],
+  "sub_a4adc_values": {
+    "reachable_on_initial_attach": false,
+    "table_driven": true,
+    "tables": ["rx_farrow_tbl", "rx_farrow_tbl_rev3", "rx_farrow_tbl_40_rev3"],
+    "table_stride": 1476,
+    "entries_per_table": 123,
+    "entry_format": "byte[0]=selector (== (phy+0x17e)&0xff), word[+4..+0xA]=coefficients",
+    "selection": "phy_rev(+0x164): ==3 -> rev3 tables (40MHz ALP -> _40_rev3 else _rev3); else base table",
+    "writes": [
+      {"address": "0x19a", "source": "rx_farrow_tbl*.word[+4]", "provenance_root": "STATIC_TABLE", "predicate": "phy_rev>=2 and selector match"},
+      {"address": "0x19b", "source": "rx_farrow_tbl*.word[+6]", "provenance_root": "STATIC_TABLE"},
+      {"address": "0x19c", "source": "rx_farrow_tbl*.word[+8]", "provenance_root": "STATIC_TABLE"},
+      {"address": "0x199", "source": "rx_farrow_tbl*.word[+0xA]", "provenance_root": "STATIC_TABLE"},
+      {"address": "0x1a1/0x1a2/0x1a3/0x1a0", "source": "same four words (second filter bank)", "provenance_root": "STATIC_TABLE"},
+      {"address": "0x1602/0x1607/0x1606", "source": "caller coeff struct [arg+0x54/0x58/0x5c] or [arg+0x68/0x6c/0x70]", "provenance_root": "COMPUTED_RUNTIME (populated coefficient arrays)"},
+      {"address": "0x1603", "source": "same coeff struct", "provenance_root": "COMPUTED_RUNTIME"}
+    ],
+    "note": "Not executed on the initial attach path; values need not be closed for D4."
+  },
+  "sub_9591e_values": {
+    "reachable_on_initial_attach": false,
+    "kind": "3-iteration radio calibration/measurement loop",
+    "static_arrays": {
+      "local_48": [1, 0, 0],
+      "local_58": [0, 2, 1],
+      "local_70_40mhz": ["0x14A", "0x101", "0x11A"],
+      "local_70_37p4mhz": ["0x22D", "0x00F0", "0x10A"]
+    },
+    "writes": [
+      {"address": "0x412", "value_expression": "local_70[cVar9]", "final_value_if_static": "0x14A (40MHz ALP) / 0x22D (37.4MHz ALP)", "provenance_root": "STATIC", "caller": "wlc_phy_switch_radio_acphy (ON)"},
+      {"address": "0x12f", "value_expression": "0x1f", "provenance_root": "STATIC", "mask": "local_10-derived", "caller": "wlc_phy_switch_radio_acphy (ON)"},
+      {"address": "0x416", "kind": "READ", "provenance_root": "HARDWARE_READ", "note": "0x416 is read, not a write; not a blocker"},
+      {"address": "0x410/0x411", "value_expression": "static descriptor bits", "provenance_root": "STATIC"},
+      {"address": "0x339/0x33a/0x33b", "value_expression": "(r1-r0)*scale>>8", "provenance_root": "COMPUTED_RUNTIME (radio reads)"}
+    ],
+    "note": "Not executed on the initial attach path."
+  },
+  "si_pmu_otp_power": {
+    "reachable": "conditional",
+    "chip": "BCM4352 sih->chip @sih+0x3c == 0x4352",
+    "otp_power_mask": "0x100",
+    "power_on_formula": "new = osl_readl(pmureg) | (otp_power_mask | sub_118f2_value)",
+    "power_off_formula": "new = osl_readl(pmureg) & ~(otp_power_mask | sub_118f2_value)",
+    "registers": ["PMU control reg (via r13+0x60c / corebase+0x10)", "sub_118f2/sub_111b0 PMU setup"],
+    "polls": ["bounded wait for (readl & mask)!=0 on power-on", "bounded wait on bit 0x1000"],
+    "provenance": ["STATIC (chip mask 0x100)", "PMU_DERIVED (sub_118f2 return)", "HARDWARE_READ (old register value)"],
+    "verdict": "RMW, not a constant; UNKNOWN removed"
+  },
+  "executed_initial_attach_write_set": {
+    "wlc_phy_anacore(phy,1) @0xbed84": {
+      "callback": "phy+0x118 == NULL (proven) -> fallback",
+      "write": {"address": "D11 0x3e6", "value": "0x0000", "operation": "WRITE", "provenance_root": "STATIC"}
+    },
+    "wlc_phy_switch_radio_acphy OFF branch (0xab413)": {
+      "phy_writes": [
+        {"address": "0x173e", "value": "0x1c00", "op": "WRITE"},
+        {"address": "0x1739", "value": "0x0000", "op": "WRITE"},
+        {"address": "0x173a", "value": "0x0000", "op": "WRITE"},
+        {"address": "0x1725", "value": "0x1fff", "op": "WRITE"},
+        {"address": "0x1729", "value": "0x0000", "op": "WRITE"},
+        {"address": "0x1721", "value": "0xffff", "op": "WRITE"},
+        {"address": "0x1728", "value": "0x0000", "op": "WRITE"},
+        {"address": "0x1720", "value": "0x03ff", "op": "WRITE"},
+        {"address": "0x0408", "value": "0x0002", "op": "RMW"},
+        {"address": "0x0417", "value": "0x0000", "op": "WRITE"},
+        {"address": "0x0416", "value": "0x0001", "op": "WRITE"}
+      ],
+      "radio_writes": [
+        {"address": "0x097f", "value": "0x0010", "mask": "0x0010", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0001", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0002", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0100", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0040", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0080", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0010", "op": "RMW"},
+        {"address": "0x08ea", "value": "0x0200", "op": "RMW"}
+      ],
+      "mac": "none (no wlapi_suspend_mac_and_wait and no wlapi_enable_mac on the OFF branch)",
+      "provenance_root": "STATIC (all literal register/value pairs; chip-selected 0x1xxx/0x8ea for 4352)"
+    },
+    "wlc_phy_attach_acphy": {"mmio_writes": 0, "phy_reg_read": 11},
+    "direct_0x3d8_block": {"executed": false, "why": "+0x160==0xb(AC) -> jne 0xbee9f skips the 0x160==4/0xa NPHY block"},
+    "sub_9591e": {"executed": false},
+    "sub_a4adc": {"executed": false}
+  },
+  "counts_initial_attach": {
+    "expanded_phy_writes": 12,
+    "expanded_radio_writes": 8,
+    "phy_table_ops": 0,
+    "phy_reads": 12,
+    "delays": 0,
+    "polls": 0,
+    "source_records": 19,
+    "generated_loops": 0,
+    "computed_runtime": 0,
+    "board_dependent": 0
+  },
+  "oracle": {
+    "RE": ["reachability/callers, function boundaries, PV masks via upstream, D3A/D3B baseline"],
+    "GHIDRA": ["FUN_001a4adc table/base resolution (rx_farrow_tbl*), FUN_0019591e descriptor arrays, si_pmu_otp_power RMW, wlc_phy_attach +0x160/+0x164"],
+    "BOTH": ["switch_radio_acphy on/off dispatch, sub_9591e/sub_a4adc call guards"],
+    "ELF_RELOCATION": [],
+    "TABLE_PROVENANCE": ["rx_farrow_tbl selectors"],
+    "MANUAL": ["0xab413/0xab7cd OFF-path control-flow read of re --asm (0 manual disasm interventions)"]
+  },
+  "tooling_gaps": [
+    "re field-writers misclassified a compare (0xab3d8 cmp byte [r12+32d],0) as a store at +0x32d; needs store-vs-load verification.",
+    "re has no path-sensitive reachability (which callees execute for a given argument/branch); determining the radio-OFF attach path required manual/Ghidra control-flow over switch_radio_acphy."
+  ]
+}

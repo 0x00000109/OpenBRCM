@@ -424,6 +424,23 @@ Canonical status (exact):
   `val=?` on the executed callbacks), `HARDWARE TEST GO: NO`. Report
   `docs/m34d4b/d4b_resume_analysis.md`, updated
   `docs/m34d4b/acphy_function_table.json`.
+- **M3.4D4B value-provenance closure + CP-A3 proof** = **`ANALYSIS ONLY`**:
+  the three "UNKNOWN executed write values" are **not executed on the initial
+  attach path**. `wlc_phy_attach` enters the **radio-OFF** branch of
+  `wlc_phy_switch_radio_acphy` (`xor esi,esi` -> `wlc_phy_switch_radio(phy,0)`);
+  `sub_9591e` and `sub_a4adc` (via `sub_a7089`/`sub_a04c2`, gated by
+  `phy+0x32d`) live only in the **radio-ON** branch. `sub_a4adc` is
+  `rx_farrow_tbl*`-table-driven; `sub_9591e` is a static-descriptor radio
+  calibration loop; `si_pmu_otp_power` is a conditional RMW
+  (`old|(0x100|v)` / `old&~(0x100|v)`). The executed attach write set is
+  **12 PHY writes + 8 radio RMWs**, all `STATIC`; the NPHY-only `0x3d8` direct
+  block is skipped for AC. `UNKNOWN = 0`. **CP-A3 = `LOGICALLY STABLE /
+  NOT DIRECTLY OBSERVABLE`** (radio OFF, PSM not running, channel-independent);
+  the operational state requires the later radio-ON checkpoint. `dev_lost`
+  coverage complete structurally (wire the 1 `0x3e0` + 11 `phy_reg_read`
+  sites). `D4 IMPLEMENTATION GO: NO`, `HARDWARE TEST GO: NO`. Report
+  `docs/m34d4b/d4b_value_provenance_closure.md` +
+  `docs/m34d4b/d4b_value_provenance.json`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
