@@ -341,10 +341,15 @@ Canonical status (exact):
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
 mode `d11_tail_test_only=1` reproduces the exact rev42 vendor sequence after
-the common initvals and STOPS before real PHY init. New code:
+  the common initvals and STOPS before real PHY init. New code:
 `src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`, `tests/kunit/ob_d3a1_kunit.c`.
 Module built + MOK-signed and hardware-run for the D3A1 tail; the
 `tsf_cfpstart` postcondition was corrected 2026-09 (§17).
+
+**D3B retest candidate (fixed, NOT HARDWARE PROVEN):** commit
+`ffa2a548911007b58605df51150e24d422d6d957`, signed `openbrcm.ko` sha256
+`889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`; the failed
+attempt was frozen candidate `5fa5e5b` (module `3a10aff9…`).
 - **Ordering:** the vendor **interleaves** DMA inside the tail —
   `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
   intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →

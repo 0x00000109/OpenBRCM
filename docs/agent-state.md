@@ -387,7 +387,10 @@ programmed/validated -> FIFO0 RX programmed/validated IDLE -> DMA bring-up PASS
 record was applied.** Root cause: `0x18c` is a write-only CFP-start
 programming register (readable value at `0x604/0x606`); the equality gate was
 invalid and is removed (write-accounting + diagnostics; `tsf_cfprep` equality
-retained). Evidence `docs/m34d3a1_vendor_tail_test.md` §17.
+retained). Evidence `docs/m34d3a1_vendor_tail_test.md` §17. **Fixed retest
+candidate = `ffa2a548911007b58605df51150e24d422d6d957`, signed `openbrcm.ko`
+sha256 `889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`
+(NOT HARDWARE PROVEN; one D3B retest pending owner approval).**
 
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
