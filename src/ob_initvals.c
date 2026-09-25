@@ -32,9 +32,9 @@
 static void ob_initvals_write(struct ob_hw *hw, const struct ob_fw_iv *rec)
 {
 	if (rec->width == OB_FW_IV_WIDTH16)
-		bcma_write16(hw->core, rec->offset, (u16)rec->value);
+		ob_d11_write16(hw, rec->offset, (u16)rec->value);
 	else
-		bcma_write32(hw->core, rec->offset, rec->value);
+		ob_d11_write32(hw, rec->offset, rec->value);
 }
 
 /*
@@ -137,8 +137,8 @@ int ob_initvals_run_d2b(struct ob_hw *hw, const char *tag,
 	post->fifosize1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
 	post->fifosize2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
 	post->fifosize3 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE3);
-	post->macintmask = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
-	post->maccontrol = bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
+	post->macintmask = ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
+	post->maccontrol = ob_d11_read32(hw, OB_UCODE_REG_MACCONTROL);
 	post->shm14 = (u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_LO) |
 		      ((u32)ob_ucode_read_shm16(hw, OB_INITVALS_SHM14_HI)
 		       << 16);

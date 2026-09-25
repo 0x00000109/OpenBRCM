@@ -145,17 +145,17 @@ static int ob_rx_disable_hw(struct ob_hw *hw)
 	u32 control, status0 = 0, status1;
 	int i;
 
-	bcma_write32(hw->core, OB_D11_RX_CONTROL, 0);
-	control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
+	ob_d11_write32(hw, OB_D11_RX_CONTROL, 0);
+	control = ob_d11_read32(hw, OB_D11_RX_CONTROL);
 
 	for (i = 0; i < OB_RX_DISABLE_POLL; i++) {
-		status0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
+		status0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
 		if ((status0 & OB_D11_RS0_RS_MASK) ==
 		    OB_D11_RS0_RS_DISABLED)
 			return 0;
 		udelay(10);
 	}
-	status1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	status1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
 	dev_err(hw->dev,
 		"rx: disable timeout control=%08x status0=%08x status1=%08x\n",
 		control, status0, status1);
@@ -186,17 +186,17 @@ static int ob_rx_program(struct ob_hw *hw)
 	dev_info(hw->dev, "rx: program addrlow=%08x addrhigh=%08x ptr=%08x control=%08x\n",
 		 ring_lo, OB_DMA_PCIE_H32, ptr, OB_D11_RX_CONTROL_INIT);
 
-	bcma_write32(hw->core, OB_D11_RX_ADDRLOW, ring_lo);
-	bcma_write32(hw->core, OB_D11_RX_ADDRHIGH, OB_DMA_PCIE_H32);
-	bcma_write32(hw->core, OB_D11_RX_PTR, ptr);
-	bcma_write32(hw->core, OB_D11_RX_CONTROL, OB_D11_RX_CONTROL_INIT);
+	ob_d11_write32(hw, OB_D11_RX_ADDRLOW, ring_lo);
+	ob_d11_write32(hw, OB_D11_RX_ADDRHIGH, OB_DMA_PCIE_H32);
+	ob_d11_write32(hw, OB_D11_RX_PTR, ptr);
+	ob_d11_write32(hw, OB_D11_RX_CONTROL, OB_D11_RX_CONTROL_INIT);
 
-	control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
-	rb_ptr = bcma_read32(hw->core, OB_D11_RX_PTR);
-	rb_lo = bcma_read32(hw->core, OB_D11_RX_ADDRLOW);
-	rb_hi = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
-	status0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-	status1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	control = ob_d11_read32(hw, OB_D11_RX_CONTROL);
+	rb_ptr = ob_d11_read32(hw, OB_D11_RX_PTR);
+	rb_lo = ob_d11_read32(hw, OB_D11_RX_ADDRLOW);
+	rb_hi = ob_d11_read32(hw, OB_D11_RX_ADDRHIGH);
+	status0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
+	status1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
 	hw->rx.last_status0 = status0;
 	hw->rx.last_status1 = status1;
 
@@ -239,19 +239,19 @@ static int ob_rx_enable_irq(struct ob_hw *hw)
 	hw->rx.route = true;
 	dev_info(hw->dev, "rx: host irq route enabled\n");
 
-	im = bcma_read32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4);
+	im = ob_d11_read32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4);
 	dev_info(hw->dev, "rx: fifo mask before=%08x\n", im);
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
 		     im | OB_D11_FIFO_I_RI);
 
-	mm = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
+	mm = ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
 	dev_info(hw->dev, "rx: mac mask before=%08x\n", mm);
-	bcma_write32(hw->core, OB_D11_REG_MACINTMASK, mm | OB_D11_MI_DMAINT);
+	ob_d11_write32(hw, OB_D11_REG_MACINTMASK, mm | OB_D11_MI_DMAINT);
 
 	dev_info(hw->dev, "rx: fifo mask=%08x mac mask=%08x\n",
-		 bcma_read32(hw->core,
+		 ob_d11_read32(hw,
 			     OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4),
-		 bcma_read32(hw->core, OB_D11_REG_MACINTMASK));
+		 ob_d11_read32(hw, OB_D11_REG_MACINTMASK));
 	return 0;
 }
 
@@ -262,19 +262,19 @@ void ob_rx_irq(struct ob_hw *hw)
 	if (!hw->rx.running)
 		return;
 
-	ist = bcma_read32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX));
+	ist = ob_d11_read32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX));
 	if (!(ist & OB_D11_FIFO_I_RI))
 		return;
 
 	/* Mask the RX source while deferred work drains the ring. */
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
-		     bcma_read32(hw->core,
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+		     ob_d11_read32(hw,
 				 OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4) &
 		     ~OB_D11_FIFO_I_RI);
 	/* Ack only I_RI (write-1-to-clear). */
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX),
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX),
 		     OB_D11_FIFO_I_RI);
-	(void)bcma_read32(hw->core,
+	(void)ob_d11_read32(hw,
 			  OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX));
 	hw->rx.irq_masked = true;
 
@@ -292,8 +292,8 @@ static void ob_rx_tasklet(struct tasklet_struct *t)
 	if (!rx->running)
 		return;
 
-	status0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-	status1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	status0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
+	status1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
 	rx->last_status0 = status0;
 	rx->last_status1 = status1;
 	curr = ob_rx_status_index(status0, ring->desc_dma);
@@ -362,8 +362,8 @@ static void ob_rx_tasklet(struct tasklet_struct *t)
 	}
 
 	/* More completions may arrive: re-arm the RX source. */
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
-		     bcma_read32(hw->core,
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+		     ob_d11_read32(hw,
 				 OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4) |
 		     OB_D11_FIFO_I_RI);
 	rx->irq_masked = false;
@@ -371,8 +371,8 @@ static void ob_rx_tasklet(struct tasklet_struct *t)
 
 abort:
 	/* Failure containment: mask, unroute, stop; no auto-recovery. */
-	bcma_write32(hw->core, OB_D11_REG_MACINTMASK,
-		     bcma_read32(hw->core, OB_D11_REG_MACINTMASK) &
+	ob_d11_write32(hw, OB_D11_REG_MACINTMASK,
+		     ob_d11_read32(hw, OB_D11_REG_MACINTMASK) &
 		     ~OB_D11_MI_DMAINT);
 	if (rx->route) {
 		bcma_host_pci_irq_ctl(hw->bus, hw->core, false);
@@ -381,8 +381,8 @@ abort:
 	}
 
 stop:
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
-		     bcma_read32(hw->core,
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+		     ob_d11_read32(hw,
 				 OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4) &
 		     ~OB_D11_FIFO_I_RI);
 	rx->irq_masked = true;
@@ -436,14 +436,14 @@ void ob_rx_quiesce(struct ob_hw *hw)
 		return;
 
 	/* 1. mask FIFO0 I_RI */
-	v = bcma_read32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4);
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+	v = ob_d11_read32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4);
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
 		     v & ~OB_D11_FIFO_I_RI);
 	dev_info(hw->dev, "rx: interrupts masked\n");
 
 	/* 2. mask MAC MI_DMAINT */
-	v = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
-	bcma_write32(hw->core, OB_D11_REG_MACINTMASK,
+	v = ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
+	ob_d11_write32(hw, OB_D11_REG_MACINTMASK,
 		     v & ~OB_D11_MI_DMAINT);
 
 	/* 3. disable host routing */
@@ -470,12 +470,12 @@ void ob_rx_quiesce(struct ob_hw *hw)
 	 * The deferred path may have re-armed I_RI just before it stopped;
 	 * mask both owned sources again so nothing is left enabled.
 	 */
-	bcma_write32(hw->core, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
-		     bcma_read32(hw->core,
+	ob_d11_write32(hw, OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4,
+		     ob_d11_read32(hw,
 				 OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4) &
 		     ~OB_D11_FIFO_I_RI);
-	bcma_write32(hw->core, OB_D11_REG_MACINTMASK,
-		     bcma_read32(hw->core, OB_D11_REG_MACINTMASK) &
+	ob_d11_write32(hw, OB_D11_REG_MACINTMASK,
+		     ob_d11_read32(hw, OB_D11_REG_MACINTMASK) &
 		     ~OB_D11_MI_DMAINT);
 
 	hw->rx.running = false;

@@ -8,6 +8,7 @@
   "NEEDS_OBSERVER",
   "UNREACHABLE_AFTER_LATCH"
  ],
+ "protection_status_note": "SUPERSEDED for protection status by docs/m34d4/dev_lost_phy_access_map.json (central access guard implemented in src/ob_guard.{c,h}). The per-function operation inventory below remains valid; the 'NEEDS_OBSERVER' protection labels are historical.",
  "existing_protected_gates": [
   {
    "where": "ob_d3a0.c D3A0 quiesce intmask0",

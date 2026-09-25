@@ -6,7 +6,7 @@ SRC     := ../../src
 .PHONY: run clean
 run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
      ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test ob_d3a1_test \
-     ob_d3b_test
+     ob_d3b_test ob_guard_test
 	./ob_math_test
 	./ob_caps_test
 	./ob_dma_test
@@ -18,11 +18,13 @@ run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
 	./ob_d3a0_test
 	./ob_d3a1_test
 	./ob_d3b_test
+	./ob_guard_test
 	python3 test_sprom11_decode.py
 	python3 test_srom_var_table.py
 	python3 test_runtime_test_cli.py
 	python3 test_current_context.py
 	python3 test_re_packet.py
+	python3 test_device_lost_guard.py
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -63,7 +65,10 @@ ob_d3b_test: ob_d3b_test.c $(SRC)/ob_d3b.h $(SRC)/ob_d3a0.h \
 		$(SRC)/ob_initvals.h $(SRC)/ob_fw.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+ob_guard_test: ob_guard_test.c $(SRC)/ob_guard.h $(SRC)/ob_d3a0.h
+	$(CC) $(CFLAGS) -o $@ $<
+
 clean:
 	rm -f ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
 	      ob_fw_test ob_ucode_test ob_initvals_test ob_d3a0_test \
-	      ob_d3a1_test ob_d3b_test
+	      ob_d3a1_test ob_d3b_test ob_guard_test

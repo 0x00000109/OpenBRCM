@@ -63,6 +63,7 @@ Generated 2026-09-25. Repository of record:
 | D4D-PI-8BF | `pi+0x8bf` = `0x1a` (incrementing-pointer writer) | `7c5425c` | ANALYSIS ONLY (T8 now tool-native) | `docs/m34d4/pi_8bf_provenance.{md,json}` |
 | CACHE-OPT | DeepSeek prompt-cache optimization + telemetry | `6d6438c` | IMPLEMENTED / STATIC TESTED | `docs/cache/`, `.opencode/plugins/openbrcm-cache.ts`, `scripts/cache_telemetry.py`, `scripts/cache-report.py`, `tests/host/test_cache_*.py` |
 | T8 | canonical `re`: bounded incrementing-pointer store coverage | iced/test `aa67a95` | IMPLEMENTED / STATIC TESTED | iced/test `re_support/mod.rs`, `scripts/verify_induction.py`, `scripts/fixtures/induction_fixtures.s`; `docs/m34d4/pi_8bf_provenance.*`, `docs/re-tooling.md` §9 |
+| DEV-LOST-GUARD | central device-loss access guard (D3B→PHY path) | (this commit) | IMPLEMENTED / STATIC TESTED | `src/ob_guard.{c,h}`, `tests/host/ob_guard_test.c`, `tests/host/test_device_lost_guard.py`, `docs/m34d4/dev_lost_phy_access_map.json`, `docs/m34d4/dev_lost_phy_guard.md` |
 
 ## 4. Required knowledge → persistent location
 

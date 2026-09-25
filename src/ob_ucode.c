@@ -41,6 +41,10 @@ static int ob_ucode_prepare(struct ob_hw *hw)
 	u32 clk;
 	int err;
 
+	/* Device-loss guard: no core/host bring-up after the latch. */
+	if (hw->dev_lost)
+		return -EIO;
+
 	dev_info(hw->dev, "ucode-test: prep host up (host_is_pcie2=%d)\n",
 		 hw->bus->host_is_pcie2);
 	bcma_host_pci_up(hw->bus);
@@ -55,7 +59,7 @@ static int ob_ucode_prepare(struct ob_hw *hw)
 	}
 
 	bcma_core_set_clockmode(hw->core, BCMA_CLKMODE_FAST);
-	clk = bcma_read32(hw->core, OB_UCODE_REG_CLKCTLST);
+	clk = ob_d11_read32(hw, OB_UCODE_REG_CLKCTLST);
 	dev_info(hw->dev,
 		 "ucode-test: clkctlst=%08x HAVEHT=%d core_enabled=%d\n",
 		 clk, !!(clk & OB_UCODE_CLKCTLST_HAVEHT),
@@ -70,10 +74,10 @@ static int ob_ucode_prepare(struct ob_hw *hw)
  */
 u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off)
 {
-	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
+	ob_d11_write32(hw, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_SHM_SEL | ((u32)off >> 2));
-	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);
-	return bcma_read16(hw->core, OB_UCODE_REG_OBJDATA + (off & 0x2));
+	(void)ob_d11_read32(hw, OB_UCODE_REG_OBJADDR);
+	return ob_d11_read16(hw, OB_UCODE_REG_OBJDATA + (off & 0x2));
 }
 
 /*
@@ -83,20 +87,20 @@ u16 ob_ucode_read_shm16(struct ob_hw *hw, u16 off)
  */
 void ob_ucode_write_shm16(struct ob_hw *hw, u16 off, u16 val)
 {
-	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
+	ob_d11_write32(hw, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_SHM_SEL | ((u32)off >> 2));
-	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);
-	bcma_write16(hw->core, OB_UCODE_REG_OBJDATA + (off & 0x2), val);
+	(void)ob_d11_read32(hw, OB_UCODE_REG_OBJADDR);
+	ob_d11_write16(hw, OB_UCODE_REG_OBJDATA + (off & 0x2), val);
 }
 
 /* Masked MACCONTROL update, mirroring wlc_bmac_mctrl(dev, mask, val). */
 static u32 ob_ucode_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 {
-	u32 old = bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
+	u32 old = ob_d11_read32(hw, OB_UCODE_REG_MACCONTROL);
 	u32 new = (old & ~mask) | val;
 
-	bcma_write32(hw->core, OB_UCODE_REG_MACCONTROL, new);
-	return bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
+	ob_d11_write32(hw, OB_UCODE_REG_MACCONTROL, new);
+	return ob_d11_read32(hw, OB_UCODE_REG_MACCONTROL);
 }
 
 /*
@@ -143,7 +147,7 @@ int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag, struct ob_ucode_run *run
 	/* 2. pre-upload MACCONTROL (masked update, mask = ~0). */
 	stage = "maccontrol-upload";
 	{
-		u32 before = bcma_read32(hw->core, OB_UCODE_REG_MACCONTROL);
+		u32 before = ob_d11_read32(hw, OB_UCODE_REG_MACCONTROL);
 		u32 after;
 
 		dev_info(hw->dev, "ucode: maccontrol before=%08x\n", before);
@@ -164,13 +168,13 @@ int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag, struct ob_ucode_run *run
 
 	/* 3. ucode upload (raw LE 32-bit words, one write each, auto-increment). */
 	stage = "upload";
-	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
+	ob_d11_write32(hw, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_AUTO_INC | OB_UCODE_OBJADDR_UCM_SEL);
-	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);	/* vendor readback */
+	(void)ob_d11_read32(hw, OB_UCODE_REG_OBJADDR);	/* vendor readback */
 	dev_info(hw->dev, "%s: OBJADDR=30000000\n", tag);
 	dev_info(hw->dev, "%s: upload start words=%u\n", tag, words);
 	for (i = 0; i < words; i++) {
-		bcma_write32(hw->core, OB_UCODE_REG_OBJDATA,
+		ob_d11_write32(hw, OB_UCODE_REG_OBJDATA,
 			     ob_fw_le32(ucode->data + (size_t)i * 4));
 		written++;
 	}
@@ -199,7 +203,7 @@ int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag, struct ob_ucode_run *run
 
 	/* 4. clear stale interrupt state, then start PSM. */
 	stage = "psm-start";
-	bcma_write32(hw->core, OB_UCODE_REG_MACINTSTATUS, 0xffffffffu);
+	ob_d11_write32(hw, OB_UCODE_REG_MACINTSTATUS, 0xffffffffu);
 	{
 		u32 after = ob_ucode_mctrl_update(hw, OB_UCODE_MACCONTROL_MASK,
 						  OB_UCODE_MACCONTROL_PSM);
@@ -227,7 +231,7 @@ int ob_ucode_run_d2a(struct ob_hw *hw, const char *tag, struct ob_ucode_run *run
 		 OB_UCODE_POLL_DELAY_US);
 	remaining = OB_UCODE_POLL_TIMEOUT;
 	for (;;) {
-		status = bcma_read32(hw->core, OB_UCODE_REG_MACINTSTATUS);
+		status = ob_d11_read32(hw, OB_UCODE_REG_MACINTSTATUS);
 		if (ob_ucode_mac_suspended(status))
 			break;
 		if (ob_ucode_poll_expired(remaining, OB_UCODE_POLL_STEP)) {

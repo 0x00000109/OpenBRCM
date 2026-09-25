@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "6d6438c607cb5e68bd17db9547f60992ec8c5bf9",
+      "head": "cfc822b3940ad73d765f3178a4d88e73f62fa99d",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 25,
-      "ahead_of_origin_branch": 2,
+      "ahead_of_origin_main": 26,
+      "ahead_of_origin_branch": 3,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the T8 doc commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 chain is UNMERGED relative to main"
+      "note": "snapshot before the DEV-LOST-GUARD commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -380,6 +380,34 @@
           "6 negative fixtures (unbounded, runtime stride/count, branch-dependent, reassignment, merged base) produce zero induction rows",
           "Ghidra FUN_001a7089 decompile independently agrees (local_78={0x19,0x1a})",
           "value/provenance of pi+0x8bf unchanged (0x1a); only the derivation is now tool-native"
+      ]
+  },
+  {
+      "id": "DEV-LOST-GUARD",
+      "milestone": "D4-BLOCKER-DEV-LOST-PHY-PATH — central device-loss access guard",
+      "subject": "every D11/PHY/radio/SHM-OBJ/DMA/core access stops safely once dev_lost is latched",
+      "status": "IMPLEMENTED / STATIC TESTED (safety infrastructure; no hardware)",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "src/ob_guard.h",
+          "src/ob_guard.c",
+          "src/ob_core.h",
+          "tests/host/ob_guard_test.c",
+          "tests/host/test_device_lost_guard.py",
+          "docs/m34d4/dev_lost_phy_access_map.json",
+          "docs/m34d4/dev_lost_phy_guard.md"
+      ],
+      "key_facts": [
+          "central guard src/ob_guard.{c,h}; struct ob_hw::dev_lost remains the single monotonic latch",
+          "all raw bcma_read*/write* routed through ob_d11_*/ob_axi_*/ob_cc_* (audited: none outside ob_guard.c)",
+          "after latch: reads return a dead sentinel with no MMIO; writes are suppressed",
+          "trusted detector ob_d11_read32_trusted latches on a direct D11 all-ones read; wired into D3B/D3A1 postconditions",
+          "core/host reset+bring-up gated on dev_lost (ob_si_powerup, ob_ucode_prepare, ob_d3a0_core_contain)",
+          "SHM/OBJDATA payloads are never classified as device loss; vendor predicate (m&0x404)==0x400 retained",
+          "normal (dev_lost==false) path is a direct bcma pass-through; make modules + make hosttest PASS",
+          "D4 IMPLEMENTATION GO: NO; HARDWARE TEST GO: NO (unchanged)"
       ]
   }
   ],

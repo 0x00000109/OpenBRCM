@@ -71,15 +71,15 @@ MODULE_PARM_DESC(srom_diag, "Alias for sprom_diag");
  */
 static void ob_si_d11_diag(struct ob_hw *hw)
 {
-	u32 mc = bcma_read32(hw->core, OB_D11_MACCONTROL);
-	u32 cmd = bcma_read32(hw->core, OB_D11_MACCOMMAND);
-	u32 ist = bcma_read32(hw->core, OB_D11_MACINTSTATUS);
-	u32 im = bcma_read32(hw->core, OB_D11_MACINTMASK);
-	u32 psm = bcma_read32(hw->core, OB_D11_PSMDEBUG);
-	u32 phyd = bcma_read32(hw->core, OB_D11_PHYDEBUG);
-	u32 tlo = bcma_read32(hw->core, OB_D11_TSF_LOW);
-	u32 thi = bcma_read32(hw->core, OB_D11_TSF_HIGH);
-	u16 phyver = bcma_read16(hw->core, OB_D11_PHYVERSION);
+	u32 mc = ob_d11_read32(hw, OB_D11_MACCONTROL);
+	u32 cmd = ob_d11_read32(hw, OB_D11_MACCOMMAND);
+	u32 ist = ob_d11_read32(hw, OB_D11_MACINTSTATUS);
+	u32 im = ob_d11_read32(hw, OB_D11_MACINTMASK);
+	u32 psm = ob_d11_read32(hw, OB_D11_PSMDEBUG);
+	u32 phyd = ob_d11_read32(hw, OB_D11_PHYDEBUG);
+	u32 tlo = ob_d11_read32(hw, OB_D11_TSF_LOW);
+	u32 thi = ob_d11_read32(hw, OB_D11_TSF_HIGH);
+	u16 phyver = ob_d11_read16(hw, OB_D11_PHYVERSION);
 
 	dev_info(hw->dev,
 		 "bringup: maccontrol=%08x maccommand=%08x macintstatus=%08x macintmask=%08x\n",
@@ -105,18 +105,18 @@ static void ob_si_d11_diag(struct ob_hw *hw)
 /* ChipCommon is a fixed-function core; access it through bcma's window. */
 u32 ob_si_cc_read(struct ob_hw *hw, u16 off)
 {
-	return bcma_read32(hw->cc, off);
+	return ob_cc_read32(hw, off);
 }
 
 void ob_si_cc_write(struct ob_hw *hw, u16 off, u32 val)
 {
-	bcma_write32(hw->cc, off, val);
+	ob_cc_write32(hw, off, val);
 }
 
 /* 16-bit accessor: identical width to bcma_sprom_read()'s bcma_read16(). */
 static u16 ob_si_cc_read16(struct ob_hw *hw, u16 off)
 {
-	return bcma_read16(hw->cc, off);
+	return ob_cc_read16(hw, off);
 }
 
 static u8 ob_sprom_crc(const u16 *sprom, size_t words);
@@ -282,6 +282,10 @@ int ob_si_powerup(struct ob_hw *hw)
 {
 	u32 clk;
 	int err;
+
+	/* Device-loss guard: no host/core/clock bring-up after the latch. */
+	if (hw->dev_lost)
+		return -EIO;
 
 	dev_info(hw->dev, "powerup: chip 0x%04x rev %u\n",
 		 hw->chip_id, hw->chip_rev);

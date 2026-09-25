@@ -377,6 +377,24 @@ Stated exactly:
   (`scripts/verify_induction.py`) PASS; Ghidra `FUN_001a7089` agrees. Prior
   relocation/dataflow/indirect false-positive fixes remain intact.
   `docs/re-tooling.md` §9, `docs/m34d4/pi_8bf_provenance.*`.
+- **DEV-LOST-PHY-PATH — central device-loss access guard** = safety
+  infrastructure `IMPLEMENTED` / `STATIC TESTED` (blocker
+  `D4-BLOCKER-DEV-LOST-PHY-PATH` resolved; no hardware, no MMIO, no PHY
+  implementation). New `src/ob_guard.{c,h}` centralizes every D11 / PHY-indirect
+  / radio / SHM-OBJ / ChipCommon / AXI access: once `hw->dev_lost` is latched,
+  reads return a dead sentinel without MMIO and writes are suppressed
+  (`struct ob_hw::dev_lost` remains the single monotonic latch). All raw
+  `bcma_read*/write*` in the driver was routed through the guarded primitives
+  (`ob_d11_*`, `ob_axi_*`, `ob_cc_*`), the trusted detector
+  (`ob_d11_read32_trusted`) latches on a direct all-ones read and is wired into
+  the D3B/D3A1 postconditions, and core/host reset+bring-up
+  (`ob_si_powerup`, `ob_ucode_prepare`, `ob_d3a0_core_contain`) is gated on
+  `dev_lost`. Tests: `tests/host/ob_guard_test.c` (cases 1–12 + negatives) and
+  the centralization audit `tests/host/test_device_lost_guard.py`; `make
+  modules` and `make hosttest` PASS. All-ones detection is limited to trusted
+  direct reads (SHM/OBJDATA payloads are never classified as loss). Artifacts:
+  `docs/m34d4/dev_lost_phy_access_map.json`, `docs/m34d4/dev_lost_phy_guard.md`.
+  **`D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
   (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
   never a source of truth) + `scripts/generate-current-context.py`

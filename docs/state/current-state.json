@@ -22,13 +22,6 @@
       ]
     },
     {
-      "id": "d4.dev_lost.coverage",
-      "summary": "dev_lost latch not wired to the D3B -> wlc_phy_cal_perical path.",
-      "evidence": [
-        "docs/m34d4/dev_lost_access_map.json"
-      ]
-    },
-    {
       "id": "d4.checkpoint.none",
       "summary": "No STRONG operational checkpoint; D4 GO = NO; HARDWARE TEST GO = NO.",
       "evidence": [

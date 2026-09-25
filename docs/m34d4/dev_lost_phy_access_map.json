@@ -1,0 +1,185 @@
+{
+  "milestone": "M3.4D4",
+  "blocker": "D4-BLOCKER-DEV-LOST-PHY-PATH",
+  "path": "sub_6656c -> wlc_phy_init -> wlc_phy_anacore -> wlc_phy_switch_radio -> wlc_phy_switch_radio_acphy -> wlc_phy_cals_acphy (D3B -> wlc_phy_init -> radio/PHY/calibration)",
+  "status": "STATIC SAFETY INFRASTRUCTURE (analysis + guard implementation); no hardware",
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+  "generated_from": [
+    "docs/m34d4/dev_lost_access_map.json (re.db schema v5, re phyops/direct MMIO)",
+    "re.db (schema v5) for the helper families; Ghidra only where noted"
+  ],
+  "invariant": "once hw->dev_lost == true, no new D11/PHY/radio/SHM-OBJ/DMA/core hardware write is issued; reads are suppressed and return a dead sentinel (no MMIO).",
+  "central_guard": {
+    "header": "src/ob_guard.h (pure, host-testable decision layer + backend abstraction)",
+    "backend": "src/ob_guard.c (bcma backend + windows)",
+    "latch": "struct ob_hw::dev_lost (monotonic, src/ob_core.h); latched by ob_dev_lost_latch()/ob_d11_read32_trusted()",
+    "wrappers": [
+      "ob_d11_read32/read16", "ob_d11_write32/write16", "ob_d11_read32_trusted",
+      "ob_axi_read32", "ob_axi_write32", "ob_cc_read32", "ob_cc_read16", "ob_cc_write32"
+    ],
+    "read_after_latch": "return 0xffffffff / 0xffff (no MMIO), count as blocked",
+    "write_after_latch": "suppressed (no MMIO), count as blocked",
+    "detection": "trusted direct 32-bit D11 read == 0xffffffff -> ob_d11_read32_trusted() -> latch; vendor predicate (MACCONTROL & 0x404) == 0x400 remains available (ob_d3a0_maccontrol_present)"
+  },
+  "protection_vocab": ["PROTECTED", "UNREACHABLE_AFTER_LATCH", "NEEDS_OBSERVER"],
+  "access_families": [
+    {
+      "family": "DIRECT_D11_READ",
+      "vendor_helpers": ["osl_readl", "osl_readw"],
+      "vendor_sites": 3,
+      "openbrcm_primitive": "ob_d11_read32 / ob_d11_read16",
+      "observer_before": "the D3B/D3A1 entry reads use ob_d11_read32_trusted (first access on the path)",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": true,
+      "after_detection": "read returns 0xffffffff (no MMIO); caller stops",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "DIRECT_D11_WRITE",
+      "vendor_helpers": ["osl_writel", "osl_writew"],
+      "vendor_sites": 3,
+      "openbrcm_primitive": "ob_d11_write32 / ob_d11_write16",
+      "observer_before": "suppressed by the guard once latched; first write follows a trusted read",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "write suppressed (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "SHM_OBJ_READ",
+      "vendor_helpers": ["wlc_bmac_read_shm (OBJADDR+OBJDATA)"],
+      "vendor_sites": 0,
+      "openbrcm_primitive": "ob_ucode_read_shm16 -> ob_d11_read32/read16 (OBJADDR write + OBJDATA read)",
+      "observer_before": "the D3B postcondition reads MACCONTROL/MACINTMASK trusted FIRST, before any SHM read",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "OBJADDR write suppressed; OBJDATA read returns 0xffff sentinel",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "SHM_OBJ_WRITE",
+      "vendor_helpers": ["wlc_bmac_write_shm (OBJADDR+OBJDATA)"],
+      "vendor_sites": 0,
+      "openbrcm_primitive": "ob_ucode_write_shm16 -> ob_d11_write32/write16",
+      "observer_before": "guarded; no SHM write is issued after latch",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "write suppressed (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "PHY_INDIRECT_READ",
+      "vendor_helpers": ["phy_reg_read"],
+      "vendor_sites": 5,
+      "openbrcm_primitive": "ob_d11_read32 (D11 PHY window)",
+      "observer_before": "trusted entry read on the path (wlc_phy_init entry)",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "read returns 0xffffffff (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "PHY_INDIRECT_WRITE",
+      "vendor_helpers": ["phy_reg_write", "phy_reg_write_array", "phy_reg_mod"],
+      "vendor_sites": 45,
+      "openbrcm_primitive": "ob_d11_write32 / ob_d11_write16",
+      "observer_before": "guarded; suppressed after latch",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "write suppressed (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "PHY_TABLE_WRITE",
+      "vendor_helpers": ["wlc_phy_table_write_acphy"],
+      "vendor_sites": 2,
+      "openbrcm_primitive": "ob_d11_write32 (table host-interface window)",
+      "observer_before": "guarded; suppressed after latch",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "write suppressed (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "RADIO_READ",
+      "vendor_helpers": ["read_radio_reg"],
+      "vendor_sites": 5,
+      "openbrcm_primitive": "ob_d11_read32 (radio window)",
+      "observer_before": "trusted entry read on the path",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "read returns 0xffffffff (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "RADIO_WRITE",
+      "vendor_helpers": ["write_radio_reg", "mod_radio_reg"],
+      "vendor_sites": 57,
+      "openbrcm_primitive": "ob_d11_write32 / ob_d11_write16",
+      "observer_before": "guarded; suppressed after latch",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "write suppressed (no MMIO)",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "DMA_ACCESS",
+      "vendor_helpers": ["dma_txinit/txreset/rxinit/rxreset control+status"],
+      "vendor_sites": 0,
+      "openbrcm_primitive": "ob_d11_write32 (RX/TX control) + guarded teardown in ob_d3a0_quiesce/rx_reset/tx_reset",
+      "observer_before": "ob_d3a0_teardown/quiesce/rx_reset/tx_reset refuse when dev_lost",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": true,
+      "after_detection": "no DMA reset/quiesce write; memory retained; reboot required",
+      "protection_before": "PROTECTED (teardown) / NEEDS_OBSERVER (programming)",
+      "protection_after": "PROTECTED"
+    },
+    {
+      "family": "BCMA_CORE_ACCESS",
+      "vendor_helpers": ["si_core_reset / ai_core_reset / PCIe up"],
+      "vendor_sites": 0,
+      "openbrcm_primitive": "bcma_host_pci_up / bcma_core_enable / bcma_core_set_clockmode / bcma_core_disable gated on dev_lost in ob_si_powerup / ob_ucode_prepare / ob_d3a0_core_contain",
+      "observer_before": "entry guard on dev_lost",
+      "trusted_read_can_detect_loss": true,
+      "access_can_see_all_ones": false,
+      "after_detection": "core enable/reset/disable suppressed; -EIO",
+      "protection_before": "NEEDS_OBSERVER",
+      "protection_after": "PROTECTED"
+    }
+  ],
+  "gap_classes_resolved": {
+    "A_observer_missing": "all families route through the guarded primitives; the trusted entry read is the first D11 access on the path",
+    "B_observer_too_late": "the D3B postcondition (and the future PHY entry) reads MACCONTROL/MACINTMASK trusted BEFORE any SHM/OBJ or PHY/radio access",
+    "C_read_detects_but_does_not_latch": "ob_d11_read32_trusted latches on all-ones",
+    "D_latched_but_caller_continues": "the guard suppresses subsequent writes and returns dead sentinels; ob_d3b/d3a1 return -EIO",
+    "E_nested_helper_writes_after_latch": "all nested helpers (ob_ucode SHM/OBJ, DMA reset, core ops) are guarded",
+    "F_safe_already": "normal (dev_lost==false) behaviour is a direct bcma pass-through, unchanged"
+  },
+  "functions_on_path": [
+    {"function": "sub_6656c", "addr": "0x6656c", "direct": 1, "phy_radio_table": 0},
+    {"function": "sub_60f67", "addr": "0x60f67", "direct": 2, "phy_radio_table": 0},
+    {"function": "wlc_phy_init", "addr": "0xbabf5", "direct": 1, "phy_radio_table": 2},
+    {"function": "wlc_phy_anacore", "addr": "0xbaad1", "direct": 1, "phy_radio_table": 2},
+    {"function": "wlc_phy_switch_radio", "addr": "0xba302", "direct": 1, "phy_radio_table": 6},
+    {"function": "wlc_phy_switch_radio_acphy", "addr": "0xaa782", "direct": 0, "phy_radio_table": 75},
+    {"function": "sub_b018f", "addr": "0xb018f", "direct": 0, "phy_radio_table": 21},
+    {"function": "wlc_set_home_chanspec", "addr": "0x39e94", "direct": 0, "phy_radio_table": 0},
+    {"function": "wlc_phy_cal_perical", "addr": "0xb57d3", "direct": 0, "phy_radio_table": 0},
+    {"function": "wlc_phy_cals_acphy", "addr": "0xb13b5", "direct": 0, "phy_radio_table": 8}
+  ],
+  "detection_predicate_note": "Only trusted direct 32-bit D11 reads classify all-ones as device loss. Legitimate SHM/OBJDATA/table payloads (16-bit, or 32-bit data words) are NEVER classified as loss; the guard merely blocks further access after a real latch.",
+  "tests": {
+    "host": "tests/host/ob_guard_test.c (cases 1-12 + negatives), tests/host/test_device_lost_guard.py (source audit)",
+    "kunit": "none (pure host layer; no kernel API added to the guard core)",
+    "re_regression": "unchanged (no re.db schema/analysis change)"
+  }
+}

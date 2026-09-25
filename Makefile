@@ -8,7 +8,7 @@
 ifneq ($(KERNELRELEASE),)
 
 obj-m		:= openbrcm.o
-openbrcm-y	:= src/ob_main.o src/ob_core.o src/ob_si.o \
+openbrcm-y	:= src/ob_main.o src/ob_core.o src/ob_guard.o src/ob_si.o \
 		   src/ob_dma.o src/ob_irq.o src/ob_rx.o src/ob_d3a0.o \
 		   src/ob_d3a1.o src/ob_d3b.o \
 		   src/ob_fw.o src/ob_ucode.o src/ob_initvals.o \

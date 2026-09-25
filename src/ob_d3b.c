@@ -88,9 +88,9 @@ static int ob_d3b_apply_mhf(struct ob_hw *hw)
 static void ob_d3b_write_iv(struct ob_hw *hw, const struct ob_fw_iv *rec)
 {
 	if (rec->width == OB_FW_IV_WIDTH16)
-		bcma_write16(hw->core, rec->offset, (u16)rec->value);
+		ob_d11_write16(hw, rec->offset, (u16)rec->value);
 	else
-		bcma_write32(hw->core, rec->offset, rec->value);
+		ob_d11_write32(hw, rec->offset, rec->value);
 }
 
 static int ob_d3b_apply_bs(struct ob_hw *hw, const u8 *data, size_t size,
@@ -189,13 +189,13 @@ static void ob_d3b_read_post(struct ob_hw *hw, struct ob_d3b *st)
 	 * (MACCONTROL) BEFORE any SHM/OBJ access. If the window is all-ones,
 	 * latch and stop immediately - no further MMIO.
 	 */
-	p->maccontrol = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
-	if (ob_dev_lost_observe32(hw, "D3B postcondition MACCONTROL",
-				  p->maccontrol))
+	p->maccontrol = ob_d11_read32_trusted(hw, "D3B postcondition MACCONTROL",
+					       OB_D3A1_REG_MACCONTROL);
+	if (hw->dev_lost)
 		return;
-	p->macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
-	if (ob_dev_lost_observe32(hw, "D3B postcondition MACINTMASK",
-				  p->macintmask))
+	p->macintmask = ob_d11_read32_trusted(hw, "D3B postcondition MACINTMASK",
+					      OB_D3A1_REG_MACINTMASK);
+	if (hw->dev_lost)
 		return;
 
 	for (i = 0; i < OB_D3B_MHF_COUNT; i++) {
@@ -317,7 +317,7 @@ int ob_d3b_test(struct ob_hw *hw)
 		return ret;
 
 	/* sub_6656c pre-bs: read-only PHY-version status (blob 0x665c3) */
-	st->phyver_status = bcma_read16(hw->core, OB_D3B_REG_PHYVER_STATUS);
+	st->phyver_status = ob_d11_read16(hw, OB_D3B_REG_PHYVER_STATUS);
 	dev_info(hw->dev,
 		 "d3b-test: sub_6656c pre-bs phyver_status(0x3e0)=%04x (read-only)\n",
 		 st->phyver_status);

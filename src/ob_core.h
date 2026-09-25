@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <linux/device.h>
 #include <linux/bcma/bcma.h>
+#include "ob_guard.h"
 #include "ob_dma.h"
 #include "ob_irq.h"
 #include "ob_rx.h"
@@ -98,6 +99,8 @@ struct ob_hw {
 	struct ob_d3b		d3b;
 	/* monotonic device-lost latch (D11/BCMA/PCIe inaccessible) */
 	bool			dev_lost;
+	/* central access-guard accounting (diagnostics; latch is dev_lost) */
+	struct ob_guard_stat	guard_stat;
 };
 
 int ob_probe(struct bcma_device *core);

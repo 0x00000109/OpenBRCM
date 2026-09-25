@@ -45,12 +45,12 @@
 
 static void ob_d3a1_obj_write16(struct ob_hw *hw, u32 sel, u16 off, u16 val)
 {
-	bcma_write32(hw->core, OB_D3A1_REG_OBJADDR, sel | ((u32)off >> 2));
-	(void)bcma_read32(hw->core, OB_D3A1_REG_OBJADDR);
+	ob_d11_write32(hw, OB_D3A1_REG_OBJADDR, sel | ((u32)off >> 2));
+	(void)ob_d11_read32(hw, OB_D3A1_REG_OBJADDR);
 	if (off & 0x2)
-		bcma_write16(hw->core, OB_D3A1_REG_OBJDATA + 2, val);
+		ob_d11_write16(hw, OB_D3A1_REG_OBJDATA + 2, val);
 	else
-		bcma_write16(hw->core, OB_D3A1_REG_OBJDATA, val);
+		ob_d11_write16(hw, OB_D3A1_REG_OBJDATA, val);
 }
 
 static void ob_d3a1_write_shm16(struct ob_hw *hw, u16 off, u16 val)
@@ -65,11 +65,11 @@ static void ob_d3a1_write_scr16(struct ob_hw *hw, u16 off, u16 val)
 
 static u16 ob_d3a1_read_obj16(struct ob_hw *hw, u32 sel, u16 off)
 {
-	bcma_write32(hw->core, OB_D3A1_REG_OBJADDR, sel | ((u32)off >> 2));
-	(void)bcma_read32(hw->core, OB_D3A1_REG_OBJADDR);
+	ob_d11_write32(hw, OB_D3A1_REG_OBJADDR, sel | ((u32)off >> 2));
+	(void)ob_d11_read32(hw, OB_D3A1_REG_OBJADDR);
 	if (off & 0x2)
-		return bcma_read16(hw->core, OB_D3A1_REG_OBJDATA + 2);
-	return bcma_read16(hw->core, OB_D3A1_REG_OBJDATA);
+		return ob_d11_read16(hw, OB_D3A1_REG_OBJDATA + 2);
+	return ob_d11_read16(hw, OB_D3A1_REG_OBJDATA);
 }
 
 static u16 ob_d3a1_read_scr16(struct ob_hw *hw, u16 off)
@@ -83,23 +83,23 @@ static u16 ob_d3a1_read_scr16(struct ob_hw *hw, u16 off)
  */
 static void ob_d3a1_macphyclk_set(struct ob_hw *hw, bool on)
 {
-	u32 v = bcma_aread32(hw->core, BCMA_IOCTL);
+	u32 v = ob_axi_read32(hw, BCMA_IOCTL);
 
 	if (on)
 		v |= OB_D3A0_IOCTL_MPCLKE;
 	else
 		v &= ~OB_D3A0_IOCTL_MPCLKE;
-	bcma_awrite32(hw->core, BCMA_IOCTL, v);
-	(void)bcma_aread32(hw->core, BCMA_IOCTL);
+	ob_axi_write32(hw, BCMA_IOCTL, v);
+	(void)ob_axi_read32(hw, BCMA_IOCTL);
 }
 
 static u32 ob_d3a1_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 {
-	u32 old = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
+	u32 old = ob_d11_read32(hw, OB_D3A1_REG_MACCONTROL);
 	u32 new = (old & ~mask) | val;
 
-	bcma_write32(hw->core, OB_D3A1_REG_MACCONTROL, new);
-	return bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
+	ob_d11_write32(hw, OB_D3A1_REG_MACCONTROL, new);
+	return ob_d11_read32(hw, OB_D3A1_REG_MACCONTROL);
 }
 
 /* ---- bounded FIFO completion poll (vendor bound 0xd1 / step 10) --------- */
@@ -122,7 +122,7 @@ static int ob_d3a1_poll16(struct ob_hw *hw, u16 off,
 	u32 n;
 
 	for (n = 0; n < OB_D3A1_FIFO_POLL_MAX_ITERS + 1u; n++) {
-		u16 v = bcma_read16(hw->core, off);
+		u16 v = ob_d11_read16(hw, off);
 		bool done = ob_d3a1_poll_done(kind, v);
 
 		*last = v;
@@ -146,7 +146,7 @@ static int ob_d3a1_poll16(struct ob_hw *hw, u16 off,
 static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 {
 	struct ob_d3a1 *st = &hw->d3a1;
-	u32 machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
+	u32 machwcap = ob_d11_read32(hw, OB_D3A1_REG_MACHWCAP);
 	u16 v = ob_d3a1_fifo_flush_val(machwcap);
 	u16 last = 0;
 	u32 i;
@@ -155,8 +155,8 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 	st->fifo_last_expired_index = -1;
 
 	/* 0x542 = v, 0x540 = 5, bounded completion poll on 0x540 bit0 */
-	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOFLUSH, v);
-	bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOCMD, 5);
+	ob_d11_write16(hw, OB_D3A1_REG_XMTFIFOFLUSH, v);
+	ob_d11_write16(hw, OB_D3A1_REG_XMTFIFOCMD, 5);
 	st->fifo_fixed_writes += OB_D3A1_FIFO_FIXED_WRITES;
 	if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMTFIFOCMD, OB_D3A1_POLL_540,
 			   &st->fifo_poll540_iters, &last)) {
@@ -174,17 +174,17 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 	for (i = 0; i < OB_D3A1_FIFO_TABLE1_LEN; i++) {
 		u32 entry = ob_d3a1_fifo_table1(i);
 
-		bcma_write16(hw->core, OB_D3A1_REG_XMTFIFORQPRI,
+		ob_d11_write16(hw, OB_D3A1_REG_XMTFIFORQPRI,
 			     ob_d3a1_fifo7_rqpri(entry, v));
-		bcma_write16(hw->core, OB_D3A1_REG_XMTTPLATETXPTR,
+		ob_d11_write16(hw, OB_D3A1_REG_XMTTPLATETXPTR,
 			     ob_d3a1_fifo7_txptr(entry));
-		bcma_write16(hw->core, OB_D3A1_REG_XMTFIFODEF,
+		ob_d11_write16(hw, OB_D3A1_REG_XMTFIFODEF,
 			     ob_d3a1_fifo7_def(entry));
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_54E,
+		ob_d11_write16(hw, OB_D3A1_REG_XMT_54E,
 			     ob_d3a1_fifo7_54e(entry));
-		bcma_write16(hw->core, OB_D3A1_REG_XMTTPLATEPTR,
+		ob_d11_write16(hw, OB_D3A1_REG_XMTTPLATEPTR,
 			     OB_D3A1_FIFO_VAL_TPLATE);
-		bcma_write16(hw->core, OB_D3A1_REG_XMTFIFOPRIRDY,
+		ob_d11_write16(hw, OB_D3A1_REG_XMTFIFOPRIRDY,
 			     ob_d3a1_fifo7_prirdy(entry));
 		st->fifo7_writes += 6;
 	}
@@ -199,13 +199,13 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 		u16 programmed = ob_d3a1_fifo42_x530(i);
 		u32 iters;
 
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_534,
+		ob_d11_write16(hw, OB_D3A1_REG_XMT_534,
 			     ob_d3a1_fifo42_x534(i));
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_536,
+		ob_d11_write16(hw, OB_D3A1_REG_XMT_536,
 			     ob_d3a1_fifo42_x536(i));
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_532,
+		ob_d11_write16(hw, OB_D3A1_REG_XMT_532,
 			     ob_d3a1_fifo42_x532(i));
-		bcma_write16(hw->core, OB_D3A1_REG_XMT_530, programmed);
+		ob_d11_write16(hw, OB_D3A1_REG_XMT_530, programmed);
 		if (ob_d3a1_poll16(hw, OB_D3A1_REG_XMT_530, OB_D3A1_POLL_530,
 				   &iters, &last)) {
 			st->fifo_poll_expired++;
@@ -226,7 +226,7 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 		st->fifo_poll530_iters += iters;
 		if (iters > st->fifo_poll530_max)
 			st->fifo_poll530_max = iters;
-		(void)bcma_read16(hw->core, OB_D3A1_REG_XMT_530);
+		(void)ob_d11_read16(hw, OB_D3A1_REG_XMT_530);
 		st->fifo42_writes += 4;
 	}
 
@@ -253,8 +253,8 @@ static int ob_d3a1_fifo_fixup(struct ob_hw *hw)
 
 static int ob_d3a1_check_d2b_exit(struct ob_hw *hw)
 {
-	u32 mctrl = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
-	u32 macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
+	u32 mctrl = ob_d11_read32(hw, OB_D3A1_REG_MACCONTROL);
+	u32 macintmask = ob_d11_read32(hw, OB_D3A1_REG_MACINTMASK);
 	u32 fs0 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0);
 	u32 fs1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
 	u32 fs2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
@@ -307,7 +307,7 @@ static int ob_d3a1_t1(struct ob_hw *hw)
 	ob_d3a1_write_shm16(hw, OB_D3A1_SHM_MAXANTCNT,
 			    OB_D3A1_SHM_MAXANTCNT_VAL);
 
-	bcma_write32(hw->core, OB_D3A1_REG_INTRCVLAZY0, OB_D3A1_INTRCVLAZY);
+	ob_d11_write32(hw, OB_D3A1_REG_INTRCVLAZY0, OB_D3A1_INTRCVLAZY);
 
 	mctrl = ob_d3a1_mctrl_update(hw, OB_D3A1_MACCONTROL_MASK,
 				     OB_D3A1_MACCONTROL_VAL);
@@ -318,12 +318,12 @@ static int ob_d3a1_t1(struct ob_hw *hw)
 		return -EIO;
 	}
 
-	bcma_write32(hw->core, OB_D3A1_REG_TSF_CFPREP, OB_D3A1_TSF_CFPREP);
-	bcma_write32(hw->core, OB_D3A1_REG_TSF_CFPSTART, OB_D3A1_TSF_CFPSTART);
+	ob_d11_write32(hw, OB_D3A1_REG_TSF_CFPREP, OB_D3A1_TSF_CFPREP);
+	ob_d11_write32(hw, OB_D3A1_REG_TSF_CFPSTART, OB_D3A1_TSF_CFPSTART);
 	st->tsf_cfpstart_written = true;
 
-	bcma_write32(hw->core, OB_D3A1_REG_MACINTSTATUS, OB_D3A1_MI_GP1);
-	bcma_write32(hw->core, OB_D3A1_REG_INTCONTROL0_MASK, OB_D3A1_I_RI);
+	ob_d11_write32(hw, OB_D3A1_REG_MACINTSTATUS, OB_D3A1_MI_GP1);
+	ob_d11_write32(hw, OB_D3A1_REG_INTCONTROL0_MASK, OB_D3A1_I_RI);
 
 	ob_d3a1_macphyclk_set(hw, true);
 
@@ -332,7 +332,7 @@ static int ob_d3a1_t1(struct ob_hw *hw)
 		dly = ob_d3a1_fast_pwrup_delay(hw);
 		st->fastpwrup_dly = dly;
 		st->fastpwrup_dly_sw = dly;
-		bcma_write16(hw->core, OB_D3A1_REG_FASTPWRUP_DLY, dly);
+		ob_d11_write16(hw, OB_D3A1_REG_FASTPWRUP_DLY, dly);
 		if (hw->core->id.rev > 0x28u)
 			st->fastpwrup_dly_sw = (u16)(dly +
 						     ob_d3a1_sub5fdca(hw));
@@ -340,7 +340,7 @@ static int ob_d3a1_t1(struct ob_hw *hw)
 
 	ob_d3a1_write_shm16(hw, OB_D3A1_SHM_MACHWVER,
 			    (u16)hw->core->id.rev);
-	machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
+	machwcap = ob_d11_read32(hw, OB_D3A1_REG_MACHWCAP);
 	if (hw->core->id.rev > 0xcu) {
 		ob_d3a1_write_shm16(hw, OB_D3A1_SHM_MACHWCAP_L,
 				    (u16)(machwcap & 0xffffu));
@@ -359,23 +359,23 @@ static int ob_d3a1_t1(struct ob_hw *hw)
 	ob_d3a1_write_shm16(hw, OB_D3A1_SHM_LFBL, OB_D3A1_LFBL_DEFAULT);
 
 	if (hw->core->id.rev > 0xfu) {
-		u16 ifs = bcma_read16(hw->core, OB_D3A1_REG_IFS_CTL) &
+		u16 ifs = ob_d11_read16(hw, OB_D3A1_REG_IFS_CTL) &
 			  OB_D3A1_IFS_CTL_MASK;
 
-		bcma_write16(hw->core, OB_D3A1_REG_IFS_CTL, ifs);
-		bcma_write16(hw->core, OB_D3A1_REG_IFS_AIFSN,
+		ob_d11_write16(hw, OB_D3A1_REG_IFS_CTL, ifs);
+		ob_d11_write16(hw, OB_D3A1_REG_IFS_AIFSN,
 			     OB_D3A1_IFS_AIFSN_VAL);
 	}
 
 	if (!ob_d3a0_host_irq_disabled(
-		    bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK))) {
+		    ob_d11_read32(hw, OB_D3A1_REG_MACINTMASK))) {
 		dev_err(hw->dev, "d3a1-test: macintmask not 0 after T1\n");
 		return -EIO;
 	}
 	dev_info(hw->dev,
 		 "d3a1-test: T1 complete maccontrol=%08x intrcvlazy=%08x intmask0=%08x fastpwrup=%u\n",
-		 mctrl, bcma_read32(hw->core, OB_D3A1_REG_INTRCVLAZY0),
-		 bcma_read32(hw->core, OB_D3A1_REG_INTCONTROL0_MASK),
+		 mctrl, ob_d11_read32(hw, OB_D3A1_REG_INTRCVLAZY0),
+		 ob_d11_read32(hw, OB_D3A1_REG_INTCONTROL0_MASK),
 		 st->fastpwrup_dly);
 	return 0;
 }
@@ -476,16 +476,16 @@ static int ob_d3a1_switch_macfreq(struct ob_hw *hw)
 
 	frac_lo = st->tsf_frac_lo;
 	frac_hi = st->tsf_frac_hi;
-	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_L, frac_lo);
-	bcma_write16(hw->core, OB_D3A1_REG_TSF_FRAC_H, frac_hi);
+	ob_d11_write16(hw, OB_D3A1_REG_TSF_FRAC_L, frac_lo);
+	ob_d11_write16(hw, OB_D3A1_REG_TSF_FRAC_H, frac_hi);
 
 	/*
 	 * Stable readback of D11 0x62e/0x630 is NOT vendor-proven, so this is
 	 * observability only: record the readback and classify it as unproven.
 	 * Do NOT invent an equality gate.
 	 */
-	rb_lo = bcma_read16(hw->core, OB_D3A1_REG_TSF_FRAC_L);
-	rb_hi = bcma_read16(hw->core, OB_D3A1_REG_TSF_FRAC_H);
+	rb_lo = ob_d11_read16(hw, OB_D3A1_REG_TSF_FRAC_L);
+	rb_hi = ob_d11_read16(hw, OB_D3A1_REG_TSF_FRAC_H);
 	st->tsf_frac_lo_rb = rb_lo;
 	st->tsf_frac_hi_rb = rb_hi;
 	st->tsf_frac_rb_proven = false;
@@ -599,27 +599,30 @@ static int ob_d3a1_validate(struct ob_hw *hw)
 	 * registers FIRST; an all-ones value latches the central device-lost
 	 * state and skips the rest of the validation (no further MMIO).
 	 */
-	mctrl = bcma_read32(hw->core, OB_D3A1_REG_MACCONTROL);
-	if (ob_dev_lost_observe32(hw, "D3A1 validate MACCONTROL", mctrl))
+	mctrl = ob_d11_read32_trusted(hw, "D3A1 validate MACCONTROL",
+				      OB_D3A1_REG_MACCONTROL);
+	if (hw->dev_lost)
 		return -EIO;
-	macintmask = bcma_read32(hw->core, OB_D3A1_REG_MACINTMASK);
-	if (ob_dev_lost_observe32(hw, "D3A1 validate MACINTMASK", macintmask))
+	macintmask = ob_d11_read32_trusted(hw, "D3A1 validate MACINTMASK",
+					   OB_D3A1_REG_MACINTMASK);
+	if (hw->dev_lost)
 		return -EIO;
 
-	intrcvlazy = bcma_read32(hw->core, OB_D3A1_REG_INTRCVLAZY0);
-	intmask0 = bcma_read32(hw->core, OB_D3A1_REG_INTCONTROL0_MASK);
-	machwcap = bcma_read32(hw->core, OB_D3A1_REG_MACHWCAP);
-	ioc = bcma_aread32(hw->core, BCMA_IOCTL);
+	intrcvlazy = ob_d11_read32(hw, OB_D3A1_REG_INTRCVLAZY0);
+	intmask0 = ob_d11_read32(hw, OB_D3A1_REG_INTCONTROL0_MASK);
+	machwcap = ob_d11_read32(hw, OB_D3A1_REG_MACHWCAP);
+	ioc = ob_axi_read32(hw, BCMA_IOCTL);
 	mburst = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MBURST);
 	maxant = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MAXANTCNT);
 	machwver = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWVER);
 	capl = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_L);
 	caph = ob_ucode_read_shm16(hw, OB_D3A1_SHM_MACHWCAP_H);
-	rx_control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
-	rx_high = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
-	rx_s0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-	rx_s1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
-	if (ob_dev_lost_observe32(hw, "D3A1 validate RX_STATUS0", rx_s0))
+	rx_control = ob_d11_read32(hw, OB_D11_RX_CONTROL);
+	rx_high = ob_d11_read32(hw, OB_D11_RX_ADDRHIGH);
+	rx_s0 = ob_d11_read32_trusted(hw, "D3A1 validate RX_STATUS0",
+				      OB_D11_RX_STATUS0);
+	rx_s1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
+	if (hw->dev_lost)
 		return -EIO;
 
 	if (mctrl != OB_D3A1_MACCONTROL_EXPECTED) {
@@ -661,10 +664,10 @@ static int ob_d3a1_validate(struct ob_hw *hw)
 
 	/* Deterministic T1 register readbacks (exact equality). */
 	{
-		u32 cfprep = bcma_read32(hw->core, OB_D3A1_REG_TSF_CFPREP);
-		u16 fastp = bcma_read16(hw->core, OB_D3A1_REG_FASTPWRUP_DLY);
-		u16 ifs_ctl = bcma_read16(hw->core, OB_D3A1_REG_IFS_CTL);
-		u16 ifs_aifsn = bcma_read16(hw->core, OB_D3A1_REG_IFS_AIFSN);
+		u32 cfprep = ob_d11_read32(hw, OB_D3A1_REG_TSF_CFPREP);
+		u16 fastp = ob_d11_read16(hw, OB_D3A1_REG_FASTPWRUP_DLY);
+		u16 ifs_ctl = ob_d11_read16(hw, OB_D3A1_REG_IFS_CTL);
+		u16 ifs_aifsn = ob_d11_read16(hw, OB_D3A1_REG_IFS_AIFSN);
 
 		if (cfprep != OB_D3A1_TSF_CFPREP) {
 			dev_err(hw->dev,
@@ -685,11 +688,11 @@ static int ob_d3a1_validate(struct ob_hw *hw)
 				"d3a1-test: tsf_cfpstart write not accounted\n");
 			ret = -EIO;
 		}
-		st->tsf_cfpstart_rb = bcma_read32(hw->core,
+		st->tsf_cfpstart_rb = ob_d11_read32(hw,
 						  OB_D3A1_REG_TSF_CFPSTART);
-		st->tsf_cfpstrt_l_rb = bcma_read16(hw->core,
+		st->tsf_cfpstrt_l_rb = ob_d11_read16(hw, 
 						   OB_D3A1_REG_TSF_CFPSTRT_L);
-		st->tsf_cfpstrt_h_rb = bcma_read16(hw->core,
+		st->tsf_cfpstrt_h_rb = ob_d11_read16(hw, 
 						   OB_D3A1_REG_TSF_CFPSTRT_H);
 		st->tsf_cfpstart_rb_proven = false;
 		dev_info(hw->dev,
