@@ -27,7 +27,7 @@
     "provenance_class": "DETERMINISTIC_CONSTANT (immediate from a stack array, not hardware/runtime derived)",
     "writer": "sub_a7089 @0xaa364: mov %dl,0x8be(%r15) inside a 2-iteration loop with `inc %r15`",
     "writer_detail": "arr1 = {0x19,0x1a} at rbp-0x70 (set at 0xaa2ef/0xaa2fc); iteration i=0 stores 0x19 to +0x8be, i=1 stores 0x1a to +0x8bf; the `cmovs` negative-only path is not taken for 0x1a",
-    "overlapping_store": "YES — the single store instruction (literal disp 0x8be) has an effective address of base+0x8be+r15 where r15 increments per iteration; it covers +0x8be and +0x8bf. This is why the prior literal-displacement / `re field-writers` scan missed +0x8bf.",
+    "overlapping_store": "YES — the single store instruction (literal disp 0x8be) has an effective address of base+0x8be+r15 where r15 increments per iteration; it covers +0x8be and +0x8bf. Tool-native as of T8 (`provenance=induction`).",
     "implicit_zero": "the 0x920 sub-object is osl_memset(0) at attach, so +0x8bf is 0 until the producer runs",
     "memcpy_struct_copy": "none (no 0x920-sized copy into the sub-object; the 0x920 constants elsewhere are register/table offsets, not copy sizes)",
     "wider_store_covering_8bf": "none (no byte@0x8bf, word@0x8be, dword@0x8bc, qword@0x8b8 anywhere in .text)"
@@ -53,11 +53,21 @@
     "re": [
       "re fn sub_a7089 --asm  (0xaa255 load r13; 0xaa2b0 read +0x8bf; 0xaa289 read +0x8be; 0xaa364 store; 0xaa3c4 set +0x8bd)",
       "re fn wlc_phy_attach_acphy --asm  (0xa1997 [pi+0x138]=osl_malloc(0x920); 0xa19ae osl_memset(0,0x920))",
-      "re field-writers --field 0x138  (wlc_phy_attach_acphy @0xa1997 store)")
+      "re field-writers --field 0x138  (wlc_phy_attach_acphy @0xa1997 store)",
+      "re field-writers --field 0x8bf  (sub_a7089 @0xaa364 store value=0x1a — T8 tool-native)",
+      "re packet --fn sub_a7089 --fields  (0xaa364 +0x8be=0x19, +0x8bf=0x1a, provenance=induction, confidence=EXACT, base_load=0x138)"
     ],
     "ghidra": "Decompile FUN_001a7089: local_78={0x19,0x1a}; loop `*(char*)(lVar17+0x8be)=cVar13; lVar17++;` while(lVar16!=8); consumer reads +0x8be and +0x8bf at lVar4+0x8be/+0x8bf",
-    "manual": "objdump -d: only access to 0x8bf in .text is `aa2b0 movzbl 0x8bf(%r13),%ecx`; raw producer loop `aa364 mov %dl,0x8be(%r15)` + `aa39a inc %r15`, `cmp $8,%r13` -> 2 iterations",
-    "gates": "re regress PASS, re verify --strict PASS (unchanged by this analysis-only task)"
+    "manual": "objdump -d (pre-T8): only access to 0x8bf in .text is `aa2b0 movzbl 0x8bf(%r13),%ecx`; raw producer loop `aa364 mov %dl,0x8be(%r15)` + `aa39a inc %r15`, `cmp $8,%r13` -> 2 iterations",
+    "gates": "re regress PASS, re verify --strict PASS; T8: re regress PASS (T8 induction +0x8be=0x19 / +0x8bf=0x1a), scripts/verify_induction.py PASS (1 positive + 6 negative fixtures)"
+  },
+  "t8_tooling": {
+    "status": "RESOLVED",
+    "tooling_commit": "iced/test aa67a95",
+    "method": "bounded bottom-tested loop detection + constant pointer-induction enumeration + loop re-execution value domain (frame-array + register-spill aware)",
+    "re_field_writers_0x8bf": "0xaa364 sub_a7089 store a0 width=8 value=0x1a",
+    "re_packet_sub_a7089": "+0x8be=0x19, +0x8bf=0x1a (induction, EXACT, base_load=0x138)",
+    "manual_objdump_still_required": false
   },
   "supersedes": [
     "value_provenance.json pi+0x8bf 'no store found; UNKNOWN; COMPUTED_RUNTIME'",

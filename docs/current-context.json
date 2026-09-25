@@ -21,12 +21,12 @@
     "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
     "re_db": {
       "exists": true,
-      "file_sha256": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+      "file_sha256": "8a4bc47abb699f908746c64476c4e8a18849c5e8d21f89e093414b8e196d3fec",
       "meta_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
       "path": "/media/kartashoff/Storage/opensource/iced/test/re.db",
       "schema_version": "5"
     },
-    "tooling_commit": "064026509ae630fc2b2cf763362e1e107c243a23"
+    "tooling_commit": "aa67a9553decd85a93abad1bfcb0c588326cb04d"
   },
   "canonical_sources": [
     "AGENTS.md",
@@ -53,17 +53,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba"
+    "head": "6d6438c607cb5e68bd17db9547f60992ec8c5bf9"
   },
   "current_milestone": {
     "artifact": "docs/m34d4/value_provenance.json",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba",
+  "generated_from_head": "6d6438c607cb5e68bd17db9547f60992ec8c5bf9",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "1ca3898f405ed697a356ce726e6c36487cfcbd147c9dcc249a00ba8327331d7c"
+    "sources_hash": "f5d7734852accb77196f01c106b0816cbacfc57513026ef933d282795e8da462"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",
@@ -233,7 +233,7 @@
     "re": {
       "exists": true,
       "path": "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/target/release/re",
-      "sha256": "77e9ec5a97aedf54b10b59efd281a790a3ce04e5422bce4ef4742952d4634618"
+      "sha256": "eda31b21bfc4c4ee39723a206f14f151d9451d5f308a4f3ede895e4175929c66"
     },
     "re_bootstrap": {
       "present": true,
@@ -241,7 +241,7 @@
     },
     "re_db": {
       "exists": true,
-      "file_sha256": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+      "file_sha256": "8a4bc47abb699f908746c64476c4e8a18849c5e8d21f89e093414b8e196d3fec",
       "meta_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
       "path": "/media/kartashoff/Storage/opensource/iced/test/re.db",
       "schema_version": "5"

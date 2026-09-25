@@ -362,6 +362,21 @@ Stated exactly:
   `docs/m34d4/pi_8bf_provenance.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
+- **T8 — incrementing-pointer store coverage** = tooling `IMPLEMENTED` /
+  `STATIC TESTED` (iced/test `aa67a95`; no OpenBRCM runtime change, no
+  hardware). Canonical `re` now detects bottom-tested bounded loops with
+  constant pointer induction and enumerates the effective object-relative
+  offsets with per-iteration values where provable (loop re-execution with a
+  frame-array + register-spill aware value domain). `re field-writers --field
+  0x8bf` → `0xaa364 sub_a7089 store a0 width=8 value=0x1a`; `re packet --fn
+  sub_a7089 --fields` → `+0x8be=0x19, +0x8bf=0x1a (induction, EXACT,
+  base_load=0x138)` — no manual `objdump` required. The `pi+0x8bf` value (0x1a)
+  and its provenance are unchanged; only the derivation is now tool-native.
+  No schema change; `re regress`/`re verify --strict` + `verify_edges`/
+  `verify_tables`/`verify_decode` PASS; 1 positive + 6 negative fixtures
+  (`scripts/verify_induction.py`) PASS; Ghidra `FUN_001a7089` agrees. Prior
+  relocation/dataflow/indirect false-positive fixes remain intact.
+  `docs/re-tooling.md` §9, `docs/m34d4/pi_8bf_provenance.*`.
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
   (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
   never a source of truth) + `scripts/generate-current-context.py`

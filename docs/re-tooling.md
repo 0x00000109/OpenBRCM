@@ -426,3 +426,48 @@ Tooling gap filed during the M3.4D4A reachability recovery (analysis only; see
   `wlc_phy_cal_perical` the reason-argument jump table (case 4/5/6 → AC
   calibration) had to be mapped with the Ghidra decompiler. Desired:
   `re switch <fn> --targets` listing each indirect jump-table target.
+
+Tooling gap filed during the M3.4D4 `pi+0x8bf` provenance recovery (analysis
+only; see `docs/m34d4/pi_8bf_provenance.md`):
+
+- **T8 — incrementing-pointer store coverage. RESOLVED (2026-09, iced/test
+  `aa67a95`).** `re field-writers`/`re fields` observed only the first
+  iteration's offset for a store whose base register is advanced inside a loop
+  (`mov %dl,0x8be(%r15)` + `inc %r15` + `cmp $8,%r13` / `jne`), so the second
+  effective writer (`+0x8bf = 0x1a`) was invisible and required manual
+  `objdump`.
+  - **Method (general; no address/offset/function/chip hardcoding).**
+    `analyze_facts` now detects bottom-tested natural loops (backward branch),
+    parses a constant guard (`cmp <reg>, <imm|const-reg>` + `jcc`), identifies
+    registers advanced only by constant self-adjusts (`add/sub/inc/dec` of a
+    constant, `lea reg,[reg+disp]`), and re-executes the loop body for the
+    provable trip count, emitting one field site per iteration with the evolved
+    object-relative offset. A loop-local value domain resolves a store's source
+    from a local constant frame array (`lea reg,[rbp+disp]` + immediate stores,
+    last-write-before-load) and follows compiler register spills/restores around
+    calls (`mov [rbp-x],reg` … `mov reg,[rbp-x]`), so per-iteration values are
+    recovered where statically provable.
+  - **Confidence model.** `EXACT` only when: the loop is bottom-tested and
+    branch-free apart from the back-edge; the guard counter has a constant
+    initial value and constant step with an exact trip count ≤ 64; the base
+    register is written inside the loop only by constant self-adjusts and has a
+    single reaching definition in the loop-entry basic block (`entry_block_writes
+    == 1`). Otherwise no induction row is emitted (no false `EXACT`). Unbounded
+    loops, runtime-variable stride/iteration count, branch-dependent increments,
+    pointer reassignment/escape, and ambiguous merged base identities are
+    rejected.
+  - **Result.** `re field-writers --field 0x8bf` → `0xaa364  sub_a7089  store
+    a0  width=8  value=0x1a`; `re packet --fn sub_a7089 --fields` →
+    `+0x8be=0x19, +0x8bf=0x1a (induction, EXACT, base_load=0x138)`. Ghidra
+    `Decompile FUN_001a7089` independently agrees (`local_78={0x19,0x1a}`,
+    `*(char*)(lVar17+0x8be)=cVar13; lVar17++` while `lVar16!=8`).
+  - **Coverage/fixtures.** `re regress` asserts the fixture
+    (`T8 induction +0x8be=0x19` / `+0x8bf=0x1a`); `scripts/verify_induction.py`
+    (iced/test) assembles and indexes 1 positive + 6 negative synthetic loops
+    (unbounded; runtime stride; runtime trip count; branch-dependent increment;
+    pointer reassignment; ambiguous merged base) and requires the positives to
+    be `EXACT` and the negatives to produce zero induction rows.
+  - **Affected facts.** Only `docs/m34d4/pi_8bf_provenance.*` (derivation now
+    tool-native; value/provenance conclusion unchanged). The prior
+    relocation/dataflow and indirect-resolution false-positive fixes are
+    unchanged (`re regress` PASS, `re verify --strict` PASS).

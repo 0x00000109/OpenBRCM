@@ -111,10 +111,32 @@ independent of the band selector `r14`.
 
 **Value = `0x1a`; class = deterministic constant (stack-array immediate).**
 
-## 6. Tooling gap
+## 6. Tooling gap — RESOLVED (T8)
 
-`re field-writers` / `re fields` do not model a store whose base register is
-incremented in a loop (`mov %dl,0x8be(%r15)` + `inc %r15`), so the `+0x8bf`
-writer was invisible. Filed as **T8 — incrementing-pointer store coverage**.
-No tooling change made (a correct general fix needs value-range tracking of the
-store base; not small, and this task is analysis-only).
+Originally `re field-writers` / `re fields` did not model a store whose base
+register is incremented in a loop (`mov %dl,0x8be(%r15)` + `inc %r15`), so the
+`+0x8bf` writer was invisible. Filed as **T8 — incrementing-pointer store
+coverage**; no tooling change was made then (this analysis used manual
+`objdump`).
+
+**RESOLVED** in canonical `re` (iced/test `aa67a95`). `analyze_facts` now
+detects bottom-tested bounded loops, identifies constant
+incrementing/decrementing pointer inductions, and enumerates the effective
+object-relative offsets with per-iteration values where statically provable
+(linear pass + bounded loop re-execution with an `rbp`/frame-array spill-aware
+value domain). The writer is now discovered by the tool alone:
+
+```
+$ re field-writers --field 0x8bf
+0xaa364  sub_a7089   store  a0  width=8  value=0x1a
+$ re packet --fn sub_a7089 --fields
+0xaa364  +0x8be = 0x19  induction  EXACT  base_load=0x138
+0xaa364  +0x8bf = 0x1a  induction  EXACT  base_load=0x138
+```
+
+No manual disassembly is required any more. The value/provenance conclusion of
+this analysis is unchanged (`+0x8be = 0x19`, `+0x8bf = 0x1a`, deterministic
+stack-array constants); only the derivation is now tool-native. See
+[`../../re-tooling.md` §9](../re-tooling.md) and the regression/false-positive
+fixtures in iced/test (`re regress`, `scripts/verify_induction.py`).
+

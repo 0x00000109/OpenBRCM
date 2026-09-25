@@ -9,14 +9,14 @@ Generated 2026-09-25. Repository of record:
 
 ## 0. Persistence status (important)
 
-- **OpenBRCM HEAD** `7c5425c` on branch `m34d3b-band-init-test`, **24 commits
+- **OpenBRCM HEAD** `6d6438c` on branch `m34d3b-band-init-test`, **25 commits
   ahead of `origin/main`** (`main` = `06d60d6`). **The D3B-implementation and
-  the whole D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT chain are
-  UNMERGED**; `origin/m34d3b-band-init-test` is 1 commit behind HEAD.
-- **RE tooling** `iced/test` HEAD `0640265` on `master`; `re.db` is
-  **gitignored** (generated). Current `re.db` sha256
-  `f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633`
-  (schema v5). Hashes cited in earlier docs (`44dae60d…`, `185f0bd8…`) are
+  the whole D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 chain
+  are UNMERGED**; `origin/m34d3b-band-init-test` is 2 commits behind HEAD.
+- **RE tooling** `iced/test` HEAD `aa67a95` on `master` (T8 incrementing-pointer
+  store coverage); `re.db` is **gitignored** (generated). Current `re.db` sha256
+  `8a4bc47abb699f908746c64476c4e8a18849c5e8d21f89e093414b8e196d3fec`
+  (schema v5). Hashes cited in earlier docs (`f4b86669…`, `44dae60d…`) are
   **stale**.
 - Untracked local helper: `scripts/runtime-test.sh` (not a result artifact).
 
@@ -60,8 +60,9 @@ Generated 2026-09-25. Repository of record:
 | D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da`/`cf9738e` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
 | CONTEXT-INFRA | current-context index + `re packet` + governance | (this commit) | IMPLEMENTED / STATIC TESTED | `docs/current-context.json`, `docs/state/current-state.json`, `scripts/generate-current-context.py`, `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`, `AGENTS.md`, `docs/re-tooling.md`, `.opencode/` |
 | D4D-INDIRECT-OPS | `wlc_bmac_init` ops-table slots `+0xa0`/`+0xd8` resolved | (this commit) | ANALYSIS ONLY | `docs/m34d4/indirect_ops_table_resolution.{md,json}` |
-| D4D-PI-8BF | `pi+0x8bf` = `0x1a` (incrementing-pointer writer) | (this commit) | ANALYSIS ONLY | `docs/m34d4/pi_8bf_provenance.{md,json}` |
-| CACHE-OPT | DeepSeek prompt-cache optimization + telemetry | (this commit) | IMPLEMENTED / STATIC TESTED | `docs/cache/`, `.opencode/plugins/openbrcm-cache.ts`, `scripts/cache_telemetry.py`, `scripts/cache-report.py`, `tests/host/test_cache_*.py` |
+| D4D-PI-8BF | `pi+0x8bf` = `0x1a` (incrementing-pointer writer) | `7c5425c` | ANALYSIS ONLY (T8 now tool-native) | `docs/m34d4/pi_8bf_provenance.{md,json}` |
+| CACHE-OPT | DeepSeek prompt-cache optimization + telemetry | `6d6438c` | IMPLEMENTED / STATIC TESTED | `docs/cache/`, `.opencode/plugins/openbrcm-cache.ts`, `scripts/cache_telemetry.py`, `scripts/cache-report.py`, `tests/host/test_cache_*.py` |
+| T8 | canonical `re`: bounded incrementing-pointer store coverage | iced/test `aa67a95` | IMPLEMENTED / STATIC TESTED | iced/test `re_support/mod.rs`, `scripts/verify_induction.py`, `scripts/fixtures/induction_fixtures.s`; `docs/m34d4/pi_8bf_provenance.*`, `docs/re-tooling.md` §9 |
 
 ## 4. Required knowledge → persistent location
 

@@ -4,25 +4,25 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba",
+      "head": "6d6438c607cb5e68bd17db9547f60992ec8c5bf9",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 24,
-      "ahead_of_origin_branch": 1,
+      "ahead_of_origin_main": 25,
+      "ahead_of_origin_branch": 2,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the CACHE-OPT commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT chain is UNMERGED relative to main"
+      "note": "snapshot before the T8 doc commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
-      "head": "064026509ae630fc2b2cf763362e1e107c243a23",
+      "head": "aa67a9553decd85a93abad1bfcb0c588326cb04d",
       "branch": "master",
       "re_db": {
         "tracked": false,
         "gitignored": true,
-        "sha256_current": "f4b86669838efc0f979fbbcf1ffd20d71b3fa5d049eed3f1743c0a97640cf633",
+        "sha256_current": "8a4bc47abb699f908746c64476c4e8a18849c5e8d21f89e093414b8e196d3fec",
         "schema": "v5",
-        "note": "generated/ignored; rebuild with `re db build`; schema v5 (unchanged by the packet command)"
+        "note": "generated/ignored; rebuild with `re db build`; schema v5 (T8 is additive analysis, no schema change)"
       },
-      "re_binary_sha256_current": "77e9ec5a97aedf54b10b59efd281a790a3ce04e5422bce4ef4742952d4634618",
+      "re_binary_sha256_current": "eda31b21bfc4c4ee39723a206f14f151d9451d5f308a4f3ede895e4175929c66",
       "untracked": ["html/"]
     }
   },
@@ -353,6 +353,33 @@
           "--validate rejects duplicate fact IDs, broken refs, PROVEN->SUPERSEDED, missing milestone, unsupported schema",
           "re packet is additive, bounded, deterministic; existing subcommands unchanged; re regress/verify PASS",
           "AGENTS.md adds PROVEN-fact immutability, one-blocker-one-task, startup/current-context, delta-only output"
+      ]
+  },
+  {
+      "id": "T8",
+      "milestone": "canonical re: bounded incrementing-pointer store coverage",
+      "subject": "re field-writers/fields/packet now enumerate per-iteration induction store offsets + values",
+      "status": "IMPLEMENTED / STATIC TESTED",
+      "merged": false,
+      "branch": "master",
+      "repo": "iced/test",
+      "commit": "aa67a95",
+      "artifacts": [
+          "/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/src/bin/re_support/mod.rs",
+          "/media/kartashoff/Storage/opensource/iced/test/scripts/verify_induction.py",
+          "/media/kartashoff/Storage/opensource/iced/test/scripts/fixtures/induction_fixtures.s",
+          "docs/m34d4/pi_8bf_provenance.md",
+          "docs/m34d4/pi_8bf_provenance.json",
+          "docs/re-tooling.md"
+      ],
+      "key_facts": [
+          "general: bottom-tested bounded loops + constant pointer induction; no function/address/offset/chip hardcoding",
+          "re field-writers --field 0x8bf -> 0xaa364 sub_a7089 store a0 width=8 value=0x1a",
+          "re packet --fn sub_a7089 --fields -> +0x8be=0x19, +0x8bf=0x1a (induction, EXACT, base_load=0x138)",
+          "no schema change; re regress + re verify --strict + verify_edges/tables/decode PASS",
+          "6 negative fixtures (unbounded, runtime stride/count, branch-dependent, reassignment, merged base) produce zero induction rows",
+          "Ghidra FUN_001a7089 decompile independently agrees (local_78={0x19,0x1a})",
+          "value/provenance of pi+0x8bf unchanged (0x1a); only the derivation is now tool-native"
       ]
   }
   ],
