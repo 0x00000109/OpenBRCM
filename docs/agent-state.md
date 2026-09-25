@@ -54,13 +54,16 @@ source of truth; this file records the live working-tree state on top of HEAD.
   **M3.4D3A1** (`d11_tail_test_only=1`, candidate `42d74b8`, module
   `6ba2d853…`) are all `HARDWARE RUNTIME PROVEN` on BCM4352.
 - **D3B analysis merged** via PR #11 (`06bbd60`); **value closure merged** via
-  PR #13 (`5f6c3d2`): `mhfs[0..4] = {0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`
-  (MHF1/MHF2/MHF4/MHF5 PROVEN), `D3B IMPLEMENTATION GO: NO` (blocked on MHF3).
-- **Active D3B SPROM-evidence branch** `m34d3b-sprom-evidence` (from `main`
-  @ `5f6c3d2`): read-only capture of the already-read 234-word rev11 SPROM
-  image (`sprom_evidence_only=1` + `ob_si_emit_sprom11()`), the offline decoder
+  PR #13 (`5f6c3d2`). **MHF3 input PROVEN** by the 2026-09 read-only SPROM
+  capture (PR #14): `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`
+  (all five PROVEN), **`D3B IMPLEMENTATION GO: YES`**.
+- **D3B SPROM-evidence branch** `m34d3b-sprom-evidence` (from `main` @
+  `5f6c3d2`): read-only capture of the already-read 234-word rev11 SPROM image
+  (`sprom_evidence_only=1` + `ob_si_emit_sprom11()`), the offline decoder
   `scripts/sprom11_decode.py` and host tests. `IMPLEMENTED` / `STATIC TESTED` /
-  `SIGNED`; the hardware run is **prepared but NOT executed**.
+  `SIGNED` / **`HARDWARE RUNTIME PROVEN` (BCM4352, 2026-09)** on frozen
+  candidate `739273c` (`openbrcm.ko` sha256 `538588e2…`); `antsel_type = 0`,
+  `MHF3 = 0x0000`. Evidence `docs/m34d3b/d3b_sprom_capture.json`.
 - Analysis branch `m34d3a1-vendor-tail-analysis` — **M3.4D3A1 vendor-tail
   recovery, `ANALYSIS COMPLETE`**, `D3A1 IMPLEMENTATION GO: YES`; report
   `docs/m34d3a1_vendor_tail.md`; merged via PR #9.
@@ -168,7 +171,9 @@ Stated exactly:
   teardown proven)
 - M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
   / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; `D3B
-  IMPLEMENTATION GO: NO` — blocked only on **MHF3**; MHF1/MHF2/MHF4/MHF5 PROVEN)
+  IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
+  `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
+  capture)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
@@ -335,20 +340,23 @@ Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN.**
 ## Current milestone
 **M3.4D3B — band init / `d11ac1bsinitvals42` (analysis/design).**
 Status: **`ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN**;
-`D3B IMPLEMENTATION GO: NO` — `VALUE PARTIALLY PROVEN`, blocked on **MHF3**
-(`antsel_type`) only. The band-0 MHF vector is now
-`{0x0100, 0x0000, UNKNOWN, 0x0000, 0x0080}`: MHF1/MHF2/MHF4/MHF5 are PROVEN
-statically (`docs/m34d3b_band_init.md` §3.8). The last hardware-proven
-milestone is **M3.4D3A1** (see "Last completed hardware test"); the D2B detail
-below is retained as the historical common-initvals result.
+`D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`, no remaining blocker. The
+band-0 MHF vector is `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}` with all five
+words PROVEN (`docs/m34d3b_band_init.md` §3.8). MHF3 was closed by the 2026-09
+read-only hardware SPROM capture (MHF4/MHF5/… PROVEN earlier). The last
+hardware-proven milestone is **M3.4D3A1** (see "Last completed hardware test");
+the D2B detail below is retained as the historical common-initvals result.
 
 **D3B MHF3 SPROM-evidence capture** (`m34d3b-sprom-evidence`, from `main` @
-`5f6c3d2`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` — the existing read-only
-SPROM path now emits the already-read, CRC-validated 234-word rev11 image
-(`sprom_evidence_only=1`, `ob_si_emit_sprom11()`, **zero extra MMIO**), with the
-offline decoder `scripts/sprom11_decode.py` and 10 host tests. The one-shot
-read-only hardware run is **prepared, NOT executed**; the rev11 raw offsets are
-the remaining static blocker. Evidence: `docs/m34d3b_sprom_evidence.md`.
+`5f6c3d2`, PR #14): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE
+RUNTIME PROVEN` (BCM4352, 2026-09)** — the existing read-only SPROM path emits
+the already-read, CRC-validated 234-word rev11 image (`sprom_evidence_only=1`,
+`ob_si_emit_sprom11()`, zero extra MMIO). Frozen candidate `739273c`
+(`openbrcm.ko` sha256 `538588e2…`), `insmod`/`rmmod` rc=0; `revision=11`,
+`crc=calc=0xc0`, MAC anchor `2cfd a161 4025`. Decoded: `boardtype=0x85ba`,
+`boardflags=0x10001000`, `aa2g=aa5g=7`, `antswitch=0` -> `antsel_type=0` ->
+**MHF3 = `0x0000`**. Evidence: `docs/m34d3b/d3b_sprom_capture.json`,
+`docs/m34d3b_sprom_evidence.md`.
 
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
@@ -465,30 +473,25 @@ verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
 `sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
 `docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
 
-**Next action — D3B blocked on MHF3 only; D4 after.** M3.4D3B (band init /
+**Next action — D3B unblocked (`GO: YES`); D4 after.** M3.4D3B (band init /
 `d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
 `wlc_bmac_write_mhf` (writes MHF1..5 to SHM `0x5e/0x60/0x62/0x78/0xd4` from
 `band-0 mhfs[0..4]`). Value closure (§3.8): `mhfs[0..4] = {0x0100, 0x0000,
-UNKNOWN, 0x0000, 0x0080}` —
+0x0000, 0x0000, 0x0080}` —
 MHF1 `0x0100` (pub+0x54 init `0xffffffff`, no initial-up zeroer; the only
 zeroer is the runtime iovar `wlc_doiovar`);
 MHF2 `0x0000` (BCM4352 `bustype==1`, `buscoretype==0x83c`, so
 `si_pci_war16165=0` => `wlc+0x60=0`);
+MHF3 `0x0000` (hardware capture: `boardtype=0x85ba`, `boardflags & 0x8 = 0`,
+`antswitch=0` => `antsel_type=0`);
 MHF4 `0x0000` (4313-only site skipped);
 MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
-Only **MHF3** remains: `antsel_type` needs the rev11 SPROM
-`boardtype`/`boardflags` and the **SPROM-synthesized** `aa2g`/`aa5g`/
-`antswitch` (corrected: not NVRAM-only). The capture is now implemented
-(`sprom_evidence_only=1` emits the already-read, CRC-validated 234-word image
-with **zero extra MMIO**; evidence `docs/m34d3b_sprom_evidence.md`); the
-one-shot read-only hardware run is **prepared but NOT executed**, and the rev11
-raw offsets remain the static blocker. `D3B IMPLEMENTATION GO: NO` — do not
-invent an MHF3 default. D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`,
-first PHY-indirect MMIO) follows. Neither D3B nor D4 has code or hardware proof
-yet.
+No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES`. D4
+(AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO)
+follows. Neither D3B nor D4 has code or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -520,11 +523,11 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B MHF3 SPROM-evidence capture, static-only): STOP after the signed
-frozen candidate + docs/evidence commit; **no D3B implementation**, no
+Current (D3B MHF3 SPROM-evidence capture, static-only): the one-shot read-only
+`sprom_evidence_only=1` run is **DONE** (`HARDWARE RUNTIME PROVEN`); STOP after
+the evidence/docs commit; **no D3B implementation**, no further
 `insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering. The
-next action (owner approval) is the one-shot read-only `sprom_evidence_only=1`
-run, then static recovery of the rev11 offsets.
+MHF3 input is resolved; D3B implementation awaits its own planning branch.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the
@@ -533,8 +536,8 @@ channel / mac80211.
 
 Next runtime STOP (D3B, **not implemented**): after the `sub_60f67` applier
 return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e. before
-`wlc_phy_anacore` and any PHY-indirect/radio window. D3B may not be implemented
-while `D3B IMPLEMENTATION GO: NO`.
+`wlc_phy_anacore` and any PHY-indirect/radio window. `D3B IMPLEMENTATION GO:
+YES`, but D3B may only be implemented in a dedicated (planning-first) milestone.
 
 D2A/D2B historical STOP: neither earlier path reaches bsinitvals/`sub_6656c`/
 PHY/radio/channel/DMA/IRQ/mac80211.

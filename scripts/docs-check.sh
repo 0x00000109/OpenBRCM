@@ -210,13 +210,29 @@ else
 fi
 if [ -f docs/m34d3b_band_init.md ] && \
    grep -q 'ANALYSIS ONLY' docs/m34d3b_band_init.md && \
-   grep -q 'D3B IMPLEMENTATION GO:.*NO' docs/m34d3b_band_init.md && \
+   grep -q 'D3B IMPLEMENTATION GO:.*YES' docs/m34d3b_band_init.md && \
    grep -q 'wlc_bmac_write_mhf' docs/m34d3b_band_init.md && \
    grep -q 'si_pci_war16165' docs/m34d3b_band_init.md && \
-   grep -q 'VALUE PARTIALLY PROVEN' docs/m34d3b_band_init.md; then
-	ok "D3B analysis record present (ANALYSIS ONLY / blocked GO / MHF provenance)"
+   grep -q '0x0100, 0x0000, 0x0000, 0x0000, 0x0080' docs/m34d3b_band_init.md; then
+	ok "D3B analysis record present (ANALYSIS ONLY / GO: YES / MHF provenance / final vector)"
 else
-	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / blocked GO / wlc_bmac_write_mhf / si_pci_war16165 / VALUE PARTIALLY PROVEN)"
+	bad "docs/m34d3b_band_init.md must record the D3B analysis (ANALYSIS ONLY / D3B IMPLEMENTATION GO: YES / wlc_bmac_write_mhf / si_pci_war16165 / final mhfs vector)"
+fi
+# The MHF3 input must be recorded as hardware-proven (SPROM-evidence capture).
+if [ -f docs/m34d3b/d3b_sprom_capture.json ] && \
+   grep -q '"MHF3": 0' docs/m34d3b/d3b_sprom_capture.json && \
+   grep -q '"antsel_type": 0' docs/m34d3b/d3b_sprom_capture.json && \
+   grep -q '"revision": 11' docs/m34d3b/d3b_sprom_capture.json; then
+	ok "D3B MHF3 hardware capture artifact present (rev11, antsel_type=0, MHF3=0)"
+else
+	bad "docs/m34d3b/d3b_sprom_capture.json must record rev 11 / antsel_type=0 / MHF3=0"
+fi
+if [ -f docs/m34d3b_sprom_evidence.md ] && \
+   grep -q 'HARDWARE RUNTIME PROVEN' docs/m34d3b_sprom_evidence.md && \
+   grep -q 'MHF3 = `0x0000`' docs/m34d3b_sprom_evidence.md; then
+	ok "D3B SPROM-evidence hardware runtime proof recorded"
+else
+	bad "docs/m34d3b_sprom_evidence.md must record the SPROM-evidence HARDWARE RUNTIME PROVEN result with MHF3 = 0x0000"
 fi
 
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.

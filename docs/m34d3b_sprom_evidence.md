@@ -1,8 +1,11 @@
 # M3.4D3B — external-SPROM evidence capture for MHF3
 
-**Status: `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` (frozen candidate, NOT
-executed on hardware).** D3B remains `ANALYSIS ONLY` / NOT HARDWARE PROVEN;
-`D3B IMPLEMENTATION GO: NO` (blocked on **MHF3** only).
+**Status: `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE RUNTIME PROVEN`
+(BCM4352, one-shot read-only, 2026-09).** The capture executed on the frozen
+candidate `739273c` (`openbrcm.ko` sha256 `538588e2…`); see §9. D3B itself
+remains `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN, but its MHF3
+input is now **PROVEN** (`antsel_type = 0`, **MHF3 = `0x0000`**) and
+**`D3B IMPLEMENTATION GO: YES`**.
 
 This milestone adds the read-only capture of the **already-read,
 CRC-validated rev11 external SPROM image** required to resolve MHF3
@@ -108,18 +111,25 @@ python3 scripts/sprom11_decode.py --json /tmp/openbrcm-sprom.log > sprom11.json
 python3 scripts/sprom11_decode.py --antsel-inputs boardtype=0x8f,boardflags=0x0,antswitch=0,aa2g=0,aa5g=0
 ```
 
-## 4. Rev11 raw offsets — remaining static blocker
+## 4. Rev11 raw field map — RECOVERED (T7 closed)
 
-The five target fields are proven **SPROM-derived** (not NVRAM-only): the vendor
-`srom_parsecis` emits `boardtype=0x%x`, `boardflags=0x%x`, `aa2g=0x%x`,
-`aa5g=0x%x`, `antswitch=0x%x` from its parse cursor
-(`docs/m34d3b_band_init.md` §3.8.5), and C3 (`bcm47xx_sprom.c`) corroborates the
-semantics (`aa2g = ant_available_bg`, `aa5g = ant_available_a`). However the
-parse cursor is a computed byte index into the vendor parser's working buffer,
-not a fixed raw SPROM offset, so the exact rev11 word indices are **not yet
-recovered**; the decoder therefore refuses to decode them until supplied. This
-is a static RE task (tooling gap T7), not a hardware blocker. The captured image
-is the necessary input.
+The five target fields are SPROM-synthesized (not NVRAM-only). On BCM4352/PCIe
+the synthesis is `srom_var_init` (`0x9704`), which walks a **24-byte descriptor
+table at `.rodata+0x1b00`** (revmask-gated) mapping each variable to a word
+index + bit mask in the 234-word image (it is **not** the PCMCIA/CIS
+`srom_parsecis`). Recovered rev11 mapping (word indices; MAC anchor word `0x48`
+= byte `0x90` is independently hardware-proven):
+
+| variable | word(s) | mask / shift | absent rule |
+|---|---|---|---|
+| `boardtype` | `0x02` | `0xffff` | always |
+| `boardflags` | `0x42`+`0x43` | 32-bit (lo\|hi<<16) | always |
+| `aa2g` | `0x50` | `0x00ff` | always |
+| `aa5g` | `0x50` | `0xff00`>>8 | always |
+| `antswitch` | `0x54` | `0xff00`>>8 | omitted if `0xff` |
+
+Tool: `scripts/srom_var_table.py` (pinned, blob sha256-checked); artifact:
+`docs/m34d3b/rev11_sprom_fields.json` (193 rev>=11 fields).
 
 ## 5. Tests (Phase 4)
 
@@ -127,11 +137,13 @@ is the necessary input.
 words, truncated-image rejection, bad word-count header rejection, malformed
 word rejection, missing BEGIN rejection, CRC failure detection, revision != 11
 rejection, deterministic re-serialization, `antsel_type` known vectors (all
-branches) and the exact MHF3 mapping. 10/10 pass.
+branches, incl. the L_bt0 -> L_bf fall-through) and the exact MHF3 mapping.
+`tests/host/test_srom_var_table.py` decodes the pinned vendor descriptor table
+(573 entries). 19 + 7 tests pass.
 
 ## 6. Frozen read-only hardware candidate (Phase 5)
 
-The capture runs in an isolated, read-only mode so the future hardware run does
+The capture runs in an isolated, read-only mode so the hardware run does
 **not** initialize DMA/IRQ or load firmware. `src/ob_core.c` gains
 `sprom_evidence_only=1`: it sets the ChipCommon window and calls
 `ob_si_sprom_evidence()` → the existing `ob_si_sprom_diag()` (read-only), then
@@ -139,7 +151,8 @@ returns before `ob_fw_probe`/`ob_dma_init`/`ob_irq_init`/`ob_rx_init`/
 `ob_mac80211_register`. It is mutually exclusive with the other isolated modes.
 `ob_remove()` skips all teardown for it.
 
-Exact future one-shot command — **NOT EXECUTED** (no hardware was accessed):
+One-shot command — **EXECUTED 2026-09** (`insmod` rc=0, `rmmod` rc=0; result
+§9):
 
 ```sh
 # frozen candidate: commit 739273c857d185f861467536a639fad4aa5b0bee
@@ -150,9 +163,7 @@ sudo dmesg -C
 sudo insmod openbrcm.ko sprom_evidence_only=1
 sudo dmesg | grep -E 'openbrcm: sprom11:|sprom-evidence'
 sudo rmmod openbrcm
-# offline:
-#   sudo dmesg > /tmp/openbrcm-sprom.log
-#   python3 scripts/sprom11_decode.py --json /tmp/openbrcm-sprom.log > sprom11.json
+# offline: python3 scripts/sprom11_decode.py --decode --json <log>
 ```
 
 The run does **not** enable `ucode_test_only`/`initvals_test_only`/
@@ -163,13 +174,45 @@ PHY/radio/channel and does not enable MAC.
 ## 7. `re` tooling gaps (Phase 6)
 
 The gaps filed during the MHF closure (T1–T6) are recorded in
-`docs/re-tooling.md` §9 with their scoped `re` improvements. They do **not**
-expand this milestone. T7 (rev11 cursor resolution) is the next static task.
+`docs/re-tooling.md` §9 with their scoped `re` improvements. **T7 (rev11 field
+map) is now closed** (§4) via the reusable analysis tool
+`scripts/srom_var_table.py`; the residual `re` feature request is recorded in
+`docs/re-tooling.md` §9.
 
 ## 8. STOP boundary
 
 This milestone stops after the capture implementation + offline decoder +
-tests, the signed frozen candidate, and documentation. It does not execute any
-hardware command, does not implement D3B, and does not touch PHY/radio/channel.
-Next: the one-shot read-only `sprom_evidence_only=1` run (owner approval), then
-static recovery of the rev11 offsets and MHF3 evaluation.
+tests, the signed frozen candidate, the hardware capture result (§9), and
+documentation. It does not implement D3B and does not touch PHY/radio/channel.
+The MHF3 input is resolved; D3B implementation is a separate, later milestone.
+
+## 9. Hardware result — HARDWARE RUNTIME PROVEN (BCM4352, 2026-09)
+
+Normalized evidence: `docs/m34d3b/d3b_sprom_capture.json`. The canonical
+result is **MHF3 = `0x0000`**.
+
+- Frozen candidate `739273c` (`openbrcm.ko` sha256
+  `538588e29634287971abcd568aae208281b22055ed1aa3e1ae6699eaed4741d5`;
+  srcversion `AC97164D23C815F7BF5D349`; vermagic
+  `7.0.0-34-generic SMP preempt mod_unload modversions`; signer
+  `Broadcom Driver MOK`). `insmod` rc=0, `rmmod` rc=0.
+- Marker `[ 9497.209919] === OPENBRCM D3B SPROM EVIDENCE candidate=739273c…
+  module=538588e2… ===`; no BUG/Oops/WARNING/DMA-API/AER/Call Trace after it.
+- Header: `words=234 revision=11 crc=c0 calc=c0 valid=1`; BEGIN/END present;
+  MAC anchor `word 0x48..0x4a = 2cfd a161 4025` = `2c:fd:a1:61:40:25`.
+- Provenance chain (raw word -> field -> `antsel_type` -> MHF3):
+
+  | raw | field | value |
+  |---|---|---|
+  | word `0x02` | `boardtype` | `0x85ba` |
+  | word `0x42` \| `0x43<<16` | `boardflags` | `0x10001000` |
+  | word `0x50 & 0xff` | `aa2g` | `7` |
+  | word `0x50 >> 8` | `aa5g` | `7` |
+  | word `0x54 >> 8` | `antswitch` | `0` (present) |
+  | `wlc_antsel_attach 0x5970a` | `antsel_type` | `0` |
+  | `wlc_bmac_init` sites 5..8 | **MHF3** | **`0x0000`** |
+
+- Final band-0 vector:
+  `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`.
+- **`D3B IMPLEMENTATION GO: YES`** (all values/provenance/safety blockers
+  resolved). D3B itself remains NOT IMPLEMENTED / NOT HARDWARE PROVEN.
