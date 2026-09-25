@@ -29,6 +29,36 @@ disassembling anything. See [AGENTS.md §7](../AGENTS.md).
 (see the tooling workspace `.gitignore`). Its `meta.sha256` records the sha256
 of the vendor blob that was indexed.
 
+### 1.1 Tier-2: Ghidra headless augmentation
+
+`re`/`re.db` is the first and authoritative tier, but a few questions are
+statically hard for a single linear pass. The **second tier** is Ghidra
+headless (decompiler + reference manager + CFG-aware value flow), used only for
+those residual facts: indirect/vtable call targets, interprocedural constant
+flow, struct-field aliasing, and loop/engine-array base resolution.
+
+| Item | Path |
+|---|---|
+| Ghidra root | `/home/kartashoff/projects/ghidra` (12.1.3) |
+| headless | `support/analyzeHeadless` |
+| wrapper (this repo) | `scripts/ghidra_headless.sh` |
+| reusable scripts | `scripts/ghidra/*.java` (`Decompile`, `Refs`, `Vtable`) |
+| scratch project | `/tmp/openbrcm_ghidra` (generated; not committed) |
+
+```sh
+scripts/ghidra_headless.sh Refs.java wlc_phy_btc_adjust_acphy wlc_phy_init
+scripts/ghidra_headless.sh Vtable.java dma64proc
+scripts/ghidra_headless.sh Decompile.java wlc_phy_anacore wlc_phy_switch_radio
+```
+
+Rules: (a) query `re` first; (b) if a fact stays PARTIAL/CONDITIONAL/UNRESOLVED,
+use Ghidra; (c) manual `objdump`/`readelf`/`r2` only if both cannot answer, or to
+settle a conflict between them — and record why. Ghidra import under-segments
+this ET_REL blob, so treat Ghidra *negative* results with care and cross-check
+against `re`. Record any fact that neither tier can express as a tooling gap
+(§9). The wrapper is read-only with respect to hardware and Git; it imports the
+canonical vendor blob, which is never committed.
+
 ## 2. Verify the index matches the blob
 
 The bootstrap script performs this check. Manually:

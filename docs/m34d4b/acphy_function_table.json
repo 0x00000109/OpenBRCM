@@ -78,6 +78,25 @@
         "installer": "zeroed by attach_acphy 0xa3001",
         "rev42_ac_reachable": false
       }
+    },
+    "acphy_install_confirmed": {
+      "offset": 248,
+      "target": "wlc_phy_btc_adjust_acphy",
+      "provenance": "R_X86_64_32S relocation on imm32 of 'movq $imm,0xf8(%rbx)' at 0xa3052 (objdump -r: 0xa3059); ghidra DATA ref from 0x1a3052; re address_taken store_disp=0xF8"
+    },
+    "acphy_also_zeroed_slots": [
+      56,
+      64,
+      192,
+      200,
+      208,
+      256
+    ],
+    "ghidra_crosscheck": {
+      "phy+0x118": "no installer (confirmed by ghidra refs + re address_taken)",
+      "phy+0x110": "no installer (confirmed)",
+      "wlc_phy_init_data_refs": "none -> never installed as a callback",
+      "wlc_phy_cals_acphy": "referenced from wlc_phy_cal_perical / wlc_phy_init_test_acphy (not on attach path)"
     }
   }
 }

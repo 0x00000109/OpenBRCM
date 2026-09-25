@@ -113,6 +113,14 @@ Manual disassembly is permitted only when:
 - a) `re`/`re.db` cannot answer the question, or
 - b) it is being used as independent verification of an indexed fact.
 
+Before falling back to manual disassembly, use the **tier-2 Ghidra headless**
+augmentation (decompiler + reference manager + CFG-aware value flow) via
+`scripts/ghidra_headless.sh` and the reusable `scripts/ghidra/*.java`; it is the
+sanctioned tool for indirect/vtable targets, interprocedural constant flow,
+struct-field aliasing and loop/engine-array base resolution that `re` leaves
+PARTIAL/CONDITIONAL/UNRESOLVED (`docs/re-tooling.md` §1.1). Ghidra under-
+segments this ET_REL blob, so cross-check its *negative* results against `re`.
+
 When a useful fact is missing from `re`, record it as a **tooling gap** (see
 `docs/re-tooling.md` §9) so the same manual work is not repeated indefinitely.
 The minimum workflow is:

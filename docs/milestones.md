@@ -379,6 +379,24 @@ Canonical status (exact):
   `si_pmu_otp_power`) ⇒ **`D4 IMPLEMENTATION GO: NO`**, `HARDWARE TEST GO: NO`.
   Artifacts `docs/m34d4b/{acphy_attach_callgraph,acphy_function_table,acphy_hw_init_flow,acphy_phy_ops,acphy_radio_ops,acphy_tables}.json`,
   `docs/m34d4b/acphy_init_analysis.md`.
+- **M3.4D4B Ghidra augmentation** = **`ANALYSIS ONLY`** (2026-09): Ghidra 12.1.3
+  headless (decompiler + reference manager) applied only to the PARTIAL/
+  CONDITIONAL/UNRESOLVED D4B facts. **Resolved the DMA TX base gap**: the bases
+  are literal `dev+0x200/0x220/0x240/0x260` (`bmac rev>10` →
+  `+0x240/0x280/0x2c0`) passed to `dma_attach`, and the per-engine writes are
+  `sub_f947`/`sub_fa57` reached via the `dma64proc+0x08` vtable (the `re const`
+  `0x240/0x280/0x2c0` were linear-scan artifacts). **Confirmed** (no change):
+  `phy+0x118`/`+0x110` have no installer (null → fallback); `wlc_phy_init` is
+  never installed as a callback; `wlc_phy_cals_acphy` is not on the attach path.
+  **Corrected method**: `phy+0xF8` *is* `wlc_phy_btc_adjust_acphy` (the
+  `movq $0,0xf8(%rbx)` look is the relocated `imm32`; `R_X86_64_32S` at
+  `0xa3059`), and `+0x38/0x40/0xC0/0xC8/0xD0/0x100` are also zeroed. Ghidra is
+  now **integrated into the persistent RE workflow**: `scripts/ghidra_headless.sh`
+  + `scripts/ghidra/{Decompile,Refs,Vtable}.java`, documented in
+  `docs/re-tooling.md` §1.1, checked by `scripts/re-bootstrap.sh`, and required
+  by `AGENTS.md` §7 before manual disassembly. Artifacts
+  `docs/m34d4b/ghidra_augmentation.{md,json}`; `D4 IMPLEMENTATION GO: NO`
+  (unchanged), `HARDWARE TEST GO: NO`.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256

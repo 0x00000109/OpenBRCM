@@ -25,6 +25,13 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `openbrcm-re` skill and the project plugins via `.opencode/opencode.json`.
 - Rule: query `re.db`/`re` before manual `objdump`/`readelf`/`r2`/`grep`
   (`AGENTS.md` §7).
+- Tier-2 augmentation: **Ghidra 12.1.3 headless** at
+  `/home/kartashoff/projects/ghidra` via `scripts/ghidra_headless.sh` and
+  `scripts/ghidra/*.java` (`Decompile`, `Refs`, `Vtable`) for indirect/vtable
+  targets, interprocedural constants, struct-field aliasing and loop/engine-array
+  bases that `re` leaves PARTIAL/CONDITIONAL/UNRESOLVED; use it before manual
+  disassembly and cross-check Ghidra *negatives* against `re` (it under-segments
+  this ET_REL blob). See `docs/re-tooling.md` §1.1.
 
 ## Commit state (IMPORTANT)
 - `main` = `5f6c3d2b64ecf8c7c4beaf9d0c61607d27431551` (**PR #13 merged**,
