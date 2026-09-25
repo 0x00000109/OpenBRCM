@@ -441,6 +441,21 @@ Canonical status (exact):
   sites). `D4 IMPLEMENTATION GO: NO`, `HARDWARE TEST GO: NO`. Report
   `docs/m34d4b/d4b_value_provenance_closure.md` +
   `docs/m34d4b/d4b_value_provenance.json`.
+- **M3.4D4C radio-OFF attach -> first operational AC state** = **`ANALYSIS
+  ONLY`**. The 8 `wlc_phy_switch_radio` call sites are enumerated; the only
+  AC-reachable `on=1` site is **`wlc_bmac_radio_hw @0x63ec8`** (arg proven),
+  which is a `LOCAL` function with **no in-blob caller** (re + Ghidra +
+  objdump + ELF all agree) — the hardware-layer radio on/off API. `wlc_phy_init
+  @0xbad44` is `on=1` but AC-unreachable (`[phy+0x28]==0` early return). **CP-A3
+  is temporally BEFORE D2/D3** (attach phase vs later `wlc_bmac_init`).
+  Operation counts: whole family = 272 PHY / 304 RADIO / 8 TABLE; **actual
+  `on=0` attach = 12 PHY / 8 RADIO / 0 TABLE**; first radio-ON = 242 PHY /
+  296 RADIO / 8 TABLE. Channel is first required at `wlc_bmac_init @0x6833b`
+  (`wlc_default_chanspec` provenance). First operational checkpoint = **CP-O2**
+  (return of `wlc_bmac_radio_hw`), not hardware-proven. `D4 IMPLEMENTATION GO:
+  NO`; `HARDWARE TEST GO: NO`. Report `docs/m34d4b/d4c_radio_on_transition.md`.
+  **The old "186 PHY / 301 RADIO" is whole-family/radio-ON-inclusive and MUST
+  NOT be quoted as the attach scope.**
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256

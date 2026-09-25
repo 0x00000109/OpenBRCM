@@ -224,6 +224,20 @@ Stated exactly:
   OBSERVABLE`** (radio OFF, PSM not running); operational state needs the later
   radio-ON checkpoint. `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`.
   `docs/m34d4b/d4b_value_provenance_closure.md`.
+- **M3.4D4C radio-OFF attach -> first operational AC state** = **`ANALYSIS
+  ONLY`** (commit follows `84f9073`): the only AC-reachable
+  `wlc_phy_switch_radio(on=1)` site is **`wlc_bmac_radio_hw @0x63ec8`**, a
+  `LOCAL` function with **no in-blob caller** (the hw-layer radio API; re +
+  Ghidra + objdump + ELF agree); `wlc_phy_init @0xbad44` is on=1 but
+  AC-unreachable (`[phy+0x28]==0`). **CP-A3 is temporally BEFORE D2/D3**
+  (attach vs `wlc_bmac_init`). Counts: whole family 272 PHY / 304 RADIO / 8
+  TABLE; **attach `on=0` = 12 PHY / 8 RADIO / 0 TABLE**; first radio-ON = 242
+  PHY / 296 RADIO / 8 TABLE. Channel first required at `wlc_bmac_init @0x6833b`
+  (`wlc_default_chanspec` provenance). First operational checkpoint = **CP-O2**
+  (`wlc_bmac_radio_hw` return). `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO:
+  NO`. Report `docs/m34d4b/d4c_radio_on_transition.md`.
+  **"186 PHY / 301 RADIO" is whole-family/radio-ON-inclusive — NOT the attach
+  scope.**
 - **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
   zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
   body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but

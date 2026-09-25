@@ -1,0 +1,113 @@
+{
+  "milestone": "M3.4D4C radio-OFF attach -> first operational BCM4352 AC state",
+  "status": "ANALYSIS ONLY",
+  "baseline": {
+    "re": "0c7cf87538b9391283f3f26f1ce36bf077b21ce4dccceb8f6a6433f94c8f3137",
+    "re_db": "44dae60d232b08bc8990e446220eaaf684d7fa180f728559114643f27f71c4af",
+    "schema": "v4",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "prior_commit": "84f9073"
+  },
+  "switch_radio_callsites": [
+    {"caller": "wlc_phy_attach", "site": "0xbf114", "on": 0, "ac_reached": true, "phase": "attach"},
+    {"caller": "wlc_bmac_init", "site": "0x69595", "on": 0, "ac_reached": false, "gate": "phy_type==7", "phase": "init"},
+    {"caller": "wlc_bmac_set_chanspec", "site": "0x67a3b", "on": 0, "ac_reached": false, "gate": "phy_type==0xb skip", "phase": "channel"},
+    {"caller": "wlc_phy_init", "site": "0xbad45", "on": 1, "ac_reached": false, "gate": "[phy+0x28]==0 early return 0xbac76", "phase": "band-init"},
+    {"caller": "wlc_bmac_radio_hw", "site": "0x63ec9", "on": 1, "ac_reached": true, "phase": "radio-enable"},
+    {"caller": "wlc_bmac_radio_hw", "site": "0x63eed", "on": 0, "ac_reached": true, "phase": "radio-disable"},
+    {"caller": "wlc_coredisable", "site": "0x637c0", "on": 0, "ac_reached": false, "phase": "teardown"},
+    {"caller": "wlc_phy_periodic_cal_lpphy", "site": "0x110160", "on": null, "ac_reached": false, "phase": "periodic"}
+  ],
+  "first_on1": {
+    "site": "0x63ec8",
+    "caller": "wlc_bmac_radio_hw",
+    "on_arg_proven": "mov esi,1 @0x63ebf; r13b=sil on tested @0x63e58",
+    "in_blob_caller": null,
+    "cross_check": {"re": "0 callers", "ghidra": "no refs", "objdump": "no call/jmp to 0x63e2a", "elf": "no relocation"},
+    "chain": ["wlc_bmac_radio_hw(on=1)", "si_pmu_radio_enable", "wlc_phy_anacore(1)", "wlc_phy_switch_radio(1)", "wlc_phy_switch_radio_acphy(1)", "ON branch"]
+  },
+  "timeline": [
+    {"phase": "attach", "fn": "wlc_bmac_attach", "site": "0x6984f", "note": "SPROM/MAC/M2"},
+    {"phase": "attach", "fn": "wlc_phy_attach(0)", "site": "0xbe426"},
+    {"phase": "attach", "fn": "wlc_phy_anacore(1)", "site": "0xbed84", "write": "D11 0x3e6=0"},
+    {"phase": "attach", "fn": "wlc_phy_switch_radio(0)", "site": "0xbf113", "note": "OFF branch"},
+    {"phase": "attach", "fn": "dma_attach", "site": "0x6a3d6", "note": "after phy_attach"},
+    {"phase": "CP-A3", "note": "end wlc_phy_attach; radio OFF", "temporal": "BEFORE D2/D3"},
+    {"phase": "up/init", "fn": "wlc_init", "site": "0x3c46f"},
+    {"phase": "up/init", "fn": "wlc_bmac_init", "site": "0x6828a"},
+    {"phase": "up/init", "fn": "wlc_phy_chanspec_radio_set", "site": "0x6833b", "note": "first channel-dependent write"},
+    {"phase": "up/init", "fn": "wlc_phy_cal_init", "site": "0x6834b", "note": "AC no-op (+0x30 null)"},
+    {"phase": "D2A", "fn": ["sub_607b0", "sub_60c2f", "wlc_bmac_wowlucode_start"], "sites": ["0x684c4", "0x684f8", "0x68500"]},
+    {"phase": "D2B", "fn": "sub_60f67", "site": "0x6888a", "note": "common initvals + MHF"},
+    {"phase": "D3A1", "fn": "sub_67efd", "site": "0x68bab"},
+    {"phase": "D3A0", "fn": ["wlc_bmac_macphyclk_set", "sub_62b79"], "sites": ["0x690b1", "0x69461"]},
+    {"phase": "D3A1", "fn": "wlc_bmac_switch_macfreq", "site": "0x695cb"},
+    {"phase": "D3B", "fn": "sub_6656c", "site": "0x695d8", "note": "MHF + bsinitvals; wlc_phy_init no-op"},
+    {"phase": "radio-on", "fn": "wlc_bmac_radio_hw(1)", "site": "0x63ec8", "note": "external hw-layer API"},
+    {"phase": "CP-O1", "note": "switch_radio_acphy ON returns 0xab412"},
+    {"phase": "CP-O2", "note": "wlc_bmac_radio_hw returns 0x63f43; first operational"}
+  ],
+  "operation_counts": {
+    "per_function": {
+      "wlc_phy_attach_acphy": {"phy": 11, "radio": 0, "table": 0},
+      "wlc_phy_anacore": {"phy": 2, "radio": 0, "table": 0},
+      "wlc_phy_switch_radio": {"phy": 6, "radio": 0, "table": 0},
+      "wlc_phy_switch_radio_acphy": {"phy": 13, "radio": 62, "table": 0},
+      "sub_8fb39": {"phy": 82, "radio": 0, "table": 0},
+      "sub_9027d": {"phy": 11, "radio": 0, "table": 0},
+      "sub_9fb72": {"phy": 20, "radio": 30, "table": 0},
+      "sub_9591e": {"phy": 0, "radio": 22, "table": 0},
+      "sub_a04c2": {"phy": 25, "radio": 0, "table": 0},
+      "sub_a7089": {"phy": 16, "radio": 187, "table": 3},
+      "sub_a4adc": {"phy": 86, "radio": 3, "table": 5}
+    },
+    "A_whole_family": {"phy": 272, "radio": 304, "table": 8},
+    "B_attach_on0": {"phy": 12, "radio": 8, "table": 0},
+    "C_first_radio_on": {"phy": 242, "radio": 296, "table": 8},
+    "D_later_runtime": "re-execution of C subsets",
+    "deprecated": "186 PHY / 301 RADIO must NOT be quoted as attach scope"
+  },
+  "radio_on_path": {
+    "range": "0xaa7a6..0xab412",
+    "direct_calls": {"mod_radio_reg": 33, "write_radio_reg": 16, "osl_delay": 8, "read_radio_reg": 5, "wlapi_suspend_mac_and_wait": 1, "wlapi_enable_mac": 1, "phy_reg_write": 1, "phy_reg_mod": 1, "sub_8fb39": 1, "sub_9027d": 1, "sub_9fb72": 1, "sub_9591e": 1, "sub_a04c2": 1, "sub_a7089": 1},
+    "substages": ["MAC quiesce", "PHY/RF setup (sub_8fb39)", "PLL/LO (sub_9027d, 0x60c, sub_9fb72)", "radio cal (sub_9591e)", "PHY cal (sub_a04c2, +0x32d)", "farrow/radio-set (sub_a7089 -> sub_a4adc, +0x32d)", "MAC resume (wlapi_enable_mac)"]
+  },
+  "channel": {
+    "first_required": "wlc_bmac_init @0x6833b wlc_phy_chanspec_radio_set",
+    "reapplied_on_path": "sub_a7089 @0xa739f",
+    "band_select": "wlc_setxband @0x68328",
+    "default_chanspec": "wlc_default_chanspec(wlc->band,1) in wlc_init @0x3c5b7/0x3c602 -> wlc_bmac_init arg @0x3c6f1"
+  },
+  "calibration": {
+    "wlc_phy_cal_init": {"site": "0x6834b", "class": "no-op for AC (+0x30 null)"},
+    "sub_9591e": {"site": "0xab3d3", "class": "mandatory radio RX cal", "completion": "bounded read_radio_reg()&0x10, <=100 iters @0x95cff"},
+    "wlc_phy_crs_min_pwr_cal_acphy": {"inside": "sub_a4adc", "class": "board/PHY cal"},
+    "periodic": {"wlc_phy_cal_perical/wlc_phy_cals_acphy": "not on path"}
+  },
+  "farrow": {
+    "function": "sub_a4adc",
+    "tables": ["rx_farrow_tbl", "rx_farrow_tbl_rev3", "rx_farrow_tbl_40_rev3"],
+    "entries_per_table": 123,
+    "stride": 1476,
+    "entry": {"selector": "byte[0]==(phy+0x17e)&0xff", "coefficients": "word[+4..+0xA]"},
+    "selection": "phy+0x164==3 -> rev3; 40MHz ALP -> _40_rev3 else _rev3; else base"
+  },
+  "cp": {
+    "CP-A3": "logically stable, radio OFF, before D2/D3",
+    "CP-O1": "switch_radio_acphy ON returns 0xab412",
+    "CP-O2": "wlc_bmac_radio_hw returns; first operational; CHOSEN",
+    "PSM": "running (D2A ucode)",
+    "MAC": "enabled",
+    "DMA": "initialized (D3A0)"
+  },
+  "observable_postconditions": [
+    {"read": "sub_9591e radio read @0x95cff", "mask": "0x10", "side_effect": "none", "vendor_uses": true},
+    {"read": "osl_readl(D11 0x120) @0xba31d", "side_effect": "none", "vendor_uses": true}
+  ],
+  "dev_lost": {
+    "reads_to_wire": ["D11 0x120", "D11 0x3e0", "phy_reg_read x11", "radio reads"],
+    "invariant": "latch on first 0xffffffff; zero BAR writes after latch; no teardown write/reset/free post-loss"
+  },
+  "oracle": {"RE": ["call graph, phyops counts, ELF relocs"], "GHIDRA": ["decompile, refs", "sub_a4adc tables"], "BOTH": ["radio-ON/Off dispatch", "wlc_bmac_radio_hw unreferenced"], "ELF_RELOCATION": ["switch_radio sites"], "MANUAL": "0"},
+  "tooling_gaps": ["path-sensitive reachability (callers of wlc_bmac_radio_hw absent in-blob; requires external-API boundary statement)"]
+}
