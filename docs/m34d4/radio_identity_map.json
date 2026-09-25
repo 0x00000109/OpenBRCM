@@ -1,0 +1,140 @@
+{
+  "artifact": "radio_identity_map",
+  "purpose": "Reusable map of the radio/PHY identity+revision model used by the vendor AC-PHY blob for BCM4352 (AC, radio BCM2069). ANALYSIS ONLY.",
+  "binary": {"blob": "wlc_hybrid.o_shipped", "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743"},
+  "confidence_vocab": ["EXACT", "CONDITIONAL", "UNKNOWN"],
+
+  "primary_identity_source": {
+    "type": "PHY/radio register window at pi+0x148, accessed via external osl_readw/osl_writew",
+    "radio_indirect_pair_on_bcm4352": {
+      "addr_latch": "pi+0x148 + 0x3d8 (16-bit write selects the radio register)",
+      "data": "pi+0x148 + 0x3da (16-bit read returns the selected radio register)",
+      "alternate_window": "pi+0x148 + 0x3f6/0x3f8/0x3fa used when [[pi+0x20]+0x28] == 0x1B or <= 0x17 (NOT this board)",
+      "confidence": "EXACT"
+    },
+    "phy_version_register": {
+      "reg": "pi+0x148 + 0x3e0 (16-bit)",
+      "reader_pc": "wlc_phy_attach @0xbe5ac (after wlapi_bmac_corereset @0xbe5a7)",
+      "confidence": "EXACT"
+    }
+  },
+
+  "fields": [
+    {
+      "name": "radioid (radio chip id)",
+      "object_field": "pi+0x16a (u16)",
+      "raw_source": "radio reg 1 (0x3d8=1, read 0x3da)",
+      "extraction": "edx & 0xffff where edx=(reg0<<16)|reg1",
+      "writer_pc": "wlc_phy_attach @0xbefd3",
+      "consumers": [
+        "wlc_phy_attach @0xbf02f..0xbf106: compared to radio-id constants per phytype; AC accepts {0x030B, 0x2069} (a mismatch calls wlc_phy_switch_radio(pi,0) and takes the attach error path)",
+        "sub_9fb72 @0x9fc89: == 0x2069 selects the 2069 revision jump table"
+      ],
+      "confidence": "EXACT"
+    },
+    {
+      "name": "radio_rev (full 2069 revision byte)",
+      "object_field": "pi+0x16c (u8)",
+      "raw_source": "radio reg 0 (0x3d8=0, read 0x3da), bits[7:0]",
+      "extraction": "(edx >> 16) & 0xff = reg0 & 0xff",
+      "writer_pc": "wlc_phy_attach @0xbefe4",
+      "consumers": [
+        "sub_9fb72 @0x9fc92: index = R-3 (R in [3,38]) -> jump table selecting prefregs_2069_rev3/4/16/17/18/23/24/25/26/33_37/20691_rev1",
+        "sub_9fb72 @0xa02b4 (chain loop, table base chosen by rev)"
+      ],
+      "observed_values": "0,1,2,3,4,16,17,18,23,24,25,26,32,33..37,254 (from 2069 table names/families)",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "(padding)",
+      "object_field": "pi+0x16d (u8)",
+      "raw_source": "constant 0",
+      "writer_pc": "wlc_phy_attach @0xbefda",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "radio_major_rev_class",
+      "object_field": "pi+0x16e (u8)",
+      "raw_source": "radio reg 0 (0x3d8=0, read 0x3da), bits[11:4]",
+      "extraction": "(edx >> 20) & 0xff = (reg0 >> 4) & 0xff = radio_rev >> 4",
+      "writer_pc": "wlc_phy_attach @0xbeff8",
+      "consumers": "see docs/m34d4/pll_selector_provenance.json (switch_radio_acphy, sub_9fb72, radio_override_acphy, attach_acphy, tempsense, stf_chain_temp_throttle, rx_iq_est, tx_tone, get_spurmode)",
+      "branch_meaning": "1 = 2069 rev 16..31 (PLL sequence A); 2 = rev 32..47 (PLL sequence B); 0 = rev 0..15; 15 = rev254 special",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "radio_rev_low_nibble",
+      "object_field": "pi+0x16f (u8)",
+      "raw_source": "radio reg 0 bits[3:0]",
+      "extraction": "(edx >> 16) & 0x0f",
+      "writer_pc": "wlc_phy_attach @0xbeffe",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "phytype",
+      "object_field": "pi+0x160 (u32)",
+      "raw_source": "PHY reg 0x3e0, bits[11:8]",
+      "extraction": "(v >> 8) & 0x0f",
+      "writer_pc": "wlc_phy_attach @0xbe5e6",
+      "overrides": [
+        "@0xbe639: if phytype==9 -> phyrev += 0x10 and phytype := 4"
+      ],
+      "consumers": "radio reg-window selection (read_radio_reg), AC path gating (==0x0B), radio-id acceptance table",
+      "board_value": "0x0B (AC) - hardware-proven M3.4D3A1",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "phyrev",
+      "object_field": "pi+0x164 (u32)",
+      "raw_source": "PHY reg 0x3e0, bits[3:0]",
+      "extraction": "v & 0x0f",
+      "writer_pc": "wlc_phy_attach @0xbe5f2",
+      "overrides": [
+        "@0xbe61f: for chip ids {0xA8E3,0xA8E4,0xA8E6,0xA8E2} with [hw+0x40]-2 <= 1 -> phyrev := 9"
+      ],
+      "board_value": "low nibble 0x0A (full D11 PHY rev 0x2A/42 per M3.4D3A1)",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "phy_rev_class_0x168",
+      "object_field": "pi+0x168 (u8)",
+      "raw_source": "derived from phytype",
+      "extraction": "phytype==7 -> 3; phytype==4 -> 2; else 1",
+      "writer_pc": "wlc_phy_attach @0xbe658",
+      "consumers": "wlc_phy_radio_override_acphy per-chain loop bound (cmp r12b,[rbx+168h])",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "phytype_hi_nibble",
+      "object_field": "pi+0x174 (u32)",
+      "raw_source": "PHY reg 0x3e0 >> 12",
+      "writer_pc": "wlc_phy_attach @0xbe668",
+      "confidence": "EXACT"
+    },
+    {
+      "name": "fabid",
+      "object_field": "pi+0x10FC (u16)",
+      "raw_source": "si_fabid(hw) call @0xbe5cb",
+      "writer_pc": "wlc_phy_attach @0xbe5d0",
+      "confidence": "EXACT"
+    }
+  ],
+
+  "accepted_radio_ids_by_phytype": {
+    "0": 32480,
+    "2": 8272,
+    "4": "0x2055..0x2057 or 0x22E (rev-dependent)",
+    "6": 8291,
+    "7": 8281,
+    "8": "0x2064/0x2066 (rev-dependent)",
+    "10": "0x2065/0x2067",
+    "11": "0x030B or 0x2069",
+    "_note": "constants 0x2050=8272,0x2060=8288,0x2063=8291,0x2064=8292,0x2065=8293,0x2066=8294,0x2067=8295,0x2069=8297,0x2059=8281; AC (11) accepts {0x030B,0x2069}"
+  },
+
+  "notes": [
+    "radioid is radio reg 1; radio_rev/class is radio reg 0.",
+    "The AC path reads reg 0 and reg 1 only (no reg 2).",
+    "No NVRAM/SPROM 'radiorev'/'radioid' override string exists in the blob; the values are hardware identity."
+  ]
+}

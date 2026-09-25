@@ -14,11 +14,10 @@
   "active_blocker": {},
   "open_blockers": [
     {
-      "id": "d4.pll_synth.rev42.branch",
-      "summary": "First PLL/synth selector is the hardware radio revision; rev42 branch UNKNOWN.",
+      "id": "d4.pll_branch.hw_probe",
+      "summary": "PLL branch (A/B) needs a radio reg0 read; probe designed, not executed.",
       "evidence": [
-        "docs/m34d4/pll_synth_path.md",
-        "docs/m34d4/value_provenance.json"
+        "docs/m34d4/pll_selector_provenance.json"
       ]
     },
     {

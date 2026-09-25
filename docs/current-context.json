@@ -9,7 +9,7 @@
     "docs/m34d3b_sprom_evidence.md",
     "docs/m34d4/indirect_ops_table_resolution.md",
     "docs/m34d4/operational_checkpoint_analysis.md",
-    "docs/m34d4/pll_synth_path.md",
+    "docs/m34d4/pll_selector_provenance.json",
     "docs/m34d4/post_d3b_operational_timeline.md",
     "docs/m34d4/tooling_gap_closure.md",
     "docs/m34d4/value_provenance.json",
@@ -52,17 +52,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "cfc822b3940ad73d765f3178a4d88e73f62fa99d"
+    "head": "ffbe7262bb1f78163d11099120d8408e0fb033f2"
   },
   "current_milestone": {
     "artifact": "docs/m34d4/value_provenance.json",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "cfc822b3940ad73d765f3178a4d88e73f62fa99d",
+  "generated_from_head": "ffbe7262bb1f78163d11099120d8408e0fb033f2",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "378a680b7ae931f36cf888fc54f18c95be094e803fa52bc3ed44913bb83303c8"
+    "sources_hash": "516ec46cab060a5a61824d0600a1a42b115d53759d40857b4ec8aafbda600155"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",
@@ -78,11 +78,10 @@
     },
     {
       "evidence": [
-        "docs/m34d4/pll_synth_path.md",
-        "docs/m34d4/value_provenance.json"
+        "docs/m34d4/pll_selector_provenance.json"
       ],
-      "id": "d4.pll_synth.rev42.branch",
-      "summary": "First PLL/synth selector is the hardware radio revision; rev42 branch UNKNOWN."
+      "id": "d4.pll_branch.hw_probe",
+      "summary": "PLL branch (A/B) needs a radio reg0 read; probe designed, not executed."
     }
   ],
   "project": "OpenBRCM",

@@ -395,6 +395,26 @@ Stated exactly:
   direct reads (SHM/OBJDATA payloads are never classified as loss). Artifacts:
   `docs/m34d4/dev_lost_phy_access_map.json`, `docs/m34d4/dev_lost_phy_guard.md`.
   **`D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
+- **D4D-PLL-SELECTOR — `pi+0x16e` PLL/synth selector provenance** = **`ANALYSIS
+  COMPLETE` / `HARDWARE_REQUIRED`** (no hardware, no MMIO, no driver change).
+  The blocker `d4.pll_synth.rev42.branch` (task alias
+  `D4-BLOCKER-PLL-SYNTH-REV42-SELECTOR`) is resolved: `pi+0x16e` is not a
+  "radio revision" but the **2069 radio revision class = `radio_rev >> 4`**,
+  decoded in `wlc_phy_attach @0xbeff8` (AC path) from **radio reg 0 bits[11:4]**
+  (radio indirect pair `pi+0x148+0x3d8` latch / `+0x3da` data; reg 1 = radio id
+  `0x2069`). First-radio-ON `wlc_phy_switch_radio_acphy`: selector 1 (rev
+  16..31) = **sequence A** (`0x80b`), 2 (rev 32..47) = **sequence B** (`0x60c`),
+  else skip; both converge at `sub_9fb72` (2069 rev jump table
+  `prefregs_2069_rev*`). Single AC writer + no NVRAM/SPROM `radiorev` override ⇒
+  the numeric rev is **HARDWARE_REQUIRED**; **classification C, no guessed
+  default**. A read-only probe (2× `0x3d8` latch write + 2× `0x3da` read) is
+  designed but **NOT implemented/executed**. Adjacent harvest: reusable
+  [`radio_identity_map.json`](m34d4/radio_identity_map.json),
+  [`pll_decision_matrix.json`](m34d4/pll_decision_matrix.json),
+  [`checkpoint_candidates.json`](m34d4/checkpoint_candidates.json); tooling gaps
+  filed (R-G1..R-G4, no tooling change). New blocker `d4.pll_branch.hw_probe`.
+  Artifacts `docs/m34d4/pll_selector_provenance.{json,md}`. **`D4 IMPLEMENTATION
+  GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
   (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
   never a source of truth) + `scripts/generate-current-context.py`

@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "cfc822b3940ad73d765f3178a4d88e73f62fa99d",
+      "head": "ffbe7262bb1f78163d11099120d8408e0fb033f2",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 26,
-      "ahead_of_origin_branch": 3,
+      "ahead_of_origin_main": 27,
+      "ahead_of_origin_branch": 0,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the DEV-LOST-GUARD commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD chain is UNMERGED relative to main"
+      "note": "snapshot before the D4D-PLL-SELECTOR commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -408,6 +408,46 @@
           "SHM/OBJDATA payloads are never classified as device loss; vendor predicate (m&0x404)==0x400 retained",
           "normal (dev_lost==false) path is a direct bcma pass-through; make modules + make hosttest PASS",
           "D4 IMPLEMENTATION GO: NO; HARDWARE TEST GO: NO (unchanged)"
+      ]
+  },
+  {
+      "id": "D4D-PLL-SELECTOR",
+      "milestone": "D4-BLOCKER-PLL-SYNTH-REV42-SELECTOR — pi+0x16e provenance",
+      "subject": "first-radio-ON PLL/synth selector semantics and branch mapping",
+      "status": "ANALYSIS COMPLETE / HARDWARE_REQUIRED",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "docs/m34d4/pll_selector_provenance.json",
+          "docs/m34d4/pll_selector_provenance.md",
+          "docs/m34d4/pll_decision_matrix.json",
+          "docs/m34d4/checkpoint_candidates.json"
+      ],
+      "key_facts": [
+          "pi+0x16e = (radio reg 0 >> 4) & 0xff = 2069 radio_rev >> 4, decoded at wlc_phy_attach @0xbeff8 (AC path)",
+          "radio reg 0/reg 1 read via 0x3d8 latch / 0x3da data (pi+0x148 window); reg1 = radio id 0x2069",
+          "selector 1 (rev16..31) = sequence A (0x80b); selector 2 (rev32..47) = sequence B (0x60c); else skip",
+          "single AC writer; no NVRAM/SPROM radiorev override; values are hardware identity",
+          "classification C HARDWARE_REQUIRED; read-only probe (0x3d8=0/1 + 0x3da read) designed, not executed",
+          "new blocker d4.pll_branch.hw_probe; D4 GO NO; HARDWARE TEST GO NO"
+      ]
+  },
+  {
+      "id": "D4D-RADIO-IDENTITY",
+      "milestone": "D4D radio/PHY identity model (adjacent harvest)",
+      "subject": "reusable map of radio id/revision + phytype/phyrev fields",
+      "status": "ANALYSIS ONLY",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "docs/m34d4/radio_identity_map.json"
+      ],
+      "key_facts": [
+          "radioid=pi+0x16a (radio reg1); full rev=pi+0x16c (radio reg0 low byte); class=pi+0x16e (rev>>4); low nibble=pi+0x16f",
+          "phytype=pi+0x160 ((PHY reg 0x3e0>>8)&0xF); phyrev=pi+0x164 (0x3e0&0xF, +overrides); pi+0x174=0x3e0>>12",
+          "AC accepts radio ids {0x030B, 0x2069}; tables prefregs/ovr/chan_tuning/acphy_txgain keyed to the 2069 rev"
       ]
   }
   ],

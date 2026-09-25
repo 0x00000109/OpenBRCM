@@ -1,0 +1,69 @@
+{
+  "artifact": "checkpoint_candidates",
+  "purpose": "Adjacent harvest (Part G): naturally occurring observable states AFTER successful PLL/radio initialization on the BCM4352 AC path. No checkpoint is classified STRONG/PROVEN here; the operational-checkpoint blocker (d4.checkpoint.none) is NOT solved.",
+  "status": "ANALYSIS ONLY",
+  "classification_vocab": ["CANDIDATE", "WEAK_CANDIDATE", "REJECTED"],
+
+  "candidates": [
+    {
+      "id": "CP-P1",
+      "location": "wlc_phy_switch_radio_acphy A/B lock-poll exit (A: 0xaaabe read_radio_reg(0x80b)&1; B: 0xaabc4/0xaabd5 read_radio_reg(0x0b/0x20b)&1)",
+      "completed": "radio PLL/synth enable bit observed set within the bounded 101x100us poll",
+      "observable": "the selected radio PLL-lock register bit (0x80b bit0 / 0x0b bit0 / 0x20b bit0)",
+      "pending_async_work": "no - poll is synchronous and bounded",
+      "bounded_poll_completed": "yes (<=0x65 iters)",
+      "mac_psm_state": "MAC suspended (wlapi_suspend_mac_and_wait @0xaa7bb); PSM running from D2A",
+      "why_may_be_useful": "the first hardware-observable evidence that the radio PLL/SYNTH is up; a natural post-PLL checkpoint before sub_9fb72",
+      "classification": "CANDIDATE"
+    },
+    {
+      "id": "CP-P2",
+      "location": "after sub_9fb72 returns to wlc_phy_switch_radio_acphy (call @0xaabf3)",
+      "completed": "2069 revision-class radio init (prefregs/override) applied",
+      "observable": "radio regs written per rev table; no single documented readback",
+      "pending_async_work": "none apparent",
+      "bounded_poll_completed": "n/a",
+      "mac_psm_state": "MAC suspended",
+      "why_may_be_useful": "covers the 2069 rev-dependent init regardless of A/B class; a class-independent convergence checkpoint",
+      "classification": "CANDIDATE"
+    },
+    {
+      "id": "CP-P3",
+      "location": "after sub_a7089 -> wlc_2069_rfpll_150khz (call @0xab3f5)",
+      "completed": "2069 RF PLL 150kHz programming (0x8c7..0x8c9/0x8cc)",
+      "observable": "radio PLL regs 0x8c7/0x8c8 = 0xFFFF and 0x8c9/0x8cc masked fields; no documented lock bit read",
+      "pending_async_work": "sub_a7089 also writes (*(pi+0x138))+0x8be/0x8bf constants 0x19/0x1a",
+      "bounded_poll_completed": "n/a",
+      "mac_psm_state": "MAC suspended",
+      "why_may_be_useful": "the concrete 2069 RF-PLL programming point; pairs with the pi+0x8bf proven values",
+      "classification": "CANDIDATE"
+    },
+    {
+      "id": "CP-P4",
+      "location": "wlapi_enable_mac @0xab409 inside wlc_phy_switch_radio_acphy (end region)",
+      "completed": "MAC re-enabled after radio ON; more PHY regs follow (0xab455..)",
+      "observable": "MACCONTROL EN_MAC set",
+      "pending_async_work": "yes - subsequent phy_reg_write block follows",
+      "bounded_poll_completed": "n/a",
+      "mac_psm_state": "MAC enabled (EN_MAC)",
+      "why_may_be_useful": "marks the transition back to an active MAC, but is not the end of PHY init",
+      "classification": "WEAK_CANDIDATE"
+    },
+    {
+      "id": "CP-P0",
+      "location": "wlc_phy_switch_radio_acphy entry / A-B decision at 0xaa7c0",
+      "completed": "nothing observed yet (branch selection only)",
+      "observable": "none (pi+0x16e is a byte, not a gate)",
+      "pending_async_work": "yes (full ON sequence)",
+      "bounded_poll_completed": "no",
+      "mac_psm_state": "MAC about to be suspended",
+      "why_may_be_useful": "none as a checkpoint",
+      "classification": "REJECTED"
+    }
+  ],
+
+  "notes": [
+    "This does NOT resolve d4.checkpoint.none; no candidate is STRONG/PROVEN.",
+    "CP-P1..CP-P3 are all synchronous (no async DMA/IRQ dependency) and are good future checkpoint material once the D3B->wlc_phy_init successor path is host-tested."
+  ]
+}
