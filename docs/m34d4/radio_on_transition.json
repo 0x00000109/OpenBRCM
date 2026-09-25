@@ -1,0 +1,60 @@
+{
+  "milestone": "M3.4D4 Phase 2",
+  "status": "ANALYSIS ONLY",
+  "question": "First vendor call that transitions BCM4352 AC from radio-OFF to radio-ON",
+  "verdict": "FOUND (vendor-executed): wlc_phy_init @0xbad44 -> wlc_phy_switch_radio(pi, ON=1) -> wlc_phy_switch_radio_acphy(pi, ON=1)",
+  "supersedes": "d4c_radio_on_transition.md claim that the only on=1 entry is the RPC-dispatched wlc_bmac_radio_hw",
+  "transition": {
+    "caller": "wlc_phy_init",
+    "caller_addr": "0xbabf5",
+    "call_site": "0xbad44",
+    "caller_caller": "sub_6656c @0x669df",
+    "caller_caller_caller": "wlc_bmac_init @0x695d8 <- wlc_init @0x3c6f1",
+    "callee": "wlc_phy_switch_radio",
+    "callee_addr": "0xba302",
+    "argument_on": "esi = 1 (mov esi,1 @0xbad3c; on=ON)",
+    "second_hop": {"callee": "wlc_phy_switch_radio_acphy", "addr": "0xaa782", "site": "0xba3a1", "dispatch_guard": "phytype [pi+0x160]==0xb (0xba395..0xba3a1)"},
+    "on_branch_entry": "0xaa7bb (je 0xAB413 is the OFF path when sil==0)",
+    "chanspec_at_moment": "[pi+0x17e] set in wlc_phy_init 0xbac19 from the u16 argument; wlc_phy_chanspec_shm_set called at 0xbac31 before the switch",
+    "band": "derived from chanspec & 0xc000 (band field); band struct selected earlier by wlc_setxband in wlc_bmac_init",
+    "predicates": {
+      "phytype": "[pi+0x160] == 0xb",
+      "phyrev": "[pi+0x164] (runtime; ==3 rev42-class branch in wlc_phy_init 0xbad27..0xbad35 sets [pi+0xF88]=0)",
+      "chipid_gate": "chipid in {0x4352,0x4360} for the [pi+0xF88]=0 write",
+      "runtime_branch": "[pi+0x16e] selects ON-path variant: ==1 -> long path (sub_8fb39/PLL poll 0xaaab6); ==2 -> 0xaab42 path (sub_9027d + write_radio_reg 0x60c + PLL poll); else -> 0xaabf0 (skip to sub_9fb72)"
+    },
+    "first_operations": {
+      "first_phy_indirect_write": {"op": "phy_reg_mod", "reg": "0x830", "val": "0x7", "mask": "0x3", "site": "0x8fb54", "in": "sub_8fb39 @0xaa7d1"},
+      "first_radio_write": {"op": "mod_radio_reg", "reg": "0x80b", "val": "0x80", "mask": "0x80", "site": "0xaa80f", "note": "chipid {0x4352,0x4360,0xa9c4,0xaa06} => 0x80b else 0x80c"},
+      "first_pll_synth": {
+        "candidates": [
+          "branch [pi+0x16e]==2: sub_9027d @0xaab50 (PHY PLL/clock regs 0x836/0x852/0x839/0x837/0x838) then write_radio_reg(0x60c,0x9e) @0xaab62, then lock poll read_radio_reg(0x0b)&1 and read_radio_reg(0x20b)&1 (<=0x65 iters) @0xaabbb",
+          "branch [pi+0x16e]==1: radio 0x80b sequence and PLL-lock poll read_radio_reg(0x80b)&1 @0xaaab6 (<=0x65 iters)"
+        ],
+        "exact": "UNKNOWN (depends on runtime [pi+0x16e])"
+      },
+      "first_phy_table_op": {"op": "wlc_phy_table_write_acphy", "table": "0x3", "val": "0x1", "mask": "*(pi+0x8be)", "site": "0xaa2ab", "in": "sub_a7089 @0xab3f5 (also called from sub_b018f @0xb02a9)"},
+      "first_delay": {"site": "0xaa911", "arg_us": "100"},
+      "first_bounded_poll": {"site": "0xaaab6", "what": "read_radio_reg(0x80b) bit0", "bound": "0x65 = 101 iterations"}
+    }
+  },
+  "attach_radio_off_path": {
+    "chain": "wlc_phy_attach 0xbed84 -> wlc_phy_anacore(pi,1); wlc_phy_attach 0xbf113 -> wlc_phy_switch_radio(pi, OFF=0) -> wlc_phy_switch_radio_acphy(pi,0) -> 0xAB413 (OFF path)",
+    "relationship": "wlc_phy_attach is the attach/probe phase (before DMA/ucode/initvals); wlc_phy_init is later in wlc_bmac_init and performs the matching ON transition"
+  },
+  "other_on1_callers": {
+    "wlc_bmac_radio_hw": {"site": "0x63ec8", "callers_in_blob": 0, "classification": "RPC/out-of-band API; still not vendor-executed in the local init path", "note": "this path remains valid as a code path but is NOT the first vendor-executed radio-ON"},
+    "wlc_phy_init": {"site": "0xbad44", "reachable": true, "note": "NOW proven reachable for AC; this is the actual first vendor-executed radio-ON"}
+  },
+  "re_commands": [
+    "re fn wlc_phy_init --asm",
+    "re fn wlc_phy_switch_radio --asm",
+    "re fn wlc_phy_switch_radio_acphy --asm",
+    "re phyops sub_8fb39",
+    "re phyops sub_9027d",
+    "re phyops sub_9fb72",
+    "re phyops sub_a7089 --class PHY_TABLE",
+    "re mmio --fn wlc_phy_init",
+    "re mmio --fn wlc_phy_switch_radio"
+  ]
+}

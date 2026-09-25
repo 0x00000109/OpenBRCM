@@ -7,9 +7,11 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - Read [`artifact-ledger.md`](artifact-ledger.md) **before re-deriving any
   fact**: it indexes every recent milestone/report by commit + path and lists
   superseded facts.
-- **Unmerged/unpushed work:** HEAD is on branch `m34d3b-band-init-test`,
-  15 commits ahead of `origin/main`; the latest 8 are unpushed. The D3B
-  implementation + D4/D4B/D4C/lifecycle/D4A chain is **not on `main`**.
+- **Unmerged work:** HEAD is on branch `m34d3b-band-init-test`, **17 commits
+  ahead of `origin/main`**; the branch is **pushed** (origin branch == `db151c8`).
+  The D3B implementation + D4/D4B/D4C/lifecycle/D4A/D4D chain is **not on
+  `main`**. Latest: **D4D post-D3B operational timeline** (reachability
+  correction) — see [`m34d4/post_d3b_operational_timeline.md`](m34d4/post_d3b_operational_timeline.md).
 - `re.db` is generated/gitignored (schema v4, current sha256 in the ledger);
   rebuild before analysis if stale.
 
@@ -261,7 +263,8 @@ Stated exactly:
   `docs/m34d4b/d4c_radio_on_transition.md`. `D4 IMPLEMENTATION GO: NO`;
   `HARDWARE TEST GO: NO`.
 - **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`** (commit
-  follows `00f22d8`): `wlc_bmac_radio_hw` =
+  follows `00f22d8`) — **SUPERSEDED by D4D (reachability correction); retained
+  for history**: `wlc_bmac_radio_hw` =
   `OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT`. **`wlc_phy_init` is a no-op for AC**
   (`[pi+0x28]==0`; only `wlc_phy_chanspec_shm_set`). Real post-D3B work =
   **`wlc_phy_cal_perical(pi,6)` from `wlc_init @0x3cde0`** (after
@@ -274,14 +277,16 @@ Stated exactly:
   `docs/m34d4/d4a_reachability_recovery.md`,
   `docs/m34d4/wlc_phy_init_bcm4352_reachable.json`. `D4 IMPLEMENTATION GO: NO`;
   `HARDWARE TEST GO: NO`.
-- **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
+- **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`** — **SUPERSEDED by D4D**:
+  `[phy+0x28]` is **proven
   zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
   body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but
   unreachable. `wlc_phy_init` is **not** the AC PHY-init point; scope must be
   re-derived from `wlc_phy_attach_acphy`. CP-F stable but not an AC PHY-init
   checkpoint. `D4 GO: NO`. Artifacts `docs/m34d4/*_v2.json`,
   `docs/m34d4/d4_checkpoint_analysis_v2.md`.
-- **M3.4D4B — AC-PHY init lineage** = **`ANALYSIS ONLY`** (2026-09, tool-first):
+- **M3.4D4B — AC-PHY init lineage** = **`ANALYSIS ONLY`** (2026-09, tool-first) —
+  **SUPERSEDED in part by D4D** (the `+0x28`/`+0x30` "zeroed" claim is wrong):
   `wlc_phy_attach_acphy` is software/board/capability only (0 MMIO writes, 11
   `phy_reg_read`, 1 callback `btc_adjust@+0xF8`); it zeroes `+0x28`/`+0x30`, so
   `wlc_phy_init`/`wlc_phy_cal_init` are no-ops for rev42 AC. Real AC init is in
@@ -292,6 +297,30 @@ Stated exactly:
   pre-hardware); first "PHY initialised" **CP-A3** (after `wlc_phy_attach`
   returns). Unknown runtime-derived write values ⇒ `D4 GO: NO`,
   `HARDWARE TEST GO: NO`. Artifacts `docs/m34d4b/*`.
+- **M3.4D4D post-D3B operational PHY/radio timeline** = **`ANALYSIS ONLY`**
+  (correction of D4A/D4B/D4C/D4A-v2): the `pi_fptr` slots installed by
+  `wlc_phy_attach_acphy` are **relocation-covered `imm32`**, NOT NULL:
+  `pi+0x28`=**`sub_b018f`** (AC PHY init callback), `+0x30`=`sub_8e77a`,
+  `+0x38`=`sub_a7089`, `+0x40`=`sub_9949f`, `+0xc0`=`sub_97e2b`,
+  `+0xc8`=`sub_92e67`, `+0xd0`=`sub_99528`, `+0x100`=`sub_9737d`,
+  `+0xf8`=`wlc_phy_btc_adjust_acphy`; only `+0x110`/`+0x118` uninstalled.
+  Therefore **`wlc_phy_init` is the real AC PHY/radio init entry**, reached
+  from **`sub_6656c @0x669df`** on the initial-up path (`wlc_bmac_init` passes
+  `dl=0`, so the `phyrev>0x27` skip is not taken). **First vendor-executed
+  radio-ON = `wlc_phy_init @0xbad44 → wlc_phy_switch_radio(ON=1) →
+  wlc_phy_switch_radio_acphy(ON=1)`** (`sub_b018f` runs at `0xbad4c` right
+  after). First radio write `mod_radio_reg(0x80b,0x80,0x80) @0xaa80f`; first
+  PHY write `phy_reg_mod(0x830,0x7,0x3) @0x8fb54`; first PHY-table
+  `wlc_phy_table_write_acphy(table 3) @0xaa2ab`; first PLL/synth `UNKNOWN`
+  (runtime `pi+0x16e` branch). `wlc_phy_cal_perical(pi,6)`/`wlc_phy_cals_acphy`
+  still follows from `wlc_init`. `wlc_bmac_init` reachable indirect
+  `[rax+0xA0]`/`[rax+0xD8]` `UNRESOLVED`; dev_lost not wired for the new D11
+  reads; **EARLIEST STRONG CHECKPOINT = NONE** (best candidate CP-F = WEAK).
+  `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`. Artifacts
+  `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`,
+  `radio_on_transition.json`, `initial_chanspec_provenance.json`,
+  `calibration_path.json`, `operational_checkpoint_analysis.md`,
+  `evidence_post_d3b_reachability.json`.
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

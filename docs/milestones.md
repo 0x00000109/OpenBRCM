@@ -834,7 +834,8 @@ never hands frames to mac80211.
 - M3 ← RE Stage 6 (DMA) and Stage 8 (data-path flows).
 - M4 ← RE Stages 7–8 (contract/dispatch, control flows, mac80211 mapping).
 - M6 ← RE Stage 3 (pluggable PHY ops).
-- **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`**:
+- **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`** —
+  **SUPERSEDED by M3.4D4D (reachability correction); retained for history**:
   `wlc_bmac_radio_hw` classified `OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT`
   (`WLRPC_WLC_BMAC_RADIO_HW_ID`, no caller/reloc). **`wlc_phy_init` is a no-op
   for AC** (`[pi+0x28]==0`; only `wlc_phy_chanspec_shm_set` runs). The real
@@ -850,3 +851,30 @@ never hands frames to mac80211.
   wlc_phy_cal_perical`. Reports `docs/m34d4/d4a_reachability_recovery.md`,
   `docs/m34d4/wlc_phy_init_bcm4352_reachable.json`. `D4 IMPLEMENTATION GO: NO`;
   `HARDWARE TEST GO: NO`.
+
+- **M3.4D4D post-D3B operational PHY/radio timeline** = **`ANALYSIS ONLY`** —
+  **correction of D4A/D4B/D4C/D4A-v2**. The `pi_fptr` slots installed by
+  `wlc_phy_attach_acphy` are **relocation-covered `imm32`**, NOT NULL:
+  `pi+0x28`=**`sub_b018f`**, `+0x30`=`sub_8e77a`, `+0x38`=`sub_a7089`,
+  `+0x40`=`sub_9949f`, `+0xc0`=`sub_97e2b`, `+0xc8`=`sub_92e67`,
+  `+0xd0`=`sub_99528`, `+0x100`=`sub_9737d`, `+0xf8`=`wlc_phy_btc_adjust_acphy`
+  (evidence: `objdump -r` + readelf + `re field_sites` reloc EXACT); only
+  `+0x110`/`+0x118` are uninstalled. Therefore **`wlc_phy_init` is the real AC
+  PHY/radio init entry**, reached from **`sub_6656c @0x669df`** on the
+  initial-up path (`wlc_bmac_init` passes `dl=0`, so the `phyrev>0x27` skip is
+  not taken). **First vendor-executed radio-ON = `wlc_phy_init @0xbad44 →
+  wlc_phy_switch_radio(ON=1) → wlc_phy_switch_radio_acphy(ON=1)`**; the AC init
+  callback `sub_b018f` runs at `0xbad4c` right after. First radio write
+  `mod_radio_reg(0x80b,0x80,0x80) @0xaa80f`; first PHY write
+  `phy_reg_mod(0x830,0x7,0x3) @0x8fb54`; first PHY-table
+  `wlc_phy_table_write_acphy(table 3) @0xaa2ab`; first PLL/synth `UNKNOWN`
+  (runtime `pi+0x16e` branch). `wlc_phy_cal_perical(pi,6)`/`wlc_phy_cals_acphy`
+  still follows from `wlc_init`. Initial chanspec = `wlc_default_chanspec`
+  (`COMPUTED_RUNTIME`; SPROM/NVRAM/locale). `wlc_bmac_init` reachable indirect
+  `[rax+0xA0]`/`[rax+0xD8]` `UNRESOLVED`; dev_lost not wired for the new D11
+  reads; **EARLIEST STRONG CHECKPOINT = NONE** (best candidate CP-F = WEAK).
+  `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`. Reports
+  `docs/m34d4/post_d3b_operational_timeline.md`,
+  `operational_callgraph.json`, `radio_on_transition.json`,
+  `initial_chanspec_provenance.json`, `calibration_path.json`,
+  `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json`.

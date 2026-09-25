@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "799996611912b98184443d66328f6379db249df2",
+      "head": "db151c89c7dd1e8550d1c72db73489ee0e5e4391",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 15,
-      "ahead_of_origin_branch": 8,
+      "ahead_of_origin_main": 17,
+      "ahead_of_origin_branch": 0,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "the entire D3B-implementation + D4/D4B/D4C/lifecycle/D4A chain is UNMERGED; 8 commits UNPUSHED"
+      "note": "the entire D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D chain is UNMERGED relative to main; the branch is pushed (origin/m34d3b-band-init-test == db151c8 at the time this ledger was generated)"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -215,8 +215,28 @@
       "status": "ANALYSIS ONLY",
       "merged": false, "branch": "m34d3b-band-init-test", "commit": "7999966",
       "artifacts": ["docs/m34d4/d4a_reachability_recovery.md", "docs/m34d4/wlc_phy_init_bcm4352_reachable.json"],
-      "key_facts": ["RPC radio_hw = OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT", "wlc_phy_init NO-OP for AC ([pi+0x28]==0)", "real entry = wlc_phy_cal_perical(pi,6) from wlc_init @0x3cde0 -> wlc_phy_cals_acphy", "0 unresolved indirects", "smallest unit = D3B + bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical"],
-      "supersedes": ["D4A-DECOMP"]
+      "key_facts": ["RPC radio_hw = OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT", "wlc_phy_init NO-OP for AC ([pi+0x28]==0) [SUPERSEDED: see D4D-POST-D3B]", "real entry = wlc_phy_cal_perical(pi,6) from wlc_init @0x3cde0 -> wlc_phy_cals_acphy [PARTIALLY SUPERSEDED: wlc_phy_init runs first]", "0 unresolved indirects [SUPERSEDED: wlc_bmac_init [rax+0xA0]/[rax+0xD8] unresolved]", "smallest unit = D3B + bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical"],
+      "supersedes": ["D4A-DECOMP"],
+      "superseded_by": "D4D-POST-D3B (reachability correction)"
+    },
+    {
+      "id": "D4D-POST-D3B",
+      "milestone": "M3.4D4 post-D3B operational PHY/radio timeline",
+      "status": "ANALYSIS ONLY",
+      "merged": false, "branch": "m34d3b-band-init-test",
+      "artifacts": ["docs/m34d4/post_d3b_operational_timeline.md", "docs/m34d4/operational_callgraph.json", "docs/m34d4/radio_on_transition.json", "docs/m34d4/initial_chanspec_provenance.json", "docs/m34d4/calibration_path.json", "docs/m34d4/operational_checkpoint_analysis.md", "docs/m34d4/evidence_post_d3b_reachability.json"],
+      "key_facts": [
+        "pi_fptr slots installed by wlc_phy_attach_acphy via relocation-covered imm32 (NOT NULL): pi+0x28=sub_b018f, +0x30=sub_8e77a, +0x38=sub_a7089, +0x40=sub_9949f, +0xc0=sub_97e2b, +0xc8=sub_92e67, +0xd0=sub_99528, +0x100=sub_9737d, +0xf8=wlc_phy_btc_adjust_acphy",
+        "wlc_phy_init is the real AC PHY/radio init entry, reached from sub_6656c @0x669df (dl=0 on initial up)",
+        "FIRST RADIO-ON = wlc_phy_init @0xbad44 -> wlc_phy_switch_radio(ON=1) -> wlc_phy_switch_radio_acphy(ON=1)",
+        "AC PHY init callback sub_b018f (0xb018f..0xb0454, 709 bytes) runs after switch_radio(ON) at wlc_phy_init @0xbad4c",
+        "first radio write mod_radio_reg(0x80b,0x80,0x80) @0xaa80f; first PHY write phy_reg_mod(0x830,0x7,0x3) @0x8fb54; first PHY-table wlc_phy_table_write_acphy(table 0x3) @0xaa2ab",
+        "first PLL/synth UNKNOWN (branch on runtime pi+0x16e)",
+        "wlc_bmac_init reachable indirect [rax+0xA0]/[rax+0xD8] UNRESOLVED",
+        "EARLIEST STRONG CHECKPOINT = NONE; best candidate CP-F after wlc_phy_cal_perical (WEAK)",
+        "D4 IMPLEMENTATION GO = NO; HARDWARE TEST GO = NO"
+      ],
+      "supersedes": ["D4A-REACHABILITY", "D4B-CLOSURE (attach interpretation)", "D4C", "acphy_function_table.json NULL slots"]
     }
   ],
   "supersession_map": [
@@ -225,6 +245,9 @@
     {"old": "sub_a4adc / sub_9591e are initial-attach blockers", "new": "radio-ON only, NOT reached at attach", "correcting_artifact": "docs/m34d4b/d4b_value_provenance_closure.md"},
     {"old": "phy+0xf8 = ambiguous / literal 0", "new": "EXACT relocation to wlc_phy_btc_adjust_acphy", "correcting_artifact": "docs/m34d4b/re_false_positive_fixes.md, docs/m34d4b/ghidra_augmentation.md"},
     {"old": "D4 follows D3B via wlc_phy_init", "new": "wlc_phy_init is a no-op for AC; real path is wlc_phy_cal_perical", "correcting_artifact": "docs/m34d4/d4a_reachability_recovery.md"},
-    {"old": "CP-O2 (radio enable) at init", "new": "RPC-only, no vendor-time CP-O2", "correcting_artifact": "docs/lifecycle/bcm4352_rev42_lifecycle.md"}
+    {"old": "CP-O2 (radio enable) at init", "new": "RPC-only, no vendor-time CP-O2", "correcting_artifact": "docs/lifecycle/bcm4352_rev42_lifecycle.md"},
+    {"old": "wlc_phy_init is a no-op for AC; [pi+0x28]/[pi+0x30]/... are NULL", "new": "wlc_phy_init runs; pi_fptr slots are relocation-installed (pi+0x28=sub_b018f, etc.)", "correcting_artifact": "docs/m34d4/evidence_post_d3b_reachability.json, docs/m34d4/post_d3b_operational_timeline.md"},
+    {"old": "radio-ON is RPC-only; no vendor-time radio-ON", "new": "first vendor-executed radio-ON = wlc_phy_init @0xbad44 -> switch_radio(ON)", "correcting_artifact": "docs/m34d4/radio_on_transition.json"},
+    {"old": "D4 real entry is wlc_phy_cal_perical only", "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path", "correcting_artifact": "docs/m34d4/operational_callgraph.json"}
   ]
 }

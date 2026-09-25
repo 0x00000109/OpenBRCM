@@ -9,10 +9,10 @@ Generated 2026-09-25. Repository of record:
 
 ## 0. Persistence status (important)
 
-- **OpenBRCM HEAD** `7999966` on branch `m34d3b-band-init-test`, **15 commits
+- **OpenBRCM HEAD** `db151c8` on branch `m34d3b-band-init-test`, **17 commits
   ahead of `origin/main`** (`main` = `06d60d6`). **The D3B-implementation and
-  the whole D4/D4B/D4C/lifecycle/D4A chain are UNMERGED**; the latest **8
-  commits are UNPUSHED** (local only).
+  the whole D4/D4B/D4C/lifecycle/D4A/D4D chain are UNMERGED**; the branch is
+  **pushed** (`origin/m34d3b-band-init-test` == `db151c8`).
 - **RE tooling** `iced/test` HEAD `f334e21` on `master`; `re.db` is
   **gitignored** (generated). Current `re.db` sha256
   `185f0bd84c2441379939ada95a4aba2e70c632f1175c41d759f9bd411b6ae449`
@@ -54,7 +54,8 @@ Generated 2026-09-25. Repository of record:
 | D4B-CLOSURE | value closure + CP-A3 | `84f9073` | ANALYSIS | `docs/m34d4b/d4b_value_provenance_closure.md`, `.json` |
 | D4C | radio-OFF attach → operational | `e8946a1` | ANALYSIS | `docs/m34d4b/d4c_radio_on_transition.*` |
 | LIFECYCLE | RPC caller + timeline | `00f22d8` | ANALYSIS | `docs/lifecycle/bcm4352_rev42_lifecycle.*` |
-| D4A-REACHABILITY | actual rev42 reachability | `7999966` | ANALYSIS | `docs/m34d4/d4a_reachability_recovery.md`, `wlc_phy_init_bcm4352_reachable.json` |
+| D4A-REACHABILITY | actual rev42 reachability | `7999966` | ANALYSIS (partially superseded) | `docs/m34d4/d4a_reachability_recovery.md`, `wlc_phy_init_bcm4352_reachable.json` |
+| D4D-POST-D3B | post-D3B operational PHY/radio timeline | (this commit) | ANALYSIS | `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`, `radio_on_transition.json`, `initial_chanspec_provenance.json`, `calibration_path.json`, `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json` |
 
 ## 4. Required knowledge → persistent location
 
@@ -81,6 +82,9 @@ Generated 2026-09-25. Repository of record:
 | `phy+0xf8` literal/ambiguous | EXACT reloc to `wlc_phy_btc_adjust_acphy` | `docs/m34d4b/re_false_positive_fixes.md` |
 | D4 follows D3B via `wlc_phy_init` | `wlc_phy_init` no-op for AC; path is `wlc_phy_cal_perical` | `docs/m34d4/d4a_reachability_recovery.md` |
 | CP-O2 radio-enable checkpoint | RPC-only, no vendor-time CP-O2 | `docs/lifecycle/bcm4352_rev42_lifecycle.md` |
+| `wlc_phy_init` no-op for AC; `pi+0x28`/`+0x30`/… NULL | `wlc_phy_init` runs; `pi_fptr` slots relocation-installed (`pi+0x28`=`sub_b018f`) | `docs/m34d4/evidence_post_d3b_reachability.json` |
+| radio-ON RPC-only | first vendor radio-ON = `wlc_phy_init @0xbad44 → switch_radio(ON)` | `docs/m34d4/radio_on_transition.json` |
+| D4 real entry is `wlc_phy_cal_perical` only | `wlc_phy_init` (`sub_b018f`) precedes it | `docs/m34d4/operational_callgraph.json` |
 
 ## 6. Open persistence risks
 

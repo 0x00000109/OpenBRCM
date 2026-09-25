@@ -1,0 +1,71 @@
+{
+  "milestone": "M3.4D4 (post-D3B operational PHY/radio timeline)",
+  "status": "ANALYSIS ONLY",
+  "supersedes": [
+    "docs/m34d4/d4a_reachability_recovery.md (wlc_phy_init is a no-op for AC)",
+    "docs/m34d4b/d4b_value_provenance_closure.md (CP-A3 / attach interpretation)",
+    "docs/m34d4b/acphy_function_table.json (INTENTIONALLY_NULL slots)",
+    "docs/m34d4b/d4c_radio_on_transition.md (radio-ON is RPC-only)"
+  ],
+  "correction": {
+    "claim": "wlc_phy_init DOES execute for BCM4352 rev42 AC; it is the real AC PHY/radio init entry, reached from sub_6656c on the vendor up path.",
+    "root_cause_of_previous_error": "pi_fptr slots in wlc_phy_attach_acphy are initialised by relocation-covered imm32 (`movq $imm,disp(%rbx)`); the raw object bytes are 0 and were misread as NULL. The relocations install real functions.",
+    "relocation_evidence": [
+      {"instruction_site": "0xa3001", "imm_field": "0xa3005", "field": "pi+0x28", "reloc": "R_X86_64_32S .text+0xb018f", "target": "sub_b018f", "oracle": "objdump -r + readelf .rela.text + re field_sites (reloc EXACT, src=wlc_phy_attach_acphy)"},
+      {"instruction_site": "0xa3009", "imm_field": "0xa300d", "field": "pi+0x30", "reloc": "R_X86_64_32S .text+0x8e77a", "target": "sub_8e77a", "oracle": "objdump -r"},
+      {"instruction_site": "0xa3016", "imm_field": "0xa301a", "field": "pi+0x38", "reloc": "R_X86_64_32S .text+0xa7089", "target": "sub_a7089", "oracle": "objdump -r"},
+      {"instruction_site": "0xa301e", "imm_field": "0xa3022", "field": "pi+0x40", "reloc": "R_X86_64_32S .text+0x9949f", "target": "sub_9949f", "oracle": "objdump -r"},
+      {"instruction_site": "0xa3026", "imm_field": "0xa302d", "field": "pi+0x100", "reloc": "R_X86_64_32S .text+0x9737d", "target": "sub_9737d", "oracle": "objdump -r"},
+      {"instruction_site": "0xa3031", "imm_field": "0xa3038", "field": "pi+0xc0", "reloc": "R_X86_64_32S .text+0x97e2b", "target": "sub_97e2b", "oracle": "objdump -r"},
+      {"instruction_site": "0xa303c", "imm_field": "0xa3043", "field": "pi+0xd0", "reloc": "R_X86_64_32S .text+0x99528", "target": "sub_99528", "oracle": "objdump -r"},
+      {"instruction_site": "0xa3047", "imm_field": "0xa304e", "field": "pi+0xc8", "reloc": "R_X86_64_32S .text+0x92e67", "target": "sub_92e67", "oracle": "objdump -r"},
+      {"instruction_site": "0xa3052", "imm_field": "0xa3059", "field": "pi+0xf8", "reloc": "R_X86_64_32S wlc_phy_btc_adjust_acphy", "target": "wlc_phy_btc_adjust_acphy", "oracle": "objdump -r (already correct in D4B)"}
+    ],
+    "genuinely_uninstalled_slots": {
+      "pi+0x110": {"name": "radio_cb", "evidence": "no field_sites writer other than memset; AC takes explicit 0xba3a1 branch to wlc_phy_switch_radio_acphy"},
+      "pi+0x118": {"name": "anacore_cb", "evidence": "no field_sites writer other than memset; wlc_phy_anacore AC fallback writes D11 0x3e6"}
+    }
+  },
+  "consumers": [
+    {"field": "pi+0x28", "consumer_fn": "wlc_phy_init", "site": "0xbad4c", "kind": "call r13", "runtime": "AC type 0xb reaches here, r13=sub_b018f"},
+    {"field": "pi+0x30", "consumer_fn": "wlc_phy_cal_init", "site": "0xb1bc9", "kind": "call rax", "runtime": "AC reaches here, rax=sub_8e77a (6-byte ret stub)"},
+    {"field": "pi+0xc0", "consumer_fn": "wlc_phy_detach", "site": "0xbaf78", "kind": "call rax", "runtime": "AC detach path"},
+    {"field": "pi+0xf8", "consumer_fn": "wlc_phy_watchdog", "site": "0xbc770", "kind": "call rax", "runtime": "btc_adjust"}
+  ],
+  "reachability_chain_post_d3b": [
+    "wlc_init 0x3c6f1 -> wlc_bmac_init(pi_hw, chanspec, 0, 0)",
+    "wlc_bmac_init 0x695d8 -> sub_6656c(dev, chanspec, dl=0)",
+    "sub_6656c 0x669bd -> sub_60f67(d11ac1bsinitvals42)  # D3B applier",
+    "sub_6656c 0x669df -> wlc_phy_init(pi, chanspec)  # dl=0 so the phyrev>0x27 skip at 0x669c7 is NOT taken",
+    "wlc_phy_init 0xbac6f r13=[pi+0x28]=sub_b018f (non-null)",
+    "wlc_phy_init 0xbac84 -> wlc_phy_anacore(pi, ON)",
+    "wlc_phy_init 0xbad44 -> wlc_phy_switch_radio(pi, ON=1)",
+    "wlc_phy_switch_radio 0xba3a1 -> wlc_phy_switch_radio_acphy(pi, ON=1)",
+    "wlc_phy_init 0xbad4c -> sub_b018f(pi)  # AC PHY init callback",
+    "wlc_init 0x3ca27 -> wlc_set_home_chanspec",
+    "wlc_init 0x3cde0 -> wlc_phy_cal_perical(pi, reason=6)",
+    "wlc_phy_cal_perical 0xb5aac -> wlc_phy_cals_acphy(pi, 0)"
+  ],
+  "guards": {
+    "sub_6656c_wlc_phy_init_guard": {
+      "asm": "0x669c2 test r13b,r13b; 0x669c5 je 0x669d0; 0x669c7 cmp dword [rbx+0x84],0x27; 0x669ce ja 0x669e4",
+      "meaning": "r13b==0 => always call wlc_phy_init; r13b!=0 => call only if phyrev<=0x27",
+      "initial_up_value": "wlc_bmac_init @0x695d3 xor edx,edx => dl=0 => wlc_phy_init IS called for rev42"
+    },
+    "wlc_phy_init_null_guard": {
+      "asm": "0xbac6f mov r13,[rbx+0x28]; 0xbac73 test r13,r13; 0xbac76 je 0xbaecE",
+      "rev42_value": "non-null (sub_b018f) => guard not taken"
+    }
+  },
+  "re_commands": [
+    "re fn sub_6656c --asm",
+    "re fn wlc_bmac_init --asm",
+    "re fn wlc_phy_init --asm",
+    "re fn wlc_phy_attach_acphy --asm",
+    "re field-writers --field 0x28",
+    "re field-writers --field 0x30",
+    "re fn sub_b018f --json",
+    "re card sub_b018f"
+  ],
+  "manual_used": "objdump -r (independent relocation verification; justified by the re/manual conflict on relocated imm32)"
+}
