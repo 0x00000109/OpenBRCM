@@ -834,3 +834,19 @@ never hands frames to mac80211.
 - M3 ← RE Stage 6 (DMA) and Stage 8 (data-path flows).
 - M4 ← RE Stages 7–8 (contract/dispatch, control flows, mac80211 mapping).
 - M6 ← RE Stage 3 (pluggable PHY ops).
+- **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`**:
+  `wlc_bmac_radio_hw` classified `OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT`
+  (`WLRPC_WLC_BMAC_RADIO_HW_ID`, no caller/reloc). **`wlc_phy_init` is a no-op
+  for AC** (`[pi+0x28]==0`; only `wlc_phy_chanspec_shm_set` runs). The real
+  post-D3B PHY/radio work is **`wlc_phy_cal_perical(pi,6)` called from
+  `wlc_init @0x3cde0`** (after `wlc_bmac_init`) → case 4/5/6 → (AC)
+  `wlc_phy_cals_acphy`. First PHY write =
+  `wlc_phy_rxcore_setstate_acphy phy_reg_mod(0x160,0x7) @0x97d50`; first radio
+  write = `sub_9311b mod_radio_reg(0x8e5,0x4000) @0x9315d`; first calibration =
+  `wlc_phy_cals_acphy` (synchronous). `[pi+0x28]`/`[pi+0x118]` =
+  `INTENTIONALLY_NULL`; **0 unresolved indirect calls**. D3B hypotheses: H1
+  **REJECTED**, H2 PLAUSIBLE/UNKNOWN, H3 WEAKENED, H4 PLAUSIBLE. Smallest next
+  unit = `D3B + wlc_bmac_init remainder + wlc_set_home_chanspec +
+  wlc_phy_cal_perical`. Reports `docs/m34d4/d4a_reachability_recovery.md`,
+  `docs/m34d4/wlc_phy_init_bcm4352_reachable.json`. `D4 IMPLEMENTATION GO: NO`;
+  `HARDWARE TEST GO: NO`.

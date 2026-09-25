@@ -250,6 +250,20 @@ Stated exactly:
   scope. `docs/lifecycle/bcm4352_rev42_lifecycle.{md,json}`; erratum in
   `docs/m34d4b/d4c_radio_on_transition.md`. `D4 IMPLEMENTATION GO: NO`;
   `HARDWARE TEST GO: NO`.
+- **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`** (commit
+  follows `00f22d8`): `wlc_bmac_radio_hw` =
+  `OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT`. **`wlc_phy_init` is a no-op for AC**
+  (`[pi+0x28]==0`; only `wlc_phy_chanspec_shm_set`). Real post-D3B work =
+  **`wlc_phy_cal_perical(pi,6)` from `wlc_init @0x3cde0`** (after
+  `wlc_bmac_init`) -> case 4/5/6 -> `wlc_phy_cals_acphy` (first calibration,
+  synchronous). First PHY write `phy_reg_mod(0x160,0x7) @0x97d50`; first radio
+  write `mod_radio_reg(0x8e5,0x4000) @0x9315d`. `[pi+0x28]`/`[pi+0x118]` =
+  `INTENTIONALLY_NULL`; **0 unresolved indirects**. D3B: H1 **REJECTED**, H2
+  PLAUSIBLE/UNKNOWN, H3 WEAKENED, H4 PLAUSIBLE. Smallest unit = `D3B +
+  wlc_bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical`.
+  `docs/m34d4/d4a_reachability_recovery.md`,
+  `docs/m34d4/wlc_phy_init_bcm4352_reachable.json`. `D4 IMPLEMENTATION GO: NO`;
+  `HARDWARE TEST GO: NO`.
 - **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`**: `[phy+0x28]` is **proven
   zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
   body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but

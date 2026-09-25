@@ -329,3 +329,11 @@ Tooling gap filed during the M3.4 lifecycle reconstruction (analysis only; see
   table (external symbol/API, candidate caller, normalized function identity,
   confidence/provenance) would prevent re-deriving it by four-tool
   cross-checking. Not implemented (not required for this analysis).
+
+Tooling gap filed during the M3.4D4A reachability recovery (analysis only; see
+`docs/m34d4/d4a_reachability_recovery.md`):
+
+- **D4A-G1 — `re switch` does not print jump-table targets.** For
+  `wlc_phy_cal_perical` the reason-argument jump table (case 4/5/6 → AC
+  calibration) had to be mapped with the Ghidra decompiler. Desired:
+  `re switch <fn> --targets` listing each indirect jump-table target.
