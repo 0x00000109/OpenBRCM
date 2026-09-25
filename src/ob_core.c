@@ -97,6 +97,20 @@ module_param(d11_tail_test_only, bool, 0444);
 MODULE_PARM_DESC(d11_tail_test_only,
 		 "isolated D3A1 vendor-ordered post-common/pre-PHY D11 tail test; includes proven DMA lifecycle; stops before bsinitvals/PHY (default: 0)");
 
+/*
+ * Explicit isolated read-only external-SPROM evidence capture (D3B MHF3).
+ *
+ * Reuses the existing external-SPROM diagnostic (ob_si_sprom_diag) to emit the
+ * already-read, CRC-validated 234-word rev11 image. It performs NO hardware
+ * writes at all: no power-up, no D11/core/clock write, no firmware upload, no
+ * PSM start, no DMA, no IRQ, no PHY/radio/channel, no MAC enable and no
+ * mac80211. Mutually exclusive with the other isolated modes.
+ */
+static bool sprom_evidence_only;
+module_param(sprom_evidence_only, bool, 0444);
+MODULE_PARM_DESC(sprom_evidence_only,
+		 "read-only external-SPROM evidence capture (emits the 234-word rev11 image); no bring-up (default: 0)");
+
 int ob_probe(struct bcma_device *core)
 {
 	struct ob_hw *hw;
@@ -116,6 +130,11 @@ int ob_probe(struct bcma_device *core)
 			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only/d11_tail_test_only are mutually exclusive\n");
 		return -EINVAL;
 	}
+	if (sprom_evidence_only && mode != OB_ISOLATED_NONE) {
+		dev_err(&core->dev,
+			OB_DRV_NAME ": sprom_evidence_only conflicts with other modes\n");
+		return -EINVAL;
+	}
 
 	hw = devm_kzalloc(&core->dev, sizeof(*hw), GFP_KERNEL);
 	if (!hw)
@@ -132,6 +151,21 @@ int ob_probe(struct bcma_device *core)
 	dev_info(hw->dev,
 		 OB_DRV_NAME ": chip 0x%04x rev %u, d11 core rev %u\n",
 		 hw->chip_id, hw->chip_rev, core->id.rev);
+
+	/*
+	 * sprom_evidence_only: bind, then run ONLY the read-only external-SPROM
+	 * diagnostic and return. Reuses ob_si_sprom_diag(); no power-up, no
+	 * D11/clock write, no firmware/PSM/DMA/IRQ/PHY/MAC/mac80211.
+	 */
+	if (sprom_evidence_only) {
+		hw->sprom_evidence_only = true;
+		ret = ob_si_sprom_evidence(hw);
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
 
 	/*
 	 * fw_validate_only: BCMA has bound the device and the identity check
@@ -319,6 +353,17 @@ void ob_remove(struct bcma_device *core)
 
 	if (!hw)
 		return;
+
+	/*
+	 * sprom_evidence_only is read-only and initialized no platform
+	 * resources; skip every teardown step.
+	 */
+	if (hw->sprom_evidence_only) {
+		dev_info(hw->dev,
+			 OB_DRV_NAME ": removed (sprom-evidence; nothing to tear down)\n");
+		bcma_set_drvdata(core, NULL);
+		return;
+	}
 
 	/*
 	 * fw_validate_only never initialized mac80211, DMA, IRQ or RX. Skip

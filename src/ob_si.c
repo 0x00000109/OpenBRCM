@@ -725,6 +725,42 @@ static void ob_si_dump_sprom_window(struct ob_hw *hw, u16 start,
 }
 
 /*
+ * D3B MHF3 evidence emission: dump the external SPROM image that the caller
+ * has ALREADY read and CRC-validated. This performs ZERO ChipCommon/SPROM
+ * MMIO — it only formats the existing `sp[]` array. Raw evidence only; field
+ * interpretation is done offline by scripts/sprom11_decode.py. It is reached
+ * only from the sprom_diag-gated diagnostic, so `sprom_diag=0` emits nothing.
+ */
+#define OB_SPROM11_WORDS_PER_LINE	8
+
+static void ob_si_emit_sprom11(struct ob_hw *hw, const u16 *sp, size_t words,
+			       u8 rev, u8 ecrc, u8 crc)
+{
+	char line[OB_SPROM11_WORDS_PER_LINE * 6 + 32];
+	unsigned int i, k;
+	bool valid;
+
+	/* Only the full rev10/11-sized image is part of this evidence. */
+	if (words != OB_SPROM_WORDS_R11)
+		return;
+	valid = (rev == 11) && (crc == ecrc);
+
+	dev_info(hw->dev,
+		 "openbrcm: sprom11: BEGIN words=%zu revision=%u crc=%02x calc=%02x valid=%d\n",
+		 words, rev, ecrc, crc, valid);
+	for (i = 0; i < words; i += OB_SPROM11_WORDS_PER_LINE) {
+		int n = scnprintf(line, sizeof(line),
+				  "openbrcm: sprom11: %03u:", i);
+
+		for (k = 0; k < OB_SPROM11_WORDS_PER_LINE && i + k < words; k++)
+			n += scnprintf(line + n, sizeof(line) - n, " %04x",
+				       sp[i + k]);
+		dev_info(hw->dev, "%s\n", line);
+	}
+	dev_info(hw->dev, "openbrcm: sprom11: END words=%zu\n", words);
+}
+
+/*
  * Read-only external-SPROM diagnostic (M2.5f). Reads through the ChipCommon
  * window with 16-bit accesses exactly like bcma_sprom_read(); writes nothing.
  * Validates CRC + revision the same way bcma_sprom_valid() does.
@@ -791,6 +827,20 @@ static int ob_si_sprom_diag(struct ob_hw *hw)
 			 erev >= 8 && erev <= 11);
 		if (crc == ecrc && erev >= 8 && erev <= 11)
 			valid = true;
+	}
+
+	/*
+	 * D3B MHF3 evidence: emit the ALREADY-read 234-word image from sp[]
+	 * (zero additional MMIO). sp[] holds the last loop iteration, which is
+	 * the full rev10/11-sized read.
+	 */
+	{
+		u8 crc234 = ob_sprom_crc(sp, OB_SPROM_WORDS_R11);
+		u8 rev234 = sp[OB_SPROM_WORDS_R11 - 1] & 0xff;
+		u8 ecrc234 = sp[OB_SPROM_WORDS_R11 - 1] >> 8;
+
+		ob_si_emit_sprom11(hw, sp, OB_SPROM_WORDS_R11, rev234,
+				   ecrc234, crc234);
 	}
 	kfree(sp);
 
@@ -879,4 +929,26 @@ int ob_si_probe(struct ob_hw *hw)
 		ob_si_otp_diag(hw);
 
 	return 0;
+}
+
+/*
+ * Isolated READ-ONLY SPROM evidence capture (D3B MHF3, sprom_evidence_only=1).
+ *
+ * Sets the ChipCommon window and runs the existing external-SPROM diagnostic
+ * (ob_si_sprom_diag), which emits the already-read, CRC-validated 234-word
+ * rev11 image via ob_si_emit_sprom11(). It performs NO hardware writes: no
+ * power-up, no D11/core/clock write, no firmware upload, no PSM start, no DMA,
+ * no IRQ, no PHY/radio/channel, no MAC enable.
+ */
+int ob_si_sprom_evidence(struct ob_hw *hw)
+{
+	hw->cc = hw->bus->drv_cc.core;
+	if (!hw->cc) {
+		dev_err(hw->dev, "sprom-evidence: no ChipCommon core\n");
+		return -ENODEV;
+	}
+
+	dev_info(hw->dev,
+		 "sprom-evidence: read-only external-SPROM capture (no bring-up)\n");
+	return ob_si_sprom_diag(hw);
 }

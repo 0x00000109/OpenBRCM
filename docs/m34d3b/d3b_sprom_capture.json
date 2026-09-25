@@ -1,0 +1,608 @@
+{
+  "schema": "openbrcm.d3b_sprom_capture.v1",
+  "milestone": "M3.4D3B",
+  "artifact": "external-SPROM rev11 hardware capture (MHF3 input)",
+  "capture_scope": "read-only external-SPROM capture; no bring-up",
+  "provenance_role": "hardware input for the D3B MHF3 value closure (NOT D3B itself)",
+  "hardware_tested_driver_commit": "739273c857d185f861467536a639fad4aa5b0bee",
+  "module_sha256": "538588e29634287971abcd568aae208281b22055ed1aa3e1ae6699eaed4741d5",
+  "kernel": "7.0.0-34-generic",
+  "vermagic": "7.0.0-34-generic SMP preempt mod_unload modversions",
+  "signer": "Broadcom Driver MOK",
+  "srcversion": "AC97164D23C815F7BF5D349",
+  "runtime": {
+    "insmod_rc": 0,
+    "rmmod_rc": 0
+  },
+  "log_source": {
+    "file": "openbrcm-sprom11-20260925-021950.log",
+    "marker": "[ 9497.209919] === OPENBRCM D3B SPROM EVIDENCE candidate=739273c... module=538588e2... ===",
+    "sha256": "18580b3badc7f9d24832734259b33ccf27784e7feefa74837554f145934e1ab9"
+  },
+  "header": {
+    "words": 234,
+    "revision": 11,
+    "crc": 192,
+    "calc": 192,
+    "valid": 1
+  },
+  "validation": {
+    "revision": 11,
+    "stored_crc": 192,
+    "calculated_crc": 192,
+    "crc_match": true,
+    "errors": [],
+    "ok": true
+  },
+  "raw_image": [
+    14337,
+    12288,
+    34234,
+    4163,
+    536,
+    7038,
+    2560,
+    11204,
+    10852,
+    10596,
+    11364,
+    15591,
+    17930,
+    316,
+    8498,
+    12644,
+    6226,
+    5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    17329,
+    32768,
+    2,
+    0,
+    16371,
+    6144,
+    0,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    1588,
+    4480,
+    4096,
+    4096,
+    2,
+    48,
+    0,
+    0,
+    11517,
+    41313,
+    16421,
+    17749,
+    95,
+    65535,
+    65535,
+    65535,
+    1799,
+    0,
+    0,
+    0,
+    119,
+    2193,
+    81,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    52428,
+    52428,
+    52428,
+    52428,
+    52428,
+    52428,
+    4,
+    65380,
+    65355,
+    6589,
+    64753,
+    65535,
+    47564,
+    25700,
+    25700,
+    65327,
+    6801,
+    64732,
+    65331,
+    6902,
+    64725,
+    65334,
+    6983,
+    64719,
+    65333,
+    6725,
+    64742,
+    65380,
+    65354,
+    6893,
+    64728,
+    65535,
+    45516,
+    25700,
+    25700,
+    65345,
+    7297,
+    64694,
+    65344,
+    7346,
+    64685,
+    65325,
+    6762,
+    64734,
+    65323,
+    6666,
+    64738,
+    65380,
+    65360,
+    5310,
+    64849,
+    65535,
+    43476,
+    25700,
+    25700,
+    65334,
+    5075,
+    64902,
+    65335,
+    5255,
+    64884,
+    65332,
+    5212,
+    64888,
+    65335,
+    5225,
+    64888,
+    4369,
+    4369,
+    13107,
+    39285,
+    13107,
+    39285,
+    47477,
+    51,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    30515,
+    47768,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    65535,
+    3858,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    65535,
+    49163
+  ],
+  "fields": {
+    "boardtype": {
+      "field": "boardtype",
+      "word_indices": [
+        2
+      ],
+      "parts": [
+        {
+          "word_index": 2,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "value": 34234,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[21] (w10=0x02 mask=0xffff); = SSB_SPROM1_SPID@0x04"
+    },
+    "boardflags": {
+      "field": "boardflags",
+      "word_indices": [
+        66,
+        67
+      ],
+      "parts": [
+        {
+          "word_index": 66,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 67,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "value": 268439552,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[13]+[14] continuation (SSB_SPROM8_BFLLO/HI@0x84/0x86)"
+    },
+    "boardflags2": {
+      "field": "boardflags2",
+      "word_indices": [
+        68,
+        69
+      ],
+      "parts": [
+        {
+          "word_index": 68,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 69,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "value": 3145730,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[19]+[20] continuation"
+    },
+    "boardflags3": {
+      "field": "boardflags3",
+      "word_indices": [
+        70,
+        71
+      ],
+      "parts": [
+        {
+          "word_index": 70,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 71,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "value": 0,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[374]+[375] continuation (rev>=11)"
+    },
+    "boardrev": {
+      "field": "boardrev",
+      "word_indices": [
+        65
+      ],
+      "parts": [
+        {
+          "word_index": 65,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "value": 4480,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[3] (SSB_SPROM8_BOARDREV@0x82)"
+    },
+    "boardnum": {
+      "field": "boardnum",
+      "word_indices": [
+        74
+      ],
+      "parts": [
+        {
+          "word_index": 74,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "value": 16421,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[376] (rev>=11)"
+    },
+    "ccode": {
+      "field": "ccode",
+      "word_indices": [
+        75
+      ],
+      "parts": [
+        {
+          "word_index": 75,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "value": 17749,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[378] (rev>=11)"
+    },
+    "regrev": {
+      "field": "regrev",
+      "word_indices": [
+        76
+      ],
+      "parts": [
+        {
+          "word_index": 76,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "value": 95,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[379] (rev>=11)"
+    },
+    "aa2g": {
+      "field": "aa2g",
+      "word_indices": [
+        80
+      ],
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "value": 7,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[385] (rev>=11) = ANTAVAIL_BG"
+    },
+    "aa5g": {
+      "field": "aa5g",
+      "word_indices": [
+        80
+      ],
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "value": 7,
+      "present": true,
+      "skip_all_ones": false,
+      "provenance": "srom_var_init table[386] (rev>=11) = ANTAVAIL_A"
+    },
+    "txchain": {
+      "field": "txchain",
+      "word_indices": [
+        84
+      ],
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 15,
+          "shift": 0,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "value": 7,
+      "present": true,
+      "skip_all_ones": true,
+      "provenance": "srom_var_init table[393] (rev>=11) = TXRXC_TXCHAIN"
+    },
+    "rxchain": {
+      "field": "rxchain",
+      "word_indices": [
+        84
+      ],
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 240,
+          "shift": 4,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "value": 7,
+      "present": true,
+      "skip_all_ones": true,
+      "provenance": "srom_var_init table[394] (rev>=11) = TXRXC_RXCHAIN"
+    },
+    "antswitch": {
+      "field": "antswitch",
+      "word_indices": [
+        84
+      ],
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "value": 0,
+      "present": true,
+      "skip_all_ones": true,
+      "provenance": "srom_var_init table[395] (rev>=11) = TXRXC_SWITCH"
+    }
+  },
+  "antsel_inputs": {
+    "boardtype": 34234,
+    "boardflags": 268439552,
+    "antswitch": 0,
+    "aa2g": 7,
+    "aa5g": 7
+  },
+  "antsel_type": 0,
+  "antsel_avail": false,
+  "MHF3": 0,
+  "final_mhfs": [
+    256,
+    0,
+    0,
+    0,
+    128
+  ],
+  "band_0_mhf_provenance": {
+    "MHF1": "PROVEN 0x0100 (pub+0x54 init)",
+    "MHF2": "PROVEN 0x0000 (BCM4352 bustype==1, buscoretype=0x83c -> si_pci_war16165=0)",
+    "MHF3": "PROVEN 0x0000 (this capture: antsel_type=0)",
+    "MHF4": "PROVEN 0x0000 (4313-only site skipped)",
+    "MHF5": "PROVEN 0x0080 (band phytype 0x0b != 7)"
+  },
+  "field_chain": [
+    {
+      "raw_word": "word 0x02 = 0x85ba",
+      "field": "boardtype",
+      "value": "0x85ba"
+    },
+    {
+      "raw_word": "word 0x42 = 0x1000 | word 0x43 = 0x1000",
+      "field": "boardflags",
+      "value": "0x10001000"
+    },
+    {
+      "raw_word": "word 0x50 = 0x0707",
+      "field": "aa2g",
+      "value": "0x07"
+    },
+    {
+      "raw_word": "word 0x50 = 0x0707",
+      "field": "aa5g",
+      "value": "0x07"
+    },
+    {
+      "raw_word": "word 0x54 = 0x0077",
+      "field": "antswitch",
+      "value": "0x00",
+      "present": true
+    },
+    {
+      "algorithm": "wlc_antsel_attach 0x5970a: boardtype>3 & antswitch==0 & boardtype!=4 -> L_bf; boardflags&0x8==0",
+      "field": "antsel_type",
+      "value": 0
+    },
+    {
+      "mapping": "wlc_bmac_init sites 5..8: {2,3,6}->0x3, 1->0x1, else 0x0",
+      "field": "MHF3",
+      "value": "0x0000"
+    }
+  ]
+}
