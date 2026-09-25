@@ -90,6 +90,76 @@ class ParseTests(unittest.TestCase):
         self.assertFalse(v["ok"])
 
 
+class FieldDecodeTests(unittest.TestCase):
+    """Decode the proven rev11 field map from synthetic 234-word images."""
+
+    def _image(self):
+        return make_image()
+
+    def test_boardtype_word(self):
+        w = self._image()
+        w[0x02] = 0x008F
+        f = sd.decode_field(w, "boardtype", sd.PROVEN_REV11_FIELDS["boardtype"])
+        self.assertEqual(f["value"], 0x8F)
+        self.assertTrue(f["present"])
+
+    def test_aa2g_aa5g_split(self):
+        w = self._image()
+        w[0x50] = (0x03 << 8) | 0x07
+        a2 = sd.decode_field(w, "aa2g", sd.PROVEN_REV11_FIELDS["aa2g"])
+        a5 = sd.decode_field(w, "aa5g", sd.PROVEN_REV11_FIELDS["aa5g"])
+        self.assertEqual((a2["value"], a5["value"]), (7, 3))
+
+    def test_boardflags_continuation(self):
+        w = self._image()
+        w[0x42] = 0x0008
+        w[0x43] = 0x4000
+        f = sd.decode_field(w, "boardflags",
+                            sd.PROVEN_REV11_FIELDS["boardflags"])
+        self.assertEqual(f["value"], 0x40000008)
+
+    def test_antswitch_present_and_absent(self):
+        w = self._image()
+        w[0x54] = 0x0500
+        f = sd.decode_field(w, "antswitch",
+                            sd.PROVEN_REV11_FIELDS["antswitch"])
+        self.assertEqual((f["value"], f["present"]), (5, True))
+        w[0x54] = 0xFF00
+        f = sd.decode_field(w, "antswitch",
+                            sd.PROVEN_REV11_FIELDS["antswitch"])
+        self.assertEqual(f["value"], 0xFF)
+        self.assertFalse(f["present"])
+
+    def test_zero_image(self):
+        w = [0] * WORDS
+        for name in ("boardtype", "aa2g", "aa5g", "antswitch"):
+            f = sd.decode_field(w, name, sd.PROVEN_REV11_FIELDS[name])
+            self.assertEqual(f["value"], 0)
+        # antswitch==0 -> type 1 iff BFL_RFANTS, else 0 (zero image -> 0).
+        self.assertEqual(sd.antsel_type(0, 0, 0, 0, 0), (0, False))
+
+    def test_mhf3_end_to_end_from_image(self):
+        w = self._image()
+        w[0x02] = 0x0005          # boardtype > 3
+        w[0x54] = 0x0100          # antswitch = 1 -> type 2
+        w[0x50] = 0x0000
+        vals = {n: sd.decode_field(w, n, sd.PROVEN_REV11_FIELDS[n])["value"]
+                for n in ("boardtype", "boardflags", "antswitch", "aa2g",
+                          "aa5g")}
+        atype, avail = sd.antsel_type(*(vals[n] for n in
+                                        ("boardtype", "boardflags", "antswitch",
+                                         "aa2g", "aa5g")))
+        self.assertEqual((atype, avail, sd.mhf3(atype)), (2, False, 0x3))
+
+    def test_field_map_never_has_unknown_provenance(self):
+        for name, spec in sd.PROVEN_REV11_FIELDS.items():
+            self.assertIn("provenance", spec, name)
+            self.assertTrue(spec["provenance"], name)
+            self.assertIn("parts", spec, name)
+            for part in spec["parts"]:
+                self.assertLess(part["word"], sd.WORDS_R11, name)
+
+
 class AntselTests(unittest.TestCase):
     def test_antsel_type_vectors(self):
         cases = [
