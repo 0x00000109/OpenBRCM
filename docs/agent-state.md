@@ -172,13 +172,17 @@ Stated exactly:
   (`0x18c`) equality gate was invalid and is removed/replaced by
   write-accounting + diagnostics; the rest of the D3A1 proof stands**)
 - M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
-  NOT HARDWARE PROVEN (isolated `bsinitvals_test_only=1` band init +
-  `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; implementation
-  `docs/m34d3b_band_init_test.md`; **2026-09 attempt on frozen candidate
-  `5fa5e5b` failed the pre-D3B `tsf_cfpstart` postcondition — fix applied, no
-  bsinitvals applied, retest pending**; `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5
-  all PROVEN; final vector `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3
-  PROVEN by the SPROM-evidence capture)
+  NOT HARDWARE PROVEN / **platform CRASH** (isolated `bsinitvals_test_only=1`
+  band init + `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`;
+  implementation `docs/m34d3b_band_init_test.md`; post-mortem
+  `docs/m34d3b/d3b_crash_postmortem.md`). **Attempt 1 (`5fa5e5b`) failed the
+  pre-D3B `tsf_cfpstart` postcondition (fixed). Attempt 2 (corrected
+  `2917ca9`/`88971029…`) applied all 73 bsinitvals records, then every post-D3B
+  D11 read returned `0xffffffff`; the platform reset with an AMD data-fabric
+  sync flood during `ob_d3a0_teardown()`. Not proven; `HARDWARE RETEST: NO`.**
+  `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
+  `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
+  capture)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
@@ -392,6 +396,20 @@ candidate = `ffa2a548911007b58605df51150e24d422d6d957`, signed `openbrcm.ko`
 sha256 `889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`
 (NOT HARDWARE PROVEN; one D3B retest pending owner approval).**
 
+**2026-09 corrected hardware attempt (candidate `2917ca9` / runtime `ffa2a54`,
+module `88971029…`) — PLATFORM CRASH:** D2A PASS -> D2B 610 PASS -> D3A1 T1 PASS
+-> 4 TX DMA channels programmed/validated -> FIFO0 RX programmed/validated IDLE
+-> DMA bring-up PASS -> T2 PASS -> `switch_macfreq` -> D3A1 postconditions PASS
+-> D3B: MHF `{0x0100,0,0,0,0x0080}` written, `bsinitvals42 begin records=73`,
+`complete total=73 w16=39 w32=34`. ~4.84 s later **every post-D3B D11 read
+returned `0xffffffff`** (`mhfs=ffff…`, `SHM[0x10/0x1c/0x94]=ffffffff`,
+`MACCONTROL=ffffffff`, `MACINTMASK=ffffffff`). `validation FAIL ret=-5` ->
+`dma-test: quiesce begin`; **no later OpenBRCM line**; then 100% CPU / freeze /
+spontaneous reboot (no visible panic, pstore empty). Next boot:
+`x86/amd: Previous system reset reason [0x08000800]: an uncorrected error caused
+a data fabric sync flood event`. Full analysis:
+`docs/m34d3b/d3b_crash_postmortem.md`. **`HARDWARE RETEST: NO`.**
+
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
   `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
@@ -464,7 +482,18 @@ M3.4D3A1 isolated `d11_tail_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
 (candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
 
 ## Last failure / reset event
-**2026-09 D3B hardware attempt (frozen candidate `5fa5e5b`):** the shared
+**2026-09 D3B corrected hardware attempt (candidate `2917ca9` / runtime `ffa2a54`,
+module `88971029…`) — platform-level crash:** the D3B slice applied all 73
+`d11ac1bsinitvals42` records (`73/39/34`); ~4.84 s later every post-D3B D11 read
+returned `0xffffffff`; validation failed and the driver entered
+`ob_d3a0_teardown()` (`dma-test: quiesce begin`), after which the platform reset
+with an AMD **data-fabric sync flood** (`0x08000800`). No later OpenBRCM line;
+no visible panic; pstore empty. Post-mortem:
+`docs/m34d3b/d3b_crash_postmortem.md`. **`HARDWARE RETEST: NO`. Do not retest
+until the all-ones mechanism and the teardown-on-device-loss interaction are
+bounded.**
+
+**2026-09 D3B attempt 1 (frozen candidate `5fa5e5b`):** the shared
 pre-D3B `ob_d3a1_validate()` failed **only** on the `tsf_cfpstart` (`0x18c`)
 postcondition (`rb=0x3c000000`, expected `0x02000000`). Mandatory verified
 teardown succeeded; no bsinitvals applied; no BUG/Oops/lockup/reset. Root cause
@@ -517,8 +546,9 @@ the `tsf_cfpstart` (`0x18c`) equality gate was invalid and is removed; the rest
 of the proof stands (`docs/m34d3a1_vendor_tail_test.md` §17). See
 `docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md`.
 
-**Next action — D3B attempt made, postcondition fixed; one D3B retest pending;
-D4 after.** M3.4D3B (band init / `d11ac1bsinitvals42`) is analyzed in
+**Next action — D3B attempt made, postcondition fixed; retest BLOCKED by the
+platform crash; D4 after.** M3.4D3B (band init / `d11ac1bsinitvals42`) is
+analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
@@ -573,13 +603,16 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B band-init implementation, attempt made + postcondition fix): the
+Current (D3B band-init implementation, attempts made + postcondition fix): the
 isolated `bsinitvals_test_only=1` implementation is `IMPLEMENTED` /
-`STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT HARDWARE PROVEN**
-(2026-09 attempt stopped at the pre-D3B `tsf_cfpstart` gate; fixed). STOP
-before any further hardware run — **no `insmod`/`rmmod`/`modprobe`, no
-hardware**. The next action (owner approval) is the one-shot D3B retest, which
-must stop before `wlc_phy_init`.
+`STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT HARDWARE PROVEN**;
+attempt 1 stopped at the pre-D3B `tsf_cfpstart` gate (fixed); attempt 2 applied
+all 73 bsinitvals records and then the platform crashed (AMD data-fabric sync
+flood) during `ob_d3a0_teardown()` after the D11 window returned `0xffffffff`.
+**`HARDWARE RETEST: NO`.** STOP — **no `insmod`/`rmmod`/`modprobe`, no
+hardware**. Retest requires the prerequisites in
+`docs/m34d3b/d3b_crash_postmortem.md` §15 (device-loss handling + bound
+mechanism).
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the

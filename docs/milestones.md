@@ -302,19 +302,25 @@ Canonical status (exact):
   The other postconditions, the vendor sequence and the teardown remain proven.
   See `docs/m34d3a1_vendor_tail_test.md` §17.
 - M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
-  NOT HARDWARE PROVEN (isolated `bsinitvals_test_only=1` band init +
-  `d11ac1bsinitvals42`); design `docs/m34d3b_band_init.md`, implementation
-  `docs/m34d3b_band_init_test.md`. **2026-09 attempt (frozen candidate
-  `5fa5e5b`, module `3a10aff9…`) reached D2A/D2B/T1/DMA/T2/`switch_macfreq`
-  and the verified teardown, but failed the pre-D3B `tsf_cfpstart` postcondition
-  in the shared `ob_d3a1_validate()`; no bsinitvals record was applied.** The
-  invalid gate is fixed; the D3B slice itself is still NOT HARDWARE PROVEN.
+  NOT HARDWARE PROVEN / **platform CRASH** (isolated `bsinitvals_test_only=1`
+  band init + `d11ac1bsinitvals42`); design `docs/m34d3b_band_init.md`,
+  implementation `docs/m34d3b_band_init_test.md`, post-mortem
+  `docs/m34d3b/d3b_crash_postmortem.md`. **Attempt 1 (frozen candidate
+  `5fa5e5b`, module `3a10aff9…`)** reached D2A/D2B/T1/DMA/T2/`switch_macfreq`
+  and the verified teardown, but failed the pre-D3B `tsf_cfpstart` postcondition;
+  no bsinitvals record was applied. **Attempt 2 (corrected candidate
+  `2917ca9`, module `88971029…`)** reached the D3B slice: MHF1..5 written and
+  **all 73 `d11ac1bsinitvals42` records applied** (`73/39/34`), then ~4.84 s
+  later every post-D3B D11 read returned `0xffffffff`; validation failed, the
+  driver entered `ob_d3a0_teardown()` and the platform reset with an AMD
+  **data-fabric sync flood** (`0x08000800`). The D3B postconditions were **not**
+  proven; the D3A0 teardown is unsafe after MMIO loss. `HARDWARE RETEST: NO`.
   `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`: all MHF write expressions,
   gate semantics and all five band-0 MHF values are resolved —
   `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}` (MHF1/MHF2/MHF4/MHF5
   closed earlier; **MHF3** closed by the 2026-09 read-only hardware SPROM
-  capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/provenance/safety
-  blocker remains.
+  capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/provenance blocker
+  remains, but a new **safety** blocker exists: device-loss handling.
 - M3.4D3B SPROM-evidence capture (branch `m34d3b-sprom-evidence`, PR #14)
   = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE RUNTIME PROVEN`**
   (BCM4352, 2026-09, frozen candidate `739273c`, `openbrcm.ko` sha256
@@ -333,10 +339,13 @@ Canonical status (exact):
   with the D3A0 DMA engines left live (`ob_d3a1_run_prefix()`), writes MHF1..5
   derived from the rev11 board fields, applies 73 `d11ac1bsinitvals42` records
   (39 x w2 + 34 x w4), validates the deterministic postconditions and performs
-  the verified D3A0 teardown; STOPS before `wlc_phy_init`. **Failure point of
-  the 2026-09 attempt: the pre-D3B `tsf_cfpstart` postcondition** (fixed in the
-  same branch). Files `src/ob_d3b.{c,h}`; proof
-  `docs/m34d3b_band_init_test.md`.
+  the verified D3A0 teardown; STOPS before `wlc_phy_init`. **Failure history:
+  attempt 1 stopped at the pre-D3B `tsf_cfpstart` postcondition (fixed); attempt
+  2 applied all 73 records, then the D11 window read `0xffffffff` and the
+  platform crashed during `ob_d3a0_teardown()` (AMD data-fabric sync flood).**
+  Files `src/ob_d3b.{c,h}`; proof
+  `docs/m34d3b_band_init_test.md`; post-mortem
+  `docs/m34d3b/d3b_crash_postmortem.md`.
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 `352a6e349f…`); implementation `docs/m34d3a1_vendor_tail_test.md`. Isolated
@@ -346,10 +355,13 @@ mode `d11_tail_test_only=1` reproduces the exact rev42 vendor sequence after
 Module built + MOK-signed and hardware-run for the D3A1 tail; the
 `tsf_cfpstart` postcondition was corrected 2026-09 (§17).
 
-**D3B retest candidate (fixed, NOT HARDWARE PROVEN):** commit
-`ffa2a548911007b58605df51150e24d422d6d957`, signed `openbrcm.ko` sha256
-`889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`; the failed
-attempt was frozen candidate `5fa5e5b` (module `3a10aff9…`).
+**D3B attempt-2 candidate (corrected, NOT HARDWARE PROVEN, CRASHED):** commit
+`ffa2a548911007b58605df51150e24d422d6d957` (PR #17 HEAD `2917ca9`), signed
+`openbrcm.ko` sha256
+`889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`; attempt 1
+was frozen candidate `5fa5e5b` (module `3a10aff9…`). Both candidates are
+retained in the frozen-candidate history; **do not retest** until the device-loss
+mechanism is bounded (`docs/m34d3b/d3b_crash_postmortem.md`).
 - **Ordering:** the vendor **interleaves** DMA inside the tail —
   `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
   intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →
