@@ -9,8 +9,8 @@
     "docs/m34d3b_sprom_evidence.md",
     "docs/m34d4/indirect_ops_table_resolution.md",
     "docs/m34d4/operational_checkpoint_analysis.md",
-    "docs/m34d4/pll_selector_provenance.json",
     "docs/m34d4/post_d3b_operational_timeline.md",
+    "docs/m34d4/radio_probe_contract.json",
     "docs/m34d4/tooling_gap_closure.md",
     "docs/m34d4/value_provenance.json",
     "docs/ucode_test.md"
@@ -52,17 +52,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "ffbe7262bb1f78163d11099120d8408e0fb033f2"
+    "head": "a74875f460f92d506e733cf18aa4a0a81fa46179"
   },
   "current_milestone": {
     "artifact": "docs/m34d4/value_provenance.json",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "ffbe7262bb1f78163d11099120d8408e0fb033f2",
+  "generated_from_head": "a74875f460f92d506e733cf18aa4a0a81fa46179",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "516ec46cab060a5a61824d0600a1a42b115d53759d40857b4ec8aafbda600155"
+    "sources_hash": "833cc372e1f1279d5f425d73090bdcca0d63e94fd373e58bc68957bb9f80cf23"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",
@@ -78,10 +78,10 @@
     },
     {
       "evidence": [
-        "docs/m34d4/pll_selector_provenance.json"
+        "docs/m34d4/radio_probe_contract.json"
       ],
       "id": "d4.pll_branch.hw_probe",
-      "summary": "PLL branch (A/B) needs a radio reg0 read; probe designed, not executed."
+      "summary": "PLL branch (A/B) needs a radio reg0 read; frozen isolated radio_id_probe_only=1 candidate ready, NOT executed."
     }
   ],
   "project": "OpenBRCM",

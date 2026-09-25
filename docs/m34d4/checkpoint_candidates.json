@@ -1,8 +1,13 @@
 {
   "artifact": "checkpoint_candidates",
-  "purpose": "Adjacent harvest (Part G): naturally occurring observable states AFTER successful PLL/radio initialization on the BCM4352 AC path. No checkpoint is classified STRONG/PROVEN here; the operational-checkpoint blocker (d4.checkpoint.none) is NOT solved.",
+  "purpose": "Adjacent harvest (Part G of the PLL-selector task + Part J of D4-BLOCKER-PLL-BRANCH-HW-PROBE): naturally occurring observable states AFTER successful PLL/radio initialization on the BCM4352 AC path. No checkpoint is classified STRONG/PROVEN here; the operational-checkpoint blocker (d4.checkpoint.none) is NOT solved.",
   "status": "ANALYSIS ONLY",
   "classification_vocab": ["CANDIDATE", "WEAK_CANDIDATE", "REJECTED"],
+  "part_j_refinement": {
+    "note": "Only facts already implied by the proven branch/probe work are added. No candidate was promoted.",
+    "selector_relation": "the isolated radio probe (radio_id_probe_only=1) pins the executed branch (A/B/SKIP) from the BCM2069 revision class; that makes each candidate's branch dependence known in advance and cheapens the later checkpoint blocker without resolving it.",
+    "probe_reuses": "the same non-destructive radio read primitive (write16 0x3d8 + read16 0x3da) is available for any candidate that reads a radio lock bit, so such candidates need no extra invasive access class."
+  },
 
   "candidates": [
     {
@@ -14,6 +19,11 @@
       "bounded_poll_completed": "yes (<=0x65 iters)",
       "mac_psm_state": "MAC suspended (wlapi_suspend_mac_and_wait @0xaa7bb); PSM running from D2A",
       "why_may_be_useful": "the first hardware-observable evidence that the radio PLL/SYNTH is up; a natural post-PLL checkpoint before sub_9fb72",
+      "branch_dependent": true,
+      "requires_actual_selector": true,
+      "before_or_after_radio_lock": "at lock (this is the lock-poll exit)",
+      "pending_bounded_work": false,
+      "observable_without_extra_invasive_access": true,
       "classification": "CANDIDATE"
     },
     {
@@ -25,6 +35,11 @@
       "bounded_poll_completed": "n/a",
       "mac_psm_state": "MAC suspended",
       "why_may_be_useful": "covers the 2069 rev-dependent init regardless of A/B class; a class-independent convergence checkpoint",
+      "branch_dependent": false,
+      "requires_actual_selector": false,
+      "before_or_after_radio_lock": "after lock (A/B convergence)",
+      "pending_bounded_work": false,
+      "observable_without_extra_invasive_access": false,
       "classification": "CANDIDATE"
     },
     {
@@ -36,6 +51,11 @@
       "bounded_poll_completed": "n/a",
       "mac_psm_state": "MAC suspended",
       "why_may_be_useful": "the concrete 2069 RF-PLL programming point; pairs with the pi+0x8bf proven values",
+      "branch_dependent": false,
+      "requires_actual_selector": false,
+      "before_or_after_radio_lock": "after lock (same convergence tail)",
+      "pending_bounded_work": true,
+      "observable_without_extra_invasive_access": false,
       "classification": "CANDIDATE"
     },
     {
@@ -47,6 +67,11 @@
       "bounded_poll_completed": "n/a",
       "mac_psm_state": "MAC enabled (EN_MAC)",
       "why_may_be_useful": "marks the transition back to an active MAC, but is not the end of PHY init",
+      "branch_dependent": false,
+      "requires_actual_selector": false,
+      "before_or_after_radio_lock": "after lock",
+      "pending_bounded_work": true,
+      "observable_without_extra_invasive_access": true,
       "classification": "WEAK_CANDIDATE"
     },
     {
@@ -58,12 +83,18 @@
       "bounded_poll_completed": "no",
       "mac_psm_state": "MAC about to be suspended",
       "why_may_be_useful": "none as a checkpoint",
+      "branch_dependent": true,
+      "requires_actual_selector": true,
+      "before_or_after_radio_lock": "before lock",
+      "pending_bounded_work": true,
+      "observable_without_extra_invasive_access": false,
       "classification": "REJECTED"
     }
   ],
 
   "notes": [
     "This does NOT resolve d4.checkpoint.none; no candidate is STRONG/PROVEN.",
-    "CP-P1..CP-P3 are all synchronous (no async DMA/IRQ dependency) and are good future checkpoint material once the D3B->wlc_phy_init successor path is host-tested."
+    "CP-P1..CP-P3 are all synchronous (no async DMA/IRQ dependency) and are good future checkpoint material once the D3B->wlc_phy_init successor path is host-tested.",
+    "Part J refinement adds only branch/probe-derived facts; classification is unchanged."
   ]
 }

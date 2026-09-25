@@ -63,6 +63,12 @@ struct ieee80211_hw;
  *		runs (it emits the already-read 234-word rev11 image); no power-up,
  *		D11/core write, DMA, IRQ, PHY/radio, firmware or mac80211; @remove
  *		skips all teardown
+ * @radio_id_probe_only: true when probe ran with radio_id_probe_only=1: the
+ *		device is bound, the minimum proven core prep ran (host up + D11
+ *		core enable + FAST clock + D11 MAC-PHY clock), the D11 radio
+ *		indirect window read radio reg 0/1 (two selector writes + two
+ *		16-bit reads) and the probe STOPPED before any PLL/radio/PHY/
+ *		calibration/channel/DMA/IRQ/mac80211; @remove skips all teardown
  * @cc:		chipcommon core (register window for CC/PMU/SPROM)
  * @mac:	validated factory MAC from the external SPROM (rev8/rev11)
  * @mac_valid:	true when @mac passed CRC/revision validation and eth checks
@@ -85,6 +91,7 @@ struct ob_hw {
 	bool			d3a1_test_only;
 	bool			bsinitvals_test_only;
 	bool			sprom_evidence_only;
+	bool			radio_id_probe_only;
 	struct bcma_device	*cc;
 	u8			mac[6];
 	bool			mac_valid;

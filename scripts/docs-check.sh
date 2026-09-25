@@ -261,12 +261,21 @@ else
 	ok "D3B code does not reach PHY/radio/IRQ setup"
 fi
 if grep -q 'OB_ISOLATED_D3B_TEST' src/ob_ucode.h && \
-   grep -q 'ob_isolated_mode_select6' src/ob_core.c && \
+   grep -qE 'ob_isolated_mode_select(6|7)' src/ob_core.c && \
    grep -q 'bsinitvals_test_only' src/ob_core.c && \
    grep -q 'ob_d3b_remove' src/ob_core.c; then
 	ok "bsinitvals_test_only isolated mode wired (mutual exclusion + remove hook)"
 else
-	bad "bsinitvals_test_only mode not wired (select6 / ob_d3b_remove)"
+	bad "bsinitvals_test_only mode not wired (select6/7 / ob_d3b_remove)"
+fi
+if grep -q 'OB_ISOLATED_RADIO_ID_PROBE' src/ob_ucode.h && \
+   grep -q 'radio_id_probe_only' src/ob_core.c && \
+   grep -q 'ob_radio_probe_test' src/ob_core.c && \
+   grep -q 'ob_radio_remove' src/ob_core.c && \
+   [ -f src/ob_radio.c ] && [ -f src/ob_radio.h ]; then
+	ok "radio_id_probe_only isolated mode wired (mutual exclusion + remove hook)"
+else
+	bad "radio_id_probe_only mode not wired (select7 / ob_radio_probe_test / ob_radio_remove)"
 fi
 if [ -f docs/m34d3b_band_init_test.md ] && \
    grep -q 'IMPLEMENTED' docs/m34d3b_band_init_test.md && \

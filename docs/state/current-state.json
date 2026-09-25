@@ -15,9 +15,9 @@
   "open_blockers": [
     {
       "id": "d4.pll_branch.hw_probe",
-      "summary": "PLL branch (A/B) needs a radio reg0 read; probe designed, not executed.",
+      "summary": "PLL branch (A/B) needs a radio reg0 read; frozen isolated radio_id_probe_only=1 candidate ready, NOT executed.",
       "evidence": [
-        "docs/m34d4/pll_selector_provenance.json"
+        "docs/m34d4/radio_probe_contract.json"
       ]
     },
     {

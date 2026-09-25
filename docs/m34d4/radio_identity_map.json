@@ -132,6 +132,18 @@
     "_note": "constants 0x2050=8272,0x2060=8288,0x2063=8291,0x2064=8292,0x2065=8293,0x2066=8294,0x2067=8295,0x2069=8297,0x2059=8281; AC (11) accepts {0x030B,0x2069}"
   },
 
+  "decoder_relations": {
+    "note": "Relations the offline decoder (scripts/decode_radio_probe.py) uses. No tables are duplicated here; extraction strings above are authoritative.",
+    "raw_registers": {"radio_reg0": "0x3d8=0 -> read 0x3da", "radio_reg1": "0x3d8=1 -> read 0x3da"},
+    "radioid": {"object_field": "pi+0x16a", "raw": "radio_reg1", "mask": "0xffff", "shift": 0},
+    "radiorev": {"object_field": "pi+0x16c", "raw": "radio_reg0", "mask": "0xff", "shift": 0},
+    "revision_class": {"object_field": "pi+0x16e", "raw": "radio_reg0", "mask": "0xff", "shift": 4},
+    "rev_low": {"object_field": "pi+0x16f", "raw": "radio_reg0", "mask": "0x0f", "shift": 0},
+    "phytype": {"object_field": "pi+0x160", "raw": "PHY reg 0x3e0", "mask": "0x0f", "shift": 8, "board_value": "0x0B (AC)"},
+    "phyrev": {"object_field": "pi+0x164", "raw": "PHY reg 0x3e0", "mask": "0x0f", "shift": 0, "board_value": "0x0A (D11 PHY rev 0x2A/42)"},
+    "branch_mapping": {"1": "PLL sequence A (rev 16..31)", "2": "PLL sequence B (rev 32..47)", "other": "SKIP (2069); UNKNOWN if radio_id != 0x2069"}
+  },
+
   "notes": [
     "radioid is radio reg 1; radio_rev/class is radio reg 0.",
     "The AC path reads reg 0 and reg 1 only (no reg 2).",

@@ -12,6 +12,7 @@
 #include "ob_mac80211.h"
 #include "ob_ucode.h"
 #include "ob_initvals.h"
+#include "ob_radio.h"
 
 /*
  * Explicit firmware-validation-only mode.
@@ -112,6 +113,22 @@ MODULE_PARM_DESC(sprom_evidence_only,
 		 "read-only external-SPROM evidence capture (emits the 234-word rev11 image); no bring-up (default: 0)");
 
 /*
+ * Explicit isolated BCM2069 radio identity probe (D4-BLOCKER-PLL-BRANCH-HW-PROBE).
+ *
+ * Reads only the D11 radio-indirect window (radio reg 0 and 1) after the
+ * minimum proven core prep, then STOPS. Exactly two selector writes and two
+ * 16-bit reads; no PLL sequence, no calibration, no channel, no PHY tables, no
+ * DMA, no IRQ, no TX/RX and no mac80211. It is not a radio register dump. The
+ * captured revision class selects the first-radio-ON PLL branch A/B/SKIP.
+ * Mutually exclusive with every other isolated mode; any conflict fails probe
+ * before hardware access.
+ */
+static bool radio_id_probe_only;
+module_param(radio_id_probe_only, bool, 0444);
+MODULE_PARM_DESC(radio_id_probe_only,
+		 "isolated BCM2069 radio id/revision probe (radio reg 0/1 only); stops before PLL/radio init (default: 0)");
+
+/*
  * Explicit isolated D3B band-init test (M3.4D3B).
  *
  * Runs the proven D2A/D2B core and the exact D3A1 vendor prefix with the D3A0
@@ -137,13 +154,14 @@ int ob_probe(struct bcma_device *core)
 		return -ENODEV;
 
 	/* Explicit mode policy: at most one isolated mode may be selected. */
-	mode = ob_isolated_mode_select6(fw_validate_only, ucode_test_only,
+	mode = ob_isolated_mode_select7(fw_validate_only, ucode_test_only,
 					initvals_test_only, dma_test_only,
 					d11_tail_test_only,
-					bsinitvals_test_only);
+					bsinitvals_test_only,
+					radio_id_probe_only);
 	if (ob_isolated_mode_conflict(mode)) {
 		dev_err(&core->dev,
-			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only/d11_tail_test_only/bsinitvals_test_only are mutually exclusive\n");
+			OB_DRV_NAME ": fw_validate_only/ucode_test_only/initvals_test_only/dma_test_only/d11_tail_test_only/bsinitvals_test_only/radio_id_probe_only are mutually exclusive\n");
 		return -EINVAL;
 	}
 	if (sprom_evidence_only && mode != OB_ISOLATED_NONE) {
@@ -345,6 +363,33 @@ int ob_probe(struct bcma_device *core)
 		return 0;
 	}
 
+	/*
+	 * radio_id_probe_only: isolated BCM2069 radio identity probe. Runs the
+	 * minimum proven core prep, reads radio reg 0/1 through the D11 radio
+	 * indirect window, decodes the revision class and STOPS before any
+	 * PLL/radio/PHY/calibration/channel/DMA/IRQ/mac80211. It never runs the
+	 * normal ob_si_probe() path, never uploads ucode, never applies
+	 * initvals and never touches DMA.
+	 */
+	if (mode == OB_ISOLATED_RADIO_ID_PROBE) {
+		hw->radio_id_probe_only = true;
+		ret = ob_radio_probe_test(hw);
+		if (hw->dev_lost || hw->d3a0.lc.fatal) {
+			/* Fail-closed: keep the device bound and the module
+			 * pinned; no teardown and no MMIO after device loss.
+			 * Only a reboot clears the latch.
+			 */
+			dev_crit(hw->dev,
+				 OB_DRV_NAME ": radio-probe FATAL/dev-lost; device kept bound, reboot required\n");
+			return 0;
+		}
+		if (ret) {
+			bcma_set_drvdata(core, NULL);
+			return ret;
+		}
+		return 0;
+	}
+
 	ret = ob_si_probe(hw);
 	if (ret)
 		return ret;
@@ -481,6 +526,15 @@ void ob_remove(struct bcma_device *core)
 	 */
 	if (hw->bsinitvals_test_only) {
 		ob_d3b_remove(hw);
+		return;
+	}
+
+	/*
+	 * radio_id_probe_only owns no platform resources; its remove hook only
+	 * reports the retained (fatal/dev-lost) state or the clean STOP.
+	 */
+	if (hw->radio_id_probe_only) {
+		ob_radio_remove(hw);
 		return;
 	}
 

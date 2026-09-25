@@ -415,6 +415,31 @@ Stated exactly:
   filed (R-G1..R-G4, no tooling change). New blocker `d4.pll_branch.hw_probe`.
   Artifacts `docs/m34d4/pll_selector_provenance.{json,md}`. **`D4 IMPLEMENTATION
   GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
+- **D4-BLOCKER-PLL-BRANCH-HW-PROBE — isolated BCM2069 radio identity probe** =
+  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **frozen candidate** / **NOT
+  HARDWARE PROVEN / NOT EXECUTED** (no hardware, no MMIO). New additive
+  isolated mode `radio_id_probe_only=1` (`src/ob_radio.{c,h}`, ob_core dispatch
+  via `ob_isolated_mode_select7`): minimum proven core prep (host up + D11 core
+  enable + FAST clock + SICF_MPCLKE) then exactly the proven vendor radio read
+  (selector write `0x3d8=0/1` + 16-bit read `0x3da`), decode radio reg 0/1, and
+  STOP before PLL/radio/PHY/cal/channel/DMA/IRQ/mac80211. **Probe class =
+  `READ_WITH_NONDESTRUCTIVE_SELECTOR_WRITE`.** Earliest safe point = the D11-side
+  core bring-up only; ucode/PSM/initvals/D3A1/DMA/D3B/bsinitvals/PHY init are
+  NOT required (vendor reads radio regs in `wlc_phy_attach`, before all of them;
+  `wlc_bmac_core_phypll_ctl` is a proven no-op for rev42). dev_lost-safe
+  (PRE/POST trusted MACCONTROL sentinel; zero MMIO after latch; module pinned;
+  reboot). Offline decoder `scripts/decode_radio_probe.py` (no LLM; rejects
+  malformed/missing/conflicting/candidate-mismatch/impossible/fault) plus
+  `scripts/radio_probe_audit.py` (all dangerous categories zero; D11 reads=5,
+  D11 writes=2 selector, radio reads=2, PHY/PLL/cal/DMA/IRQ/SHM=0). Frozen
+  candidate module `openbrcm.ko` sha256
+  `706b3407fc164b2a87e3f7e879f6bdc99d2180f84a1d8431635033be6106dc8d`,
+  srcversion `C15A62FF7BAA84106E75F43`, signer `Broadcom Driver MOK`; human
+  one-shot procedure in `docs/m34d4/radio_probe_design.md` §9. Artifacts
+  `docs/m34d4/radio_probe_design.md`, `radio_probe_contract.json`,
+  `radio_probe_decoder.md`. Scoped `HARDWARE TEST GO: YES` for this isolated
+  candidate only (owner approval); **global `D4 IMPLEMENTATION GO: NO`**. The
+  blocker `d4.pll_branch.hw_probe` stays OPEN until a decoded capture exists.
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
   (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
   never a source of truth) + `scripts/generate-current-context.py`

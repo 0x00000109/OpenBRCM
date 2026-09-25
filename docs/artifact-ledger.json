@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "ffbe7262bb1f78163d11099120d8408e0fb033f2",
+      "head": "a74875f460f92d506e733cf18aa4a0a81fa46179",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 27,
-      "ahead_of_origin_branch": 0,
+      "ahead_of_origin_main": 28,
+      "ahead_of_origin_branch": 1,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the D4D-PLL-SELECTOR commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR chain is UNMERGED relative to main"
+      "note": "snapshot before the D4D-RADIO-PROBE commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR + D4D-RADIO-PROBE chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -447,7 +447,61 @@
       "key_facts": [
           "radioid=pi+0x16a (radio reg1); full rev=pi+0x16c (radio reg0 low byte); class=pi+0x16e (rev>>4); low nibble=pi+0x16f",
           "phytype=pi+0x160 ((PHY reg 0x3e0>>8)&0xF); phyrev=pi+0x164 (0x3e0&0xF, +overrides); pi+0x174=0x3e0>>12",
-          "AC accepts radio ids {0x030B, 0x2069}; tables prefregs/ovr/chan_tuning/acphy_txgain keyed to the 2069 rev"
+          "AC accepts radio ids {0x030B, 0x2069}; tables prefregs/ovr/chan_tuning/acphy_txgain keyed to the 2069 rev",
+          "decoder_relations block added: masks/shifts + branch mapping for the offline decoder"
+      ]
+  },
+  {
+      "id": "D4D-RADIO-PROBE",
+      "milestone": "D4-BLOCKER-PLL-BRANCH-HW-PROBE — isolated BCM2069 radio identity probe",
+      "subject": "radio_id_probe_only=1 isolated frozen candidate + offline decoder + runbook",
+      "status": "IMPLEMENTED / STATIC TESTED / SIGNED / FROZEN CANDIDATE / NOT HARDWARE PROVEN",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "src/ob_radio.c",
+          "src/ob_radio.h",
+          "src/ob_core.c",
+          "src/ob_core.h",
+          "src/ob_ucode.h",
+          "tests/host/ob_radio_test.c",
+          "tests/host/test_radio_probe_decoder.py",
+          "tests/kunit/ob_radio_kunit.c",
+          "scripts/decode_radio_probe.py",
+          "scripts/radio_probe_audit.py",
+          "docs/m34d4/radio_probe_design.md",
+          "docs/m34d4/radio_probe_contract.json",
+          "docs/m34d4/radio_probe_decoder.md",
+          "docs/m34d4/checkpoint_candidates.json"
+      ],
+      "key_facts": [
+          "additive radio_id_probe_only=1; mutually exclusive with every other isolated mode; normal + older modes unchanged",
+          "probe class READ_WITH_NONDESTRUCTIVE_SELECTOR_WRITE: write16 0x3d8=0/1 + read16 0x3da (radio reg 0/1 only)",
+          "earliest safe point = D11-side core bring-up only (host up + D11 core enable + FAST clock + SICF_MPCLKE); ucode/PSM/initvals/D3A1/DMA/D3B/bsinitvals/PHY init NOT required; wlc_bmac_core_phypll_ctl is a no-op for rev42",
+          "dev_lost-safe (PRE/POST trusted MACCONTROL sentinel; zero MMIO after latch; module pinned; reboot)",
+          "static audit: D11 reads=5, D11 writes=2 (selector), radio reads=2, PHY/PLL/cal/DMA/IRQ/SHM writes=0, polls=0",
+          "host tests 80 checks PASS; decoder 16 tests PASS; frozen openbrcm.ko sha256 706b3407...06dc8d; srcversion C15A62FF7BAA84106E75F43; signer Broadcom Driver MOK",
+          "HARDWARE NOT EXECUTED; blocker d4.pll_branch.hw_probe stays OPEN; global D4 GO still NO"
+      ]
+  },
+  {
+      "id": "D4D-RADIO-PROBE-DECODER",
+      "milestone": "D4-BLOCKER-PLL-BRANCH-HW-PROBE — offline capture decoder",
+      "subject": "deterministic (no-LLM) decode + rejection + prepared state transition",
+      "status": "IMPLEMENTED / STATIC TESTED",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "scripts/decode_radio_probe.py",
+          "tests/host/test_radio_probe_decoder.py",
+          "docs/m34d4/radio_probe_decoder.md"
+      ],
+      "key_facts": [
+          "decodes reg0/reg1 with the exact wlc_phy_attach @0xbeff8 expressions; emits radio_probe_capture JSON",
+          "rejects malformed / missing / duplicate-conflict / candidate mismatch / module mismatch / impossible extraction / dev_lost-FAIL / all-ones pair / unexpected radio id",
+          "prepared (not applied) state transition: d4.pll_branch.hw_probe OPEN->CLOSED; d4.pll_synth.rev42.branch HARDWARE_REQUIRED->PROVEN_A|B|SKIP"
       ]
   }
   ],

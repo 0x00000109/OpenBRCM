@@ -1,0 +1,188 @@
+{
+  "artifact": "radio_probe_contract",
+  "schema_version": 1,
+  "milestone": "M3.4D4",
+  "blocker": "D4-BLOCKER-PLL-BRANCH-HW-PROBE",
+  "blocker_alias": "d4.pll_branch.hw_probe",
+  "purpose": "Smallest isolated hardware probe that reads the BCM2069 radio revision / PLL selector for this exact BCM4352 board and stops. DESIGN + STATIC + SIGNED; NOT executed.",
+  "hardware_executed": false,
+  "hardware_test_go": "YES (isolated radio_id_probe_only candidate only; owner approval required; the global D4 HARDWARE TEST GO remains NO)",
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+
+  "mode": {
+    "module_param": "radio_id_probe_only",
+    "value": 1,
+    "mutually_exclusive_with": [
+      "fw_validate_only", "ucode_test_only", "initvals_test_only",
+      "dma_test_only", "d11_tail_test_only", "bsinitvals_test_only",
+      "sprom_evidence_only"
+    ],
+    "conflict_result": "-EINVAL before any hardware access",
+    "normal_path_unchanged": true,
+    "older_modes_unchanged": true
+  },
+
+  "earliest_safe_probe_point": {
+    "vendor_evidence": "wlc_phy_attach (radio reg 0/1 read) is called ONLY from wlc_bmac_attach @0x6a138, after wlc_bmac_corereset @0x69b1c and BEFORE si_clkctl_init @0x6aa20, ucode upload, common initvals, dma_attach and every later stage",
+    "prefix": "bcma_host_pci_up + bcma_core_enable(D11) + bcma_core_set_clockmode(FAST) + D11 MAC-PHY clock (SICF_MPCLKE, BCMA_IOCTL bit 4)",
+    "prefix_rationale": "D11-side register window bring-up, already hardware-proven (M2.5/D3A0). wlc_bmac_core_phypll_ctl is a proven NO-OP for rev42 (early return at phyrev>0x27 == 42)."
+  },
+
+  "prerequisites": [
+    {"name": "PCI/BCMA host up", "class": "REQUIRED", "evidence": "radio window is a D11 register access"},
+    {"name": "D11 core enabled", "class": "REQUIRED", "evidence": "vendor corereset precedes the read"},
+    {"name": "HT/FAST clock", "class": "REQUIRED", "evidence": "vendor sets FAST before the read; M2.5 proven"},
+    {"name": "D11 PHY clock (SICF_MPCLKE)", "class": "REQUIRED", "evidence": "vendor corereset sets D11 core cflags on the AC branch before the read; hardware-proven in D3A0/D3A1"},
+    {"name": "ucode upload", "class": "NOT REQUIRED", "evidence": "vendor read precedes upload (wlc_bmac_attach order)"},
+    {"name": "PSM running", "class": "NOT REQUIRED", "evidence": "vendor read precedes PSM start"},
+    {"name": "common initvals (d11ac1initvals42)", "class": "NOT REQUIRED", "evidence": "vendor read precedes initvals"},
+    {"name": "D3A1 vendor tail", "class": "NOT REQUIRED", "evidence": "vendor read precedes the post-common tail"},
+    {"name": "DMA", "class": "NOT REQUIRED", "evidence": "dma_attach @0x6a3d6 runs after wlc_phy_attach"},
+    {"name": "D3B MHF writes", "class": "NOT REQUIRED", "evidence": "band init runs after wlc_bmac_init"},
+    {"name": "bsinitvals42", "class": "NOT REQUIRED", "evidence": "vendor read precedes band init"},
+    {"name": "wlc_phy_init / AC PHY init", "class": "NOT REQUIRED", "evidence": "vendor read precedes wlc_phy_init"},
+    {"name": "PHY attach software object (pi)", "class": "NOT REQUIRED", "evidence": "the window is raw D11; the probe does not build pi"},
+    {"name": "radio-window selector write", "class": "REQUIRED (part of the read)", "evidence": "data port is only meaningful for the latched register"},
+    {"name": "MAC suspend state", "class": "NOT REQUIRED", "evidence": "not referenced by the read path"},
+    {"name": "wlc_bmac_phy_reset (PMU/PHY PLL programming)", "class": "UNKNOWN", "evidence": "vendor runs it before the read; the read may not need it. The probe omits all PHY/PLL writes by design and validates the window via the radio-id check; a failed validation is a bounded, non-crashing result that proves the dependency without any PHY/PLL write."}
+  ],
+
+  "probe_class": "READ_WITH_NONDESTRUCTIVE_SELECTOR_WRITE",
+  "probe_class_detail": {
+    "pure_read": false,
+    "reason": "the 0x3d8 address latch is written before each 0x3da data read; it selects a read window and does not change RF/PLL/radio config",
+    "selector_write_is_safe": "exact vendor read_radio_reg / wlc_phy_attach primitive; no RF state change"
+  },
+
+  "registers": {
+    "window_base": "D11 core register window (hw->core)",
+    "address_selector_register": "0x3d8",
+    "selector_value_reg0": 0,
+    "selector_value_reg1": 1,
+    "data_register": "0x3da",
+    "access_width": "16-bit",
+    "ordering_barrier": "none required by the vendor primitive; the probe does a single write+read pair per register",
+    "retry_poll": "none (no polling)",
+    "reads": ["radio register 0", "radio register 1"],
+    "read_count": 2,
+    "register_dump": false,
+    "reg1_justification": "radio-id identity validation for BCM2069 (accepted {0x2069,0x030B}); material for correct-window detection"
+  },
+
+  "extraction": {
+    "radio_id": "reg1",
+    "radio_rev": "reg0 & 0xff",
+    "rev_low": "reg0 & 0x0f",
+    "revision_class": "(reg0 >> 4) & 0xff  == pi+0x16e",
+    "branch": "class 1 -> A; class 2 -> B; 2069 other class -> SKIP; radio_id != 0x2069 -> UNKNOWN",
+    "evidence": [
+      "docs/m34d4/pll_selector_provenance.json",
+      "docs/m34d4/radio_identity_map.json",
+      "docs/m34d4/pll_decision_matrix.json"
+    ]
+  },
+
+  "log_format": [
+    "radio-probe: BEGIN",
+    "radio-probe: prep host up (host_is_pcie2=<0|1>)",
+    "radio-probe: clkctlst=<hex> HAVEHT=<0|1> core_enabled=<0|1>",
+    "radio-probe: ioctl=<hex> mpclke=<0|1>",
+    "radio-probe: pre_access=0x<hex>",
+    "radio-probe: reg0_raw=0x<hex>",
+    "radio-probe: reg1_raw=0x<hex>",
+    "radio-probe: radioid=0x<hex>",
+    "radio-probe: radiorev=0x<hex>",
+    "radio-probe: revision_class=<dec>",
+    "radio-probe: id_accepted=<0|1> id_is_2069=<0|1>",
+    "radio-probe: pll_branch=<A|B|SKIP|UNKNOWN>",
+    "radio-probe: post_access=0x<hex>",
+    "radio-probe: PASS",
+    "radio-probe: STOPPED BEFORE PLL/RADIO INIT"
+  ],
+
+  "dev_lost_safety": {
+    "central_guard": "ob_guard / hw->dev_lost (monotonic)",
+    "pre_access_guard": "ob_d11_read32_trusted(MACCONTROL 0x0120); all-ones latches dev_lost and stops before any write",
+    "post_access_guard": "ob_d11_read32_trusted(MACCONTROL 0x0120)",
+    "after_latch": "zero hardware writes, zero reset/quiesce MMIO, resources retained, module pinned, reboot required",
+    "fatal_retain_policy_verified": true
+  },
+
+  "offline_decoder": {
+    "tool": "scripts/decode_radio_probe.py",
+    "requires_llm": false,
+    "rejects": [
+      "malformed log (no BEGIN / no PASS / no STOPPED line)",
+      "missing values",
+      "duplicate conflicting values",
+      "candidate mismatch (--expect-candidate)",
+      "module sha256 mismatch (--expect-module-sha256)",
+      "impossible extraction (declared decode disagrees with reg0/reg1)",
+      "explicit dev_lost / FAIL result",
+      "all-ones register pair",
+      "unexpected radio id"
+    ],
+    "output_fields": [
+      "reg0_raw", "reg1_raw", "radio_id", "radio_rev", "revision_class",
+      "pll_branch", "pre_access", "post_access", "candidate", "module_sha256",
+      "kernel", "provenance", "state_transition"
+    ]
+  },
+
+  "checkpoint_candidates_refined": true,
+  "no_candidate_promoted": true,
+
+  "static_audit": {
+    "source": "src/ob_radio.c + src/ob_radio.h (comments stripped)",
+    "ok": true,
+    "d11_reads": 5,
+    "d11_writes": 2,
+    "radio_address_writes": 2,
+    "radio_reads": 2,
+    "phy_writes": 0,
+    "radio_state_changing_writes": 0,
+    "pll_writes": 0,
+    "calibration_ops": 0,
+    "shm_writes": 0,
+    "dma_programming_ops": 0,
+    "irq_programming_ops": 0,
+    "unbounded_polls": 0,
+    "bounded_polls": 0,
+    "axi_ioctl_writes": 1,
+    "tool": "scripts/radio_probe_audit.py"
+  },
+
+  "failure_matrix": [
+    {"case": "prerequisite unavailable (host up / core enable fails)", "rc": "negative errno", "rmmod_permitted": true, "resources_freed": "n/a (none allocated)", "reboot_required": false},
+    {"case": "trusted accessibility read all-ones (pre)", "rc": -5, "rmmod_permitted": false, "resources_freed": false, "reboot_required": true, "detail": "dev_lost latched before any write"},
+    {"case": "radio selector access fails (latch flips before a write)", "rc": -5, "rmmod_permitted": false, "resources_freed": false, "reboot_required": true, "detail": "guarded write suppressed; STOP"},
+    {"case": "reg0 invalid (all-ones pair)", "rc": -5, "rmmod_permitted": true, "resources_freed": "n/a", "reboot_required": false, "detail": "no PHY/PLL write issued; bounded failure"},
+    {"case": "reg1 invalid (all-ones pair)", "rc": -5, "rmmod_permitted": true, "resources_freed": "n/a", "reboot_required": false},
+    {"case": "unexpected radio id (!= 0x2069/0x030B)", "rc": -5, "rmmod_permitted": true, "resources_freed": "n/a", "reboot_required": false},
+    {"case": "unexpected revision class (0 / 15 / other)", "rc": 0, "rmmod_permitted": true, "resources_freed": "n/a", "reboot_required": false, "detail": "valid data; pll_branch=SKIP (2069) or UNKNOWN"},
+    {"case": "post-access device loss", "rc": -5, "rmmod_permitted": false, "resources_freed": false, "reboot_required": true},
+    {"case": "module removal after clean STOP", "rc": 0, "rmmod_permitted": true, "resources_freed": "n/a (probe owns none)", "reboot_required": false, "detail": "hardware left as-is (D11 core enabled + macphyclk), same as the ucode/initvals isolated modes"},
+    {"case": "fatal / dev_lost state", "rc": 0 (probe success kept to retain state)", "rmmod_permitted": false, "resources_freed": false, "reboot_required": true, "detail": "module pinned; no MMIO; only reboot clears"}
+  ],
+
+  "state_transition_prepared": {
+    "applied": false,
+    "blocker": {"id": "d4.pll_branch.hw_probe", "from": "OPEN", "to": "CLOSED", "condition": "a valid decoded capture exists"},
+    "selector": {"id": "d4.pll_synth.rev42.branch", "from": "HARDWARE_REQUIRED", "to": "PROVEN_A | PROVEN_B | PROVEN_SKIP", "condition": "decoded from reg0/reg1"},
+    "current_state": "HARDWARE_REQUIRED / NOT HARDWARE PROVEN"
+  },
+
+  "build_identity": {
+    "candidate_commit": "implementation commit of this task (see artifact ledger)",
+    "runtime_implementation_commit": "implementation commit of this task (see artifact ledger)",
+    "module_sha256": "706b3407fc164b2a87e3f7e879f6bdc99d2180f84a1d8431635033be6106dc8d",
+    "srcversion": "C15A62FF7BAA84106E75F43",
+    "vermagic": "7.0.0-34-generic SMP preempt mod_unload modversions",
+    "signer": "Broadcom Driver MOK",
+    "sig_key": "13:9D:B8:1D:6A:1D:60:66:4E:81:FC:56:90:AC:BC:E4:4A:5C:7D:24",
+    "kernel_expected": "7.0.0-34-generic",
+    "module_param": "radio_id_probe_only=1",
+    "signed_module_path": "openbrcm.ko (build artifact; not committed)",
+    "frozen": true
+  }
+}

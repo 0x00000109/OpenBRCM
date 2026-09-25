@@ -66,6 +66,8 @@ Generated 2026-09-25. Repository of record:
 | DEV-LOST-GUARD | central device-loss access guard (D3B→PHY path) | (this commit) | IMPLEMENTED / STATIC TESTED | `src/ob_guard.{c,h}`, `tests/host/ob_guard_test.c`, `tests/host/test_device_lost_guard.py`, `docs/m34d4/dev_lost_phy_access_map.json`, `docs/m34d4/dev_lost_phy_guard.md` |
 | D4D-PLL-SELECTOR | `pi+0x16e` PLL/synth selector provenance (TASK: D4-BLOCKER-PLL-SYNTH-REV42-SELECTOR) | (this commit) | ANALYSIS COMPLETE / HARDWARE_REQUIRED | `docs/m34d4/pll_selector_provenance.{json,md}`, `docs/m34d4/pll_decision_matrix.json`, `docs/m34d4/checkpoint_candidates.json` |
 | D4D-RADIO-IDENTITY | radio/PHY identity model (adjacent harvest) | (this commit) | ANALYSIS ONLY | `docs/m34d4/radio_identity_map.json` |
+| D4D-RADIO-PROBE | isolated BCM2069 radio identity probe `radio_id_probe_only=1` (frozen candidate, NOT executed) | (this commit) | IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN | `src/ob_radio.{c,h}`, `tests/host/ob_radio_test.c`, `tests/kunit/ob_radio_kunit.c`, `scripts/radio_probe_audit.py`, `docs/m34d4/radio_probe_design.md`, `docs/m34d4/radio_probe_contract.json` |
+| D4D-RADIO-PROBE-DECODER | deterministic offline radio-probe capture decoder | (this commit) | IMPLEMENTED / STATIC TESTED | `scripts/decode_radio_probe.py`, `tests/host/test_radio_probe_decoder.py`, `docs/m34d4/radio_probe_decoder.md` |
 
 ## 4. Required knowledge → persistent location
 
