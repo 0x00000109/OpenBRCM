@@ -241,11 +241,11 @@
     {
       "id": "D4D-CLOSURE",
       "milestone": "M3.4D4D tooling-gap closure + Phases 3-7",
-      "status": "ANALYSIS ONLY / IMPLEMENTED (tooling, iced/test f5d03da)",
+      "status": "ANALYSIS ONLY / IMPLEMENTED (tooling, iced/test f5d03da + cf9738e)",
       "merged": false, "branch": "m34d3b-band-init-test",
       "artifacts": ["docs/m34d4/tooling_gap_closure.md", "docs/m34d4/tooling_gap_closure.json", "docs/m34d4/indirect_resolution.json", "docs/m34d4/value_provenance.json", "docs/m34d4/pll_synth_path.md", "docs/m34d4/dev_lost_access_map.json", "docs/m34d4/operational_checkpoint_analysis.md"],
       "key_facts": [
-        "re v5 (f5d03da): base-aware indirect resolution + fragment-size + store-vs-read fixes; all gates PASS",
+        "re v5 (f5d03da + store-vs-read follow-up cf9738e): base-aware indirect resolution, fragment-size and store-vs-read fixes; all gates PASS",
         "wlc_bmac_init 0x6923d [rax+0xa0] and 0x6924a [rax+0xd8] = UNRESOLVED runtime ops-table dispatch through *(*(wlc_hw+0x20)); 0x69260/0x6926d gated phyrev==4 (not rev42)",
         "pi+0x16e = (radio_reg 0x3da >> 4) & 0xff, stored by wlc_phy_attach @0xbeff8 (AC path); HARDWARE-derived, not zero",
         "pi+0x20+0xa7 / pi+0x8be / pi+0x8bf = COMPUTED_RUNTIME; Farrow arrays = static .data tables",

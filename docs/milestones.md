@@ -881,7 +881,7 @@ never hands frames to mac80211.
 
 - **M3.4D4D tooling-gap closure + Phases 3-7** = **`ANALYSIS ONLY`** + tooling
   `IMPLEMENTED`/`STATIC TESTED` (iced/test **`f5d03da`**, re v5, `re.db` schema
-  v5). Fixes: base-aware indirect resolution (constructor reloc stores at
+  v5; store-vs-read follow-up **`cf9738e`**). Fixes: base-aware indirect resolution (constructor reloc stores at
   `(base_arg, base_load, field)`; AC pi table fixture; `--installer`/`--family`),
   discovered-fragment size correction (620 spurious mid-instruction entries
   demoted; `sub_b018f` `0x2c6`), and iced operand-access store-vs-read. All

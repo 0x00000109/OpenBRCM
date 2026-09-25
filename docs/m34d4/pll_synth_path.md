@@ -45,7 +45,7 @@ reads are bracketed by writes to `+0x3d8`), then stores:
 There is no other store to `pi+0x16e` on the AC path; the single other store
 (`wlc_phy_periodic_cal_lpphy @0x10fb0a`, 16-bit) is LPPHY-only. The
 previously-reported writers `{0,1,2}` were **`cmpb` reads misclassified as
-stores** (see `tooling_gap_closure.md`; fixed in `f5d03da`, with a regression
+stores** (see `tooling_gap_closure.md`; fixed in `cf9738e`, with a regression
 fixture). Verified by whole-`.text` scan: exactly two true stores to `0x16e`.
 
 **Consequence:** `pi+0x16e` is a **hardware-derived radio-revision value**, not

@@ -56,7 +56,7 @@ Generated 2026-09-25. Repository of record:
 | LIFECYCLE | RPC caller + timeline | `00f22d8` | ANALYSIS | `docs/lifecycle/bcm4352_rev42_lifecycle.*` |
 | D4A-REACHABILITY | actual rev42 reachability | `7999966` | ANALYSIS (partially superseded) | `docs/m34d4/d4a_reachability_recovery.md`, `wlc_phy_init_bcm4352_reachable.json` |
 | D4D-POST-D3B | post-D3B operational PHY/radio timeline | `593061d` | ANALYSIS | `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`, `radio_on_transition.json`, `initial_chanspec_provenance.json`, `calibration_path.json`, `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json` |
-| D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
+| D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da`/`cf9738e` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
 
 ## 4. Required knowledge → persistent location
 
@@ -97,6 +97,6 @@ Generated 2026-09-25. Repository of record:
    commit is one ahead. A fresh agent on `main` cannot see the D4 chain;
    merge/PR required for durability.
 2. **`re.db` is generated/ignored** — the **v5** index is not in Git; rebuild
-   with `re db build --elf wlc_hybrid.o_shipped --db re.db` (tooling `f5d03da`).
+   with `re db build --elf wlc_hybrid.o_shipped --db re.db` (tooling `f5d03da`/`cf9738e`).
 3. **Stale hashes in docs** — several D4B docs cite `44dae60d…`/`0c7cf875…`;
    the current build is `185f0bd8…`/`f6601944…`.

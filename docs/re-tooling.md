@@ -159,7 +159,8 @@ When invoking the binary directly (only from the tooling workspace), pass
 `confidence` (`mmio_sites`, `field_sites`) and `confidence,candidates`
 (`const_props`): relocated immediates are exposed as symbols (never literal
 zero) and a linearly-ambiguous value is `CONDITIONAL` with a candidate set,
-never `EXACT`. **v5** (tooling commit `f5d03da`) adds base-aware indirect
+never `EXACT`. **v5** (tooling commit `f5d03da`, store-vs-read follow-up
+`cf9738e`) adds base-aware indirect
 resolution — `indirect_targets` carries `base_arg`, `base_load`, `field_offset`,
 `installer`, `family`, and candidates come from the object constructor's
 relocation-covered function-pointer stores (`field_sites`) at the exact
@@ -319,7 +320,7 @@ see `docs/m34d4b/d4b_value_provenance_closure.md`):
 
 - **D4B-G1 — `re field-writers` store-vs-read misclassification.**
   `0xab3d8` is `cmp byte ptr [r12+32Dh],0` (a read), yet `re field-writers
-  --field 0x32d` reports it as a store. **RESOLVED (2026-09, `f5d03da`):**
+  --field 0x32d` reports it as a store. **RESOLVED (2026-09, `cf9738e`):**
   `analyze_facts` now uses iced `InstructionInfoFactory`/`UsedMemory` access;
   a `field_sites` store row is emitted only when the memory operand is
   actually written. Regression fixture: `wlc_phy_switch_radio_acphy` has 0

@@ -324,7 +324,7 @@ Stated exactly:
   `evidence_post_d3b_reachability.json`.
 - **M3.4D4D tooling-gap closure + Phases 3-7** = **`ANALYSIS ONLY`** +
   tooling `IMPLEMENTED`/`STATIC TESTED` (iced/test **`f5d03da`**, re v5,
-  `re.db` schema v5). Two `re` defects fixed: (1) **base-aware indirect
+  `re.db` schema v5; store-vs-read follow-up **`cf9738e`**). Two `re` defects fixed: (1) **base-aware indirect
   resolution** — `indirect_targets` carries `base_arg/base_load/field_offset/
   installer/family`; candidates come from constructor reloc stores at the exact
   triple; the AC pi table (`+0x28`=`sub_b018f` … `+0xf8`=`wlc_phy_btc_adjust_acphy`,

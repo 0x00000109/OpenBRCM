@@ -7,7 +7,9 @@ This closes the two `re` defects exposed by the post-D3B reachability
 correction (OpenBRCM `593061d`). Rust changes are committed **separately** in
 the tooling workspace (`/media/kartashoff/Storage/opensource/iced/test`) as
 **`f5d03da`** (`re: v5 base-aware indirect resolution + discovered-fragment
-boundaries`). The vendor blob and `re.db` are unchanged
+boundaries`), with the store-vs-read follow-up **`cf9738e`**
+(`re: classify field stores via iced operand access (D4B-G1)`). The vendor blob
+and `re.db` are unchanged
 (`352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743`).
 
 ## 1. Why

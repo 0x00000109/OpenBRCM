@@ -5,6 +5,7 @@
   "hardware": false,
   "tooling_repo": "/media/kartashoff/Storage/opensource/iced/test",
   "tooling_commit": "f5d03da",
+  "tooling_commit_followup": "cf9738e",
   "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
   "schema_version": 5,
   "phase1": {
