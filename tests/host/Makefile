@@ -20,6 +20,7 @@ run: ob_math_test ob_caps_test ob_dma_test ob_irq_test ob_rx_test \
 	./ob_d3b_test
 	python3 test_sprom11_decode.py
 	python3 test_srom_var_table.py
+	python3 test_runtime_test_cli.py
 
 ob_math_test: ob_math_test.c $(SRC)/ob_channel.c $(SRC)/ob_rate.c
 	$(CC) $(CFLAGS) -o $@ $^
