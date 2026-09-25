@@ -189,6 +189,27 @@ class AntselTests(unittest.TestCase):
         self.assertEqual(sd.mhf3(5), 0x0)
         self.assertEqual(sd.mhf3(6), 0x3)
 
+    def test_l_bt0_falls_through_to_l_bf(self):
+        """L_bt0 mismatch must reach L_bf (boardflags & 0x8).
+
+        Vendor ``wlc_antsel_attach`` 0x5988d..0x598ca branches every mismatch
+        to 0x598cc (L_bf).  This is the case an earlier approximation got
+        wrong (it returned (0, False) directly).
+        """
+        # boardtype > 3, antswitch == 0, boardtype != 4 -> L_bf.
+        self.assertEqual(sd.antsel_type(0x10, 0x8, 0x0, 0x0, 0x0), (1, True))
+        self.assertEqual(sd.antsel_type(0x10, 0x0, 0x0, 0x0, 0x0), (0, False))
+        # boardtype == 4 but aa2g/aa5g mismatch -> L_bf.
+        self.assertEqual(sd.antsel_type(0x4, 0x8, 0x0, 0x6, 0x0), (1, True))
+        self.assertEqual(sd.antsel_type(0x4, 0x8, 0x0, 0x7, 0x1), (1, True))
+        self.assertEqual(sd.antsel_type(0x4, 0x8, 0x0, 0x7, 0x0), (2, True))
+
+    def test_captured_board_antsel_is_zero(self):
+        """BCM4352/ASUS PCE-AC56 captured values -> antsel_type 0, MHF3 0."""
+        # boardtype=0x85ba, boardflags=0x10001000, antswitch=0, aa2g=aa5g=7.
+        self.assertEqual(sd.antsel_type(0x85BA, 0x10001000, 0, 7, 7), (0, False))
+        self.assertEqual(sd.mhf3(0), 0x0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

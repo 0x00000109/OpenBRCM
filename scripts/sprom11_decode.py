@@ -345,25 +345,44 @@ def decode_field(words, name, spec):
 # Vendor antsel_type + D3B MHF3 (exact, from docs/m34d3b_band_init.md §3.3)
 # --------------------------------------------------------------------------
 def antsel_type(boardtype, boardflags, antswitch, aa2g, aa5g):
-    """Return (antsel_type, antsel_avail) exactly as wlc_antsel_attach()."""
-    if boardtype <= 3:
-        # L_bf
-        if boardflags & 0x8:
-            return 1, True
+    """Return (antsel_type, antsel_avail) exactly as ``wlc_antsel_attach()``.
+
+    Vendor control flow (``re fn 0x5970a --asm``, verified against the blob):
+
+        boardtype <= 3          -> L_bf
+        antswitch == 0          -> L_bt0
+        antswitch in 1..7       -> group table, then end (never reaches L_bf)
+        antswitch > 7           -> end (type 0, avail 0)
+
+        L_bt0: boardtype==4 && aa2g==7 && aa5g==0 -> type 2, avail 1
+               otherwise -> **falls through to L_bf**
+        L_bf : boardflags & 0x8 -> type 1, avail 1 ; else type 0, avail 0
+
+    The L_bt0 -> L_bf fall-through is real: every mismatch instruction in
+    ``0x5988d..0x598ca`` branches to ``0x598cc`` (L_bf).  An earlier
+    approximation returned type 0 directly from L_bt0, which is wrong whenever
+    ``boardtype > 3``, ``antswitch == 0`` and ``boardflags & 0x8`` is set.
+    """
+    if boardtype > 3 and antswitch != 0:
+        # antswitch-only group table; unconditionally returns (no L_bf).
+        if antswitch > 7:
+            return 0, False
+        if antswitch in (1, 2, 3):
+            return 2, (aa2g == 7 or aa5g == 7)
+        if antswitch == 5:
+            return 4, (aa2g == 7 or aa5g == 7)
+        if antswitch in (4, 6, 7):
+            atype = {4: 3, 6: 5, 7: 6}[antswitch]
+            return atype, (aa2g == 6 or aa5g == 6)
         return 0, False
-    if antswitch == 0:
+    if boardtype > 3 and antswitch == 0:
         # L_bt0
         if boardtype == 4 and aa2g == 7 and aa5g == 0:
             return 2, True
-        return 0, False
-    if antswitch > 7:
-        return 0, False
-    if antswitch in (1, 2, 3) or antswitch == 5:
-        atype = 2 if antswitch in (1, 2, 3) else 4
-        return atype, (aa2g == 7 or aa5g == 7)
-    if antswitch in (4, 6, 7):
-        atype = {4: 3, 6: 5, 7: 6}[antswitch]
-        return atype, (aa2g == 6 or aa5g == 6)
+        # fall through to L_bf
+    # L_bf (also the boardtype <= 3 entry point)
+    if boardflags & 0x8:
+        return 1, True
     return 0, False
 
 
