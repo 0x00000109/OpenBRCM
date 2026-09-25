@@ -168,13 +168,17 @@ Stated exactly:
   PROVEN` (isolated `d11_tail_test_only=1` vendor post-common / pre-PHY tail;
   reuses the proven D3A0 DMA lifecycle in its vendor position; STOPS before
   `sub_6656c`; candidate `42d74b8`, module `6ba2d853…`; normal unload + DMA
-  teardown proven)
-- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
-  (isolated `bsinitvals_test_only=1` band init + `d11ac1bsinitvals42`; design
-  `docs/m34d3b_band_init.md`; implementation `docs/m34d3b_band_init_test.md`;
-  `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
-  `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
-  capture)
+  teardown proven; **postcondition erratum 2026-09: the `tsf_cfpstart`
+  (`0x18c`) equality gate was invalid and is removed/replaced by
+  write-accounting + diagnostics; the rest of the D3A1 proof stands**)
+- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
+  NOT HARDWARE PROVEN (isolated `bsinitvals_test_only=1` band init +
+  `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; implementation
+  `docs/m34d3b_band_init_test.md`; **2026-09 attempt on frozen candidate
+  `5fa5e5b` failed the pre-D3B `tsf_cfpstart` postcondition — fix applied, no
+  bsinitvals applied, retest pending**; `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5
+  all PROVEN; final vector `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3
+  PROVEN by the SPROM-evidence capture)
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
 
 The hardware-proven milestones are narrow (see below); the later
@@ -360,7 +364,8 @@ the already-read, CRC-validated 234-word rev11 image (`sprom_evidence_only=1`,
 `docs/m34d3b_sprom_evidence.md`.
 
 **D3B band-init implementation** (`m34d3b-band-init-test`, from `main` @
-`06d60d6`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **NOT HARDWARE PROVEN**.
+`06d60d6`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` /
+NOT HARDWARE PROVEN**.
 Isolated mode `bsinitvals_test_only=1` runs the proven D2A/D2B core and the
 exact D3A1 vendor prefix with the D3A0 DMA engines **left live** (new reusable
 `ob_d3a1_run_prefix()`), then the exact `sub_6656c` slice (read-only
@@ -371,6 +376,18 @@ it STOPS before `wlc_phy_init`/PHY/radio. MHF values are derived from the
 rev11 board fields (`ob_si_read_mac` decode: `boardtype`/`boardflags`/`aa2g`/
 `aa5g`/`antswitch` -> `antsel_type` -> vector), not board-hard-coded. Files
 `src/ob_d3b.{c,h}`; proof `docs/m34d3b_band_init_test.md`.
+
+**2026-09 hardware attempt (frozen candidate `5fa5e5b`, module
+`3a10aff9…`):** D2A PASS -> D2B PASS -> T1 PASS -> 4 TX DMA channels
+programmed/validated -> FIFO0 RX programmed/validated IDLE -> DMA bring-up PASS
+-> T2 complete -> `switch_macfreq` complete; then the shared
+`ob_d3a1_validate()` failed **only** on the pre-D3B `tsf_cfpstart` gate
+(`rb=0x3c000000`, expected `0x02000000`). Mandatory teardown then PASSed
+(RX/TX0..TX3 reset PASS, all engines stopped, rings released). **No bsinitvals
+record was applied.** Root cause: `0x18c` is a write-only CFP-start
+programming register (readable value at `0x604/0x606`); the equality gate was
+invalid and is removed (write-accounting + diagnostics; `tsf_cfprep` equality
+retained). Evidence `docs/m34d3a1_vendor_tail_test.md` §17.
 
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
@@ -444,6 +461,14 @@ M3.4D3A1 isolated `d11_tail_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
 (candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
 
 ## Last failure / reset event
+**2026-09 D3B hardware attempt (frozen candidate `5fa5e5b`):** the shared
+pre-D3B `ob_d3a1_validate()` failed **only** on the `tsf_cfpstart` (`0x18c`)
+postcondition (`rb=0x3c000000`, expected `0x02000000`). Mandatory verified
+teardown succeeded; no bsinitvals applied; no BUG/Oops/lockup/reset. Root cause
+was an invalid equality gate (write-only programming register), now fixed
+(write-accounting + diagnostics; `tsf_cfprep` equality retained). This did **not**
+reach PHY/radio. See `docs/m34d3a1_vendor_tail_test.md` §17.
+
 A test that used `fw_dryrun=1` believing it isolated hardware caused a long
 hang followed by a **hard system reset**. `fw_dryrun` is only a parser log
 option. `fw_validate_only` was introduced as the true isolated early-return
@@ -476,7 +501,7 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-**M3.4D3A1 is now HARDWARE RUNTIME PROVEN on BCM4352** (candidate `42d74b8`,
+**M3.4D3A1 is HARDWARE RUNTIME PROVEN on BCM4352** (candidate `42d74b8`,
 module `6ba2d853…`) on `m34d3a1-vendor-tail-test`; report
 `docs/m34d3a1_vendor_tail_test.md` §14.1 (recovered ordering/source evidence in
 `docs/m34d3a1_vendor_tail.md`). The one-shot isolated
@@ -484,11 +509,13 @@ module `6ba2d853…`) on `m34d3a1-vendor-tail-test`; report
 tail (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) with the D3A0 DMA
 lifecycle in its vendor position, validated the postconditions, ran the
 verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
-`sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
-`docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
+`sub_6656c`**. No BUG/Oops/lockup/reset. **2026-09 postcondition erratum:**
+the `tsf_cfpstart` (`0x18c`) equality gate was invalid and is removed; the rest
+of the proof stands (`docs/m34d3a1_vendor_tail_test.md` §17). See
+`docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md`.
 
-**Next action — D3B implemented (awaiting hardware test); D4 after.** M3.4D3B
-(band init / `d11ac1bsinitvals42`) is analyzed in
+**Next action — D3B attempt made, postcondition fixed; one D3B retest pending;
+D4 after.** M3.4D3B (band init / `d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
 `wlc_phy_init` (0x669df). The pre-bs helper `sub_62766` is
@@ -505,10 +532,13 @@ MHF4 `0x0000` (4313-only site skipped);
 MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
 No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES` and the
 isolated `bsinitvals_test_only=1` implementation (`src/ob_d3b.{c,h}`) is
-`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` but **NOT HARDWARE PROVEN**
-(`docs/m34d3b_band_init_test.md`). Next: the one-shot D3B hardware run (owner
-approval); then D4 (AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first
-PHY-indirect MMIO), which has no code or hardware proof yet.
+`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT
+HARDWARE PROVEN** (`docs/m34d3b_band_init_test.md`): the 2026-09 attempt
+reached DMA + `switch_macfreq` but stopped pre-D3B on the invalid
+`tsf_cfpstart` gate; the gate is fixed and **no bsinitvals was applied**. Next:
+the one-shot D3B **retest** (owner approval); then D4 (AC PHY bring-up:
+`wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO), which has no code
+or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -540,11 +570,13 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B band-init implementation, static-only): the isolated
-`bsinitvals_test_only=1` implementation is `IMPLEMENTED` / `STATIC TESTED` /
-`SIGNED` / **NOT HARDWARE PROVEN**; STOP before any hardware run — **no
-`insmod`/`rmmod`/`modprobe`, no hardware**. The next action (owner approval) is
-the one-shot D3B hardware run, which must stop before `wlc_phy_init`.
+Current (D3B band-init implementation, attempt made + postcondition fix): the
+isolated `bsinitvals_test_only=1` implementation is `IMPLEMENTED` /
+`STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT HARDWARE PROVEN**
+(2026-09 attempt stopped at the pre-D3B `tsf_cfpstart` gate; fixed). STOP
+before any further hardware run — **no `insmod`/`rmmod`/`modprobe`, no
+hardware**. The next action (owner approval) is the one-shot D3B retest, which
+must stop before `wlc_phy_init`.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the

@@ -83,6 +83,19 @@
 #define OB_D3A1_REG_INTCONTROL0_MASK	0x0024u
 #define OB_D3A1_REG_TSF_CFPREP		0x0188u
 #define OB_D3A1_REG_TSF_CFPSTART	0x018cu
+/*
+ * tsf_cfpstart (0x18c) is a CFP-start programming register: the vendor and
+ * upstream (b43 B43_MMIO_TSF_CFP_START, brcmsmac tsf_cfpstart) only WRITE it
+ * (beacon interval, `period << 10`) and never read it back. The readable CFP
+ * value is split across tsf_cfpstrt_l/h (0x604/0x606), and the vendor's
+ * wlc_bmac_validate_chip_access validates a write by reading THOSE, never
+ * 0x18c. A hardware attempt (2026-09) read 0x3c000000 instead of the
+ * programmed 0x02000000, so direct readback is not a stable equality
+ * postcondition. It is write-accounted and logged as a diagnostic only; the
+ * vendor-exact write value/order are unchanged.
+ */
+#define OB_D3A1_REG_TSF_CFPSTRT_L	0x0604u
+#define OB_D3A1_REG_TSF_CFPSTRT_H	0x0606u
 #define OB_D3A1_REG_IFS_CTL		0x0688u
 #define OB_D3A1_REG_IFS_AIFSN		0x069cu
 #define OB_D3A1_REG_FASTPWRUP_DLY	0x06a8u
@@ -443,6 +456,18 @@ static inline u16 ob_d3a1_tsf_frac_hi(u32 frac)
 }
 
 /*
+ * tsf_cfpstart (0x18c) is a write-only CFP-start programming register; its
+ * direct readback is not a stable deterministic postcondition (hardware read
+ * 0x3c000000 vs the programmed 0x02000000; the readable CFP value lives at
+ * 0x604/0x606). PASS is gated on the vendor-exact write being accounted.
+ * Always false; kept as an explicit, testable statement of the invariant.
+ */
+static inline bool ob_d3a1_cfpstart_readback_is_postcondition(void)
+{
+	return false;
+}
+
+/*
  * ---- exact BCM4352 BB VCO frequency (blob si_pmu_get_bb_vcofreq 0x14b7b) ----
  *
  * For chip 0x4352: p2 = PMU PLL index 2, p3 = PMU PLL index 3.
@@ -604,6 +629,11 @@ struct ob_hw;
  * @tsf_frac_lo_rb:    D11 0x62e read back after programming
  * @tsf_frac_hi_rb:    D11 0x630 read back after programming
  * @tsf_frac_rb_proven: true only if 0x62e/0x630 stable readback is proven
+ * @tsf_cfpstart_written: true once the vendor-exact 0x18c write was issued
+ * @tsf_cfpstart_rb:   raw 0x18c readback (DIAGNOSTIC ONLY; not stable)
+ * @tsf_cfpstrt_l_rb:  raw 0x604 readback (diagnostic)
+ * @tsf_cfpstrt_h_rb:  raw 0x606 readback (diagnostic)
+ * @tsf_cfpstart_rb_proven: true only if 0x18c stable readback is proven (false)
  * @btc_shm92:         raw SHM[0x92] value
  * @btc_base:          2 * SHM[0x92]
  * @btc_block_ran:     true when btc_base != 0 (BTC T2 block executed)
@@ -637,6 +667,11 @@ struct ob_d3a1 {
 	u16	tsf_frac_lo_rb;
 	u16	tsf_frac_hi_rb;
 	bool	tsf_frac_rb_proven;
+	bool	tsf_cfpstart_written;
+	u32	tsf_cfpstart_rb;
+	u16	tsf_cfpstrt_l_rb;
+	u16	tsf_cfpstrt_h_rb;
+	bool	tsf_cfpstart_rb_proven;
 	u16	btc_shm92;
 	u32	btc_base;
 	bool	btc_block_ran;

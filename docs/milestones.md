@@ -295,12 +295,22 @@ Canonical status (exact):
 - M3.4D3A0 = HARDWARE RUNTIME PROVEN
 - M3.4D3A1 = IMPLEMENTED / STATIC TESTED / SIGNED / HARDWARE RUNTIME PROVEN
   (isolated `d11_tail_test_only=1`; candidate `42d74b8`, module `6ba2d853…`;
-  normal unload + DMA teardown + STOP boundary proven)
-- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN
-  (isolated `bsinitvals_test_only=1` band init + `d11ac1bsinitvals42`); design
-  `docs/m34d3b_band_init.md`, implementation `docs/m34d3b_band_init_test.md`,
-  `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`: all MHF write
-  expressions, gate semantics and all five band-0 MHF values are resolved —
+  normal unload + DMA teardown + STOP boundary proven). **POSTCONDITION
+  ERRATUM (2026-09):** the `tsf_cfpstart` (D11 `0x18c`) equality gate was
+  invalid (write-only CFP-start programming register; readable value at
+  `0x604/0x606`); it is removed and replaced by write-accounting + diagnostics.
+  The other postconditions, the vendor sequence and the teardown remain proven.
+  See `docs/m34d3a1_vendor_tail_test.md` §17.
+- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
+  NOT HARDWARE PROVEN (isolated `bsinitvals_test_only=1` band init +
+  `d11ac1bsinitvals42`); design `docs/m34d3b_band_init.md`, implementation
+  `docs/m34d3b_band_init_test.md`. **2026-09 attempt (frozen candidate
+  `5fa5e5b`, module `3a10aff9…`) reached D2A/D2B/T1/DMA/T2/`switch_macfreq`
+  and the verified teardown, but failed the pre-D3B `tsf_cfpstart` postcondition
+  in the shared `ob_d3a1_validate()`; no bsinitvals record was applied.** The
+  invalid gate is fixed; the D3B slice itself is still NOT HARDWARE PROVEN.
+  `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`: all MHF write expressions,
+  gate semantics and all five band-0 MHF values are resolved —
   `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000, 0x0080}` (MHF1/MHF2/MHF4/MHF5
   closed earlier; **MHF3** closed by the 2026-09 read-only hardware SPROM
   capture; `docs/m34d3b_band_init.md` §3.5/§3.8). No value/provenance/safety
@@ -317,13 +327,15 @@ Canonical status (exact):
   gap **T7 closed**: `srom_var_init 0x9704` walks a 24-byte descriptor table at
   `.rodata+0x1b00` (not `srom_parsecis`); tool `scripts/srom_var_table.py`,
   artifact `docs/m34d3b/rev11_sprom_fields.json`.
-- M3.4D3B band-init implementation (branch `m34d3b-band-init-test`) =
-  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN: isolated
-  `bsinitvals_test_only=1` reuses the D3A1 prefix with the D3A0 DMA engines left
-  live (`ob_d3a1_run_prefix()`), writes MHF1..5 derived from the rev11 board
-  fields, applies 73 `d11ac1bsinitvals42` records (39 x w2 + 34 x w4), validates
-  the deterministic postconditions and performs the verified D3A0 teardown;
-  STOPS before `wlc_phy_init`. Files `src/ob_d3b.{c,h}`; proof
+- M3.4D3B band-init implementation (branch `m34d3b-band-init-test`, PR #17,
+  Draft) = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
+  NOT HARDWARE PROVEN: isolated `bsinitvals_test_only=1` reuses the D3A1 prefix
+  with the D3A0 DMA engines left live (`ob_d3a1_run_prefix()`), writes MHF1..5
+  derived from the rev11 board fields, applies 73 `d11ac1bsinitvals42` records
+  (39 x w2 + 34 x w4), validates the deterministic postconditions and performs
+  the verified D3A0 teardown; STOPS before `wlc_phy_init`. **Failure point of
+  the 2026-09 attempt: the pre-D3B `tsf_cfpstart` postcondition** (fixed in the
+  same branch). Files `src/ob_d3b.{c,h}`; proof
   `docs/m34d3b_band_init_test.md`.
 
 Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
@@ -331,7 +343,8 @@ Reports: analysis `docs/m34d3a1_vendor_tail.md` (read-only RE of blob
 mode `d11_tail_test_only=1` reproduces the exact rev42 vendor sequence after
 the common initvals and STOPS before real PHY init. New code:
 `src/ob_d3a1.{c,h}`, `tests/host/ob_d3a1_test.c`, `tests/kunit/ob_d3a1_kunit.c`.
-Module built + MOK-signed, **never loaded** (no hardware execution).
+Module built + MOK-signed and hardware-run for the D3A1 tail; the
+`tsf_cfpstart` postcondition was corrected 2026-09 (§17).
 - **Ordering:** the vendor **interleaves** DMA inside the tail —
   `T1 (sub_67efd → MBURST/MAXANTCNT → intrcvlazy → MACCONTROL → TSF →
   intctrlregs → macphyclk → fastpwrup → MACHW_VER/CAP → SCR/SFBL/ifs) →

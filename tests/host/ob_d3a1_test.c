@@ -191,6 +191,11 @@ static void test_t1_constants(void)
 	chk_u64("intrcvlazy", OB_D3A1_INTRCVLAZY, 0x01000000);
 	chk_u64("tsf cfprep", OB_D3A1_TSF_CFPREP, 0x80000000);
 	chk_u64("tsf cfpstart", OB_D3A1_TSF_CFPSTART, 0x02000000);
+	chk("tsf cfpstart reg", OB_D3A1_REG_TSF_CFPSTART, 0x18c);
+	chk("tsf cfpstrt_l reg", OB_D3A1_REG_TSF_CFPSTRT_L, 0x604);
+	chk("tsf cfpstrt_h reg", OB_D3A1_REG_TSF_CFPSTRT_H, 0x606);
+	chk("tsf cfpstart readback is not a postcondition",
+	    ob_d3a1_cfpstart_readback_is_postcondition(), 0);
 	chk_u64("mi_gp1", OB_D3A1_MI_GP1, 0x4000);
 	chk_u64("i_ri", OB_D3A1_I_RI, 0x10000);
 	chk("shm machwver", OB_D3A1_SHM_MACHWVER, 0x16);

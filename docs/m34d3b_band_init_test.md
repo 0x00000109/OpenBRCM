@@ -1,12 +1,22 @@
 # M3.4D3B — isolated band-init + `d11ac1bsinitvals42` test
 
-**Status: `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / NOT HARDWARE PROVEN.**
+**Status: `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
+NOT HARDWARE PROVEN.**
+
+**Failure point of the 2026-09 hardware attempt (frozen candidate
+`5fa5e5ba8762cc98a853b0b3bc4db9150f90e88e`): the pre-D3B `tsf_cfpstart`
+(D11 0x18c) postcondition in the shared `ob_d3a1_validate()`.** D2A, D2B, the
+D3A1 T1/T2 tail, the 4 TX DMA channels, FIFO0 RX and `switch_macfreq` all
+completed; the mandatory teardown then succeeded (RX/TX0..TX3 reset PASS, all
+engines stopped, rings released). **No bsinitvals record was applied** — the
+run never entered the D3B slice. The `0x18c` equality gate was invalid: it is a
+write-only CFP-start programming register whose readable value lives at
+`0x604/0x606`; the gate is removed and replaced with write-accounting plus
+diagnostics (provenance in `m34d3a1_vendor_tail_test.md` §17 and §12 below).
 
 The D3B band-init milestone extends the hardware-proven D3A1 tail with the exact
 vendor `sub_6656c` pre-bs slice and the `d11ac1bsinitvals42` (73-record) table,
-and STOPS immediately before `wlc_phy_init`. No hardware was run for D3B; the
-only hardware evidence used is the already-proven D2B/D3A0/D3A1 milestones and
-the read-only MHF3 SPROM capture.
+and STOPS immediately before `wlc_phy_init`.
 
 Module param: **`bsinitvals_test_only=1`**, mutually exclusive with
 `fw_validate_only` / `ucode_test_only` / `initvals_test_only` / `dma_test_only` /
@@ -195,3 +205,36 @@ hardware-updated IHR field.
   blocker).
 - The D3B run depends on the already-proven D2B/D3A0/D3A1 prefix; no additional
   board value is missing.
+
+## 12. 2026-09 hardware attempt — `tsf_cfpstart` postcondition correction
+
+The one-shot `bsinitvals_test_only=1` attempt on frozen candidate
+`5fa5e5ba…` (module SHA256 `3a10aff9047afa601271e61973ae4ca1857a9aa260644830c530f5ce13218a8c`)
+reached, in order: D2A PASS -> D2B PASS -> D3A1 T1 PASS -> 4 TX DMA channels
+programmed/validated -> FIFO0 RX programmed/validated IDLE -> DMA bring-up
+validation PASS -> T2 complete -> `switch_macfreq` complete. The shared
+`ob_d3a1_validate()` then failed **only** on:
+
+```
+tsf_cfpstart = 0x3c000000   expected = 0x02000000
+```
+
+The mandatory DMA teardown then succeeded (RX reset PASS, TX0..TX3 reset PASS,
+all DMA engines stopped, rings released). **No bsinitvals record was applied.**
+
+Root cause (provenance, not guesswork): `tsf_cfpstart` (D11 `0x18c`) is a
+**write-only CFP-start programming register**. The vendor and upstream only
+write it (beacon interval `period << 10`); the readable CFP value is
+`tsf_cfpstrt_l/h` at `0x604/0x606`, which is exactly what the vendor's
+`wlc_bmac_validate_chip_access` reads back (and it never reads `0x18c`). A
+direct read of `0x18c` is therefore not a stable equality postcondition. Full
+evidence: [`m34d3a1_vendor_tail_test.md`](m34d3a1_vendor_tail_test.md) §17.
+
+Correction (minimal; the vendor-exact write value and order are unchanged):
+`ob_d3a1_validate()` now **write-accounts** the `0x18c = 0x02000000` write and
+logs the raw `0x18c`/`0x604`/`0x606` reads as diagnostics. `tsf_cfprep`
+(`0x188`) equality is **retained** (the same run read it back exact; it is a
+config field, not a live counter). No other postcondition was equality-gated on
+a live/hardware-updated register (audit §17.5).
+
+Retest recommendation: **GO for one D3B retest** after this fix (no PHY).

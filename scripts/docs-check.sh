@@ -326,6 +326,26 @@ else
 	bad "D3A1 poll expiry must be vendor-non-fatal (logged, no abort)"
 fi
 
+# 4g. tsf_cfpstart (0x18c) is a write-only CFP-start programming register; its
+# direct readback is not a stable postcondition (hardware read 0x3c000000 vs
+# the programmed 0x02000000; the readable CFP value is at 0x604/0x606). The
+# vendor-exact write and the tsf_cfprep equality must remain.
+if grep -qE 'cfpstart[[:space:]]*!=[[:space:]]*OB_D3A1_TSF_CFPSTART' src/ob_d3a1.c; then
+	bad "ob_d3a1_validate must not equality-gate tsf_cfpstart (0x18c) readback"
+else
+	ok "D3A1 tsf_cfpstart readback is not equality-gated"
+fi
+if grep -q 'OB_D3A1_REG_TSF_CFPSTART, OB_D3A1_TSF_CFPSTART' src/ob_d3a1.c; then
+	ok "D3A1 vendor-exact tsf_cfpstart write present"
+else
+	bad "D3A1 vendor-exact tsf_cfpstart write missing"
+fi
+if grep -qE 'cfprep[[:space:]]*!=[[:space:]]*OB_D3A1_TSF_CFPREP' src/ob_d3a1.c; then
+	ok "D3A1 tsf_cfprep equality postcondition retained"
+else
+	bad "D3A1 tsf_cfprep equality postcondition missing"
+fi
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"
