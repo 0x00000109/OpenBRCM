@@ -162,7 +162,7 @@
     {"case": "unexpected revision class (0 / 15 / other)", "rc": 0, "rmmod_permitted": true, "resources_freed": "n/a", "reboot_required": false, "detail": "valid data; pll_branch=SKIP (2069) or UNKNOWN"},
     {"case": "post-access device loss", "rc": -5, "rmmod_permitted": false, "resources_freed": false, "reboot_required": true},
     {"case": "module removal after clean STOP", "rc": 0, "rmmod_permitted": true, "resources_freed": "n/a (probe owns none)", "reboot_required": false, "detail": "hardware left as-is (D11 core enabled + macphyclk), same as the ucode/initvals isolated modes"},
-    {"case": "fatal / dev_lost state", "rc": 0 (probe success kept to retain state)", "rmmod_permitted": false, "resources_freed": false, "reboot_required": true, "detail": "module pinned; no MMIO; only reboot clears"}
+    {"case": "fatal / dev_lost state", "rc": 0, "rc_note": "probe success kept to retain state", "rmmod_permitted": false, "resources_freed": false, "reboot_required": true, "detail": "module pinned; no MMIO; only reboot clears"}
   ],
 
   "state_transition_prepared": {
@@ -173,8 +173,8 @@
   },
 
   "build_identity": {
-    "candidate_commit": "implementation commit of this task (see artifact ledger)",
-    "runtime_implementation_commit": "implementation commit of this task (see artifact ledger)",
+    "candidate_commit": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
+    "runtime_implementation_commit": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
     "module_sha256": "706b3407fc164b2a87e3f7e879f6bdc99d2180f84a1d8431635033be6106dc8d",
     "srcversion": "C15A62FF7BAA84106E75F43",
     "vermagic": "7.0.0-34-generic SMP preempt mod_unload modversions",

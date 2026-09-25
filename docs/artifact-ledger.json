@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "a74875f460f92d506e733cf18aa4a0a81fa46179",
+      "head": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 28,
-      "ahead_of_origin_branch": 1,
+      "ahead_of_origin_main": 29,
+      "ahead_of_origin_branch": 2,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the D4D-RADIO-PROBE commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR + D4D-RADIO-PROBE chain is UNMERGED relative to main"
+      "note": "snapshot before the freeze-record commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR + D4D-RADIO-PROBE chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -459,6 +459,7 @@
       "merged": false,
       "branch": "m34d3b-band-init-test",
       "repo": "openbrcm",
+      "commit": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
       "artifacts": [
           "src/ob_radio.c",
           "src/ob_radio.h",
@@ -493,6 +494,7 @@
       "merged": false,
       "branch": "m34d3b-band-init-test",
       "repo": "openbrcm",
+      "commit": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
       "artifacts": [
           "scripts/decode_radio_probe.py",
           "tests/host/test_radio_probe_decoder.py",
