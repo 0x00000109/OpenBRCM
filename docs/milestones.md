@@ -887,7 +887,9 @@ never hands frames to mac80211.
   demoted; `sub_b018f` `0x2c6`), and iced operand-access store-vs-read. All
   gates PASS; calls unchanged `51193`.
   **Phases 3-7:** `wlc_bmac_init @0x6923d [rax+0xa0]` / `0x6924a [rax+0xd8]` =
-  **UNRESOLVED runtime ops-table dispatch** via `*(*(wlc_hw+0x20))`;
+  **RESOLVED runtime ops-table dispatch** via `*(*(wlc_hw+0x20))` = `di[0]`
+  (FIFO0 `dma_info`, word0 = `di->ops` = `dma64proc`): `+0xa0` = `dma64_rxinit`
+  (`sub_f897`), `+0xd8` = `dma64_rxfill` (`sub_f14d`), both `EXACT`;
   `0x69260/0x6926d` gated `phyrev==4` (not rev42). `pi+0x16e` =
   `(radio_reg 0x3da >> 4) & 0xff`, stored by `wlc_phy_attach @0xbeff8` —
   **HARDWARE-derived** (the `{0,1,2}` "writers" were `cmp` reads).
@@ -896,6 +898,7 @@ never hands frames to mac80211.
   **rev42 branch UNKNOWN** (both sequences + bounded lock polls recovered).
   dev_lost latch not wired. **No STRONG checkpoint; `D4 GO: NO`; `HARDWARE
   TEST GO: NO`.** Reports `docs/m34d4/tooling_gap_closure.{md,json}`,
+  `docs/m34d4/indirect_ops_table_resolution.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
 

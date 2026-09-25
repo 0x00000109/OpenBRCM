@@ -4,38 +4,36 @@
   "current_milestone": {
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY",
-    "artifact": "docs/m34d4/tooling_gap_closure.md"
+    "artifact": "docs/m34d4/indirect_ops_table_resolution.md"
   },
   "last_hardware_proven_milestone": {
     "id": "M3.4D3A1",
     "evidence": "docs/m34d3a1_vendor_tail_test.md"
   },
   "hardware_test_go": "NO",
-  "active_blocker": {
-    "id": "d4.indirect.wlc_bmac_init.vtable",
-    "summary": "wlc_bmac_init 0x6923d [rax+0xa0] / 0x6924a [rax+0xd8] dispatch via a runtime ops table; targets UNRESOLVED.",
-    "evidence": ["docs/m34d4/indirect_resolution.json", "docs/m34d4/tooling_gap_closure.md"]
-  },
+  "active_blocker": {},
   "open_blockers": [
-    {
-      "id": "d4.indirect.wlc_bmac_init.vtable",
-      "summary": "Resolve the runtime ops-table dispatch at 0x6923d/0x6924a (needs V5-G1/V5-G2).",
-      "evidence": ["docs/m34d4/indirect_resolution.json"]
-    },
     {
       "id": "d4.pll_synth.rev42.branch",
       "summary": "First PLL/synth selector is the hardware radio revision; rev42 branch UNKNOWN.",
-      "evidence": ["docs/m34d4/pll_synth_path.md", "docs/m34d4/value_provenance.json"]
+      "evidence": [
+        "docs/m34d4/pll_synth_path.md",
+        "docs/m34d4/value_provenance.json"
+      ]
     },
     {
       "id": "d4.dev_lost.coverage",
       "summary": "dev_lost latch not wired to the D3B -> wlc_phy_cal_perical path.",
-      "evidence": ["docs/m34d4/dev_lost_access_map.json"]
+      "evidence": [
+        "docs/m34d4/dev_lost_access_map.json"
+      ]
     },
     {
       "id": "d4.checkpoint.none",
       "summary": "No STRONG operational checkpoint; D4 GO = NO; HARDWARE TEST GO = NO.",
-      "evidence": ["docs/m34d4/operational_checkpoint_analysis.md"]
+      "evidence": [
+        "docs/m34d4/operational_checkpoint_analysis.md"
+      ]
     }
   ],
   "proven_facts": [
@@ -118,6 +116,14 @@
       "summary": "First radio-ON = wlc_phy_init@0xbad44 -> switch_radio(ON) -> switch_radio_acphy@0xaa782 -> sub_b018f@0xbad4c.",
       "source": "docs/m34d4/post_d3b_operational_timeline.md",
       "record": "D4D-POST-D3B"
+    },
+    {
+      "id": "d4d.bmac_init.rx_dma_ops",
+      "class": "analysis",
+      "status": "PROVEN",
+      "summary": "wlc_bmac_init 0x6923d = di[0]->ops->[+0xa0] = dma64_rxinit (sub_f897); 0x6924a = di[0]->ops->[+0xd8] = dma64_rxfill (sub_f14d); di[0]=*(wlc_hw+0x20) from dma_attach, ops=dma64proc .rodata+0x27d620.",
+      "source": "docs/m34d4/indirect_ops_table_resolution.md",
+      "record": "D4D-INDIRECT-OPS"
     }
   ],
   "current_call_path": [

@@ -255,6 +255,22 @@
       ],
       "supersedes": ["D4D-POST-D3B (pi+0x16e writers {0,1,2}; first radio write 0xaa80f)"]
     },
+    {
+      "id": "D4D-INDIRECT-OPS",
+      "milestone": "M3.4D4 wlc_bmac_init reachable ops-table indirect resolution",
+      "status": "ANALYSIS ONLY",
+      "merged": false, "branch": "m34d3b-band-init-test",
+      "artifacts": ["docs/m34d4/indirect_ops_table_resolution.md", "docs/m34d4/indirect_ops_table_resolution.json", "docs/m34d4/indirect_resolution.json"],
+      "key_facts": [
+        "*(wlc_hw+0x20) = di[0], the FIFO0 dma_info allocated by dma_attach; object word0 = di->ops",
+        "di->ops = dma64proc (.rodata+0x27d620), R_X86_64_32S store at dma_attach 0x1040c; selected by SISF_DMA64 (0x1000)",
+        "table +0xa0 = sub_f897 = dma64_rxinit; table +0xd8 = sub_f14d = dma64_rxfill; both EXACT",
+        "0x69260/0x6926d use di[3] and are gated phyrev==4 (not rev42)",
+        "matches upstream brcms_b_init loop dma_txinit + dma_rxinit(di[RX_FIFO=0]) + dma_rxfill(di[0])",
+        "no tooling change required: re refs (installer) + re ptrtable (slots); V5-G1/V5-G2 remain filed non-blocking"
+      ],
+      "supersedes": ["D4D-CLOSURE (wlc_bmac_init 0x6923d/0x6924a UNRESOLVED)"]
+    },
   {
       "id": "CONTEXT-INFRA",
       "milestone": "token-efficient current-context index + re packet + governance rules",
@@ -303,6 +319,7 @@
     {"old": "D4 real entry is wlc_phy_cal_perical only", "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path", "correcting_artifact": "docs/m34d4/operational_callgraph.json"},
     {"old": "pi+0x16e writers are {0,1,2}", "new": "those were cmp reads; the real store is wlc_phy_attach @0xbeff8 (radio reg 0x3da revision)", "correcting_artifact": "docs/m34d4/value_provenance.json"},
     {"old": "first radio write is mod_radio_reg(0x80b,0x80,0x80) @0xaa80f", "new": "that write is inside sequence A (pi+0x16e==1) and may not execute", "correcting_artifact": "docs/m34d4/pll_synth_path.md"},
-    {"old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction", "new": "runtime ops-table dispatch; UNRESOLVED", "correcting_artifact": "docs/m34d4/indirect_resolution.json"}
+    {"old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction", "new": "runtime ops-table dispatch (D4D-CLOSURE)", "correcting_artifact": "docs/m34d4/indirect_resolution.json"},
+    {"old": "wlc_bmac_init 0x6923d/0x6924a runtime ops-table dispatch; UNRESOLVED", "new": "di[0]->ops = dma64proc; +0xa0 = sub_f897 (dma64_rxinit), +0xd8 = sub_f14d (dma64_rxfill)", "correcting_artifact": "docs/m34d4/indirect_ops_table_resolution.md, docs/m34d4/indirect_ops_table_resolution.json"}
   ]
 }

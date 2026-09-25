@@ -341,8 +341,11 @@ Stated exactly:
   All gates PASS (`re regress`, `re verify --strict`, `verify_edges`,
   `verify_decode`, `verify_tables`); calls unchanged `51193`.
   **Phases 3-7:** `wlc_bmac_init @0x6923d [rax+0xa0]` / `0x6924a [rax+0xd8]` =
-  **UNRESOLVED runtime ops-table dispatch** through `*(*(wlc_hw+0x20))` (`di[0]`
-  object from `wlc_hw_attach`); `0x69260/0x6926d` gated `phyrev==4` (NOT rev42).
+  **RESOLVED runtime ops-table dispatch** through `*(*(wlc_hw+0x20))` = `di[0]`
+  (FIFO0 `dma_info` from `dma_attach`, word0 = `di->ops` = `dma64proc`):
+  `+0xa0` = `dma64_rxinit` (`sub_f897`), `+0xd8` = `dma64_rxfill` (`sub_f14d`),
+  both `EXACT` (blocker `d4.indirect.wlc_bmac_init.vtable` CLOSED);
+  `0x69260/0x6926d` gated `phyrev==4` (NOT rev42).
   `pi+0x16e` is **`(radio_reg 0x3da >> 4) & 0xff`**, stored by
   `wlc_phy_attach @0xbeff8` (AC path) → **HARDWARE-derived, not zero** (the
   `{0,1,2}` "writers" were `cmp` reads). `pi+0x20+0xa7`/`pi+0x8be`/`pi+0x8bf`
@@ -351,6 +354,7 @@ Stated exactly:
   UNKNOWN** (sequences A/B and bounded lock polls recovered). dev_lost latch
   **not wired** to the new path. **No STRONG checkpoint; `D4 IMPLEMENTATION GO:
   NO`; `HARDWARE TEST GO: NO`.** Artifacts `docs/m34d4/tooling_gap_closure.{md,json}`,
+  `docs/m34d4/indirect_ops_table_resolution.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`

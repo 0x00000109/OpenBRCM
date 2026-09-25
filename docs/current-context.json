@@ -1,12 +1,5 @@
 {
-  "active_blocker": {
-    "evidence": [
-      "docs/m34d4/indirect_resolution.json",
-      "docs/m34d4/tooling_gap_closure.md"
-    ],
-    "id": "d4.indirect.wlc_bmac_init.vtable",
-    "summary": "wlc_bmac_init 0x6923d [rax+0xa0] / 0x6924a [rax+0xd8] dispatch via a runtime ops table; targets UNRESOLVED."
-  },
+  "active_blocker": {},
   "artifact_references": [
     "docs/agent-state.md",
     "docs/m34d2b_initvals_test.md",
@@ -15,7 +8,7 @@
     "docs/m34d3b_band_init.md",
     "docs/m34d3b_sprom_evidence.md",
     "docs/m34d4/dev_lost_access_map.json",
-    "docs/m34d4/indirect_resolution.json",
+    "docs/m34d4/indirect_ops_table_resolution.md",
     "docs/m34d4/operational_checkpoint_analysis.md",
     "docs/m34d4/pll_synth_path.md",
     "docs/m34d4/post_d3b_operational_timeline.md",
@@ -60,17 +53,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "fd2f8009db94ad1c3f356abc998e461d434edea6"
+    "head": "adcf3a7e88d8c066976f94f9a16d04ff4336a7c9"
   },
   "current_milestone": {
-    "artifact": "docs/m34d4/tooling_gap_closure.md",
+    "artifact": "docs/m34d4/indirect_ops_table_resolution.md",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "fd2f8009db94ad1c3f356abc998e461d434edea6",
+  "generated_from_head": "adcf3a7e88d8c066976f94f9a16d04ff4336a7c9",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "17741ba5b5d24336469ce673e94646147f0b36cbcac03e3db9c1ccb42faf2282"
+    "sources_hash": "7a2572d48082b693235fffeaaca835aacd1368866ba7c1682ed8b8036fbd1d77"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",
@@ -93,13 +86,6 @@
     },
     {
       "evidence": [
-        "docs/m34d4/indirect_resolution.json"
-      ],
-      "id": "d4.indirect.wlc_bmac_init.vtable",
-      "summary": "Resolve the runtime ops-table dispatch at 0x6923d/0x6924a (needs V5-G1/V5-G2)."
-    },
-    {
-      "evidence": [
         "docs/m34d4/pll_synth_path.md",
         "docs/m34d4/value_provenance.json"
       ],
@@ -109,6 +95,14 @@
   ],
   "project": "OpenBRCM",
   "proven_facts": [
+    {
+      "class": "analysis",
+      "id": "d4d.bmac_init.rx_dma_ops",
+      "record": "D4D-INDIRECT-OPS",
+      "source": "docs/m34d4/indirect_ops_table_resolution.md",
+      "status": "PROVEN",
+      "summary": "wlc_bmac_init 0x6923d = di[0]->ops->[+0xa0] = dma64_rxinit (sub_f897); 0x6924a = di[0]->ops->[+0xd8] = dma64_rxfill (sub_f14d); di[0]=*(wlc_hw+0x20) from dma_attach, ops=dma64proc .rodata+0x27d620."
+    },
     {
       "class": "analysis",
       "id": "d4d.first.radio_on",
