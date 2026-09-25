@@ -1,0 +1,4880 @@
+{
+  "schema": "openbrcm.rev11_sprom_fields.v1",
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+  "table": ".rodata+0x1b00",
+  "entry_size": 24,
+  "entry_count": 573,
+  "revision": 11,
+  "generated_by": "scripts/srom_var_table.py --blob <pinned blob> --rev 11 --json",
+  "method": "vendor srom_var_init (0x9704) descriptor table walk; entry stride 24 B; word indices are into the 234-word ob_si_read_mac image; continuation = flags bit0; absent = flags bit1 + value all-ones",
+  "required": {
+    "boardflags": {
+      "name": "boardflags",
+      "table_entry": 13,
+      "rodata_offset": 7224,
+      "word_index": 66,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "skip_all_ones": false,
+      "hex_output": true,
+      "output_transform": "direct",
+      "parts": [
+        {
+          "word_index": 66,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 67,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[13]"
+    },
+    "boardtype": {
+      "name": "boardtype",
+      "table_entry": 21,
+      "rodata_offset": 7416,
+      "word_index": 2,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "skip_all_ones": false,
+      "hex_output": true,
+      "output_transform": "direct",
+      "parts": [
+        {
+          "word_index": 2,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[21]"
+    },
+    "aa2g": {
+      "name": "aa2g",
+      "table_entry": 385,
+      "rodata_offset": 16152,
+      "word_index": 80,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "skip_all_ones": false,
+      "hex_output": false,
+      "output_transform": "direct",
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[385]"
+    },
+    "aa5g": {
+      "name": "aa5g",
+      "table_entry": 386,
+      "rodata_offset": 16176,
+      "word_index": 80,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "skip_all_ones": false,
+      "hex_output": false,
+      "output_transform": "direct",
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[386]"
+    },
+    "antswitch": {
+      "name": "antswitch",
+      "table_entry": 395,
+      "rodata_offset": 16392,
+      "word_index": 84,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "skip_all_ones": true,
+      "hex_output": false,
+      "output_transform": "direct",
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[395]"
+    }
+  },
+  "fields": [
+    {
+      "name": "devid",
+      "table_entry": 0,
+      "rodata_offset": 6912,
+      "revmask": 4294967040,
+      "flags": 132,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 48,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 48,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[0]"
+    },
+    {
+      "name": "boardrev",
+      "table_entry": 3,
+      "rodata_offset": 6984,
+      "revmask": 4294967040,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 65,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 65,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[3]"
+    },
+    {
+      "name": "boardflags",
+      "table_entry": 13,
+      "rodata_offset": 7224,
+      "revmask": 4294967040,
+      "flags": 5,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 66,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 66,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 67,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[13]"
+    },
+    {
+      "name": "boardflags2",
+      "table_entry": 19,
+      "rodata_offset": 7368,
+      "revmask": 4294967040,
+      "flags": 5,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 68,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 68,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 69,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[19]"
+    },
+    {
+      "name": "boardtype",
+      "table_entry": 21,
+      "rodata_offset": 7416,
+      "revmask": 4294967292,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 2,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 2,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[21]"
+    },
+    {
+      "name": "subvid",
+      "table_entry": 22,
+      "rodata_offset": 7440,
+      "revmask": 4294967292,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 3,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 3,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[22]"
+    },
+    {
+      "name": "boardflags3",
+      "table_entry": 374,
+      "rodata_offset": 15888,
+      "revmask": 4294965248,
+      "flags": 5,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 70,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 70,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 71,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[374]"
+    },
+    {
+      "name": "boardnum",
+      "table_entry": 376,
+      "rodata_offset": 15936,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 74,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 74,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[376]"
+    },
+    {
+      "name": "macaddr",
+      "table_entry": 377,
+      "rodata_offset": 15960,
+      "revmask": 4294965248,
+      "flags": 32,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "macaddr_big_endian",
+      "word_index": 72,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 72,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[377]"
+    },
+    {
+      "name": "ccode",
+      "table_entry": 378,
+      "rodata_offset": 15984,
+      "revmask": 4294965248,
+      "flags": 16,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "ccode_chars",
+      "word_index": 75,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 75,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[378]"
+    },
+    {
+      "name": "regrev",
+      "table_entry": 379,
+      "rodata_offset": 16008,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 76,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 76,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[379]"
+    },
+    {
+      "name": "ledbh0",
+      "table_entry": 380,
+      "rodata_offset": 16032,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 77,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 77,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[380]"
+    },
+    {
+      "name": "ledbh1",
+      "table_entry": 381,
+      "rodata_offset": 16056,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 77,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 77,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[381]"
+    },
+    {
+      "name": "ledbh2",
+      "table_entry": 382,
+      "rodata_offset": 16080,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 78,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 78,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[382]"
+    },
+    {
+      "name": "ledbh3",
+      "table_entry": 383,
+      "rodata_offset": 16104,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 78,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 78,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[383]"
+    },
+    {
+      "name": "leddc",
+      "table_entry": 384,
+      "rodata_offset": 16128,
+      "revmask": 4294965248,
+      "flags": 66,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "u16_byteswap",
+      "word_index": 79,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 79,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[384]"
+    },
+    {
+      "name": "aa2g",
+      "table_entry": 385,
+      "rodata_offset": 16152,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 80,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[385]"
+    },
+    {
+      "name": "aa5g",
+      "table_entry": 386,
+      "rodata_offset": 16176,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 80,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 80,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[386]"
+    },
+    {
+      "name": "agbg0",
+      "table_entry": 387,
+      "rodata_offset": 16200,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 81,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 81,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[387]"
+    },
+    {
+      "name": "agbg1",
+      "table_entry": 388,
+      "rodata_offset": 16224,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 81,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 81,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[388]"
+    },
+    {
+      "name": "agbg2",
+      "table_entry": 389,
+      "rodata_offset": 16248,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 82,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 82,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[389]"
+    },
+    {
+      "name": "aga0",
+      "table_entry": 390,
+      "rodata_offset": 16272,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 82,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 82,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[390]"
+    },
+    {
+      "name": "aga1",
+      "table_entry": 391,
+      "rodata_offset": 16296,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 83,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 83,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[391]"
+    },
+    {
+      "name": "aga2",
+      "table_entry": 392,
+      "rodata_offset": 16320,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 83,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 83,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[392]"
+    },
+    {
+      "name": "txchain",
+      "table_entry": 393,
+      "rodata_offset": 16344,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 84,
+      "mask": 15,
+      "shift": 0,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 15,
+          "shift": 0,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[393]"
+    },
+    {
+      "name": "rxchain",
+      "table_entry": 394,
+      "rodata_offset": 16368,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 84,
+      "mask": 240,
+      "shift": 4,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 240,
+          "shift": 4,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[394]"
+    },
+    {
+      "name": "antswitch",
+      "table_entry": 395,
+      "rodata_offset": 16392,
+      "revmask": 4294965248,
+      "flags": 2,
+      "hex_output": false,
+      "skip_all_ones": true,
+      "output_transform": "direct",
+      "word_index": 84,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 84,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[395]"
+    },
+    {
+      "name": "tssiposslope2g",
+      "table_entry": 396,
+      "rodata_offset": 16416,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 1,
+      "shift": 0,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 1,
+          "shift": 0,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[396]"
+    },
+    {
+      "name": "epagain2g",
+      "table_entry": 397,
+      "rodata_offset": 16440,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 14,
+      "shift": 1,
+      "width": 3,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 14,
+          "shift": 1,
+          "width": 3,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[397]"
+    },
+    {
+      "name": "pdgain2g",
+      "table_entry": 398,
+      "rodata_offset": 16464,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 496,
+      "shift": 4,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 496,
+          "shift": 4,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[398]"
+    },
+    {
+      "name": "tworangetssi2g",
+      "table_entry": 399,
+      "rodata_offset": 16488,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 512,
+      "shift": 9,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 512,
+          "shift": 9,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[399]"
+    },
+    {
+      "name": "papdcap2g",
+      "table_entry": 400,
+      "rodata_offset": 16512,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 1024,
+      "shift": 10,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 1024,
+          "shift": 10,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[400]"
+    },
+    {
+      "name": "femctrl",
+      "table_entry": 401,
+      "rodata_offset": 16536,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 85,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 85,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[401]"
+    },
+    {
+      "name": "tssiposslope5g",
+      "table_entry": 402,
+      "rodata_offset": 16560,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 1,
+      "shift": 0,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 1,
+          "shift": 0,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[402]"
+    },
+    {
+      "name": "epagain5g",
+      "table_entry": 403,
+      "rodata_offset": 16584,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 14,
+      "shift": 1,
+      "width": 3,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 14,
+          "shift": 1,
+          "width": 3,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[403]"
+    },
+    {
+      "name": "pdgain5g",
+      "table_entry": 404,
+      "rodata_offset": 16608,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 496,
+      "shift": 4,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 496,
+          "shift": 4,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[404]"
+    },
+    {
+      "name": "tworangetssi5g",
+      "table_entry": 405,
+      "rodata_offset": 16632,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 512,
+      "shift": 9,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 512,
+          "shift": 9,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[405]"
+    },
+    {
+      "name": "papdcap5g",
+      "table_entry": 406,
+      "rodata_offset": 16656,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 1024,
+      "shift": 10,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 1024,
+          "shift": 10,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[406]"
+    },
+    {
+      "name": "gainctrlsph",
+      "table_entry": 407,
+      "rodata_offset": 16680,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 86,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 86,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[407]"
+    },
+    {
+      "name": "tempthresh",
+      "table_entry": 408,
+      "rodata_offset": 16704,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 87,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 87,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[408]"
+    },
+    {
+      "name": "tempoffset",
+      "table_entry": 409,
+      "rodata_offset": 16728,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 87,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 87,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[409]"
+    },
+    {
+      "name": "rawtempsense",
+      "table_entry": 410,
+      "rodata_offset": 16752,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 88,
+      "mask": 511,
+      "shift": 0,
+      "width": 9,
+      "parts": [
+        {
+          "word_index": 88,
+          "mask": 511,
+          "shift": 0,
+          "width": 9,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[410]"
+    },
+    {
+      "name": "measpower",
+      "table_entry": 411,
+      "rodata_offset": 16776,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 88,
+      "mask": 65024,
+      "shift": 9,
+      "width": 7,
+      "parts": [
+        {
+          "word_index": 88,
+          "mask": 65024,
+          "shift": 9,
+          "width": 7,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[411]"
+    },
+    {
+      "name": "tempsense_slope",
+      "table_entry": 412,
+      "rodata_offset": 16800,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 89,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 89,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[412]"
+    },
+    {
+      "name": "tempcorrx",
+      "table_entry": 413,
+      "rodata_offset": 16824,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 89,
+      "mask": 64512,
+      "shift": 10,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 89,
+          "mask": 64512,
+          "shift": 10,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[413]"
+    },
+    {
+      "name": "tempsense_option",
+      "table_entry": 414,
+      "rodata_offset": 16848,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 89,
+      "mask": 768,
+      "shift": 8,
+      "width": 2,
+      "parts": [
+        {
+          "word_index": 89,
+          "mask": 768,
+          "shift": 8,
+          "width": 2,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[414]"
+    },
+    {
+      "name": "xtalfreq",
+      "table_entry": 415,
+      "rodata_offset": 16872,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 90,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 90,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[415]"
+    },
+    {
+      "name": "pa5gbw4080a1",
+      "table_entry": 416,
+      "rodata_offset": 16896,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 91,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 91,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[416]"
+    },
+    {
+      "name": "",
+      "table_entry": 417,
+      "rodata_offset": 16920,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 94,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 94,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[417]"
+    },
+    {
+      "name": "",
+      "table_entry": 418,
+      "rodata_offset": 16944,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 103,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 103,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[418]"
+    },
+    {
+      "name": "",
+      "table_entry": 419,
+      "rodata_offset": 16968,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 106,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 106,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[419]"
+    },
+    {
+      "name": "",
+      "table_entry": 420,
+      "rodata_offset": 16992,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 148,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 148,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[420]"
+    },
+    {
+      "name": "",
+      "table_entry": 421,
+      "rodata_offset": 17016,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 149,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 149,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[421]"
+    },
+    {
+      "name": "",
+      "table_entry": 422,
+      "rodata_offset": 17040,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 150,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 150,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[422]"
+    },
+    {
+      "name": "",
+      "table_entry": 423,
+      "rodata_offset": 17064,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 151,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 151,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[423]"
+    },
+    {
+      "name": "",
+      "table_entry": 424,
+      "rodata_offset": 17088,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 152,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 152,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[424]"
+    },
+    {
+      "name": "",
+      "table_entry": 425,
+      "rodata_offset": 17112,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 153,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 153,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[425]"
+    },
+    {
+      "name": "",
+      "table_entry": 426,
+      "rodata_offset": 17136,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 154,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 154,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[426]"
+    },
+    {
+      "name": "",
+      "table_entry": 427,
+      "rodata_offset": 17160,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 155,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 155,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[427]"
+    },
+    {
+      "name": "phycal_tempdelta",
+      "table_entry": 428,
+      "rodata_offset": 17184,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 92,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 92,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[428]"
+    },
+    {
+      "name": "temps_period",
+      "table_entry": 429,
+      "rodata_offset": 17208,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 92,
+      "mask": 3840,
+      "shift": 8,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 92,
+          "mask": 3840,
+          "shift": 8,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[429]"
+    },
+    {
+      "name": "temps_hysteresis",
+      "table_entry": 430,
+      "rodata_offset": 17232,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 92,
+      "mask": 61440,
+      "shift": 12,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 92,
+          "mask": 61440,
+          "shift": 12,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[430]"
+    },
+    {
+      "name": "measpower1",
+      "table_entry": 431,
+      "rodata_offset": 17256,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 93,
+      "mask": 127,
+      "shift": 0,
+      "width": 7,
+      "parts": [
+        {
+          "word_index": 93,
+          "mask": 127,
+          "shift": 0,
+          "width": 7,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[431]"
+    },
+    {
+      "name": "measpower2",
+      "table_entry": 432,
+      "rodata_offset": 17280,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 93,
+      "mask": 16256,
+      "shift": 7,
+      "width": 7,
+      "parts": [
+        {
+          "word_index": 93,
+          "mask": 16256,
+          "shift": 7,
+          "width": 7,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[432]"
+    },
+    {
+      "name": "tssifloor2g",
+      "table_entry": 433,
+      "rodata_offset": 17304,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 95,
+      "mask": 1023,
+      "shift": 0,
+      "width": 10,
+      "parts": [
+        {
+          "word_index": 95,
+          "mask": 1023,
+          "shift": 0,
+          "width": 10,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[433]"
+    },
+    {
+      "name": "tssifloor5g",
+      "table_entry": 434,
+      "rodata_offset": 17328,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 96,
+      "mask": 1023,
+      "shift": 0,
+      "width": 10,
+      "parts": [
+        {
+          "word_index": 96,
+          "mask": 1023,
+          "shift": 0,
+          "width": 10,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[434]"
+    },
+    {
+      "name": "",
+      "table_entry": 435,
+      "rodata_offset": 17352,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 97,
+      "mask": 1023,
+      "shift": 0,
+      "width": 10,
+      "parts": [
+        {
+          "word_index": 97,
+          "mask": 1023,
+          "shift": 0,
+          "width": 10,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[435]"
+    },
+    {
+      "name": "",
+      "table_entry": 436,
+      "rodata_offset": 17376,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 98,
+      "mask": 1023,
+      "shift": 0,
+      "width": 10,
+      "parts": [
+        {
+          "word_index": 98,
+          "mask": 1023,
+          "shift": 0,
+          "width": 10,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[436]"
+    },
+    {
+      "name": "",
+      "table_entry": 437,
+      "rodata_offset": 17400,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 99,
+      "mask": 1023,
+      "shift": 0,
+      "width": 10,
+      "parts": [
+        {
+          "word_index": 99,
+          "mask": 1023,
+          "shift": 0,
+          "width": 10,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[437]"
+    },
+    {
+      "name": "pdoffset2g40ma0",
+      "table_entry": 438,
+      "rodata_offset": 17424,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 100,
+      "mask": 15,
+      "shift": 0,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 100,
+          "mask": 15,
+          "shift": 0,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[438]"
+    },
+    {
+      "name": "pdoffset2g40ma1",
+      "table_entry": 439,
+      "rodata_offset": 17448,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 100,
+      "mask": 240,
+      "shift": 4,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 100,
+          "mask": 240,
+          "shift": 4,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[439]"
+    },
+    {
+      "name": "pdoffset2g40ma2",
+      "table_entry": 440,
+      "rodata_offset": 17472,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 100,
+      "mask": 3840,
+      "shift": 8,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 100,
+          "mask": 3840,
+          "shift": 8,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[440]"
+    },
+    {
+      "name": "pdoffset2g40mvalid",
+      "table_entry": 441,
+      "rodata_offset": 17496,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 100,
+      "mask": 32768,
+      "shift": 15,
+      "width": 1,
+      "parts": [
+        {
+          "word_index": 100,
+          "mask": 32768,
+          "shift": 15,
+          "width": 1,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[441]"
+    },
+    {
+      "name": "pdoffset40ma0",
+      "table_entry": 442,
+      "rodata_offset": 17520,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 101,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 101,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[442]"
+    },
+    {
+      "name": "pdoffset40ma1",
+      "table_entry": 443,
+      "rodata_offset": 17544,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 102,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 102,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[443]"
+    },
+    {
+      "name": "pdoffset40ma2",
+      "table_entry": 444,
+      "rodata_offset": 17568,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 103,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 103,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[444]"
+    },
+    {
+      "name": "pdoffset80ma0",
+      "table_entry": 445,
+      "rodata_offset": 17592,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 104,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 104,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[445]"
+    },
+    {
+      "name": "pdoffset80ma1",
+      "table_entry": 446,
+      "rodata_offset": 17616,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 105,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 105,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[446]"
+    },
+    {
+      "name": "pdoffset80ma2",
+      "table_entry": 447,
+      "rodata_offset": 17640,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 106,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 106,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[447]"
+    },
+    {
+      "name": "subband5gver",
+      "table_entry": 448,
+      "rodata_offset": 17664,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 107,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 107,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[448]"
+    },
+    {
+      "name": "paparambwver",
+      "table_entry": 449,
+      "rodata_offset": 17688,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 200,
+      "mask": 61440,
+      "shift": 12,
+      "width": 4,
+      "parts": [
+        {
+          "word_index": 200,
+          "mask": 61440,
+          "shift": 12,
+          "width": 4,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[449]"
+    },
+    {
+      "name": "pa5gbw4080a0",
+      "table_entry": 450,
+      "rodata_offset": 17712,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 156,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 156,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[450]"
+    },
+    {
+      "name": "",
+      "table_entry": 451,
+      "rodata_offset": 17736,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 157,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 157,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[451]"
+    },
+    {
+      "name": "",
+      "table_entry": 452,
+      "rodata_offset": 17760,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 158,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 158,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[452]"
+    },
+    {
+      "name": "",
+      "table_entry": 453,
+      "rodata_offset": 17784,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 159,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 159,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[453]"
+    },
+    {
+      "name": "",
+      "table_entry": 454,
+      "rodata_offset": 17808,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 160,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 160,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[454]"
+    },
+    {
+      "name": "",
+      "table_entry": 455,
+      "rodata_offset": 17832,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 161,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 161,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[455]"
+    },
+    {
+      "name": "",
+      "table_entry": 456,
+      "rodata_offset": 17856,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 162,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 162,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[456]"
+    },
+    {
+      "name": "",
+      "table_entry": 457,
+      "rodata_offset": 17880,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 163,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 163,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[457]"
+    },
+    {
+      "name": "",
+      "table_entry": 458,
+      "rodata_offset": 17904,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 164,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 164,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[458]"
+    },
+    {
+      "name": "",
+      "table_entry": 459,
+      "rodata_offset": 17928,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 165,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 165,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[459]"
+    },
+    {
+      "name": "",
+      "table_entry": 460,
+      "rodata_offset": 17952,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 166,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 166,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[460]"
+    },
+    {
+      "name": "",
+      "table_entry": 461,
+      "rodata_offset": 17976,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 167,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 167,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[461]"
+    },
+    {
+      "name": "pa5gbw40a0",
+      "table_entry": 462,
+      "rodata_offset": 18000,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 136,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 136,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[462]"
+    },
+    {
+      "name": "",
+      "table_entry": 463,
+      "rodata_offset": 18024,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 137,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 137,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[463]"
+    },
+    {
+      "name": "",
+      "table_entry": 464,
+      "rodata_offset": 18048,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 138,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 138,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[464]"
+    },
+    {
+      "name": "",
+      "table_entry": 465,
+      "rodata_offset": 18072,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 139,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 139,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[465]"
+    },
+    {
+      "name": "",
+      "table_entry": 466,
+      "rodata_offset": 18096,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 140,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 140,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[466]"
+    },
+    {
+      "name": "",
+      "table_entry": 467,
+      "rodata_offset": 18120,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 141,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 141,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[467]"
+    },
+    {
+      "name": "",
+      "table_entry": 468,
+      "rodata_offset": 18144,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 142,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 142,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[468]"
+    },
+    {
+      "name": "",
+      "table_entry": 469,
+      "rodata_offset": 18168,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 143,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 143,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[469]"
+    },
+    {
+      "name": "",
+      "table_entry": 470,
+      "rodata_offset": 18192,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 144,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 144,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[470]"
+    },
+    {
+      "name": "",
+      "table_entry": 471,
+      "rodata_offset": 18216,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 145,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 145,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[471]"
+    },
+    {
+      "name": "",
+      "table_entry": 472,
+      "rodata_offset": 18240,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 146,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 146,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[472]"
+    },
+    {
+      "name": "",
+      "table_entry": 473,
+      "rodata_offset": 18264,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 147,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 147,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[473]"
+    },
+    {
+      "name": "pa5gbw80a0",
+      "table_entry": 474,
+      "rodata_offset": 18288,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 156,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 156,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[474]"
+    },
+    {
+      "name": "",
+      "table_entry": 475,
+      "rodata_offset": 18312,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 157,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 157,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[475]"
+    },
+    {
+      "name": "",
+      "table_entry": 476,
+      "rodata_offset": 18336,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 158,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 158,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[476]"
+    },
+    {
+      "name": "",
+      "table_entry": 477,
+      "rodata_offset": 18360,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 159,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 159,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[477]"
+    },
+    {
+      "name": "",
+      "table_entry": 478,
+      "rodata_offset": 18384,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 160,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 160,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[478]"
+    },
+    {
+      "name": "",
+      "table_entry": 479,
+      "rodata_offset": 18408,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 161,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 161,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[479]"
+    },
+    {
+      "name": "",
+      "table_entry": 480,
+      "rodata_offset": 18432,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 162,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 162,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[480]"
+    },
+    {
+      "name": "",
+      "table_entry": 481,
+      "rodata_offset": 18456,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 163,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 163,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[481]"
+    },
+    {
+      "name": "",
+      "table_entry": 482,
+      "rodata_offset": 18480,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 164,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 164,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[482]"
+    },
+    {
+      "name": "",
+      "table_entry": 483,
+      "rodata_offset": 18504,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 165,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 165,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[483]"
+    },
+    {
+      "name": "",
+      "table_entry": 484,
+      "rodata_offset": 18528,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 166,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 166,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[484]"
+    },
+    {
+      "name": "",
+      "table_entry": 485,
+      "rodata_offset": 18552,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 167,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 167,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[485]"
+    },
+    {
+      "name": "pa2gccka0",
+      "table_entry": 486,
+      "rodata_offset": 18576,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 129,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 129,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[486]"
+    },
+    {
+      "name": "",
+      "table_entry": 487,
+      "rodata_offset": 18600,
+      "revmask": 4294965248,
+      "flags": 260,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 130,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 130,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[487]"
+    },
+    {
+      "name": "",
+      "table_entry": 488,
+      "rodata_offset": 18624,
+      "revmask": 4294965248,
+      "flags": 4,
+      "hex_output": true,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 131,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 131,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[488]"
+    },
+    {
+      "name": "cckbw202gpo",
+      "table_entry": 489,
+      "rodata_offset": 18648,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 168,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 168,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[489]"
+    },
+    {
+      "name": "cckbw20ul2gpo",
+      "table_entry": 490,
+      "rodata_offset": 18672,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 169,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 169,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[490]"
+    },
+    {
+      "name": "mcsbw202gpo",
+      "table_entry": 491,
+      "rodata_offset": 18696,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 170,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 170,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 171,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[491]"
+    },
+    {
+      "name": "mcsbw402gpo",
+      "table_entry": 493,
+      "rodata_offset": 18744,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 172,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 172,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 173,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[493]"
+    },
+    {
+      "name": "dot11agofdmhrbw202gpo",
+      "table_entry": 495,
+      "rodata_offset": 18792,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 174,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 174,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[495]"
+    },
+    {
+      "name": "ofdmlrbw202gpo",
+      "table_entry": 496,
+      "rodata_offset": 18816,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 175,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 175,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[496]"
+    },
+    {
+      "name": "mcsbw205glpo",
+      "table_entry": 497,
+      "rodata_offset": 18840,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 176,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 176,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 177,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[497]"
+    },
+    {
+      "name": "mcsbw405glpo",
+      "table_entry": 499,
+      "rodata_offset": 18888,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 178,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 178,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 179,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[499]"
+    },
+    {
+      "name": "mcsbw805glpo",
+      "table_entry": 501,
+      "rodata_offset": 18936,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 180,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 180,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 181,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[501]"
+    },
+    {
+      "name": "mcsbw205gmpo",
+      "table_entry": 503,
+      "rodata_offset": 18984,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 184,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 184,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 185,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[503]"
+    },
+    {
+      "name": "mcsbw405gmpo",
+      "table_entry": 505,
+      "rodata_offset": 19032,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 186,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 186,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 187,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[505]"
+    },
+    {
+      "name": "mcsbw805gmpo",
+      "table_entry": 507,
+      "rodata_offset": 19080,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 188,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 188,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 189,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[507]"
+    },
+    {
+      "name": "mcsbw205ghpo",
+      "table_entry": 509,
+      "rodata_offset": 19128,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 192,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 192,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 193,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[509]"
+    },
+    {
+      "name": "mcsbw405ghpo",
+      "table_entry": 511,
+      "rodata_offset": 19176,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 194,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 194,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 195,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[511]"
+    },
+    {
+      "name": "mcsbw805ghpo",
+      "table_entry": 513,
+      "rodata_offset": 19224,
+      "revmask": 4294965248,
+      "flags": 1,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 196,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 196,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        },
+        {
+          "word_index": 197,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 16
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[513]"
+    },
+    {
+      "name": "mcslr5glpo",
+      "table_entry": 515,
+      "rodata_offset": 19272,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 200,
+      "mask": 4095,
+      "shift": 0,
+      "width": 12,
+      "parts": [
+        {
+          "word_index": 200,
+          "mask": 4095,
+          "shift": 0,
+          "width": 12,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[515]"
+    },
+    {
+      "name": "mcslr5gmpo",
+      "table_entry": 516,
+      "rodata_offset": 19296,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 201,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 201,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[516]"
+    },
+    {
+      "name": "mcslr5ghpo",
+      "table_entry": 517,
+      "rodata_offset": 19320,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 202,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 202,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[517]"
+    },
+    {
+      "name": "sb20in40hrpo",
+      "table_entry": 518,
+      "rodata_offset": 19344,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 203,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 203,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[518]"
+    },
+    {
+      "name": "sb20in80and160hr5glpo",
+      "table_entry": 519,
+      "rodata_offset": 19368,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 204,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 204,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[519]"
+    },
+    {
+      "name": "sb40and80hr5glpo",
+      "table_entry": 520,
+      "rodata_offset": 19392,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 205,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 205,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[520]"
+    },
+    {
+      "name": "sb20in80and160hr5gmpo",
+      "table_entry": 521,
+      "rodata_offset": 19416,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 206,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 206,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[521]"
+    },
+    {
+      "name": "sb40and80hr5gmpo",
+      "table_entry": 522,
+      "rodata_offset": 19440,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 207,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 207,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[522]"
+    },
+    {
+      "name": "sb20in80and160hr5ghpo",
+      "table_entry": 523,
+      "rodata_offset": 19464,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 208,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 208,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[523]"
+    },
+    {
+      "name": "sb40and80hr5ghpo",
+      "table_entry": 524,
+      "rodata_offset": 19488,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 209,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 209,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[524]"
+    },
+    {
+      "name": "sb20in40lrpo",
+      "table_entry": 525,
+      "rodata_offset": 19512,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 210,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 210,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[525]"
+    },
+    {
+      "name": "sb20in80and160lr5glpo",
+      "table_entry": 526,
+      "rodata_offset": 19536,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 211,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 211,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[526]"
+    },
+    {
+      "name": "sb40and80lr5glpo",
+      "table_entry": 527,
+      "rodata_offset": 19560,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 212,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 212,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[527]"
+    },
+    {
+      "name": "sb20in80and160lr5gmpo",
+      "table_entry": 528,
+      "rodata_offset": 19584,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 213,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 213,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[528]"
+    },
+    {
+      "name": "sb40and80lr5gmpo",
+      "table_entry": 529,
+      "rodata_offset": 19608,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 214,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 214,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[529]"
+    },
+    {
+      "name": "sb20in80and160lr5ghpo",
+      "table_entry": 530,
+      "rodata_offset": 19632,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 215,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 215,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[530]"
+    },
+    {
+      "name": "sb40and80lr5ghpo",
+      "table_entry": 531,
+      "rodata_offset": 19656,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 216,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 216,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[531]"
+    },
+    {
+      "name": "dot11agduphrpo",
+      "table_entry": 532,
+      "rodata_offset": 19680,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 217,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 217,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[532]"
+    },
+    {
+      "name": "dot11agduplrpo",
+      "table_entry": 533,
+      "rodata_offset": 19704,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 218,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 218,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[533]"
+    },
+    {
+      "name": "sar2g",
+      "table_entry": 534,
+      "rodata_offset": 19728,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 221,
+      "mask": 255,
+      "shift": 0,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 221,
+          "mask": 255,
+          "shift": 0,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[534]"
+    },
+    {
+      "name": "sar5g",
+      "table_entry": 535,
+      "rodata_offset": 19752,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 221,
+      "mask": 65280,
+      "shift": 8,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 221,
+          "mask": 65280,
+          "shift": 8,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[535]"
+    },
+    {
+      "name": "noiselvl2ga0",
+      "table_entry": 536,
+      "rodata_offset": 19776,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 222,
+      "mask": 31,
+      "shift": 0,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 222,
+          "mask": 31,
+          "shift": 0,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[536]"
+    },
+    {
+      "name": "noiselvl2ga1",
+      "table_entry": 537,
+      "rodata_offset": 19800,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 222,
+      "mask": 992,
+      "shift": 5,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 222,
+          "mask": 992,
+          "shift": 5,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[537]"
+    },
+    {
+      "name": "noiselvl2ga2",
+      "table_entry": 538,
+      "rodata_offset": 19824,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 222,
+      "mask": 31744,
+      "shift": 10,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 222,
+          "mask": 31744,
+          "shift": 10,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[538]"
+    },
+    {
+      "name": "noiselvl5ga0",
+      "table_entry": 539,
+      "rodata_offset": 19848,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 223,
+      "mask": 31,
+      "shift": 0,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 223,
+          "mask": 31,
+          "shift": 0,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[539]"
+    },
+    {
+      "name": "",
+      "table_entry": 540,
+      "rodata_offset": 19872,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 224,
+      "mask": 31,
+      "shift": 0,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 224,
+          "mask": 31,
+          "shift": 0,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[540]"
+    },
+    {
+      "name": "",
+      "table_entry": 541,
+      "rodata_offset": 19896,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 225,
+      "mask": 31,
+      "shift": 0,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 225,
+          "mask": 31,
+          "shift": 0,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[541]"
+    },
+    {
+      "name": "",
+      "table_entry": 542,
+      "rodata_offset": 19920,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 226,
+      "mask": 31,
+      "shift": 0,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 226,
+          "mask": 31,
+          "shift": 0,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[542]"
+    },
+    {
+      "name": "noiselvl5ga1",
+      "table_entry": 543,
+      "rodata_offset": 19944,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 223,
+      "mask": 992,
+      "shift": 5,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 223,
+          "mask": 992,
+          "shift": 5,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[543]"
+    },
+    {
+      "name": "",
+      "table_entry": 544,
+      "rodata_offset": 19968,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 224,
+      "mask": 992,
+      "shift": 5,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 224,
+          "mask": 992,
+          "shift": 5,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[544]"
+    },
+    {
+      "name": "",
+      "table_entry": 545,
+      "rodata_offset": 19992,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 225,
+      "mask": 992,
+      "shift": 5,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 225,
+          "mask": 992,
+          "shift": 5,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[545]"
+    },
+    {
+      "name": "",
+      "table_entry": 546,
+      "rodata_offset": 20016,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 226,
+      "mask": 992,
+      "shift": 5,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 226,
+          "mask": 992,
+          "shift": 5,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[546]"
+    },
+    {
+      "name": "noiselvl5ga2",
+      "table_entry": 547,
+      "rodata_offset": 20040,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 223,
+      "mask": 31744,
+      "shift": 10,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 223,
+          "mask": 31744,
+          "shift": 10,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[547]"
+    },
+    {
+      "name": "",
+      "table_entry": 548,
+      "rodata_offset": 20064,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 224,
+      "mask": 31744,
+      "shift": 10,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 224,
+          "mask": 31744,
+          "shift": 10,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[548]"
+    },
+    {
+      "name": "",
+      "table_entry": 549,
+      "rodata_offset": 20088,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 225,
+      "mask": 31744,
+      "shift": 10,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 225,
+          "mask": 31744,
+          "shift": 10,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[549]"
+    },
+    {
+      "name": "",
+      "table_entry": 550,
+      "rodata_offset": 20112,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 226,
+      "mask": 31744,
+      "shift": 10,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 226,
+          "mask": 31744,
+          "shift": 10,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[550]"
+    },
+    {
+      "name": "rxgainerr2ga0",
+      "table_entry": 551,
+      "rodata_offset": 20136,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 227,
+      "mask": 63,
+      "shift": 0,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 227,
+          "mask": 63,
+          "shift": 0,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[551]"
+    },
+    {
+      "name": "rxgainerr2ga1",
+      "table_entry": 552,
+      "rodata_offset": 20160,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 227,
+      "mask": 1984,
+      "shift": 6,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 227,
+          "mask": 1984,
+          "shift": 6,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[552]"
+    },
+    {
+      "name": "rxgainerr2ga2",
+      "table_entry": 553,
+      "rodata_offset": 20184,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 227,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 227,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[553]"
+    },
+    {
+      "name": "rxgainerr5ga0",
+      "table_entry": 554,
+      "rodata_offset": 20208,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 228,
+      "mask": 63,
+      "shift": 0,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 228,
+          "mask": 63,
+          "shift": 0,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[554]"
+    },
+    {
+      "name": "",
+      "table_entry": 555,
+      "rodata_offset": 20232,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 229,
+      "mask": 63,
+      "shift": 0,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 229,
+          "mask": 63,
+          "shift": 0,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[555]"
+    },
+    {
+      "name": "",
+      "table_entry": 556,
+      "rodata_offset": 20256,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 230,
+      "mask": 63,
+      "shift": 0,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 230,
+          "mask": 63,
+          "shift": 0,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[556]"
+    },
+    {
+      "name": "",
+      "table_entry": 557,
+      "rodata_offset": 20280,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 231,
+      "mask": 63,
+      "shift": 0,
+      "width": 6,
+      "parts": [
+        {
+          "word_index": 231,
+          "mask": 63,
+          "shift": 0,
+          "width": 6,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[557]"
+    },
+    {
+      "name": "rxgainerr5ga1",
+      "table_entry": 558,
+      "rodata_offset": 20304,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 228,
+      "mask": 1984,
+      "shift": 6,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 228,
+          "mask": 1984,
+          "shift": 6,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[558]"
+    },
+    {
+      "name": "",
+      "table_entry": 559,
+      "rodata_offset": 20328,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 229,
+      "mask": 1984,
+      "shift": 6,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 229,
+          "mask": 1984,
+          "shift": 6,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[559]"
+    },
+    {
+      "name": "",
+      "table_entry": 560,
+      "rodata_offset": 20352,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 230,
+      "mask": 1984,
+      "shift": 6,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 230,
+          "mask": 1984,
+          "shift": 6,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[560]"
+    },
+    {
+      "name": "",
+      "table_entry": 561,
+      "rodata_offset": 20376,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 231,
+      "mask": 1984,
+      "shift": 6,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 231,
+          "mask": 1984,
+          "shift": 6,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[561]"
+    },
+    {
+      "name": "rxgainerr5ga2",
+      "table_entry": 562,
+      "rodata_offset": 20400,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 228,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 228,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[562]"
+    },
+    {
+      "name": "",
+      "table_entry": 563,
+      "rodata_offset": 20424,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 229,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 229,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[563]"
+    },
+    {
+      "name": "",
+      "table_entry": 564,
+      "rodata_offset": 20448,
+      "revmask": 4294965248,
+      "flags": 256,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "multi_word_string",
+      "word_index": 230,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 230,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[564]"
+    },
+    {
+      "name": "",
+      "table_entry": 565,
+      "rodata_offset": 20472,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 231,
+      "mask": 63488,
+      "shift": 11,
+      "width": 5,
+      "parts": [
+        {
+          "word_index": 231,
+          "mask": 63488,
+          "shift": 11,
+          "width": 5,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[565]"
+    },
+    {
+      "name": "rpcal2g",
+      "table_entry": 566,
+      "rodata_offset": 20496,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 182,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 182,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[566]"
+    },
+    {
+      "name": "rpcal5gb0",
+      "table_entry": 567,
+      "rodata_offset": 20520,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 183,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 183,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[567]"
+    },
+    {
+      "name": "rpcal5gb1",
+      "table_entry": 568,
+      "rodata_offset": 20544,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 190,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 190,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[568]"
+    },
+    {
+      "name": "rpcal5gb2",
+      "table_entry": 569,
+      "rodata_offset": 20568,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 191,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 191,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[569]"
+    },
+    {
+      "name": "rpcal5gb3",
+      "table_entry": 570,
+      "rodata_offset": 20592,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 198,
+      "mask": 65535,
+      "shift": 0,
+      "width": 16,
+      "parts": [
+        {
+          "word_index": 198,
+          "mask": 65535,
+          "shift": 0,
+          "width": 16,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[570]"
+    },
+    {
+      "name": "txidxcap2g",
+      "table_entry": 571,
+      "rodata_offset": 20616,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 212,
+      "mask": 4080,
+      "shift": 4,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 212,
+          "mask": 4080,
+          "shift": 4,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[571]"
+    },
+    {
+      "name": "txidxcap5g",
+      "table_entry": 572,
+      "rodata_offset": 20640,
+      "revmask": 4294965248,
+      "flags": 0,
+      "hex_output": false,
+      "skip_all_ones": false,
+      "output_transform": "direct",
+      "word_index": 214,
+      "mask": 4080,
+      "shift": 4,
+      "width": 8,
+      "parts": [
+        {
+          "word_index": 214,
+          "mask": 4080,
+          "shift": 4,
+          "width": 8,
+          "bit_offset": 0
+        }
+      ],
+      "provenance": "vendor srom_var_init 0x9704; table .rodata+0x1b00[572]"
+    }
+  ],
+  "cross_check": {
+    "authoritative": "vendor blob 352a6e349f74... (this table)",
+    "unshifted_fields_match_mainline_ssb_sprom8": {
+      "boardtype": "SSB_SPROM1_SPID byte 0x04 (word 0x02) = vendor word 0x02",
+      "boardrev": "SSB_SPROM8_BOARDREV byte 0x82 (word 0x41) = vendor word 0x41",
+      "boardflags_lo_hi": "SSB_SPROM8_BFLLO/HI 0x84/0x86 (words 0x42/0x43) = vendor words 0x42/0x43"
+    },
+    "semantics_match_mainline": {
+      "aa2g": "ANTAVAIL_BG (low byte); vendor word 0x50 mask 0x00ff",
+      "aa5g": "ANTAVAIL_A (high byte); vendor word 0x50 mask 0xff00",
+      "antswitch": "TXRXC_SWITCH (high byte); vendor word 0x54 mask 0xff00",
+      "txchain_rxchain": "TXRXC low/high nibble; vendor word 0x54 masks 0x000f/0x00f0"
+    },
+    "shifted_vs_mainline_ssb_sprom8": {
+      "macaddr": "vendor rev>=11 word 0x48 (byte 0x90) vs mainline SSB_SPROM8 0x8C; the vendor rev11 MAC at 0x90 is independently HARDWARE PROVEN (M2)",
+      "aa2g_aa5g": "vendor rev>=11 word 0x50 (byte 0xA0) vs mainline SSB_SPROM8 ANTAVAIL 0x9C",
+      "note": "mainline bcma/sprom.c uses the SSB_SPROM8 offsets for all revs 8-11; the vendor rev11 layout moves several post-MAC fields. The vendor table is authoritative; the MAC anchor proves the word indexing."
+    }
+  }
+}

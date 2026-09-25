@@ -236,3 +236,20 @@ is recorded in the milestone document:
 - **T7 — table-derived MMIO offsets** (already noted above) blocked a direct
   `re`-only reconstruction of the vendor `srom_parsecis` raw-field cursor;
   recovering the rev11 field offsets needs the table-aware resolution.
+  **RESOLVED (2026-09, M3.4D3B rev11 field map).** The BCM4352/PCIe path does
+  not use `srom_parsecis` (that is the PCMCIA/CIS path); `srom_var_init 0x9704`
+  synthesises the NVRAM variables from a **24-byte descriptor table** at
+  `.rodata+0x1b00` (573 entries, terminator index 573), reached by the
+  `mov r12, <reloc .rodata+0x1b00>` at `0x9a14` and decoded with
+  `re fn srom_var_init --asm` + `readelf -r`. The reusable, pinned decoder is
+  `scripts/srom_var_table.py` (JSON output; reproduces the vendor extraction
+  incl. multi-word continuations and the skip-all-ones absent rule); the
+  machine-readable map is `docs/m34d3b/rev11_sprom_fields.json`. Closing this
+  needed *no* change to `re` itself: the missing capability was file/data
+  parsing (`.rodata` + `.rela.rodata` + `.rodata.str1.1`), which the analysis
+  script now provides deterministically.
+  - Remaining `re` feature request (so this is not re-done manually): a
+    `re data --at <section>+<off> --reloc-names` (or `re table`)
+    subcommand that resolves section-relative data relocations and prints the
+    targeted strings, i.e. the exact step `srom_var_table.py` performs now.
+
