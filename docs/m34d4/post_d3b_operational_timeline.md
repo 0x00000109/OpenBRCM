@@ -298,3 +298,35 @@ dev_lost wiring, not reachability.
 | radio-ON is RPC-only; no vendor-time transition | `wlc_phy_init → switch_radio(ON)` | `radio_on_transition.json` |
 | "D4 follows D3B via `wlc_phy_cal_perical` only" | `wlc_phy_init` + `sub_b018f` precede it | `operational_callgraph.json` |
 | STOP-before-`wlc_phy_init` boundary invalid | boundary now valid in scope, but WEAK (CP-D4.1) | `operational_checkpoint_analysis.md` |
+
+## 12. Addendum (2026-09, v5 tooling closure + Phases 3–7)
+
+After the v5 tooling fixes (`f5d03da`; see `tooling_gap_closure.md`), the
+reachability chain was re-run and the value/PLL/dev_lost/checkpoint phases were
+closed:
+
+- **PHASE 3 (`indirect_resolution.json`).** `wlc_bmac_init @0x6923d [rax+0xa0]`
+  and `0x6924a [rax+0xd8]` are **vtable/ops-table dispatches** through
+  `*(*(wlc_hw+0x20))` (the `di[0]` sub-object built by `wlc_hw_attach`; word 0
+  is its ops table) — **UNRESOLVED** (runtime table; no static reloc at the
+  slot). The tool's `wlc_lcnphy_set_tx_pwr_ctrl`/`sub_fb187` candidates are
+  false positives (V5-G1 nested-load collapse). `0x69260/0x6926d` are gated
+  `phyrev==4` and are **not** rev42-reachable.
+- **PHASE 4 (`value_provenance.json`).** The apparent `pi+0x16e` writers
+  `{0,1,2}` were **`cmp` reads** (D4B-G1, now fixed); the real store is
+  `wlc_phy_attach @0xbeff8` = `(radio_reg 0x3da >> 4) & 0xff` (AC path,
+  phytype 0xb). So `pi+0x16e` is **hardware-derived**, not zero. `pi+0x20+0xa7`,
+  `pi+0x8be`, `pi+0x8bf` are `COMPUTED_RUNTIME`; the **Farrow arrays are static
+  `.data` tables** (8 × 4428 B).
+- **PHASE 5 (`pll_synth_path.md`).** The first radio-ON selects
+  `wlc_phy_switch_radio_acphy` sequence A (`pi+0x16e==1`) / sequence B (`==2`)
+  / neither. Both sequences and their bounded lock polls are recovered; the
+  branch taken by BCM4352 rev42 is **UNKNOWN (hardware radio revision)**.
+- **PHASE 6 (`dev_lost_access_map.json`).** Complete ordered D3B→cal access
+  map; only the existing D3A0/D3A1/D3B postcondition reads are latched. All
+  new-path accesses are `NEEDS_OBSERVER` (no D4 code).
+- **PHASE 7 (`operational_checkpoint_analysis.md`).** No STRONG checkpoint;
+  `D4 IMPLEMENTATION GO = NO`; `HARDWARE TEST GO = NO`.
+- **Superseded by this addendum:** the §10 mention of a "first radio write
+  `mod_radio_reg(0x80b,0x80,0x80)`" — that write is inside sequence A and only
+  executes if the radio revision selects A.

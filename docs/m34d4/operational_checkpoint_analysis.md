@@ -1,45 +1,48 @@
-# M3.4D4 Phase 7 — earliest STRONG operational checkpoint (post-D3B)
+# M3.4D4D — PHASE 7: operational checkpoint re-evaluation
 
-**Status:** `ANALYSIS ONLY`. No hardware, no MMIO, no driver code, no candidate.
-
-A checkpoint is a place where an isolated bring-up may STOP and still be
-vendor-faithful with deterministic postconditions. Classification:
-`INVALID` / `WEAK` / `STRONG`.
+Status: **ANALYSIS ONLY**. Re-evaluated after the v5 tooling fixes (`f5d03da`)
+and the Phase 3/4/5 closures.
 
 ## Candidate checkpoints
 
-| id | point | radio | PHY | PLL | cal | pending op | executed-value closure | DMA/PSM/MAC | verdict |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| CP-D4.0 | entry `wlc_phy_init` | OFF (attach) | attach-only | not set | not done | none yet | n/a | PSM run (D2A), DMA (D3A0 is a separate isolated run) | **INVALID** |
-| CP-D4.1 | after `wlc_phy_init` returns (end of `sub_6656c`'s PHY init) | ON | AC init callback `sub_b018f` done | set | radio RX cal (`sub_9591e`) done; **perical not done** | none | `pi+0x16e` branch, masks `pi+0xa7/0x8be/0x8bf` runtime | MAC resumed | **WEAK** |
-| CP-F | after `wlc_phy_cal_perical` returns | ON | initialized | set | perical + `wlc_phy_cals_acphy` done | none | same runtime values | MAC/PSM/DMA understood | **WEAK (best candidate)** |
-| CP-O2 | `wlc_bmac_radio_hw` return | ON | n/a | n/a | n/a | n/a | n/a | n/a | **INVALID** (RPC-only, not vendor-executed) |
+| checkpoint | location | verdict | why |
+|---|---|---|---|
+| CP-D4.1 | after `wlc_phy_init` returns | **WEAK** | `pi+0x16e` PLL selector unproven; `wlc_bmac_init` vtable indirects unresolved; dev_lost unwired |
+| CP-F | after `wlc_phy_cal_perical(6)` returns | **WEAK (best)** | calibration is synchronous, but cal table/radio values are runtime and dev_lost unwired |
+| CP-O2 | `wlc_bmac_radio_hw` return | **INVALID** | RPC-only, not executed on the vendor Linux attach path (D4 lifecycle) |
+| CP-A3 | after `wlc_phy_attach` returns | **INVALID** | attach is radio-OFF; not an operational state |
 
-## Why no STRONG checkpoint exists yet
+**No STRONG checkpoint exists.**
 
-Per the STRONG criteria, a candidate must have:
+## STRONG-checkpoint criteria
 
-1. no pending async PHY/radio operation — satisfied at CP-D4.1/CP-F;
-2. no incomplete calibration — only CP-F satisfies (CP-D4.1 leaves perical out);
-3. **no unresolved executed write value** — **FAILS**: masks `pi+0xa7`, `pi+0x8be`,
-   `pi+0x8bf`, the `pi+0x16e` PLL branch, farrow coefficient arrays and the
-   `pi+0xf9c`/`pi+0xf89` states are `COMPUTED_RUNTIME`/`UNKNOWN`;
-4. no unknown indirect callback — **PARTIAL FAIL**: `pi+0x28`/`pi+0x30`/`pi+0xc0`
-   are now resolved (sub_b018f/sub_8e77a/sub_97e2b), but `wlc_bmac_init`
-   0x6923d `[rax+0xA0]` and 0x6924a `[rax+0xD8]` remain `UNRESOLVED`;
-5. MAC/PSM state understood — PSM run (D2A), MAC resumed by `wlapi_enable_mac`;
-6. DMA state understood — D3A0 isolated; not part of this path's teardown;
-7. safe dev_lost handling — **NOT WIRED** for the new direct D11 reads;
-8. bounded teardown/recovery — the D3B crash shows teardown-on-device-loss is
-   unsafe.
+| criterion | satisfied? | evidence |
+|---|---|---|
+| all executed write values proven | **NO** | `pi+0x16e` = radio-rev (hardware, from reg `0x3da`); `pi+0x20+0xa7`, `pi+0x8be`, `pi+0x8bf` = runtime |
+| all reachable indirect calls resolved | **NO** | `wlc_bmac_init 0x6923d [rax+0xa0]`, `0x6924a [rax+0xd8]` UNRESOLVED (runtime ops table) |
+| radio/PLL state understood | **PARTIAL** | both PLL sequences and completion predicates recovered; selector value unknown |
+| initial chanspec understood | **PARTIAL** | `wlc_default_chanspec` path recovered; locale/SPROM inputs runtime |
+| calibration complete (synchronous, observable) | **PARTIAL** | `wlc_phy_cals_acphy` synchronous; write values runtime |
+| no pending async work | **UNKNOWN** | vendor PHY runs timers/upcalls; not bounded for the D4 prefix |
+| MAC/PSM state understood | **PARTIAL** | suspend/enable MAC via `wlapi_*`; full state machine not proven |
+| DMA state understood | **YES** | M3.4D3A0/D3A1 DMA lifecycle hardware-proven |
+| dev_lost coverage complete | **NO** | the D3B→cal path's new D11/PHY/radio/table accesses are not observed |
+| deterministic observable postconditions | **NO** | no proven deterministic gate at CP-D4.1/CP-F |
 
-## Conclusion
+## Verdict
 
-- **EARLIEST STRONG OPERATIONAL CHECKPOINT: NONE.**
-- Best candidate = **CP-F** (after `wlc_phy_cal_perical` returns), classified
-  **WEAK**: vendor-faithful and synchronous, but fail-closed value closure and
-  dev_lost wiring are not complete, and no deterministic observable
-  postcondition is proven for rev42 AC.
-- A STOP after `wlc_phy_init` (CP-D4.1) is **not** vendor-stable: the vendor
-  continues to `wlc_set_home_chanspec` and `wlc_phy_cal_perical`, and the D3B
-  crash already showed that stopping inside the D11/PHY boundary is unsafe.
+- **`D4 IMPLEMENTATION GO = NO`**
+- **`HARDWARE TEST GO = NO`**
+
+Blocking items: (1) `pi+0x16e` radio-revision selector is hardware-derived;
+(2) two reachable vtable indirects in `wlc_bmac_init` remain UNRESOLVED;
+(3) the dev_lost monotonic latch is not wired to the new path; (4) no
+deterministic postcondition. The first three are prerequisites for any D4
+bring-up code; none may be guessed.
+
+## Superseded
+
+- D4D's claim that `pi+0x16e` writers are `{0,1,2}` (they were `cmp` reads).
+- D4D's claim that the first radio write is `mod_radio_reg(0x80b,0x80,0x80)`
+  — that write is inside the `pi+0x16e==1` sequence and executes only if the
+  radio revision selects sequence A.

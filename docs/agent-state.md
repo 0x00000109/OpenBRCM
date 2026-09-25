@@ -7,11 +7,12 @@ source of truth; this file records the live working-tree state on top of HEAD.
 - Read [`artifact-ledger.md`](artifact-ledger.md) **before re-deriving any
   fact**: it indexes every recent milestone/report by commit + path and lists
   superseded facts.
-- **Unmerged work:** HEAD is on branch `m34d3b-band-init-test`, **17 commits
-  ahead of `origin/main`**; the branch is **pushed** (origin branch == `db151c8`).
-  The D3B implementation + D4/D4B/D4C/lifecycle/D4A/D4D chain is **not on
-  `main`**. Latest: **D4D post-D3B operational timeline** (reachability
-  correction) — see [`m34d4/post_d3b_operational_timeline.md`](m34d4/post_d3b_operational_timeline.md).
+- **Unmerged work:** HEAD is on branch `m34d3b-band-init-test`, **18 commits
+  ahead of `origin/main`**; the branch was pushed at `db151c8` and the D4D
+  tooling-closure commit is one ahead. The D3B implementation +
+  D4/D4B/D4C/lifecycle/D4A/D4D chain is **not on `main`**. Latest: **D4D
+  tooling-gap closure + Phases 3-7** — see
+  [`m34d4/tooling_gap_closure.md`](m34d4/tooling_gap_closure.md).
 - `re.db` is generated/gitignored (schema v4, current sha256 in the ledger);
   rebuild before analysis if stale.
 
@@ -321,6 +322,31 @@ Stated exactly:
   `radio_on_transition.json`, `initial_chanspec_provenance.json`,
   `calibration_path.json`, `operational_checkpoint_analysis.md`,
   `evidence_post_d3b_reachability.json`.
+- **M3.4D4D tooling-gap closure + Phases 3-7** = **`ANALYSIS ONLY`** +
+  tooling `IMPLEMENTED`/`STATIC TESTED` (iced/test **`f5d03da`**, re v5,
+  `re.db` schema v5). Two `re` defects fixed: (1) **base-aware indirect
+  resolution** — `indirect_targets` carries `base_arg/base_load/field_offset/
+  installer/family`; candidates come from constructor reloc stores at the exact
+  triple; the AC pi table (`+0x28`=`sub_b018f` … `+0xf8`=`wlc_phy_btc_adjust_acphy`,
+  `+0x110`/`+0x118` null) is a `re regress` fixture; `wlc_phy_init` no longer
+  reports only `wlc_phy_init_lpphy`; (2) **discovered-fragment sizes** — 620
+  mid-instruction/contained false entries demoted; `sub_b018f` = `0x2c6` (was
+  `0x2d`); (3) store-vs-read via iced operand access (`cmp` no longer a store).
+  All gates PASS (`re regress`, `re verify --strict`, `verify_edges`,
+  `verify_decode`, `verify_tables`); calls unchanged `51193`.
+  **Phases 3-7:** `wlc_bmac_init @0x6923d [rax+0xa0]` / `0x6924a [rax+0xd8]` =
+  **UNRESOLVED runtime ops-table dispatch** through `*(*(wlc_hw+0x20))` (`di[0]`
+  object from `wlc_hw_attach`); `0x69260/0x6926d` gated `phyrev==4` (NOT rev42).
+  `pi+0x16e` is **`(radio_reg 0x3da >> 4) & 0xff`**, stored by
+  `wlc_phy_attach @0xbeff8` (AC path) → **HARDWARE-derived, not zero** (the
+  `{0,1,2}` "writers" were `cmp` reads). `pi+0x20+0xa7`/`pi+0x8be`/`pi+0x8bf`
+  = `COMPUTED_RUNTIME`; **Farrow arrays = 8 static `.data` tables** (4428 B
+  each). First PLL/synth selector is that hardware value → **rev42 branch
+  UNKNOWN** (sequences A/B and bounded lock polls recovered). dev_lost latch
+  **not wired** to the new path. **No STRONG checkpoint; `D4 IMPLEMENTATION GO:
+  NO`; `HARDWARE TEST GO: NO`.** Artifacts `docs/m34d4/tooling_gap_closure.{md,json}`,
+  `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
+  `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

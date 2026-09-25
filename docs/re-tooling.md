@@ -145,7 +145,7 @@ When invoking the binary directly (only from the tooling workspace), pass
 | whole-blob MMIO search | `re mmio [--offset 0xOFF] [--fn F] [--access read\|write] --db re.db` |
 | whole-blob immediate search | `re imm 0xV --db re.db` |
 | struct-field writers | `re field-writers --field 0xOFF [--base-load 0xLOAD] [--arg N] --db re.db` |
-| indirect call/branch targets + candidates | `re indirect [fn] [--field 0xOFF] --db re.db` |
+| indirect call/branch targets + candidates | `re indirect [fn] [--field 0xOFF] [--installer SUBSTR] [--family SUBSTR] --db re.db` |
 | register-program tables (initvals family) | `re table <name\|0xADDR>` · `re regtables [--consumer FN]` |
 | constant arguments reaching a callee | `re const --callee FN` |
 | normalized PHY/radio ops | `re phyops [fn] [--class PHY\|RADIO\|PHY_TABLE]` |
@@ -153,16 +153,26 @@ When invoking the binary directly (only from the tooling workspace), pass
 | regression self-check | `re regress --db re.db` |
 | verifier | `re verify --db re.db` |
 
-`re db build` now also populates the v4 tables (`mmio_sites`, `imm_sites`,
+`re db build` now also populates the v5 tables (`mmio_sites`, `imm_sites`,
 `field_sites`, `indirect_targets`, `const_props`, `phy_ops`, `reg_tables`,
 `reg_table_ops`) via the in-tree `re_support` module. v4 adds provenance
 `confidence` (`mmio_sites`, `field_sites`) and `confidence,candidates`
 (`const_props`): relocated immediates are exposed as symbols (never literal
 zero) and a linearly-ambiguous value is `CONDITIONAL` with a candidate set,
-never `EXACT`. `re regress` must PASS (reproduces the 610/113/497
-common-initvals and 73/39/34 bsinitvals shapes, sub_67efd 0x530/0x540,
-switch_macfreq 0x62e/0x630, DMA/MAC access facts, the `phy+0xF8` relocation
-fixture, and the `dma_attach` non-EXACT fixture).
+never `EXACT`. **v5** (tooling commit `f5d03da`) adds base-aware indirect
+resolution — `indirect_targets` carries `base_arg`, `base_load`, `field_offset`,
+`installer`, `family`, and candidates come from the object constructor's
+relocation-covered function-pointer stores (`field_sites`) at the exact
+`(base_arg, base_load, field)` triple, not from field-offset-only
+`address_taken`; `EXACT` only when a single constructor candidate matches.
+v5 also demotes spurious mid-instruction discovered fragments so a container's
+size is not clamped (e.g. `sub_b018f` = 0x2c6, not 0x2d), and classifies
+store-vs-read with iced operand access (`cmp` memory reads are no longer
+stores). `re regress` must PASS (reproduces the 610/113/497 common-initvals and
+73/39/34 bsinitvals shapes, sub_67efd 0x530/0x540, switch_macfreq 0x62e/0x630,
+DMA/MAC access facts, the `phy+0xF8` relocation fixture, the `dma_attach`
+non-EXACT fixture, the AC `wlc_phy_attach_acphy` pi-fptr table, `sub_b018f`
+size, and the `0x16e` store-vs-read fixture).
 
 Machine-readable evidence: append `--json` (e.g. `re fn <fn> --json`,
 `re switch <fn> --json`). Use that output in evidence packets.
@@ -309,8 +319,11 @@ see `docs/m34d4b/d4b_value_provenance_closure.md`):
 
 - **D4B-G1 — `re field-writers` store-vs-read misclassification.**
   `0xab3d8` is `cmp byte ptr [r12+32Dh],0` (a read), yet `re field-writers
-  --field 0x32d` reports it as a store. Desired: confirm the operand is a write
-  (store/`lea`) before emitting a `field_sites` row.
+  --field 0x32d` reports it as a store. **RESOLVED (2026-09, `f5d03da`):**
+  `analyze_facts` now uses iced `InstructionInfoFactory`/`UsedMemory` access;
+  a `field_sites` store row is emitted only when the memory operand is
+  actually written. Regression fixture: `wlc_phy_switch_radio_acphy` has 0
+  stores to `0x16e` (the `cmpb` sites are reads).
 - **D4B-G2 — path-sensitive reachability.** `re` reports a function's callees
   but not *which* callees execute for a given argument/branch. Determining that
   `wlc_phy_attach` takes the **radio-OFF** branch of
@@ -318,6 +331,27 @@ see `docs/m34d4b/d4b_value_provenance_closure.md`):
   the initial attach path) required manual control-flow over `re --asm` +
   Ghidra. Desired: a `re path-reach <fn> --arg <n>=<v>` or branch-predicate
   annotation on call edges.
+
+Tooling gaps filed during the M3.4D4D tooling-gap closure (analysis only; see
+`docs/m34d4/tooling_gap_closure.md`):
+
+- **V5-G1 — multi-level pointer provenance.** The local tracker collapses
+  `**(base+off)` (`mov 0x20(%rbx),%rdi; mov (%rdi),%rax; call *0xa0(%rax)`) to
+  `base_load=0`, so vtable-dispatched sites (`wlc_bmac_init @0x6923d/0x6924a`)
+  match unrelated field constructors. Desired: preserve the parent load chain
+  so `(base_arg, base_load, field)` is exact for nested dereference.
+- **V5-G2 — vtable / ops-table resolution.** `call *(*(obj)+slot)` where the
+  ops table is runtime-assembled (no static reloc at the slot) cannot be
+  resolved by `re` or Ghidra. Desired: `re indirect --vtable` that binds an
+  object's constructor and follows store-installed ops tables where possible;
+  otherwise report `UNRESOLVED:runtime-vtable` distinctly from
+  `UNRESOLVED:no-installer`.
+- **V5-G3 — heap-object base provenance.** `wlc_phy_attach` allocates `pi`
+  (`osl_malloc`+`osl_memset`) and stores `pi+0x16e` (`mov %al,0x16e(%rbx)`),
+  but `re field-writers --field 0x16e` does not index it because the allocator
+  return is `V::Unk` and `rbx` loses the base. Desired: track a returned
+  allocation as an anonymous object base (`ret_of(osl_malloc)`), or at least
+  surface the store with `base=rbx/unknown`.
 
 Tooling gap filed during the M3.4 lifecycle reconstruction (analysis only; see
 `docs/lifecycle/bcm4352_rev42_lifecycle.md`):

@@ -1,0 +1,54 @@
+{
+  "milestone": "M3.4D4D",
+  "title": "tooling-gap closure (re v5)",
+  "status": "IMPLEMENTED/STATIC TESTED",
+  "hardware": false,
+  "tooling_repo": "/media/kartashoff/Storage/opensource/iced/test",
+  "tooling_commit": "f5d03da",
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+  "schema_version": 5,
+  "phase1": {
+    "defect": "indirect candidate matching ignored the base object and only used field offset; unnamed AC targets were invisible",
+    "fix": "match field_sites constructor stores at (base_arg, base_load, field_offset); reloc-backed strong, address-taken weak; candidates carry installer+family; EXACT only when unique",
+    "new_columns": ["base_load", "installer", "family"],
+    "new_query_selectors": ["--installer <substr>", "--family <substr>"],
+    "fixture_acphy_pi_table": {
+      "0x28": {"target": "0xb018f", "name": "sub_b018f"},
+      "0x30": {"target": "0x8e77a", "name": "sub_8e77a"},
+      "0x38": {"target": "0xa7089", "name": "sub_a7089"},
+      "0x40": {"target": "0x9949f", "name": "sub_9949f"},
+      "0xc0": {"target": "0x97e2b", "name": "sub_97e2b"},
+      "0xc8": {"target": "0x92e67", "name": "sub_92e67"},
+      "0xd0": {"target": "0x99528", "name": "sub_99528"},
+      "0xf8": {"target": "0x99609", "name": "wlc_phy_btc_adjust_acphy"},
+      "0x100": {"target": "0x9737d", "name": "sub_9737d"},
+      "0x110": {"target": null, "name": null, "confidence": "UNRESOLVED"},
+      "0x118": {"target": null, "name": null, "confidence": "UNRESOLVED"}
+    },
+    "old_false_positive": "wlc_phy_init_lpphy (0x110ce1) [wlc_phy_attach_lpphy]",
+    "residual_gap": "V5-G1 multi-level pointer provenance (**(base+off) collapses base_load)"
+  },
+  "phase2": {
+    "defect": "linear-sweep local-call candidates at mid-instruction addresses clamped the containing function's size",
+    "fix": "insn_root/byte_owner tracking + demote mid-instruction and trusted-contained discovered entries; preserve reloc call edges unattributed",
+    "demoted_fragments": 620,
+    "fixtures": [
+      {"function": "sub_b018f", "old": {"start": "0xb018f", "end": "0xb01bc", "size": "0x2d"}, "new": {"start": "0xb018f", "end": "0xb0455", "size": "0x2c6"}, "reason": "nested mid-instruction fragments removed", "confidence": "high"},
+      {"function": "sub_8e77a", "old": {"size": "0x6"}, "new": {"size": "0x6"}, "reason": "unchanged (ret stub)", "confidence": "high"}
+    ],
+    "residual_gap": "V5-G2 vtable/ops-table target resolution"
+  },
+  "verification": {
+    "re_regress": "PASS",
+    "re_verify_strict": "PASS",
+    "verify_edges_py": "PASS",
+    "verify_decode_py": "PASS",
+    "verify_tables_py": "PASS",
+    "functions": 4475,
+    "discovered": 1753,
+    "calls": 51193,
+    "indirect": 209,
+    "field_sites": 20557,
+    "reloc_site_mismatches": 0
+  }
+}

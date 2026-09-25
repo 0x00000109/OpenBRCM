@@ -55,7 +55,8 @@ Generated 2026-09-25. Repository of record:
 | D4C | radio-OFF attach → operational | `e8946a1` | ANALYSIS | `docs/m34d4b/d4c_radio_on_transition.*` |
 | LIFECYCLE | RPC caller + timeline | `00f22d8` | ANALYSIS | `docs/lifecycle/bcm4352_rev42_lifecycle.*` |
 | D4A-REACHABILITY | actual rev42 reachability | `7999966` | ANALYSIS (partially superseded) | `docs/m34d4/d4a_reachability_recovery.md`, `wlc_phy_init_bcm4352_reachable.json` |
-| D4D-POST-D3B | post-D3B operational PHY/radio timeline | (this commit) | ANALYSIS | `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`, `radio_on_transition.json`, `initial_chanspec_provenance.json`, `calibration_path.json`, `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json` |
+| D4D-POST-D3B | post-D3B operational PHY/radio timeline | `593061d` | ANALYSIS | `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`, `radio_on_transition.json`, `initial_chanspec_provenance.json`, `calibration_path.json`, `operational_checkpoint_analysis.md`, `evidence_post_d3b_reachability.json` |
+| D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
 
 ## 4. Required knowledge → persistent location
 
@@ -85,13 +86,17 @@ Generated 2026-09-25. Repository of record:
 | `wlc_phy_init` no-op for AC; `pi+0x28`/`+0x30`/… NULL | `wlc_phy_init` runs; `pi_fptr` slots relocation-installed (`pi+0x28`=`sub_b018f`) | `docs/m34d4/evidence_post_d3b_reachability.json` |
 | radio-ON RPC-only | first vendor radio-ON = `wlc_phy_init @0xbad44 → switch_radio(ON)` | `docs/m34d4/radio_on_transition.json` |
 | D4 real entry is `wlc_phy_cal_perical` only | `wlc_phy_init` (`sub_b018f`) precedes it | `docs/m34d4/operational_callgraph.json` |
+| `pi+0x16e` writers are `{0,1,2}` | `cmp` reads; real store is `wlc_phy_attach @0xbeff8` (radio reg `0x3da`) | `docs/m34d4/value_provenance.json` |
+| first radio write `mod_radio_reg(0x80b,0x80,0x80) @0xaa80f` | inside sequence A (`pi+0x16e==1`); may not execute | `docs/m34d4/pll_synth_path.md` |
+| `wlc_bmac_init 0x6923d/0x6924a` target lcnphy construction | runtime ops-table dispatch; UNRESOLVED | `docs/m34d4/indirect_resolution.json` |
 
 ## 6. Open persistence risks
 
-1. **Unmerged/unpushed work** — 15 commits on `m34d3b-band-init-test`; 8
-   unpushed. A fresh agent on `main` cannot see the D4 chain. Push/PR required
-   to make it durable.
-2. **`re.db` is generated/ignored** — the v4 index is not in Git; must be
-   rebuilt (`re db build`). Today's sha256 is recorded in the JSON ledger.
+1. **Unmerged work** — 18 commits on `m34d3b-band-init-test` ahead of
+   `origin/main`; the branch was pushed at `db151c8` and this D4D-closure
+   commit is one ahead. A fresh agent on `main` cannot see the D4 chain;
+   merge/PR required for durability.
+2. **`re.db` is generated/ignored** — the **v5** index is not in Git; rebuild
+   with `re db build --elf wlc_hybrid.o_shipped --db re.db` (tooling `f5d03da`).
 3. **Stale hashes in docs** — several D4B docs cite `44dae60d…`/`0c7cf875…`;
    the current build is `185f0bd8…`/`f6601944…`.

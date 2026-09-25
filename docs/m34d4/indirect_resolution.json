@@ -1,0 +1,64 @@
+{
+  "milestone": "M3.4D4D",
+  "title": "PHASE 3 — wlc_bmac_init reachable indirect resolution",
+  "note": "task text said 0x6923d [rax+0x9a0]; the actual operand is [rax+0xA0h] (verified in blob and re operand)",
+  "sites": [
+    {
+      "site": "0x6923d",
+      "operand": "call qword ptr [rax+0A0h]",
+      "base_register_expression": "rax = *(*(wlc_hw+0x20))",
+      "base_object": "wlc_hw+0x20 = di[0] sub-object allocated by wlc_hw_attach (size 0x1d0); its word 0 is the ops/function table",
+      "installer_writer": "wlc_bmac_attach @0x698ac sets wlc_hw+0x20 = wlc_hw_attach(...); wlc_hw_attach stores its arg0 into di[0][0]",
+      "field_offset": "0xa0",
+      "candidate_target": null,
+      "confidence": "UNRESOLVED",
+      "reason": "vtable/ops-table dispatch; the ops table pointer is argument/runtime-derived and no static relocation exists at slot +0xa0 (scan of .rodata/.data relocs: 0 matches)",
+      "tool_false_positive": null,
+      "branch_condition": "unconditional",
+      "bcm4352_rev42_reachable": true
+    },
+    {
+      "site": "0x6924a",
+      "operand": "call qword ptr [rax+0D8h]",
+      "base_register_expression": "rax = *(*(wlc_hw+0x20))",
+      "base_object": "same di[0] ops table",
+      "installer_writer": "wlc_hw_attach (arg0 -> di[0][0])",
+      "field_offset": "0xd8",
+      "candidate_target": null,
+      "confidence": "UNRESOLVED",
+      "reason": "same vtable/ops-table dispatch; no static reloc at +0xd8",
+      "tool_false_positive": ["wlc_lcnphy_set_tx_pwr_ctrl (wlc_phy_attach_lcnphy)", "sub_fb187 (wlc_phy_attach_lcn40phy)"],
+      "tool_false_positive_cause": "V5-G1: the nested load `**(wlc_hw+0x20)` is collapsed to base_load=0 by the local tracker, so the site matches unrelated field-0xd8 constructors",
+      "branch_condition": "unconditional",
+      "bcm4352_rev42_reachable": true
+    },
+    {
+      "site": "0x69260",
+      "operand": "call qword ptr [rax+0A0h]",
+      "base_register_expression": "rax = *(*(wlc_hw+0x38)) = di[3] ops table",
+      "field_offset": "0xa0",
+      "confidence": "UNRESOLVED",
+      "branch_condition": "cmpl $0x4,0x84(%rbx) ; phyrev==4 (legacy PHY only)",
+      "bcm4352_rev42_reachable": false
+    },
+    {
+      "site": "0x6926d",
+      "operand": "call qword ptr [rax+0D8h]",
+      "base_register_expression": "rax = *(*(wlc_hw+0x38)) = di[3] ops table",
+      "field_offset": "0xd8",
+      "confidence": "UNRESOLVED",
+      "branch_condition": "cmpl $0x4,0x84(%rbx) ; phyrev==4 (legacy PHY only)",
+      "bcm4352_rev42_reachable": false
+    }
+  ],
+  "summary": {
+    "reachable_indirects_resolved": 0,
+    "reachable_indirects_unresolved": 2,
+    "legacy_indirects_skipped": 2,
+    "gating_fact": "0x69260/0x6926d are inside `if (wlc_hw->phyrev == 4)`; BCM4352 rev42 phyrev=42 -> skipped"
+  },
+  "corroboration": {
+    "ghidra": "(**(code **)(*(longlong *)unaff_RDI[4] + 0xa0))()  — no type recovered; same UNRESOLVED",
+    "objdump": "0x69236 mov 0x20(%rbx),%rdi; 0x6923a mov (%rdi),%rax; 0x6923d call *0xa0(%rax)"
+  }
+}

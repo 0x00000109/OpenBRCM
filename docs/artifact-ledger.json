@@ -237,6 +237,23 @@
         "D4 IMPLEMENTATION GO = NO; HARDWARE TEST GO = NO"
       ],
       "supersedes": ["D4A-REACHABILITY", "D4B-CLOSURE (attach interpretation)", "D4C", "acphy_function_table.json NULL slots"]
+    },
+    {
+      "id": "D4D-CLOSURE",
+      "milestone": "M3.4D4D tooling-gap closure + Phases 3-7",
+      "status": "ANALYSIS ONLY / IMPLEMENTED (tooling, iced/test f5d03da)",
+      "merged": false, "branch": "m34d3b-band-init-test",
+      "artifacts": ["docs/m34d4/tooling_gap_closure.md", "docs/m34d4/tooling_gap_closure.json", "docs/m34d4/indirect_resolution.json", "docs/m34d4/value_provenance.json", "docs/m34d4/pll_synth_path.md", "docs/m34d4/dev_lost_access_map.json", "docs/m34d4/operational_checkpoint_analysis.md"],
+      "key_facts": [
+        "re v5 (f5d03da): base-aware indirect resolution + fragment-size + store-vs-read fixes; all gates PASS",
+        "wlc_bmac_init 0x6923d [rax+0xa0] and 0x6924a [rax+0xd8] = UNRESOLVED runtime ops-table dispatch through *(*(wlc_hw+0x20)); 0x69260/0x6926d gated phyrev==4 (not rev42)",
+        "pi+0x16e = (radio_reg 0x3da >> 4) & 0xff, stored by wlc_phy_attach @0xbeff8 (AC path); HARDWARE-derived, not zero",
+        "pi+0x20+0xa7 / pi+0x8be / pi+0x8bf = COMPUTED_RUNTIME; Farrow arrays = static .data tables",
+        "first PLL/synth branch (seq A==1 / seq B==2 / neither) selector is hardware; rev42 branch UNKNOWN",
+        "dev_lost latch not wired to the new D3B->cal path",
+        "no STRONG checkpoint; D4 IMPLEMENTATION GO=NO; HARDWARE TEST GO=NO"
+      ],
+      "supersedes": ["D4D-POST-D3B (pi+0x16e writers {0,1,2}; first radio write 0xaa80f)"]
     }
   ],
   "supersession_map": [
@@ -248,6 +265,9 @@
     {"old": "CP-O2 (radio enable) at init", "new": "RPC-only, no vendor-time CP-O2", "correcting_artifact": "docs/lifecycle/bcm4352_rev42_lifecycle.md"},
     {"old": "wlc_phy_init is a no-op for AC; [pi+0x28]/[pi+0x30]/... are NULL", "new": "wlc_phy_init runs; pi_fptr slots are relocation-installed (pi+0x28=sub_b018f, etc.)", "correcting_artifact": "docs/m34d4/evidence_post_d3b_reachability.json, docs/m34d4/post_d3b_operational_timeline.md"},
     {"old": "radio-ON is RPC-only; no vendor-time radio-ON", "new": "first vendor-executed radio-ON = wlc_phy_init @0xbad44 -> switch_radio(ON)", "correcting_artifact": "docs/m34d4/radio_on_transition.json"},
-    {"old": "D4 real entry is wlc_phy_cal_perical only", "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path", "correcting_artifact": "docs/m34d4/operational_callgraph.json"}
+    {"old": "D4 real entry is wlc_phy_cal_perical only", "new": "wlc_phy_init (sub_b018f callback) precedes it on the vendor path", "correcting_artifact": "docs/m34d4/operational_callgraph.json"},
+    {"old": "pi+0x16e writers are {0,1,2}", "new": "those were cmp reads; the real store is wlc_phy_attach @0xbeff8 (radio reg 0x3da revision)", "correcting_artifact": "docs/m34d4/value_provenance.json"},
+    {"old": "first radio write is mod_radio_reg(0x80b,0x80,0x80) @0xaa80f", "new": "that write is inside sequence A (pi+0x16e==1) and may not execute", "correcting_artifact": "docs/m34d4/pll_synth_path.md"},
+    {"old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction", "new": "runtime ops-table dispatch; UNRESOLVED", "correcting_artifact": "docs/m34d4/indirect_resolution.json"}
   ]
 }
