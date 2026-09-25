@@ -372,6 +372,23 @@ Stated exactly:
   = one task, token-efficient startup, delta-only output). Tests
   `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`.
   No hardware, no runtime C change.
+- **DeepSeek prompt-cache optimization + telemetry** = `IMPLEMENTED` /
+  `STATIC TESTED` (2026-09): `docs/cache/deepseek-cache-contract.md` (verified
+  official facts), `docs/cache/cache-architecture.md` (STABLE PREFIX / DYNAMIC
+  TAIL, frozen session snapshot, ONE BLOCKER = ONE CACHE EPOCH),
+  `docs/cache/cache-telemetry.md`; local-only capture
+  `.opencode/plugins/openbrcm-cache.ts` → `.openbrcm-local/cache-telemetry.jsonl`
+  (gitignored; no prompt/secret content; never a CI gate); per-session FROZEN
+  agent-state injection in `.opencode/plugins/openbrcm-guard.ts`;
+  `scripts/cache_telemetry.py` + `scripts/cache-report.py` (fragmentation
+  detector) + bounded `scripts/deepseek-cache-benchmark.py`; tests
+  `tests/host/test_cache_telemetry.py`, `tests/host/test_cache_plugin.py`.
+  Provider `deepseek/deepseek-flash` via `@ai-sdk/openai-compatible`. No
+  hardware, no MMIO, no runtime C change. Live benchmark **NOT RUN**
+  (`DEEPSEEK_API_KEY` absent). **Known limitation:** `docs/agent-state.md` is
+  still duplicated (opencode `instructions` + frozen plugin injection) and is
+  re-read per request by the `instructions` path; migrating it fully to the
+  frozen snapshot is a deferred follow-up (observe via telemetry first).
 - M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later

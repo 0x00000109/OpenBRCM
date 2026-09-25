@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "fd2f8009db94ad1c3f356abc998e461d434edea6",
+      "head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 20,
-      "ahead_of_origin_branch": 2,
+      "ahead_of_origin_main": 24,
+      "ahead_of_origin_branch": 1,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the CONTEXT-INFRA commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA chain is UNMERGED relative to main"
+      "note": "snapshot before the CACHE-OPT commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -287,6 +287,39 @@
       ],
       "supersedes": ["D4D-CLOSURE (pi+0x8bf no store / COMPUTED_RUNTIME)", "operational_checkpoint_analysis.md pi+0x8bf runtime"]
     },
+  {
+      "id": "CACHE-OPT",
+      "milestone": "DeepSeek prompt-cache optimization + telemetry layer",
+      "status": "IMPLEMENTED / STATIC TESTED",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "artifacts": [
+          "docs/cache/deepseek-cache-contract.md",
+          "docs/cache/cache-architecture.md",
+          "docs/cache/cache-telemetry.md",
+          ".opencode/plugins/openbrcm-cache.ts",
+          ".opencode/plugins/openbrcm-guard.ts",
+          "scripts/cache_telemetry.py",
+          "scripts/cache-report.py",
+          "scripts/deepseek-cache-benchmark.py",
+          "tests/host/test_cache_telemetry.py",
+          "tests/host/test_cache_plugin.py",
+          "AGENTS.md",
+          "docs/re-tooling.md",
+          ".gitignore"
+      ],
+      "key_facts": [
+          "DeepSeek caching verified automatic/prefix-based/best-effort; prompt_cache_hit_tokens/miss; no 64-token rule; no prompt_cache_key on DeepSeek",
+          "provider = deepseek/deepseek-flash via @ai-sdk/openai-compatible -> OpenAI-compatible Chat Completions",
+          "OpenCode tokens.input = prompt_cache_miss_tokens; tokens.cache.read = prompt_cache_hit_tokens (live usage)",
+          "STABLE PREFIX / DYNAMIC TAIL + ONE BLOCKER = ONE CACHE EPOCH added to AGENTS.md",
+          "guard injects a per-session FROZEN agent-state snapshot (no mid-blocker prefix rewrite)",
+          "telemetry is local-only JSONL (.openbrcm-local/, gitignored); no prompt/secret content; never a CI gate",
+          "live benchmark NOT run (DEEPSEEK_API_KEY absent); --mock validated offline",
+          "no driver runtime / MMIO / hardware / re.db change"
+      ]
+  },
   {
       "id": "CONTEXT-INFRA",
       "milestone": "token-efficient current-context index + re packet + governance rules",

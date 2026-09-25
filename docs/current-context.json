@@ -53,17 +53,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "a3476d56035476383bc996d06d407e195ff16e7d"
+    "head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba"
   },
   "current_milestone": {
     "artifact": "docs/m34d4/value_provenance.json",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "a3476d56035476383bc996d06d407e195ff16e7d",
+  "generated_from_head": "7c5425c6e0a49d0a9e47b7ebfda30f7687f598ba",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "ad9da39ce7fcc64f4b281451dbb443865b780f619d96a740d7ddaeff768d4e8e"
+    "sources_hash": "1ca3898f405ed697a356ce726e6c36487cfcbd147c9dcc249a00ba8327331d7c"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",

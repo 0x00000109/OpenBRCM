@@ -247,3 +247,27 @@ GO/NO-GO:
 Do not reproduce unchanged milestone history, huge call graphs, full JSON,
 long disassembly, or entire proof chains — those belong in tracked artifacts.
 Target ≤ 80 lines unless the user explicitly requests a full audit/report.
+
+## 12. Prompt-cache governance (STABLE PREFIX / DYNAMIC TAIL)
+
+Model-request hygiene is a first-class project rule because prompt-cache reuse
+is prefix-based. Details: [`docs/cache/`](docs/cache/cache-architecture.md).
+
+- **STABLE PREFIX / DYNAMIC TAIL.** Long-lived invariant governance is the
+  stable prefix; the turn, tool results and state changes are the dynamic tail.
+  Never place a timestamp, HEAD hash, active-blocker id, GO/NO-GO, request id or
+  live token statistic in the prefix. Append to the tail; never rewrite or
+  reorder earlier stable bytes.
+- **ONE BLOCKER = ONE CACHE EPOCH.** A session resolves exactly one blocker.
+  Start it by freezing the validated `docs/current-context.json` snapshot; carry
+  mid-blocker state changes as append-only `STATE DELTA:` turns; end the epoch
+  by regenerating/validating current-context on disk. Prefer a new session for
+  the next blocker (never forced session deletion).
+- `docs/current-context.json` is **canonical-current on disk**; a running session
+  uses a frozen snapshot plus deltas.
+- **Observe, do not assume.** Cache telemetry
+  (`.opencode/plugins/openbrcm-cache.ts` → `.openbrcm-local/cache-telemetry.jsonl`,
+  report `scripts/cache-report.py`) is local-only and out-of-band. A live
+  cache-hit percentage is diagnostic only and is **never** a CI correctness gate.
+- Cache files, snapshots and telemetry are optimization metadata, never a source
+  of truth; deleting them loses no reverse-engineering knowledge.

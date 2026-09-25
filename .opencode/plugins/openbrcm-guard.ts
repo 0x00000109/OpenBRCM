@@ -3,7 +3,10 @@
  *
  * Responsibilities (exactly three):
  *   1. Context hook      - inject a compact project context before every model
- *                          request, sourced from docs/agent-state.md.
+ *                          request, sourced from docs/agent-state.md. The text
+ *                          is FROZEN per session/cache epoch (stable prefix);
+ *                          later state changes are append-only deltas, not
+ *                          prefix rewrites.
  *   2. Module preflight  - before `insmod`/`modprobe`/`rmmod`/`make signed`,
  *                          detect obvious workflow mistakes and warn.
  *   3. Write/key safety  - repo writes only under the OpenBRCM tree; never
@@ -100,6 +103,26 @@ const CONTEXT_HEADER =
   "## Injected OpenBRCM project context (docs/agent-state.md)\n" +
   "This is project-owned state, not conversation history. Treat the " +
   "provenance labels literally; do not promote a hypothesis to a fact.\n\n"
+
+/* -------------------------------------------------- 1b. frozen snapshot */
+//
+// CACHE CONTRACT (STABLE PREFIX / DYNAMIC TAIL): the injected project state is
+// read ONCE per session/cache epoch, not re-read on every request. A mid-
+// blocker documentation change must NOT rewrite the earliest system bytes;
+// current state is carried by append-only STATE DELTA turns instead. A new
+// session (new sessionID) re-reads and freezes a fresh snapshot. Keyed by
+// sessionID, so concurrent sessions do not clobber each other.
+const frozenState = new Map<string, string>()
+
+function frozenStateText(sessionID: string | undefined): string {
+  const key = sessionID || "default"
+  const hit = frozenState.get(key)
+  if (hit !== undefined && hit !== "") return hit
+  const text = stateText()
+  if (text) frozenState.set(key, text)
+  return text
+}
+
 
 /* ---------------------------------------------------- 3. key-safety rules */
 
@@ -314,8 +337,8 @@ export default async function openbrcmGuard(ctx: any) {
   const base: string = ctx?.worktree || ctx?.directory || process.cwd()
 
   return {
-    "experimental.chat.system.transform": async (_input: any, output: any) => {
-      const text = stateText()
+    "experimental.chat.system.transform": async (input: any, output: any) => {
+      const text = frozenStateText(input?.sessionID)
       if (!text) return
       if (Array.isArray(output?.system)) {
         output.system.push(CONTEXT_HEADER + text.slice(0, MAX_CONTEXT_CHARS))

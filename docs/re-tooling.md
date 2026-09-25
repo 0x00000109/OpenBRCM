@@ -291,6 +291,16 @@ Flags: `--callers --callees --fields --mmio --phy --radio --tables --branches
 section is included. It does not replace `fn`/`card`/`dump`; use `packet` for a
 compact blocker-scoped question and the older commands for full dumps.
 
+## 8.2 Prompt-cache telemetry (local, out-of-band)
+
+`re packet` keeps RE evidence bounded; the cache layer keeps the *request prefix*
+stable so repeated turns hit the DeepSeek prompt cache. See
+[`cache/cache-architecture.md`](cache/cache-architecture.md) and
+[`cache/cache-telemetry.md`](cache/cache-telemetry.md). Capture is
+`.opencode/plugins/openbrcm-cache.ts`; local log `.openbrcm-local/cache-telemetry.jsonl`
+(gitignored); report `scripts/cache-report.py`. It is optimization metadata and
+never a source of truth or a CI gate.
+
 ## 9. Filing tooling gaps
 
 If `re`/`re.db` cannot answer a question and manual `objdump`/`readelf`/`r2` was
