@@ -348,13 +348,18 @@ Stated exactly:
   `0x69260/0x6926d` gated `phyrev==4` (NOT rev42).
   `pi+0x16e` is **`(radio_reg 0x3da >> 4) & 0xff`**, stored by
   `wlc_phy_attach @0xbeff8` (AC path) → **HARDWARE-derived, not zero** (the
-  `{0,1,2}` "writers" were `cmp` reads). `pi+0x20+0xa7`/`pi+0x8be`/`pi+0x8bf`
-  = `COMPUTED_RUNTIME`; **Farrow arrays = 8 static `.data` tables** (4428 B
-  each). First PLL/synth selector is that hardware value → **rev42 branch
-  UNKNOWN** (sequences A/B and bounded lock polls recovered). dev_lost latch
-  **not wired** to the new path. **No STRONG checkpoint; `D4 IMPLEMENTATION GO:
-  NO`; `HARDWARE TEST GO: NO`.** Artifacts `docs/m34d4/tooling_gap_closure.{md,json}`,
+  `{0,1,2}` "writers" were `cmp` reads). `pi+0x20+0xa7` =
+  `COMPUTED_RUNTIME`; `(*(pi+0x138))+0x8be/0x8bf` are **resolved**
+  (`value_provenance.json` corrected): the incrementing-pointer loop
+  `sub_a7089 @0xaa364` writes the constant `{0x19,0x1a}` → `+0x8be=0x19`,
+  `+0x8bf=0x1a` (read `0xaa2b0`); deterministic, not `UNKNOWN`; **Farrow arrays
+  = 8 static `.data` tables** (4428 B each). First PLL/synth selector is that
+  hardware value → **rev42 branch UNKNOWN** (sequences A/B and bounded lock
+  polls recovered). dev_lost latch **not wired** to the new path. **No STRONG
+  checkpoint; `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`.** Artifacts
+  `docs/m34d4/tooling_gap_closure.{md,json}`,
   `docs/m34d4/indirect_ops_table_resolution.{md,json}`,
+  `docs/m34d4/pi_8bf_provenance.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`

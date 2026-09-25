@@ -893,12 +893,15 @@ never hands frames to mac80211.
   `0x69260/0x6926d` gated `phyrev==4` (not rev42). `pi+0x16e` =
   `(radio_reg 0x3da >> 4) & 0xff`, stored by `wlc_phy_attach @0xbeff8` —
   **HARDWARE-derived** (the `{0,1,2}` "writers" were `cmp` reads).
-  `pi+0x20+0xa7`/`pi+0x8be`/`pi+0x8bf` `COMPUTED_RUNTIME`; Farrow arrays are 8
+  `pi+0x20+0xa7` `COMPUTED_RUNTIME`; `(*(pi+0x138))+0x8be/0x8bf` **resolved**
+  (`sub_a7089 @0xaa364` incrementing-pointer loop writes constant `{0x19,0x1a}`
+  → `+0x8be=0x19`, `+0x8bf=0x1a`, read `0xaa2b0`); Farrow arrays are 8
   static `.data` tables. First PLL/synth selector = that hardware value →
   **rev42 branch UNKNOWN** (both sequences + bounded lock polls recovered).
   dev_lost latch not wired. **No STRONG checkpoint; `D4 GO: NO`; `HARDWARE
   TEST GO: NO`.** Reports `docs/m34d4/tooling_gap_closure.{md,json}`,
   `docs/m34d4/indirect_ops_table_resolution.{md,json}`,
+  `docs/m34d4/pi_8bf_provenance.{md,json}`,
   `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
   `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
 

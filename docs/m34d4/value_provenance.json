@@ -24,24 +24,25 @@
       "classification": "COMPUTED_RUNTIME"
     },
     {
-      "field": "pi+0x8be",
-      "identity": "AC PHY table-write value byte (paired with 0x8bf)",
-      "writers": ["sub_a7089 @0xaa3a4 (runtime, byte)"],
-      "initialization_order": "written inside sub_a7089 (wlc_phy_stf_chain_temp_throttle_acphy) from a runtime loop value",
-      "board_phyrev_chanspec_dependency": "runtime",
-      "value_at_first_bringup_callsite": "UNKNOWN",
-      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(pi+0x8be), len 0x20) @0xaa289/0xaa2ab"],
-      "classification": "COMPUTED_RUNTIME"
+      "field": "(*(pi+0x138))+0x8be",
+      "identity": "AC PHY per-chain STF/temp-throttle value byte 0 of the 2-byte array at +0x8be; NOT pi+0x8be directly (base is *(pi+0x138), a 0x920 heap sub-object)",
+      "writers": ["sub_a7089 @0xaa364: mov %dl,0x8be(%r15) with `inc %r15` (loop iteration 0), from stack array arr1[0]=0x19"],
+      "initialization_order": "sub-object osl_memset(0,0x920) at wlc_phy_attach_acphy; producer loop writes 0x19 before the consumer read (later invocation)",
+      "board_phyrev_chanspec_dependency": "producer gated on chanspec low byte == 0x0d (channel 13); value itself is a constant",
+      "value_at_first_bringup_callsite": "0x19 (deterministic constant)",
+      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(*(pi+0x138)+0x8be), len 0x20) @0xaa289/0xaa2ab"],
+      "classification": "DETERMINISTIC_CONSTANT"
     },
     {
-      "field": "pi+0x8bf",
-      "identity": "AC PHY table-write value byte (paired with 0x8be)",
-      "writers": [],
-      "initialization_order": "no store found; read as a byte",
-      "board_phyrev_chanspec_dependency": "runtime",
-      "value_at_first_bringup_callsite": "UNKNOWN",
-      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(pi+0x8bf), len 0x20) @0xaa2b0/0xaa2ce"],
-      "classification": "COMPUTED_RUNTIME"
+      "field": "(*(pi+0x138))+0x8bf",
+      "identity": "AC PHY per-chain STF/temp-throttle value byte 1 of the 2-byte array at +0x8be; NOT pi+0x8bf directly (base is *(pi+0x138), a 0x920 heap sub-object) — RESOLVED M3.4D4 (D4-BLOCKER-PI-8BF)",
+      "writers": ["sub_a7089 @0xaa364: mov %dl,0x8be(%r15) with `inc %r15` (loop iteration 1) -> effective address base+0x8bf, from stack array arr1[1]=0x1a"],
+      "initialization_order": "sub-object osl_memset(0,0x920) at wlc_phy_attach_acphy; producer loop writes 0x1a before the consumer read (later invocation)",
+      "board_phyrev_chanspec_dependency": "producer gated on chanspec low byte == 0x0d (channel 13); value itself is a constant",
+      "value_at_first_bringup_callsite": "0x1a (26) — whenever the read executes, because the read is gated on the producer having run",
+      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(*(pi+0x138)+0x8bf), len 0x20) @0xaa2b0/0xaa2ce"],
+      "classification": "DETERMINISTIC_CONSTANT",
+      "evidence": ["docs/m34d4/pi_8bf_provenance.md", "docs/m34d4/pi_8bf_provenance.json"]
     },
     {
       "field": "Farrow coefficient arrays",
@@ -55,11 +56,11 @@
     }
   ],
   "summary": {
-    "proven_at_callsite": [],
+    "proven_at_callsite": ["(*(pi+0x138))+0x8be = 0x19", "(*(pi+0x138))+0x8bf = 0x1a (D4-BLOCKER-PI-8BF, M3.4D4)"],
     "hardware_derived": ["pi+0x16e (radio reg 0x3da bits 4..11)"],
-    "computed_runtime": ["pi+0x20+0xa7", "pi+0x8be", "pi+0x8bf"],
+    "computed_runtime": ["pi+0x20+0xa7"],
     "static_table": ["Farrow coefficient arrays (8 tables)"],
     "unknown_executed_write_values_remain": true,
-    "note": "The earlier apparent set of pi+0x16e writers {0,1,2} were `cmpb` READS misclassified as stores; the real store is wlc_phy_attach's radio-revision decode (hardware) plus one LPPHY 16-bit store."
+    "note": "The earlier apparent set of pi+0x16e writers {0,1,2} were `cmpb` READS misclassified as stores; the real store is wlc_phy_attach's radio-revision decode (hardware) plus one LPPHY 16-bit store. (pi+0x8be/0x8bf) were previously 'no store / COMPUTED_RUNTIME'; they are actually written by the incrementing-pointer loop sub_a7089 @0xaa364 from the constant stack array {0x19,0x1a} -> +0x8be=0x19, +0x8bf=0x1a (see pi_8bf_provenance.md)."
   }
 }

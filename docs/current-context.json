@@ -53,17 +53,17 @@
   "current_git": {
     "branch": "m34d3b-band-init-test",
     "dirty_tracked": true,
-    "head": "adcf3a7e88d8c066976f94f9a16d04ff4336a7c9"
+    "head": "a3476d56035476383bc996d06d407e195ff16e7d"
   },
   "current_milestone": {
-    "artifact": "docs/m34d4/indirect_ops_table_resolution.md",
+    "artifact": "docs/m34d4/value_provenance.json",
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY"
   },
-  "generated_from_head": "adcf3a7e88d8c066976f94f9a16d04ff4336a7c9",
+  "generated_from_head": "a3476d56035476383bc996d06d407e195ff16e7d",
   "hardware_test_go": "NO",
   "integrity": {
-    "sources_hash": "7a2572d48082b693235fffeaaca835aacd1368866ba7c1682ed8b8036fbd1d77"
+    "sources_hash": "ad9da39ce7fcc64f4b281451dbb443865b780f619d96a740d7ddaeff768d4e8e"
   },
   "last_hardware_proven_milestone": {
     "evidence": "docs/m34d3a1_vendor_tail_test.md",
@@ -110,6 +110,14 @@
       "source": "docs/m34d4/post_d3b_operational_timeline.md",
       "status": "PROVEN",
       "summary": "First radio-ON = wlc_phy_init@0xbad44 -> switch_radio(ON) -> switch_radio_acphy@0xaa782 -> sub_b018f@0xbad4c."
+    },
+    {
+      "class": "analysis",
+      "id": "d4d.pi8bf",
+      "record": "D4D-PI-8BF",
+      "source": "docs/m34d4/value_provenance.json",
+      "status": "PROVEN",
+      "summary": "(*(pi+0x138))+0x8bf=0x1a; sub_a7089 @0xaa364 writes const {0x19,0x1a}."
     },
     {
       "class": "analysis",

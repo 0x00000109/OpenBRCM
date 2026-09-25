@@ -61,6 +61,7 @@ Generated 2026-09-25. Repository of record:
 | D4D-CLOSURE | tooling-gap closure + Phases 3-7 | (this commit) | ANALYSIS + tooling `f5d03da`/`cf9738e` | `docs/m34d4/tooling_gap_closure.{md,json}`, `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`, `dev_lost_access_map.json`, `operational_checkpoint_analysis.md` |
 | CONTEXT-INFRA | current-context index + `re packet` + governance | (this commit) | IMPLEMENTED / STATIC TESTED | `docs/current-context.json`, `docs/state/current-state.json`, `scripts/generate-current-context.py`, `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`, `AGENTS.md`, `docs/re-tooling.md`, `.opencode/` |
 | D4D-INDIRECT-OPS | `wlc_bmac_init` ops-table slots `+0xa0`/`+0xd8` resolved | (this commit) | ANALYSIS ONLY | `docs/m34d4/indirect_ops_table_resolution.{md,json}` |
+| D4D-PI-8BF | `pi+0x8bf` = `0x1a` (incrementing-pointer writer) | (this commit) | ANALYSIS ONLY | `docs/m34d4/pi_8bf_provenance.{md,json}` |
 
 ## 4. Required knowledge → persistent location
 
@@ -93,6 +94,7 @@ Generated 2026-09-25. Repository of record:
 | `pi+0x16e` writers are `{0,1,2}` | `cmp` reads; real store is `wlc_phy_attach @0xbeff8` (radio reg `0x3da`) | `docs/m34d4/value_provenance.json` |
 | first radio write `mod_radio_reg(0x80b,0x80,0x80) @0xaa80f` | inside sequence A (`pi+0x16e==1`); may not execute | `docs/m34d4/pll_synth_path.md` |
 | `wlc_bmac_init 0x6923d/0x6924a` runtime ops-table dispatch; UNRESOLVED | `di[0]->ops` = `dma64proc`; `+0xa0` = `sub_f897` (`dma64_rxinit`), `+0xd8` = `sub_f14d` (`dma64_rxfill`), EXACT | `docs/m34d4/indirect_ops_table_resolution.md` |
+| `pi+0x8bf` no store / COMPUTED_RUNTIME / UNKNOWN | `(*(pi+0x138))+0x8bf` = `0x1a`, from constant `{0x19,0x1a}` via the incrementing loop `sub_a7089 @0xaa364` | `docs/m34d4/pi_8bf_provenance.md` |
 
 ## 6. Open persistence risks
 

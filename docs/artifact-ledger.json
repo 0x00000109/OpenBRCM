@@ -271,6 +271,22 @@
       ],
       "supersedes": ["D4D-CLOSURE (wlc_bmac_init 0x6923d/0x6924a UNRESOLVED)"]
     },
+    {
+      "id": "D4D-PI-8BF",
+      "milestone": "M3.4D4 pi+0x8bf exact value and provenance",
+      "status": "ANALYSIS ONLY",
+      "merged": false, "branch": "m34d3b-band-init-test",
+      "artifacts": ["docs/m34d4/pi_8bf_provenance.md", "docs/m34d4/pi_8bf_provenance.json", "docs/m34d4/value_provenance.json"],
+      "key_facts": [
+        "field base is *(pi+0x138) (0x920 heap sub-object from wlc_phy_attach_acphy), not pi directly",
+        "read 0xaa2b0 movzbl 0x8bf(%r13) in sub_a7089 (unnamed; Ghidra FUN_001a7089)",
+        "writer is the incrementing-pointer loop sub_a7089 @0xaa364 (mov %dl,0x8be(%r15) + inc %r15); iteration 1 covers +0x8bf",
+        "value = 0x1a; +0x8be = 0x19; from constant stack array {0x19,0x1a}; deterministic, not COMPUTED_RUNTIME/UNKNOWN",
+        "osl_memset(0,0x920) at attach is the only other init; no memcpy/wider store covers +0x8bf",
+        "read gated by subobj+0x8bd != 0; producer gated by chanspec low byte == 0x0d (channel 13)"
+      ],
+      "supersedes": ["D4D-CLOSURE (pi+0x8bf no store / COMPUTED_RUNTIME)", "operational_checkpoint_analysis.md pi+0x8bf runtime"]
+    },
   {
       "id": "CONTEXT-INFRA",
       "milestone": "token-efficient current-context index + re packet + governance rules",
@@ -320,6 +336,7 @@
     {"old": "pi+0x16e writers are {0,1,2}", "new": "those were cmp reads; the real store is wlc_phy_attach @0xbeff8 (radio reg 0x3da revision)", "correcting_artifact": "docs/m34d4/value_provenance.json"},
     {"old": "first radio write is mod_radio_reg(0x80b,0x80,0x80) @0xaa80f", "new": "that write is inside sequence A (pi+0x16e==1) and may not execute", "correcting_artifact": "docs/m34d4/pll_synth_path.md"},
     {"old": "wlc_bmac_init 0x6923d/0x6924a target lcnphy construction", "new": "runtime ops-table dispatch (D4D-CLOSURE)", "correcting_artifact": "docs/m34d4/indirect_resolution.json"},
-    {"old": "wlc_bmac_init 0x6923d/0x6924a runtime ops-table dispatch; UNRESOLVED", "new": "di[0]->ops = dma64proc; +0xa0 = sub_f897 (dma64_rxinit), +0xd8 = sub_f14d (dma64_rxfill)", "correcting_artifact": "docs/m34d4/indirect_ops_table_resolution.md, docs/m34d4/indirect_ops_table_resolution.json"}
+    {"old": "wlc_bmac_init 0x6923d/0x6924a runtime ops-table dispatch; UNRESOLVED", "new": "di[0]->ops = dma64proc; +0xa0 = sub_f897 (dma64_rxinit), +0xd8 = sub_f14d (dma64_rxfill)", "correcting_artifact": "docs/m34d4/indirect_ops_table_resolution.md, docs/m34d4/indirect_ops_table_resolution.json"},
+    {"old": "pi+0x8bf has no store; COMPUTED_RUNTIME / UNKNOWN", "new": "(*(pi+0x138))+0x8bf = 0x1a, written by the incrementing-pointer loop sub_a7089 @0xaa364 from constant {0x19,0x1a}", "correcting_artifact": "docs/m34d4/pi_8bf_provenance.md, docs/m34d4/pi_8bf_provenance.json"}
   ]
 }

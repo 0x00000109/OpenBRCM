@@ -4,7 +4,7 @@
   "current_milestone": {
     "id": "M3.4D4",
     "status": "ANALYSIS ONLY",
-    "artifact": "docs/m34d4/indirect_ops_table_resolution.md"
+    "artifact": "docs/m34d4/value_provenance.json"
   },
   "last_hardware_proven_milestone": {
     "id": "M3.4D3A1",
@@ -124,6 +124,14 @@
       "summary": "wlc_bmac_init 0x6923d = di[0]->ops->[+0xa0] = dma64_rxinit (sub_f897); 0x6924a = di[0]->ops->[+0xd8] = dma64_rxfill (sub_f14d); di[0]=*(wlc_hw+0x20) from dma_attach, ops=dma64proc .rodata+0x27d620.",
       "source": "docs/m34d4/indirect_ops_table_resolution.md",
       "record": "D4D-INDIRECT-OPS"
+    },
+    {
+      "id": "d4d.pi8bf",
+      "class": "analysis",
+      "status": "PROVEN",
+      "summary": "(*(pi+0x138))+0x8bf=0x1a; sub_a7089 @0xaa364 writes const {0x19,0x1a}.",
+      "source": "docs/m34d4/value_provenance.json",
+      "record": "D4D-PI-8BF"
     }
   ],
   "current_call_path": [
