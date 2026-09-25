@@ -1,3 +1,11 @@
+> **SUPERSEDED (2026-09):** the `186 PHY / 301 RADIO` counts and the
+> "executed UNKNOWN ⇒ blocker" statement in this document are **radio-ON /
+> whole-family inclusive** and **wrong for the on=0 attach path**. The corrected
+> result (attach = 12 PHY + 8 RADIO; sub_a4adc/sub_9591e not reached) is in
+> [`d4b_value_provenance_closure.md`](d4b_value_provenance_closure.md) and
+> [`d4c_radio_on_transition.md`](d4c_radio_on_transition.md). See
+> [`../artifact-ledger.md`](../artifact-ledger.md) §5. Kept for history.
+
 # M3.4D4B resume — actual BCM4352 rev42 AC-PHY initialization lineage
 
 **Status:** `ANALYSIS ONLY`. No hardware, no MMIO, no driver code, no candidate.

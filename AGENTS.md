@@ -11,9 +11,10 @@ Before modifying anything:
 
 1. `pwd` — must be this repository.
 2. `git status --short --branch`; `git rev-parse HEAD`; `git log --oneline -15`.
-3. Read `AGENTS.md` (this file), then `docs/agent-state.md`, then
-   `docs/milestones.md`, then `docs/re-tooling.md` (the canonical RE-tooling
-   document).
+3. Read `AGENTS.md` (this file), then `docs/artifact-ledger.md` (the
+   persistence index — consult it before re-deriving any fact), then
+   `docs/agent-state.md`, then `docs/milestones.md`, then `docs/re-tooling.md`
+   (the canonical RE-tooling document).
 4. Identify the **active milestone** and its exact **STOP boundary**.
 5. Check hook activation:
    `git config --local --get core.hooksPath`; `ls -l .githooks/`.

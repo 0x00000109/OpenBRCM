@@ -1,3 +1,11 @@
+> **SUPERSEDED (2026-09):** the `186 PHY` path count and the `CP-A3` "full AC
+> init / STRONG (post-HW)" checkpoint here are **radio-ON inclusive** and
+> **withdrawn**. CP-A3 is **NON-OPERATIONAL (radio OFF)**; the on=0 attach path
+> is 12 PHY writes + 8 radio RMWs. Corrections:
+> [`d4b_value_provenance_closure.md`](d4b_value_provenance_closure.md),
+> [`d4c_radio_on_transition.md`](d4c_radio_on_transition.md). See
+> [`../artifact-ledger.md`](../artifact-ledger.md) §5.
+
 # M3.4D4B — BCM4352 rev42 AC-PHY initialization lineage
 
 **Milestone:** recover the AC-PHY init lineage from `wlc_phy_attach_acphy` and

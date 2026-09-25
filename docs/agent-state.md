@@ -3,6 +3,16 @@
 Authoritative handoff. Read with `AGENTS.md`. Repository + Git history are the
 source of truth; this file records the live working-tree state on top of HEAD.
 
+## Persistence index
+- Read [`artifact-ledger.md`](artifact-ledger.md) **before re-deriving any
+  fact**: it indexes every recent milestone/report by commit + path and lists
+  superseded facts.
+- **Unmerged/unpushed work:** HEAD is on branch `m34d3b-band-init-test`,
+  15 commits ahead of `origin/main`; the latest 8 are unpushed. The D3B
+  implementation + D4/D4B/D4C/lifecycle/D4A chain is **not on `main`**.
+- `re.db` is generated/gitignored (schema v4, current sha256 in the ledger);
+  rebuild before analysis if stale.
+
 ## Target hardware
 - Broadcom BCM4352 PCI ID `14e4:43b1`
 - ASUS PCE-AC56 subsystem `1043:85ba`, chip revision 3

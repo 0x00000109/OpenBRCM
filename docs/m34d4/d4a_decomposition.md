@@ -1,3 +1,10 @@
+> **SUPERSEDED (2026-09):** `wlc_phy_init` is a **no-op for BCM4352 AC**
+> (`[pi+0x28]==0`); the checkpoint/CP-F model here and any "186 PHY" scope are
+> withdrawn. The real post-D3B path is `wlc_phy_cal_perical` →
+> `wlc_phy_cals_acphy`. See
+> [`d4a_reachability_recovery.md`](d4a_reachability_recovery.md) and
+> [`../artifact-ledger.md`](../artifact-ledger.md) §5.
+
 # M3.4D4A — BCM4352 rev42 AC-PHY `wlc_phy_init` decomposition (PURE RE)
 
 **Status: `ANALYSIS ONLY`.** No hardware, no MMIO, no `insmod`, no implementation,
