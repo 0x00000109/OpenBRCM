@@ -1,0 +1,66 @@
+{
+  "milestone": "M3.4D4 Phase 4",
+  "status": "ANALYSIS ONLY",
+  "entry": {
+    "caller": "wlc_phy_cal_perical @0x3cde0 (from wlc_init)",
+    "reason": "esi=6 (@0x3cddb mov esi,6)",
+    "gate_in_cal_perical": "phytype in {4,7,0xb}; [pi+0xf89] != 0 and != 3; (reason-2) <= 9 indexes a 23-entry jump table base 0x2cdb28; reason=6 (index 4) -> AC calibration",
+    "first_ac_calibration": "wlc_phy_cals_acphy @0xb5aac"
+  },
+  "wlc_phy_cals_acphy": {
+    "addr": "0xb13b5",
+    "ordered_flow": [
+      {"site": "0xb1428", "callee": "wlc_phy_rxcore_setstate_acphy", "class": "cal", "first_write": "phy_reg_mod(0x160, val=0x7, mask=*(pi+0xa7)) @0x97d50", "value_class": "COMPUTED_RUNTIME"},
+      {"site": "0xb145a", "callee": "wlc_phy_noise_sample_request_crsmincal", "class": "cal"},
+      {"site": "0xb148e", "callee": "wlc_phy_cal_perical_mphase_restart", "class": "control"},
+      {"site": "0xb14ac", "callee": "sub_925cc", "class": "helper"},
+      {"site": "0xb14e3", "callee": "sub_affa9", "class": "phy"},
+      {"site": "0xb14f6", "callee": "sub_b1227", "class": "cal"},
+      {"site": "0xb150a", "callee": "sub_abc76", "class": "phy", "value_class": "HARDWARE_RMW"},
+      {"site": "0xb151c", "callee": "sub_abc76", "class": "phy"},
+      {"site": "0xb1524", "callee": "sub_addfa", "class": "phy"},
+      {"site": "0xb1531", "op": "phy_reg_read", "reg": "0x19e", "class": "HARDWARE_READ"},
+      {"site": "0xb154b", "op": "phy_reg_mod", "reg": "0x19e", "val": "0x2", "mask": "0x2", "value_class": "STATIC_LITERAL"},
+      {"site": "0xb156f", "op": "wlc_phy_table_write_acphy", "table": "0xc", "val": "0x1", "mask": "0x5f", "value_class": "STATIC_TABLE"},
+      {"site": "0xb158c", "op": "phy_reg_mod", "reg": "0x19e", "val": "0x2", "mask": "0x2", "value_class": "STATIC_LITERAL"},
+      {"site": "0xb15b0", "callee": "wlc_phy_scanroam_cache_cal_acphy", "class": "cal"},
+      {"site": "0xb1749", "callee": "sub_9311b", "class": "radio", "first_write": "mod_radio_reg(0x8e5, 0x4000) @0x9315d", "value_class": "STATIC_LITERAL"},
+      {"site": "0xb1756", "callee": "sub_93e47", "class": "radio_read"},
+      {"site": "0xb1837", "callee": "wlc_phy_cal_perical_mphase_reset", "class": "control"},
+      {"site": "0xb183f", "callee": "wlc_phy_cal_perical_mphase_reset", "class": "control"},
+      {"site": "0xb184f", "callee": "wlc_phy_txpwrctrl_enable_acphy", "class": "txpower"},
+      {"site": "0xb1857", "callee": "wlc_phyreg_exit", "class": "exit"},
+      {"site": "0xb1864", "callee": "wlapi_enable_mac", "class": "mac"},
+      {"site": "0xb188d", "callee": "wlc_phy_rxcore_setstate_acphy", "class": "cal"}
+    ],
+    "completion": "synchronous function return; wlc_phy_cal_perical_mphase_reset called inside; no unbounded wait at this level",
+    "indirect_calls": "re indirect wlc_phy_cals_acphy = none"
+  },
+  "verified_callees": [
+    {"fn": "wlc_phy_rxcore_setstate_acphy", "addr": "0x97ce5", "verified": true, "first_op": "phy_reg_mod(0x160,0x7,mask=*(pi+0xa7)) @0x97d50"},
+    {"fn": "sub_abc76", "addr": "0xabc76", "verified": true, "first_op": "phy_reg_read(0x140) @0xabf6a; phy_reg_mod(0x19e,0x2,mask 0x2) @0xabfe7"},
+    {"fn": "sub_addfa", "addr": "0xaddfa", "verified": true},
+    {"fn": "sub_9311b", "addr": "0x9311b", "verified": true, "first_op": "mod_radio_reg(0x8e5,0x4000) @0x9315d"},
+    {"fn": "wlc_phy_table_write_acphy", "addr": "0x98908", "verified": true, "tables": "0xc"},
+    {"fn": "wlc_phy_txpwrctrl_enable_acphy", "addr": "0x906e6", "verified": true, "first_op": "phy_reg_read; sub_906ae; phy_reg_mod"}
+  ],
+  "value_classification": {
+    "STATIC_LITERAL": ["phy_reg_mod(0x19e,0x2,0x2)", "mod_radio_reg(0x8e5,0x4000)", "mod_radio_reg(0x8d0,0x1)", "mod_radio_reg(0x8e8,0x40)", "mod_radio_reg(0x8dc,0x2000)"],
+    "STATIC_TABLE": ["wlc_phy_table_write_acphy table 0xc (val 0x1, mask 0x5f)"],
+    "BOARD_DERIVED": ["wlc_phy_noise_sample_request_crsmincal inputs", "crsmin/aci tables"],
+    "CHANSPEC_DERIVED": ["sub_abc76 uses chanspec-derived indices"],
+    "PHYREV_DERIVED": ["sub_a7089 branch on phyrev/bandwidth", "farrow table selection by phyrev==3"],
+    "HARDWARE_RMW": ["sub_abc76 phy_reg_mod sequences", "sub_9311b mod_radio_reg sequences"],
+    "COMPUTED_RUNTIME": ["phy_reg_mod(0x160,...,mask=*(pi+0xa7))", "table 0x3 mask=*(pi+0x8be/0x8bf)", "table 0xc index/dest"],
+    "UNKNOWN": ["exact farrow coefficient arrays passed to sub_a4adc (runtime-compacted)", "sub_b018f PHY-table write values derived from pi+0x8be/0x8bf"]
+  },
+  "re_commands": [
+    "re fn wlc_phy_cals_acphy --asm",
+    "re flow wlc_phy_cals_acphy",
+    "re phyops wlc_phy_cals_acphy",
+    "re phyops wlc_phy_rxcore_setstate_acphy",
+    "re phyops sub_9311b",
+    "re phyops sub_abc76",
+    "re switch wlc_phy_cal_perical"
+  ]
+}

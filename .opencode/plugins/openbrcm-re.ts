@@ -28,8 +28,9 @@ const RE_USE_RE = new RegExp(
   [
     RE_BIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
     "\\bre\\s+(fn|card|fields|switch|seq|flow|data|gstruct|tables|phy|refs|",
-    "clusters|stats|reach|named|verify|db|osl|gaps|externals|map|modules|",
+    "packet|clusters|stats|reach|named|verify|db|osl|gaps|externals|map|modules|",
     "ptrtable|params|stage[4-8])\\b",
+    "generate-current-context\\.py",
     "re-bootstrap\\.sh",
   ].join("|"),
 )
@@ -82,6 +83,11 @@ export default (async (_input) => {
           "  check:  scripts/re-bootstrap.sh",
           "Use `scripts/re.sh fn|card|fields|switch|seq|flow|data|gstruct|phy|tables`",
           "(it cd's to the tooling workspace so the relative blob path resolves).",
+          "Read `docs/current-context.json` first (generated compact index; verify",
+          "with `scripts/generate-current-context.py --check`, regenerate with",
+          "`scripts/generate-current-context.py`). Query ONE target with",
+          "`scripts/re.sh packet --fn <name|0xADDR>` before broader re queries; it",
+          "is bounded, deterministic and machine-readable.",
           "Manual disassembly is allowed only when `re`/`re.db` cannot answer the",
           "question, or as independent verification. Facts already indexed MUST come",
           "from `re`; record any missing fact as a tooling gap so the work is not",

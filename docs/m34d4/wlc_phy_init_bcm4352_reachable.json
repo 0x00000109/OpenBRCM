@@ -1,0 +1,163 @@
+{
+  "milestone": "M3.4D4A actual BCM4352 rev42 wlc_phy_init reachability",
+  "status": "ANALYSIS ONLY",
+  "baseline": {
+    "re": "0c7cf87538b9391283f3f26f1ce36bf077b21ce4dccceb8f6a6433f94c8f3137",
+    "re_db": "44dae60d232b08bc8990e446220eaaf684d7fa180f728559114643f27f71c4af",
+    "schema": "v4",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "prior_commit": "00f22d8"
+  },
+
+  "rpc_radio_hw": {
+    "classification": "OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT",
+    "rpc_id": "WLRPC_WLC_BMAC_RADIO_HW_ID",
+    "caller": null,
+    "evidence": [
+      "no in-object caller (re card)",
+      "no relocation in wl.ko or wlc_hybrid.o_shipped (readelf -r)",
+      "unique LOCAL symbol, no alias",
+      "WLRPC_WLC_BMAC_RADIO_HW_ID string in all corpora"
+    ],
+    "local_bcm4352_init_path": false,
+    "radio_ON_branch_executed": false
+  },
+
+  "d4_entry": {
+    "note": "wlc_phy_init is a NO-OP for AC. The real PHY-init/cal entry after D3B is wlc_phy_cal_perical.",
+    "wlc_phy_init": {
+      "caller": "sub_6656c @0x669df",
+      "entry": "0xbabf5",
+      "executed_prefix_for_AC": "0xbac05..0xbac76: set [phy+0x17e]=chanspec, [phy+0x186]=1, [phy+0x18f]=0, call wlc_phy_chanspec_shm_set, osl_readl(D11 0x120), maybe OR [phy+0x19c]|=0x20",
+      "guard": "0xbac6f mov r13,[phy+0x28]; test; je 0xbaecE",
+      "phy_plus_28": "NULL for AC (zeroed wlc_phy_attach_acphy 0xa3001)",
+      "conclusion": "body (anacore + call r13) skipped; only wlc_phy_chanspec_shm_set runs"
+    },
+    "real_entry": {
+      "function": "wlc_phy_cal_perical",
+      "address": "0xb57d3",
+      "callsite": "0x3cde0 in wlc_init",
+      "args": "pi (rdi), reason=6 (esi)",
+      "pi_source": "wlc_init: rdx=[wlc+0x40] (band); rdi=[rdx+0x10] (band->pi) @0x3cdd7",
+      "temporal_position": "AFTER wlc_bmac_init (which contains D2A/D2B/D3A1/D3A0/D3B)"
+    },
+    "state": {
+      "phytype": {"value": "0xb (AC)", "class": "PROVEN_RUNTIME_DERIVED", "source": "[pi+0x160] <- D11 0x3e0 bits[11:8]"},
+      "phyrev": {"value": "runtime", "class": "PROVEN_RUNTIME_DERIVED", "source": "[pi+0x164] <- D11 0x3e0 & 0xf"},
+      "chipid": {"value": "0x4352", "class": "PROVEN_CONSTANT", "source": "sih+0x3c"},
+      "chiprev": {"value": "3", "class": "PROVEN_CONSTANT"},
+      "band": {"value": "runtime", "class": "PROVEN_RUNTIME_DERIVED", "source": "chanspec & 0xc000"},
+      "chanspec": {"value": "runtime", "class": "PROVEN_RUNTIME_DERIVED", "source": "wlc_default_chanspec(band,1)"},
+      "perical_state_f89": {"value": "2", "class": "PROVEN_CONSTANT", "source": "wlc_phy_attach_acphy 0xa1a2b"},
+      "MACCONTROL": {"class": "UNKNOWN"},
+      "PSM_RUN": {"value": true, "class": "PROVEN_RUNTIME_DERIVED", "source": "D2A ucode in wlc_bmac_init"},
+      "EN_MAC": {"class": "UNKNOWN"},
+      "DMA": {"value": "initialized", "class": "PROVEN_RUNTIME_DERIVED", "source": "D3A0 tail in wlc_bmac_init"},
+      "radio": {"class": "UNKNOWN", "source": "set by RPC/out-of-band"}
+    }
+  },
+
+  "path_specialized_branches": [
+    {"address": "0xb57fb", "predicate": "phy_type==7", "AC": "NOT_TAKEN", "provenance": "RE"},
+    {"address": "0xb5800", "predicate": "phy_type==4", "AC": "NOT_TAKEN", "provenance": "RE"},
+    {"address": "0xb5805", "predicate": "phy_type==0xb", "AC": "TAKEN (continue)", "provenance": "RE"},
+    {"address": "0xb5814", "predicate": "[phy+0xf89]==3", "AC": "NOT_TAKEN (f89=2)", "provenance": "RE"},
+    {"address": "0xb581d", "predicate": "[phy+0xf89]==0", "AC": "NOT_TAKEN", "provenance": "RE"},
+    {"address": "0xb5828", "predicate": "reason in [2..11]", "AC": "TAKEN (reason=6)", "provenance": "RE"},
+    {"address": "switch case 4/5/6", "predicate": "reason 6", "AC": "TAKEN -> joined_r0x001b5908", "provenance": "GHIDRA"},
+    {"address": "0xb58a2", "predicate": "[phy+0xf9c]!=0 (tempsense en)", "AC": "runtime", "provenance": "RE"},
+    {"address": "joined_r0x001b5908", "predicate": "phy_type==0xb", "AC": "TAKEN -> wlc_phy_cals_acphy @0xb5aac", "provenance": "GHIDRA"}
+  ],
+
+  "reachable_functions": {
+    "entry": ["wlc_phy_cal_perical (0xb57d3)"],
+    "ac_branch": [
+      {"fn": "wlc_phy_tempsense_acphy", "addr": "0xa317c", "site": "0xb58ec/0xb59b8", "class": "PHY/RMW", "conditional": "[phy+0xf9c]!=0"},
+      {"fn": "wlc_phy_cals_acphy", "addr": "0xb13b5", "site": "0xb5aac", "class": "calibration", "conditional": "always on AC case 4/5/6"}
+    ],
+    "cals_acphy_subtree": [
+      {"fn": "wlc_phy_rxcore_setstate_acphy", "addr": "0x97ce5", "class": "PHY"},
+      {"fn": "wlc_phy_noise_sample_request_crsmincal", "addr": "0xbb8d1", "class": "async-request?"},
+      {"fn": "wlc_phy_cal_perical_mphase_restart", "addr": "0xb2488", "class": "state"},
+      {"fn": "sub_925cc", "addr": "0x925cc", "class": "helper"},
+      {"fn": "sub_affa9", "addr": "0xaffa9", "class": "PHY (6)"},
+      {"fn": "sub_b1227", "addr": "0xb1227", "class": "helper"},
+      {"fn": "sub_abc76", "addr": "0xabc76", "class": "PHY (107) + RADIO read"},
+      {"fn": "sub_addfa", "addr": "0xaddfa", "class": "PHY (104)"},
+      {"fn": "sub_9311b", "addr": "0x9311b", "class": "RADIO (7)"},
+      {"fn": "sub_93e47", "addr": "0x93e47", "class": "RADIO read (1)"},
+      {"fn": "wlc_phy_scanroam_cache_cal_acphy", "addr": "0x9c28b", "class": "PHY/table"},
+      {"fn": "wlc_phy_txpwrctrl_enable_acphy", "addr": "0x906e6", "class": "PHY"},
+      {"fn": "phy_reg_read|phy_reg_mod|wlc_phy_table_write_acphy", "addr": "inline", "class": "PHY/TABLE"},
+      {"fn": "wlc_phyreg_exit", "addr": "0xbafac", "class": "helper"},
+      {"fn": "wlapi_enable_mac", "addr": "0x152a90", "class": "MAC"}
+    ],
+    "reachable_indirect_calls": [],
+    "unresolved_indirect_calls": [],
+    "note": "no indirect on this path; +0x28 and +0x118 callbacks are NULL for AC"
+  },
+
+  "first_writes": {
+    "first_phy_write": {
+      "function": "wlc_phy_rxcore_setstate_acphy",
+      "callsite": "0x97d50",
+      "via": "wlc_phy_cals_acphy @0xb1428",
+      "register": "0x160",
+      "value": "0x7",
+      "mask": "*(pi+0xa7)",
+      "provenance": "COMPUTED_RUNTIME (mask from pi+0xa7)"
+    },
+    "first_radio_write": {
+      "function": "sub_9311b",
+      "callsite": "0x9315d",
+      "via": "wlc_phy_cals_acphy @0xb1749",
+      "register": "0x8e5",
+      "value": "0x4000",
+      "mask": "0x0",
+      "provenance": "STATIC"
+    }
+  },
+
+  "tables": [
+    {"consumer": "wlc_phy_cals_acphy", "table": "0xc", "via": "wlc_phy_table_write_acphy", "ops": 2, "class": "STATIC/REV"},
+    {"consumer": "sub_abc76/sub_addfa", "table": "acphy tables", "class": "RUNTIME_COMPUTED (pi-derived)"}
+  ],
+  "runtime_derived_ops": ["pi+0xa5 mask", "pi+0xa7 mask", "pi+0x8be/8bf values", "phyrev-indexed table selection"],
+
+  "real_radio_init_function": "sub_9311b (+ sub_abc76 radio read); no wlc_phy_switch_radio on this path",
+  "first_pll_synth_op": "inside wlc_phy_cals_acphy radio sub-calls (UNKNOWN exact)",
+  "first_calibration": {
+    "function": "wlc_phy_cals_acphy",
+    "caller": "wlc_phy_cal_perical case 4/5/6",
+    "entry_condition": "phy_type==0xb AND [phy+0xf89]==2",
+    "synchronous": true,
+    "completion": "return of wlc_phy_cals_acphy; wlc_phy_cal_perical_mphase_reset called inside",
+    "timeout_poll": "none observed at this level"
+  },
+
+  "checkpoints": {
+    "CP-D4.0": "entry wlc_phy_cal_perical; PSM running, DMA init'd, radio possibly OFF",
+    "CP-D4.F": "return of wlc_phy_cal_perical; radio/PLL programmed, MAC re-enabled by cals_acphy",
+    "vendor_stable": "UNKNOWN (no hardware proof; noise-sample request may be async)",
+    "earlier_safe": "none established"
+  },
+
+  "d3b_hypotheses": {
+    "H1": {"statement": "bsinitvals consumed immediately by wlc_phy_init", "verdict": "REJECTED", "why": "wlc_phy_init is a no-op for AC; continuation is wlc_phy_cal_perical (calibration)"},
+    "H2": {"statement": "a bsinitvals SHM value causes PSM behavior while PHY uninit", "verdict": "PLAUSIBLE/UNKNOWN", "why": "no per-value evidence"},
+    "H3": {"statement": "no value dangerous; contract requires immediate continuation", "verdict": "WEAKENED", "why": "continuation is calibration, not bsinitvals-dependent"},
+    "H4": {"statement": "device loss unrelated", "verdict": "PLAUSIBLE", "why": "all-ones ~4.84s later + sync flood"}
+  },
+
+  "smallest_next_unit": "D3B (full sub_6656c) + remainder of wlc_bmac_init + wlc_set_home_chanspec + wlc_phy_cal_perical(AC cal); NOT 'through wlc_phy_init' (no-op)",
+
+  "tooling": {
+    "re_queries": ["card", "fn --asm", "phyops", "field-writers", "switch", "indirect"],
+    "manual_objdump": 0,
+    "unresolved_indirects_before": 2,
+    "unresolved_indirects_after": 0,
+    "unresolved_mmio_before": "n/a",
+    "unresolved_mmio_after": "n/a",
+    "gaps": ["re cannot represent RPC/external dispatch edges (L-C1)", "jump-table target list not printed by `re switch` (needed Ghidra to map case 4/5/6)"]
+  }
+}

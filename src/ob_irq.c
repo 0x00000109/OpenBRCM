@@ -53,7 +53,7 @@ static irqreturn_t ob_irq_handler(int irq, void *dev_id)
 		return IRQ_NONE;
 	}
 
-	raw = bcma_read32(hw->core, OB_D11_REG_MACINTSTATUS);
+	raw = ob_d11_read32(hw, OB_D11_REG_MACINTSTATUS);
 	hw->irq.last_status = raw;
 
 	if (!ob_d11_irq_has_work(raw, hw->irq.owned_mask)) {
@@ -75,7 +75,7 @@ static irqreturn_t ob_irq_handler(int irq, void *dev_id)
 		ob_rx_irq(hw);
 
 	ack = ob_d11_irq_ack_bits(raw, hw->irq.owned_mask);
-	bcma_write32(hw->core, OB_D11_REG_MACINTSTATUS, ack);
+	ob_d11_write32(hw, OB_D11_REG_MACINTSTATUS, ack);
 
 	dev_info_ratelimited(hw->dev, "irq: handled status=%08x ack=%08x\n",
 			     raw, ack);
@@ -118,17 +118,17 @@ int ob_irq_init(struct ob_hw *hw)
 	 * non-zero mask here is residual hardware state, not something
 	 * OpenBRCM programmed.
 	 */
-	status = bcma_read32(hw->core, OB_D11_REG_MACINTSTATUS);
-	mask = bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
+	status = ob_d11_read32(hw, OB_D11_REG_MACINTSTATUS);
+	mask = ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
 	hw->irq.initial_status = status;
 	hw->irq.initial_mask = mask;
 	dev_info(hw->dev,
 		 "irq: initial macintstatus=%08x macintmask=%08x\n",
 		 status, mask);
 	dev_info(hw->dev, "irq: fifo rx intstatus=%08x intmask=%08x\n",
-		 bcma_read32(hw->core,
+		 ob_d11_read32(hw,
 			     OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX)),
-		 bcma_read32(hw->core,
+		 ob_d11_read32(hw,
 			     OB_D11_REG_INTCONTROL(OB_D11_FIFO_RX) + 4));
 
 	/*
@@ -137,8 +137,8 @@ int ob_irq_init(struct ob_hw *hw)
 	 */
 	newmask = ob_d11_irq_mask_clear(mask, hw->irq.owned_mask);
 	if (newmask != mask) {
-		bcma_write32(hw->core, OB_D11_REG_MACINTMASK, newmask);
-		(void)bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
+		ob_d11_write32(hw, OB_D11_REG_MACINTMASK, newmask);
+		(void)ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
 		dev_info(hw->dev,
 			 "irq: macintmask %08x -> %08x (owned %08x masked)\n",
 			 mask, newmask, hw->irq.owned_mask);
@@ -167,11 +167,11 @@ void ob_irq_free(struct ob_hw *hw)
 		return;
 
 	/* 1. mask the owned sources (idempotent, preserves unrelated bits) */
-	bcma_write32(hw->core, OB_D11_REG_MACINTMASK,
+	ob_d11_write32(hw, OB_D11_REG_MACINTMASK,
 		     ob_d11_irq_mask_clear(
-			bcma_read32(hw->core, OB_D11_REG_MACINTMASK),
+			ob_d11_read32(hw, OB_D11_REG_MACINTMASK),
 			hw->irq.owned_mask));
-	(void)bcma_read32(hw->core, OB_D11_REG_MACINTMASK);
+	(void)ob_d11_read32(hw, OB_D11_REG_MACINTMASK);
 	dev_info(hw->dev, "irq: masked\n");
 
 	/* 2. stop the handler from claiming new work */

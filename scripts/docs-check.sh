@@ -235,6 +235,57 @@ else
 	bad "docs/m34d3b_sprom_evidence.md must record the SPROM-evidence HARDWARE RUNTIME PROVEN result with MHF3 = 0x0000"
 fi
 
+# 4g. D3B band-init implementation (M3.4D3B): IMPLEMENTED / STATIC TESTED /
+#     SIGNED / NOT HARDWARE PROVEN. The isolated mode must reuse the D3A1
+#     prefix (DMA left live), apply exactly 73/39/34 bsinitvals42 records and
+#     never reach PHY/radio or enable EN_MAC.
+if [ -f src/ob_d3b.c ] && [ -f src/ob_d3b.h ] && \
+   grep -q 'ob_d3a1_run_prefix' src/ob_d3b.c && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_RECORDS[[:space:]]+73u' src/ob_d3b.h && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_W16[[:space:]]+39u' src/ob_d3b.h && \
+   grep -qE '^#define[[:space:]]+OB_D3B_BS_W32[[:space:]]+34u' src/ob_d3b.h; then
+	ok "D3B implementation present (prefix reuse, bsinitvals 73/39/34)"
+else
+	bad "M3.4D3B implementation missing (src/ob_d3b.{c,h}, prefix reuse, 73/39/34)"
+fi
+for pair in "OB_D3B_MHF_SHM0 0x005eu" "OB_D3B_MHF_SHM1 0x0060u" \
+	    "OB_D3B_MHF_SHM2 0x0062u" "OB_D3B_MHF_SHM3 0x0078u" \
+	    "OB_D3B_MHF_SHM4 0x00d4u"; do
+	set -- $pair
+	grep -qE "^#define[[:space:]]+$1[[:space:]]+$2" src/ob_d3b.h \
+		|| bad "src/ob_d3b.h $1 != $2"
+done
+if grep -qE 'wlc_phy_init[[:space:]]*\(|wlc_phy_anacore[[:space:]]*\(|wlc_phy_switch_radio[[:space:]]*\(|request_irq[[:space:]]*\(' src/ob_d3b.c; then
+	bad "src/ob_d3b.c calls a forbidden PHY/IRQ stage"
+else
+	ok "D3B code does not reach PHY/radio/IRQ setup"
+fi
+if grep -q 'OB_ISOLATED_D3B_TEST' src/ob_ucode.h && \
+   grep -qE 'ob_isolated_mode_select(6|7)' src/ob_core.c && \
+   grep -q 'bsinitvals_test_only' src/ob_core.c && \
+   grep -q 'ob_d3b_remove' src/ob_core.c; then
+	ok "bsinitvals_test_only isolated mode wired (mutual exclusion + remove hook)"
+else
+	bad "bsinitvals_test_only mode not wired (select6/7 / ob_d3b_remove)"
+fi
+if grep -q 'OB_ISOLATED_RADIO_ID_PROBE' src/ob_ucode.h && \
+   grep -q 'radio_id_probe_only' src/ob_core.c && \
+   grep -q 'ob_radio_probe_test' src/ob_core.c && \
+   grep -q 'ob_radio_remove' src/ob_core.c && \
+   [ -f src/ob_radio.c ] && [ -f src/ob_radio.h ]; then
+	ok "radio_id_probe_only isolated mode wired (mutual exclusion + remove hook)"
+else
+	bad "radio_id_probe_only mode not wired (select7 / ob_radio_probe_test / ob_radio_remove)"
+fi
+if [ -f docs/m34d3b_band_init_test.md ] && \
+   grep -q 'IMPLEMENTED' docs/m34d3b_band_init_test.md && \
+   grep -q 'STATIC TESTED' docs/m34d3b_band_init_test.md && \
+   grep -q 'NOT HARDWARE PROVEN' docs/m34d3b_band_init_test.md; then
+	ok "D3B band-init test record present (IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN)"
+else
+	bad "docs/m34d3b_band_init_test.md must record D3B IMPLEMENTED / STATIC TESTED / NOT HARDWARE PROVEN"
+fi
+
 # 4f. D3A1 isolated path must prepare ChipCommon + validated MAC itself.
 if sed -n '/int ob_si_prepare_board_data_for_d3a1/,/^}/p' src/ob_si.c \
 		| grep -q 'hw->cc = hw->bus->drv_cc.core' && \
@@ -284,11 +335,57 @@ else
 	bad "D3A1 poll expiry must be vendor-non-fatal (logged, no abort)"
 fi
 
+# 4g. tsf_cfpstart (0x18c) is a write-only CFP-start programming register; its
+# direct readback is not a stable postcondition (hardware read 0x3c000000 vs
+# the programmed 0x02000000; the readable CFP value is at 0x604/0x606). The
+# vendor-exact write and the tsf_cfprep equality must remain.
+if grep -qE 'cfpstart[[:space:]]*!=[[:space:]]*OB_D3A1_TSF_CFPSTART' src/ob_d3a1.c; then
+	bad "ob_d3a1_validate must not equality-gate tsf_cfpstart (0x18c) readback"
+else
+	ok "D3A1 tsf_cfpstart readback is not equality-gated"
+fi
+if grep -q 'OB_D3A1_REG_TSF_CFPSTART, OB_D3A1_TSF_CFPSTART' src/ob_d3a1.c; then
+	ok "D3A1 vendor-exact tsf_cfpstart write present"
+else
+	bad "D3A1 vendor-exact tsf_cfpstart write missing"
+fi
+if grep -qE 'cfprep[[:space:]]*!=[[:space:]]*OB_D3A1_TSF_CFPREP' src/ob_d3a1.c; then
+	ok "D3A1 tsf_cfprep equality postcondition retained"
+else
+	bad "D3A1 tsf_cfprep equality postcondition missing"
+fi
+
 # 5. No proprietary firmware/blob may be tracked.
 if git ls-files | grep -qE '\.(bin|fw)$|wlc_hybrid'; then
 	bad "proprietary firmware/blob appears tracked in Git"
 else
 	ok "no proprietary firmware tracked"
+fi
+
+# 6. current-context integrity (Part F): the generated compact index must
+#    validate (artifact references resolve, no duplicate fact IDs, no PROVEN
+#    fact pointing at a SUPERSEDED ledger record, milestone exists, schema
+#    supported). The staleness check is skipped when the canonical RE tooling
+#    is absent (CI has no external iced/test workspace).
+if command -v python3 >/dev/null 2>&1 && [ -f docs/state/current-state.json ]; then
+	if python3 scripts/generate-current-context.py --validate >/dev/null 2>&1; then
+		ok "current-context integrity validates"
+	else
+		bad "current-context integrity check failed (run: scripts/generate-current-context.py --validate)"
+	fi
+	RE_BIN=${RE_BIN:-/media/kartashoff/Storage/opensource/iced/test/binary_analyzer/target/release/re}
+	RE_DB=${RE_DB:-/media/kartashoff/Storage/opensource/iced/test/re.db}
+	if [ -x "$RE_BIN" ] && [ -f "$RE_DB" ]; then
+		if python3 scripts/generate-current-context.py --check >/dev/null 2>&1; then
+			ok "current-context is fresh (sources_hash matches)"
+		else
+			bad "docs/current-context.json is STALE (regenerate: scripts/generate-current-context.py)"
+		fi
+	else
+		ok "current-context stale-check skipped (canonical RE tooling absent)"
+	fi
+else
+	printf '  note: current-context checks skipped (python3 or state file absent)\n'
 fi
 
 if [ "$fail" -eq 0 ]; then

@@ -71,15 +71,15 @@ MODULE_PARM_DESC(srom_diag, "Alias for sprom_diag");
  */
 static void ob_si_d11_diag(struct ob_hw *hw)
 {
-	u32 mc = bcma_read32(hw->core, OB_D11_MACCONTROL);
-	u32 cmd = bcma_read32(hw->core, OB_D11_MACCOMMAND);
-	u32 ist = bcma_read32(hw->core, OB_D11_MACINTSTATUS);
-	u32 im = bcma_read32(hw->core, OB_D11_MACINTMASK);
-	u32 psm = bcma_read32(hw->core, OB_D11_PSMDEBUG);
-	u32 phyd = bcma_read32(hw->core, OB_D11_PHYDEBUG);
-	u32 tlo = bcma_read32(hw->core, OB_D11_TSF_LOW);
-	u32 thi = bcma_read32(hw->core, OB_D11_TSF_HIGH);
-	u16 phyver = bcma_read16(hw->core, OB_D11_PHYVERSION);
+	u32 mc = ob_d11_read32(hw, OB_D11_MACCONTROL);
+	u32 cmd = ob_d11_read32(hw, OB_D11_MACCOMMAND);
+	u32 ist = ob_d11_read32(hw, OB_D11_MACINTSTATUS);
+	u32 im = ob_d11_read32(hw, OB_D11_MACINTMASK);
+	u32 psm = ob_d11_read32(hw, OB_D11_PSMDEBUG);
+	u32 phyd = ob_d11_read32(hw, OB_D11_PHYDEBUG);
+	u32 tlo = ob_d11_read32(hw, OB_D11_TSF_LOW);
+	u32 thi = ob_d11_read32(hw, OB_D11_TSF_HIGH);
+	u16 phyver = ob_d11_read16(hw, OB_D11_PHYVERSION);
 
 	dev_info(hw->dev,
 		 "bringup: maccontrol=%08x maccommand=%08x macintstatus=%08x macintmask=%08x\n",
@@ -105,18 +105,18 @@ static void ob_si_d11_diag(struct ob_hw *hw)
 /* ChipCommon is a fixed-function core; access it through bcma's window. */
 u32 ob_si_cc_read(struct ob_hw *hw, u16 off)
 {
-	return bcma_read32(hw->cc, off);
+	return ob_cc_read32(hw, off);
 }
 
 void ob_si_cc_write(struct ob_hw *hw, u16 off, u32 val)
 {
-	bcma_write32(hw->cc, off, val);
+	ob_cc_write32(hw, off, val);
 }
 
 /* 16-bit accessor: identical width to bcma_sprom_read()'s bcma_read16(). */
 static u16 ob_si_cc_read16(struct ob_hw *hw, u16 off)
 {
-	return bcma_read16(hw->cc, off);
+	return ob_cc_read16(hw, off);
 }
 
 static u8 ob_sprom_crc(const u16 *sprom, size_t words);
@@ -165,6 +165,22 @@ int ob_si_read_mac(struct ob_hw *hw, u8 mac[6])
 			 "SPROM validation failed (no valid CRC/revision)\n");
 		kfree(sp);
 		return -ENODATA;
+	}
+
+	/*
+	 * Proven rev11 board fields (boardtype/boardflags/aa2g/aa5g/antswitch)
+	 * decoded from the SAME already-read, CRC-validated image: no extra
+	 * MMIO. Only rev11 carries the recovered field map; other revisions
+	 * leave board.valid=false.
+	 */
+	hw->board.valid = false;
+	if (rev == 11 &&
+	    ob_d3b_decode_rev11_board(sp, words, &hw->board)) {
+		dev_info(hw->dev,
+			 "boarddata: boardtype=0x%04x boardflags=0x%08x aa2g=%u aa5g=%u antswitch=%u(present=%d)\n",
+			 hw->board.boardtype, hw->board.boardflags,
+			 hw->board.aa2g, hw->board.aa5g, hw->board.antswitch,
+			 hw->board.antswitch_present);
 	}
 
 	/* rev11 moved the first MAC to +0x90; rev8 uses +0x8C. */
@@ -266,6 +282,10 @@ int ob_si_powerup(struct ob_hw *hw)
 {
 	u32 clk;
 	int err;
+
+	/* Device-loss guard: no host/core/clock bring-up after the latch. */
+	if (hw->dev_lost)
+		return -EIO;
 
 	dev_info(hw->dev, "powerup: chip 0x%04x rev %u\n",
 		 hw->chip_id, hw->chip_rev);
@@ -895,6 +915,27 @@ int ob_si_prepare_board_data_for_d3a1(struct ob_hw *hw)
 	dev_info(hw->dev,
 		 "d3a1-test: board data prepared (cc=%p mac_valid=%d mac=%pM)\n",
 		 hw->cc, hw->mac_valid, hw->mac);
+	return 0;
+}
+
+/*
+ * Minimal board-data preparation for the isolated D3B band-init test.
+ *
+ * Identical read-only preparation to the D3A1 path, but D3B additionally needs
+ * the proven rev11 board fields (boardtype/boardflags/aa2g/aa5g/antswitch),
+ * which ob_si_read_mac() now decodes from the same already-read image into
+ * hw->board (no extra MMIO). A non-rev11/unvalidated image leaves
+ * hw->board.valid=false and ob_d3b_test() refuses.
+ */
+int ob_si_prepare_board_data_for_d3b(struct ob_hw *hw)
+{
+	int ret = ob_si_prepare_board_data_for_d3a1(hw);
+
+	if (ret)
+		return ret;
+	if (!hw->board.valid)
+		dev_warn(hw->dev,
+			 "d3b-test: rev11 board data not available (board.valid=0)\n");
 	return 0;
 }
 

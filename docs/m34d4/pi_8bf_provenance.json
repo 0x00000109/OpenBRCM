@@ -1,0 +1,78 @@
+{
+  "milestone": "M3.4D4",
+  "blocker": "D4-BLOCKER-PI-8BF",
+  "title": "pi+0x8bf exact value and provenance (BCM4352 rev42 AC path)",
+  "status": "ANALYSIS ONLY",
+  "hardware": false,
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+  "correction": "The field is NOT pi+0x8bf directly. The true base is *(pi+0x138) (a 0x920-byte heap sub-object). Field = (*(pi+0x138)) + 0x8bf.",
+  "read": {
+    "site": "0xaa2b0",
+    "instruction": "movzbl 0x8bf(%r13),%ecx",
+    "base": "r13 = *(pi+0x138) loaded at 0xaa255",
+    "containing_function": "sub_a7089 (unnamed discovered fn; Ghidra FUN_001a7089; no symbol-table FUNC covers 0xaa2b0)",
+    "not_containing": "wlc_phy_stf_chain_temp_throttle_acphy (0xa479f, size 200) is a separate function; prior attribution to it is wrong",
+    "consumer": "arg2 (ecx) of wlc_phy_table_write_acphy(pi, table=3, n=1, ecx, len=0x20, buf) @0xaa2ce"
+  },
+  "field": {
+    "base_object": "*(pi+0x138), size 0x920",
+    "constructor": "wlc_phy_attach_acphy @0xa1997: [pi+0x138]=osl_malloc(*([pi+0x20]+0x10), 0x920); @0xa19ae osl_memset(ptr, 0, 0x920)",
+    "destructor": "sub_97e2b (pi_fptr +0xc0): osl_mfree(osh, *(pi+0x138), 0x920)",
+    "sibling_fields": "+0x8be (written 0x19), +0x8bf (written 0x1a), +0x8bd (state toggle)",
+    "semantics": "2-byte per-chain STF/temperature-throttle value array applied via wlc_phy_table_write_acphy(table 3)"
+  },
+  "value": {
+    "initial_value": "0x1a",
+    "decimal": 26,
+    "provenance_class": "DETERMINISTIC_CONSTANT (immediate from a stack array, not hardware/runtime derived)",
+    "writer": "sub_a7089 @0xaa364: mov %dl,0x8be(%r15) inside a 2-iteration loop with `inc %r15`",
+    "writer_detail": "arr1 = {0x19,0x1a} at rbp-0x70 (set at 0xaa2ef/0xaa2fc); iteration i=0 stores 0x19 to +0x8be, i=1 stores 0x1a to +0x8bf; the `cmovs` negative-only path is not taken for 0x1a",
+    "overlapping_store": "YES — the single store instruction (literal disp 0x8be) has an effective address of base+0x8be+r15 where r15 increments per iteration; it covers +0x8be and +0x8bf. Tool-native as of T8 (`provenance=induction`).",
+    "implicit_zero": "the 0x920 sub-object is osl_memset(0) at attach, so +0x8bf is 0 until the producer runs",
+    "memcpy_struct_copy": "none (no 0x920-sized copy into the sub-object; the 0x920 constants elsewhere are register/table offsets, not copy sizes)",
+    "wider_store_covering_8bf": "none (no byte@0x8bf, word@0x8be, dword@0x8bc, qword@0x8b8 anywhere in .text)"
+  },
+  "ordering": {
+    "consumer_read": "0xaa2b0, guarded by cmp byte [r13+0x8bd],0 ; je 0xaa2db (read only when +0x8bd != 0)",
+    "producer_write": "0xaa364 (+0x8be/+0x8bf) and 0xaa3c4 (sets +0x8bd=1)",
+    "relative_order": "the read is on a LATER invocation than the producer that set +0x8bd=1; within a single invocation the read (0xaa2b0) precedes that invocation's producer store (0xaa364). Value is stable across calls (producer always writes the same constants).",
+    "state_byte_writers": "+0x8bd only at 0xaa2d3 (=0) and 0xaa3c4 (=1), both in sub_a7089; no other writer in the blob"
+  },
+  "branch_predicates": {
+    "read_block_entry": "[pi+0x164] == 3 (0xaa22a); [*(pi+0x20)+0x69] & 0x20 (0xaa23b); [pi+0xc24] == 0x2625a00 (=40,000,000) (0xaa245)",
+    "read_gate": "[*(pi+0x138)+0x8bd] != 0",
+    "producer_gate": "byte [pi+0x17e] == 0x0d (chanspec low byte = channel 13) at 0xaa2db",
+    "consequence": "the read at 0xaa2b0 can only execute after the producer ran; the producer requires chanspec low byte == 0x0d. Therefore whenever the read executes, +0x8bf == 0x1a."
+  },
+  "reachability": {
+    "function": "sub_a7089 called from wlc_phy_switch_radio_acphy @0xab3f5 (first radio-ON path) and sub_b018f",
+    "rev42_ac": "statically reachable on the AC path; executes when the operating chanspec is channel 13 (pi+0x17e low byte 0x0d) and the throttle conditions hold; skipped on other channels",
+    "initial_default_note": "wlc_phy_chanspec_band_firstch builds channel|0x1800 (channel in low byte); the factory-default first channel is COMPUTED_RUNTIME, so channel 13 is not guaranteed on the very first bring-up"
+  },
+  "evidence": {
+    "re": [
+      "re fn sub_a7089 --asm  (0xaa255 load r13; 0xaa2b0 read +0x8bf; 0xaa289 read +0x8be; 0xaa364 store; 0xaa3c4 set +0x8bd)",
+      "re fn wlc_phy_attach_acphy --asm  (0xa1997 [pi+0x138]=osl_malloc(0x920); 0xa19ae osl_memset(0,0x920))",
+      "re field-writers --field 0x138  (wlc_phy_attach_acphy @0xa1997 store)",
+      "re field-writers --field 0x8bf  (sub_a7089 @0xaa364 store value=0x1a — T8 tool-native)",
+      "re packet --fn sub_a7089 --fields  (0xaa364 +0x8be=0x19, +0x8bf=0x1a, provenance=induction, confidence=EXACT, base_load=0x138)"
+    ],
+    "ghidra": "Decompile FUN_001a7089: local_78={0x19,0x1a}; loop `*(char*)(lVar17+0x8be)=cVar13; lVar17++;` while(lVar16!=8); consumer reads +0x8be and +0x8bf at lVar4+0x8be/+0x8bf",
+    "manual": "objdump -d (pre-T8): only access to 0x8bf in .text is `aa2b0 movzbl 0x8bf(%r13),%ecx`; raw producer loop `aa364 mov %dl,0x8be(%r15)` + `aa39a inc %r15`, `cmp $8,%r13` -> 2 iterations",
+    "gates": "re regress PASS, re verify --strict PASS; T8: re regress PASS (T8 induction +0x8be=0x19 / +0x8bf=0x1a), scripts/verify_induction.py PASS (1 positive + 6 negative fixtures)"
+  },
+  "t8_tooling": {
+    "status": "RESOLVED",
+    "tooling_commit": "iced/test aa67a95",
+    "method": "bounded bottom-tested loop detection + constant pointer-induction enumeration + loop re-execution value domain (frame-array + register-spill aware)",
+    "re_field_writers_0x8bf": "0xaa364 sub_a7089 store a0 width=8 value=0x1a",
+    "re_packet_sub_a7089": "+0x8be=0x19, +0x8bf=0x1a (induction, EXACT, base_load=0x138)",
+    "manual_objdump_still_required": false
+  },
+  "supersedes": [
+    "value_provenance.json pi+0x8bf 'no store found; UNKNOWN; COMPUTED_RUNTIME'",
+    "operational_checkpoint_analysis.md 'pi+0x8bf = runtime'",
+    "radio_on_transition.json 'masks *(pi+0x8be/0x8bf)' runtime"
+  ],
+  "unknown_remains": false
+}

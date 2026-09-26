@@ -1,0 +1,203 @@
+{
+  "artifact": "pll_selector_provenance",
+  "blocker": "d4.pll_synth.rev42.branch (task alias D4-BLOCKER-PLL-SYNTH-REV42-SELECTOR)",
+  "status": "ANALYSIS COMPLETE",
+  "classification": "C. HARDWARE_REQUIRED",
+  "hardware_executed": false,
+  "tooling": {
+    "re": "re v5, re.db schema v5 (blob sha256 352a6e349f74...)",
+    "manual": "objdump -d whole-.text displacement scan for readers of the pi field (no re reader-enumeration command; tooling gap R-G1)"
+  },
+
+  "field_under_test": {
+    "object_field": "pi+0x16e (u8)",
+    "semantic_identity": "radio (BCM2069) revision class = radio_rev >> 4, i.e. the high nibble of the 2069 revision register byte",
+    "not": "'radio revision' as a standalone free variable",
+    "provisional_name_corrected_to": "radio_major_rev_class (2069 rev >> 4)",
+    "value_domain_observed": "0,1,2 (0 for rev 0..15; 1 for rev 16..31; 2 for rev 32..47; 15 for the rev254 special)"
+  },
+
+  "producer": {
+    "function": "wlc_phy_attach",
+    "ac_path": "phytype (pi+0x160) == 0x0B == wlc_phy_attach_acphy",
+    "inline_reader": "osl_writew(pi+0x148 + 0x3d8, sel); osl_readw(pi+0x148 + 0x3da)",
+    "window_base_field": "pi+0x148 (mapped PHY/radio register window base)",
+    "window_selector_register": "0x3d8 (radio indirect address latch); 0x3da = radio indirect data (16-bit)",
+    "reads_on_ac_path": [
+      {"pc": "0xbee18/0xbee32", "selector_written": 0, "result_reg": "r13d (radio reg 0 = 2069 revision register)"},
+      {"pc": "0xbeef7/0xbef0a", "selector_written": 1, "result_reg": "r14d (radio reg 1 = radio id, e.g. 0x2069)"}
+    ],
+    "window_gate": {
+      "condition": "uses 0x3d8/0x3da when NOT (hw+0x28 == 0x1B || hw+0x28 <= 0x17); otherwise reads 0x3f6/0x3f8/0x3fa",
+      "hw_plus_0x28_identity": "D11/PHY revision-ish dword read at [[pi+0x20]+0x28]",
+      "board_value": "AGENTS-state D11 rev 0x2A / 42 (>0x17, !=0x1B) => 0x3d8/0x3da confirmed on this board",
+      "confidence": "C1 (board value from hardware-proven M2.5/M3.4D3A1; exact struct field name not recovered)"
+    },
+    "extraction_ac": {
+      "value_assembly": "edx = (r13d << 16) | r14d",
+      "pi_plus_0x16a": "edx & 0xffff = r14d = radio reg 1 (radio id)",
+      "pi_plus_0x16c": "(edx >> 16) & 0xff = r13d & 0xff = full 2069 revision byte R",
+      "pi_plus_0x16d": "0",
+      "pi_plus_0x16e": "(edx >> 20) & 0xff = (r13d >> 4) & 0xff = R >> 4 (revision class)",
+      "pi_plus_0x16f": "(edx >> 16) & 0x0f = r13d & 0x0f = low revision nibble",
+      "store_pc": "0xbeff8 (pi+0x16e), 0xbefd3/0xbefe4/0xbeffe (sibling fields)"
+    },
+    "radio_id_accepted_for_ac": ["0x2069", "0x030B"],
+    "radio_rev_register_evidence": [
+      "sub_9fb72 @0x9fc89 compares pi+0x16a to 0x2069; @0x9fc92 loads pi+0x16c (R) and indexes a rev jump table with (R-3), range R in [3,38]",
+      "2069 per-rev tables exist: prefregs_2069_rev3/4/16/17/18/23/24/25/26/33_37, ovr_regs_2069_rev2/16/32",
+      "wlc_phy_radio_override_acphy branches on pi+0x16e == 2 / == 0 and (implicitly) rev1",
+      "wlc_phy_attach_acphy OTP fallback: pi+0x16e == 2 -> hw+0xF2=9; pi+0x16e == 1 -> hw+0xF2=0x0A"
+    ]
+  },
+
+  "overwrite_behavior": {
+    "ac_path_stores": 1,
+    "only_writer_ac": "wlc_phy_attach @0xbeff8",
+    "other_writer": "wlc_phy_periodic_cal_lpphy (16-bit, LPPHY only; NOT AC)",
+    "radio_reg0_writes_anywhere": "only sub_10a6a0 @0x10a6dc (write_radio_reg reg 0x0) - a non-AC (>=0x100000) path; radio reg 0 is hardware identity on the AC path",
+    "conclusion": "not overwritten on the AC operational path"
+  },
+
+  "initialization_order": [
+    "wlc_phy_attach allocates/zeroes pi (osl_malloc+osl_memset)",
+    "phytype/phyrev read from PHY reg 0x3e0 -> pi+0x160 (phytype), pi+0x164 (phyrev), pi+0x174 (0x3e0>>12)",
+    "radio reg 0 + reg 1 read through 0x3d8/0x3da -> pi+0x16a/16c/16e/16f",
+    "radio-id/revision validation vs accepted set {0x30B,0x2069}; mismatch -> wlc_phy_switch_radio(pi,0) then attach error path",
+    "wlc_phy_attach calls wlc_phy_switch_radio(pi, 0) (radio OFF) at 0xbf113",
+    "... later probe/init ...",
+    "wlc_phy_init @0xbad44 -> wlc_phy_switch_radio(ON=1) -> wlc_phy_switch_radio_acphy @0xaa782 reads pi+0x16e"
+  ],
+
+  "consumers": [
+    {
+      "function": "wlc_phy_switch_radio_acphy",
+      "pc": "0xaa7c0 (read), 0xaac59, 0xaad75, 0xab184, 0xab311, 0xab803",
+      "predicate": "al == 1 -> sequence A; al == 2 -> sequence B; else skip both",
+      "purpose": "radio analog/synth enable sequence selection (PLL lock)",
+      "reachable_on_bcm4352_rev42": "YES (first radio-ON via wlc_phy_init)",
+      "sel1": "sequence A",
+      "sel2": "sequence B",
+      "other": "skip both, continue at 0xaabf0/sub_9fb72"
+    },
+    {
+      "function": "sub_9fb72 (2069 radio init; ELF-local 'wlc_phy_set_analog_tx_lpf' region)",
+      "pc": "0x9fd68, 0x9ff79, 0x9ffc2, 0xa0065, 0xa00ac",
+      "predicate": "!=0 / ==2 / <=1 / ==1 per branch",
+      "purpose": "per-revision-class 2069 radio register programming",
+      "reachable_on_bcm4352_rev42": "YES (called from switch_radio_acphy @0xaabf3)",
+      "sel1": "class<=1 branches",
+      "sel2": "extra rev2-only writes (0x970=0x10, 0x11/0x0C etc.)",
+      "other": "class 0 path (rev 0..15)"
+    },
+    {
+      "function": "wlc_phy_radio_override_acphy",
+      "pc": "0x96db8 (read), 0x96e08 (==2), 0x96e7e (==0)",
+      "predicate": "==2 uses ovr_regs_2069_rev32 table + per-chain loop; ==1 uses ovr_regs_2069_rev2; ==0 uses ovr_regs_2069_rev16",
+      "purpose": "per-revision radio override register tables",
+      "reachable_on_bcm4352_rev42": "UNKNOWN (0 in-blob callers; fptr/attach-time)",
+      "sel1": "ovr_regs_2069_rev2",
+      "sel2": "ovr_regs_2069_rev32",
+      "other": "rev0 -> ovr_regs_2069_rev16"
+    },
+    {
+      "function": "wlc_phy_attach_acphy",
+      "pc": "0xa313b",
+      "predicate": "==2 -> hw+0xF2 = 9; dec al (==1) -> hw+0xF2 = 0x0A",
+      "purpose": "OTP fallback selection",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "hw+0xF2 = 0x0A",
+      "sel2": "hw+0xF2 = 9",
+      "other": "leave OTP value"
+    },
+    {
+      "function": "wlc_phy_tempsense_acphy",
+      "pc": "0xa3994, 0xa3e1f, 0xa3f7c, 0xa4038, 0xa44cc",
+      "predicate": "==0 / ==1 class branches",
+      "purpose": "per-revision temperature-sense programming",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "class1 variant", "sel2": "class2 variant", "other": "class0 variant"
+    },
+    {
+      "function": "wlc_phy_stf_chain_temp_throttle_acphy",
+      "pc": "0xa56c8, 0xa6f67, 0xa742a, 0xaa0c1, 0xaa108, 0xaa16c",
+      "predicate": "==0 / ==1 / ==2 class branches",
+      "purpose": "per-revision temp-throttle thresholds",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "class1 variant", "sel2": "class2 variant", "other": "class0 variant"
+    },
+    {
+      "function": "wlc_phy_rx_iq_est_acphy",
+      "pc": "0x939d2, 0x93ae0, 0x93c54, 0x93d95, 0x94113, 0x94381, 0x94659, 0x947ac, 0x94a9b",
+      "predicate": "==0 / ==1 / ==2 class branches",
+      "purpose": "per-revision RX IQ estimation variant",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "class1 variant", "sel2": "class2 variant", "other": "class0 variant"
+    },
+    {
+      "function": "wlc_phy_tx_tone_acphy",
+      "pc": "0xabe09, 0xad90f, 0xaeaf4, 0xafb84, 0xafc75, 0xafebf, 0xb12ee, 0xb137a",
+      "predicate": "==0 / ==1 class branches",
+      "purpose": "per-revision TX-tone (cal) variant",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "class1 variant", "sel2": "class2 variant", "other": "class0 variant"
+    },
+    {
+      "function": "wlc_phy_get_spurmode",
+      "pc": "0x8e9c5, 0x8ec4b",
+      "predicate": "reads pi+0x16e to pick spur mode family",
+      "purpose": "spur mode selection",
+      "reachable_on_bcm4352_rev42": "YES",
+      "sel1": "class1 list", "sel2": "class2 list", "other": "class0 list"
+    }
+  ],
+
+  "branch_mapping": {
+    "A": {"selector": 1, "radio_rev_range": "16..31", "first_op": "call sub_8fb39 @0xaa7d1", "radio_regs": "0x80b (chip-id gated BCM4352), 0x97f, 0x8ea; osl_delay(100); lock poll read_radio_reg(0x80b)&1 <= 0x65 iters x100us"},
+    "B": {"selector": 2, "radio_rev_range": "32..47", "first_op": "call sub_9027d @0xaab50 + write_radio_reg(0x60c,0x9e)", "radio_regs": "0x60c, lock polls read_radio_reg(0x0b)&1 and read_radio_reg(0x20b)&1"},
+    "skip": {"selector": "0 (rev 0..15) or other", "behavior": "no 0x80b/0x60c writes; continue at 0xaabf0 -> sub_9fb72"}
+  },
+
+  "static_closure": {
+    "proven_statically": [
+      "the selector is read from radio reg 0 bits[11:4] (hardware), not set by any board field",
+      "the A/B/skip mapping to selector values",
+      "the 2069 revision-class model (rev>>4) and the per-class consumers"
+    ],
+    "not_provable_statically": "the numeric 2069 revision of this board's radio, hence the executed branch",
+    "why": "radio reg 0 is read-only identity; no NVRAM/SPROM/chipstatic override exists (no 'radiorev'/'radioid' NVRAM var; the only radio-reg0 writer is a non-AC >=0x100000 path)",
+    "no_guessed_default": true
+  },
+
+  "hardware_fact_still_required": "read radio reg 0 (0x3d8=0 -> 0x3da) and radio reg 1 (0x3d8=1 -> 0x3da) on the BCM4352 board; selector = (reg0 >> 4) & 0xff; rev = reg0 & 0xff",
+
+  "read_only_probe_design": {
+    "status": "DESIGN ONLY - NOT IMPLEMENTED, NOT EXECUTED",
+    "reads": [
+      "osl_writew(phybase + 0x3d8, 0x0000); v0 = osl_readw(phybase + 0x3da)",
+      "osl_writew(phybase + 0x3d8, 0x0001); v1 = osl_readw(phybase + 0x3da)"
+    ],
+    "phybase": "pi+0x148 (mapped PHY/radio window base; == D11 core reg window base + PHY offset used by osl_readw/osl_writew)",
+    "prerequisite_state": "D11 core enabled + PHY/radio clock running; earliest already-proven safe point on the isolated path is after the D2B common-initvals exit (M3.4D2B) or the D3A1 tail; the vendor reads it at probe (wlc_phy_attach) after core reset",
+    "window_selector_is_a_write": "YES - the 0x3d8 address-latch write is unavoidable to select the radio register; it is the exact operation read_radio_reg performs and does not change radio configuration (address latch only). If a strictly write-free observation is required, it is IMPOSSIBLE: the 0x3da data port is only meaningful for the latched register.",
+    "dev_lost_integration": "OB_GUARD: use ob_d11_read16/ob_d11_write16 (pi+0x148==hw->core window) so a latched device returns OB_GUARD_DEAD16 and no MMIO follows; a 0xffff/0xffff pair must be treated as device-lost, not as a revision",
+    "expected_raw_result": "v0 (u16), v1 (u16); rev = v0 & 0xff; selector = (v0 >> 4) & 0xff; radio id = v1",
+    "selector_calc": "selector = (v0 >> 4) & 0xff",
+    "bounded": "2 writes + 2 reads, no polling, no state change beyond the address latch"
+  },
+
+  "new_blockers": [
+    {
+      "id": "d4.pll_branch.hw_probe",
+      "summary": "Exact executed PLL branch (A/B/skip) requires a read-only radio reg0 read on the BCM4352 board; probe designed, not implemented/executed.",
+      "evidence": ["docs/m34d4/pll_selector_provenance.json", "docs/m34d4/radio_identity_map.json"]
+    }
+  ],
+
+  "tooling_gaps": [
+    {"id": "R-G1", "class": "HIGH_REUSE", "desc": "re has no cross-function struct-field READER enumeration (re field-writers only lists writers); consumers of pi+0x16e required a whole-.text objdump displacement scan."},
+    {"id": "R-G2", "class": "HIGH_REUSE", "desc": "re cannot express a hardware-register-bitfield -> object-field provenance chain (radio reg0 bits[11:4] -> pi+0x16e) or a revision decision matrix."},
+    {"id": "R-G3", "class": "LOW_REUSE", "desc": "ELF function-boundary disagreement: sub_9fb72 (re, discovered/weak) spans ELF local symbols incl. wlc_phy_set_analog_tx_lpf; overlapping-symbol disambiguation still open (T6 family)."},
+    {"id": "R-G4", "class": "LOW_REUSE", "desc": "objdump/ELF symbol sizes for large .rodata/.data tables (pll_frac_tbl_rev*, chan_tuning_*, prefregs_*) are st_size-truncated (e.g. 'size=16'); true size requires next-symbol delta."}
+  ]
+}

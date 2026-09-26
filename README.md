@@ -36,22 +36,22 @@ drivers. See [`docs/provenance.md`](docs/provenance.md).
 > [`docs/m34d3a1_vendor_tail_test.md`](docs/m34d3a1_vendor_tail_test.md)
 > (implementation) and
 > [`docs/m34d3a1_vendor_tail.md`](docs/m34d3a1_vendor_tail.md) (analysis).
-> M3.4D3B (band init + `d11ac1bsinitvals42`) is **`ANALYSIS ONLY` / NOT
-> IMPLEMENTED / NOT HARDWARE PROVEN**; design
-> [`docs/m34d3b_band_init.md`](docs/m34d3b_band_init.md). Its
+> M3.4D3B (band init + `d11ac1bsinitvals42`) is **`IMPLEMENTED` / `STATIC
+> TESTED` / `SIGNED` / NOT HARDWARE PROVEN**; design
+> [`docs/m34d3b_band_init.md`](docs/m34d3b_band_init.md), implementation
+> [`docs/m34d3b_band_init_test.md`](docs/m34d3b_band_init_test.md). Its
 > `D3B IMPLEMENTATION GO: YES` — `VALUE FULLY PROVEN`: all five band-0 MHF
-> values are now proven — `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000,
+> values are proven — `mhfs[0..4] = {0x0100, 0x0000, 0x0000, 0x0000,
 > 0x0080}`. MHF3 (`antsel_type`) was closed by the 2026-09 read-only
-> SPROM-evidence capture: the already-read 234-word rev11 image
-> (`sprom_evidence_only=1`, zero extra MMIO; decoder
-> `scripts/sprom11_decode.py`) decodes to `antsel_type = 0` -> **MHF3 =
-> `0x0000`**. The capture is `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` /
-> **`HARDWARE RUNTIME PROVEN`** (BCM4352, frozen candidate `739273c`,
-> `openbrcm.ko` sha256 `538588e2…`); evidence
-> [`docs/m34d3b/d3b_sprom_capture.json`](docs/m34d3b/d3b_sprom_capture.json).
-> D3B analysis merged via PR #11, value closure via PR #13 (`main` @
-> `5f6c3d2`). Band init, bsinitvals, AC PHY, radio, calibration, channel, RX
-> and TX remain unproven.
+> SPROM-evidence capture (`sprom_evidence_only=1`, zero extra MMIO; decoder
+> `scripts/sprom11_decode.py`): `antsel_type = 0` -> **MHF3 = `0x0000`**. The
+> isolated `bsinitvals_test_only=1` mode reuses the D3A1 prefix with the D3A0
+> DMA engines left live (`ob_d3a1_run_prefix()`), writes the MHF vector derived
+> from the rev11 board fields, applies the 73 `d11ac1bsinitvals42` records and
+> STOPS before `wlc_phy_init`; it is `IMPLEMENTED` / `STATIC TESTED` / `SIGNED`
+> but **NOT HARDWARE PROVEN** (awaiting the one-shot run). D3B analysis merged
+> via PR #11, value closure via PR #13 (`main` @ `5f6c3d2`). AC PHY, radio,
+> calibration, channel, RX and TX remain unproven.
 > See `docs/agent-state.md`. Agent rules: [`AGENTS.md`](AGENTS.md).
 > MVP target: **BCM4352 `14e4:43b1`** (acphy, 2×2), kernel **7.x** (6.12 build
 > compatibility pending, tracked in

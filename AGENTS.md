@@ -11,16 +11,28 @@ Before modifying anything:
 
 1. `pwd` — must be this repository.
 2. `git status --short --branch`; `git rev-parse HEAD`; `git log --oneline -15`.
-3. Read `AGENTS.md` (this file), then `docs/agent-state.md`, then
-   `docs/milestones.md`, then `docs/re-tooling.md` (the canonical RE-tooling
-   document).
-4. Identify the **active milestone** and its exact **STOP boundary**.
-5. Check hook activation:
+3. Read `AGENTS.md` (this file).
+4. Verify and read the compact current-state index
+   `docs/current-context.json` (generated; see §10). Verify freshness with
+   `scripts/generate-current-context.py --check`; if stale, regenerate with
+   `scripts/generate-current-context.py`. This is the **first** state read:
+   it names the active milestone, active blocker, proven facts, superseded
+   claims, the current call path, tooling paths and the exact evidence files.
+5. Consult `docs/artifact-ledger.md` (the persistence index — consult it before
+   re-deriving any fact), then `docs/agent-state.md`, `docs/milestones.md` and
+   `docs/re-tooling.md` **only as needed for the active blocker** and for the
+   reconciliation required by §2. Do **not** recursively read the whole `docs/`
+   tree or historical milestone files at startup (§10).
+6. Identify the **active blocker** (current-context) and the exact **STOP
+   boundary** (§9 one-blocker discipline).
+7. Check hook activation:
    `git config --local --get core.hooksPath`; `ls -l .githooks/`.
-6. Run the lightweight read-only RE-tooling bootstrap: `scripts/re-bootstrap.sh`.
+8. Run the lightweight read-only RE-tooling bootstrap: `scripts/re-bootstrap.sh`.
    It must PASS; do not begin analysis if it FAILs (fix the index, not the
    symptom).
-7. Confirm no uncommitted work is about to be overwritten or discarded.
+9. Load only the blocker-specific evidence referenced by current-context, and
+   query the index with `re packet` first (see `docs/re-tooling.md` §4).
+10. Confirm no uncommitted work is about to be overwritten or discarded.
 
 Only then may code be changed. The OpenCode project integration
 (`.opencode/opencode.json`, `.opencode/plugins/`, `.opencode/skills/openbrcm-re`)
@@ -113,6 +125,14 @@ Manual disassembly is permitted only when:
 - a) `re`/`re.db` cannot answer the question, or
 - b) it is being used as independent verification of an indexed fact.
 
+Before falling back to manual disassembly, use the **tier-2 Ghidra headless**
+augmentation (decompiler + reference manager + CFG-aware value flow) via
+`scripts/ghidra_headless.sh` and the reusable `scripts/ghidra/*.java`; it is the
+sanctioned tool for indirect/vtable targets, interprocedural constant flow,
+struct-field aliasing and loop/engine-array base resolution that `re` leaves
+PARTIAL/CONDITIONAL/UNRESOLVED (`docs/re-tooling.md` §1.1). Ghidra under-
+segments this ET_REL blob, so cross-check its *negative* results against `re`.
+
 When a useful fact is missing from `re`, record it as a **tooling gap** (see
 `docs/re-tooling.md` §9) so the same manual work is not repeated indefinitely.
 The minimum workflow is:
@@ -128,3 +148,126 @@ The OpenCode project integration (`docs/re-tooling.md`, the `openbrcm-re`
 skill, and the project plugin) surfaces this automatically; it is still the
 agent's responsibility to follow it. `scripts/re-bootstrap.sh` must PASS before
 analysis begins.
+
+## 8. PROVEN FACT IMMUTABILITY (mandatory)
+
+If a fact is marked `PROVEN` in `docs/current-context.json` **and** its
+referenced canonical evidence:
+
+- exists, and
+- is reachable from the current repository state, and
+- matches the relevant binary identity (`binary_identity.blob_sha256`), and
+- has not been superseded (`docs/artifact-ledger.json`),
+
+then the agent **MUST NOT by default**:
+
+- re-derive it,
+- re-disassemble it,
+- rerun broad searches for it,
+- rewrite the proof, or
+- restate the full proof in chat.
+
+Instead: cite/reference the canonical artifact, consume the compact fact, and
+continue from it.
+
+Re-validation is allowed **only** if one of these applies:
+
+- contradictory evidence appears;
+- the binary/blob identity changes;
+- a relevant tooling bug is discovered (`docs/re-tooling.md` §9);
+- the source artifact is missing or stale;
+- the fact is explicitly marked `revalidation_ok` / `NEEDS_REVALIDATION`;
+- the current task explicitly requires revalidation.
+
+If a `PROVEN` fact conflicts with new evidence: **do not silently overwrite
+it.** Mark the conflict, open a focused blocker, preserve both evidence chains,
+and supersede only after proof. `scripts/generate-current-context.py --validate`
+mechanically rejects a `PROVEN` fact whose `record` is `SUPERSEDED`.
+
+## 9. ONE BLOCKER = ONE TASK (mandatory)
+
+Default behavior: **one blocker = one task.** A task has exactly one primary
+unresolved question.
+
+GOOD: *Resolve `pi+0x16e` value provenance.*
+GOOD: *Resolve the indirect target at `0x6923d`.*
+GOOD: *Recover initial-chanspec provenance.*
+
+BAD: *Resolve PLL + chanspec + calibration + dev_lost + implement D4.*
+
+During one blocker task the agent MAY inspect dependencies necessary to answer
+the blocker, but must not expand the task into unrelated blockers. New
+unrelated discoveries are **recorded**, assigned blocker IDs, added to
+`docs/state/current-state.json` (open blockers), and **deferred** — unless they
+invalidate the current task. The active blocker lives in
+`current-context.json → active_blocker` and must also appear in
+`open_blockers`.
+
+## 10. Token-efficient startup and the current-context index
+
+`docs/current-context.json` is a **generated compact view/cache/index**, not a
+source of truth. It is produced by `scripts/generate-current-context.py` from
+the machine-readable state (`docs/state/current-state.json`), the artifact
+ledger, and the binary/tooling identity. Authoritative evidence is never moved
+into it.
+
+- Regenerate: `scripts/generate-current-context.py`
+- Freshness / staleness: `scripts/generate-current-context.py --check`
+  (non-zero when `sources_hash` or the binary identity changed).
+- Integrity only: `scripts/generate-current-context.py --validate`
+  (resolves artifact references, rejects duplicate fact IDs, rejects a
+  `PROVEN` fact pointing at a `SUPERSEDED` record, requires the milestone to
+  exist, requires a supported `re.db` schema, enforces the size bound).
+- Local link scan: `scripts/generate-current-context.py --scan-links <files>`
+
+Do **not** silently regenerate during unrelated builds. Update
+`docs/state/current-state.json` only when the milestone/blocker state changes,
+together with `docs/agent-state.md` / `docs/milestones.md`.
+
+At startup, do **not**: recursively read the whole `docs/` tree; recursively
+scan historical milestone files; or load the entire artifact-ledger history
+into context. Use current-context plus the references it names.
+
+## 11. Token-efficient final output policy
+
+A normal task final response is **DELTA ONLY**:
+
+```
+TASK:
+RESULT:
+NEW FACTS:
+CHANGED CONCLUSIONS:
+BLOCKER CLOSED?:
+NEW BLOCKERS:
+ARTIFACTS:
+COMMIT:
+GO/NO-GO:
+```
+
+Do not reproduce unchanged milestone history, huge call graphs, full JSON,
+long disassembly, or entire proof chains — those belong in tracked artifacts.
+Target ≤ 80 lines unless the user explicitly requests a full audit/report.
+
+## 12. Prompt-cache governance (STABLE PREFIX / DYNAMIC TAIL)
+
+Model-request hygiene is a first-class project rule because prompt-cache reuse
+is prefix-based. Details: [`docs/cache/`](docs/cache/cache-architecture.md).
+
+- **STABLE PREFIX / DYNAMIC TAIL.** Long-lived invariant governance is the
+  stable prefix; the turn, tool results and state changes are the dynamic tail.
+  Never place a timestamp, HEAD hash, active-blocker id, GO/NO-GO, request id or
+  live token statistic in the prefix. Append to the tail; never rewrite or
+  reorder earlier stable bytes.
+- **ONE BLOCKER = ONE CACHE EPOCH.** A session resolves exactly one blocker.
+  Start it by freezing the validated `docs/current-context.json` snapshot; carry
+  mid-blocker state changes as append-only `STATE DELTA:` turns; end the epoch
+  by regenerating/validating current-context on disk. Prefer a new session for
+  the next blocker (never forced session deletion).
+- `docs/current-context.json` is **canonical-current on disk**; a running session
+  uses a frozen snapshot plus deltas.
+- **Observe, do not assume.** Cache telemetry
+  (`.opencode/plugins/openbrcm-cache.ts` → `.openbrcm-local/cache-telemetry.jsonl`,
+  report `scripts/cache-report.py`) is local-only and out-of-band. A live
+  cache-hit percentage is diagnostic only and is **never** a CI correctness gate.
+- Cache files, snapshots and telemetry are optimization metadata, never a source
+  of truth; deleting them loses no reverse-engineering knowledge.

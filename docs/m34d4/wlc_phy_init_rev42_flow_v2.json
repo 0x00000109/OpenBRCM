@@ -1,0 +1,319 @@
+{
+  "milestone": "M3.4D4A-v2",
+  "tool": "re v3 (support module)",
+  "target": {
+    "chip": "BCM4352",
+    "d11_rev": 42,
+    "phy_type": "AC/0x0b"
+  },
+  "entry": {
+    "caller": "sub_6656c @0x669df",
+    "band": 0
+  },
+  "wlc_phy_init": {
+    "addr": "0xbabf5",
+    "fields": [
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 390,
+        "kind": "store",
+        "site": "0xbac05",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 382,
+        "kind": "store",
+        "site": "0xbac19",
+        "value": "?",
+        "width": 16
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 390,
+        "kind": "store",
+        "site": "0xbac20",
+        "value": "0x1",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 399,
+        "kind": "store",
+        "site": "0xbac2a",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 3132,
+        "kind": "store",
+        "site": "0xbac4f",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 2700,
+        "kind": "store",
+        "site": "0xbac5d",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 412,
+        "kind": "store",
+        "site": "0xbac69",
+        "value": "?",
+        "width": 32
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 4241,
+        "kind": "store",
+        "site": "0xbacb4",
+        "value": "0x1",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 356,
+        "kind": "store",
+        "site": "0xbacca",
+        "value": "0x2",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 3084,
+        "kind": "store",
+        "site": "0xbacd3",
+        "value": "0xfffffffffffffffe",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 412,
+        "kind": "store",
+        "site": "0xbacda",
+        "value": "0x2",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 2700,
+        "kind": "store",
+        "site": "0xbace3",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 352,
+        "kind": "store",
+        "site": "0xbad0e",
+        "value": "0xb",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 312,
+        "field_offset": 813,
+        "kind": "store",
+        "site": "0xbad17",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 3976,
+        "kind": "store",
+        "site": "0xbad35",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 389,
+        "kind": "store",
+        "site": "0xbad53",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 352,
+        "kind": "store",
+        "site": "0xbad74",
+        "value": "0x2",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 3128,
+        "kind": "store",
+        "site": "0xbad8f",
+        "value": "?",
+        "width": 16
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 3130,
+        "kind": "store",
+        "site": "0xbad9e",
+        "value": "?",
+        "width": 16
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 356,
+        "kind": "store",
+        "site": "0xbadda",
+        "value": "0x2",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 412,
+        "kind": "store",
+        "site": "0xbadef",
+        "value": "0x2",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 32,
+        "field_offset": 148,
+        "kind": "store",
+        "site": "0xbae03",
+        "value": "0x1",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 32,
+        "field_offset": 128,
+        "kind": "store",
+        "site": "0xbae40",
+        "value": "?",
+        "width": 32
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 390,
+        "kind": "store",
+        "site": "0xbae5e",
+        "value": "0x0",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 352,
+        "kind": "store",
+        "site": "0xbae75",
+        "value": "0xa",
+        "width": 0
+      },
+      {
+        "base_arg": 0,
+        "base_load": 0,
+        "field_offset": 4006,
+        "kind": "store",
+        "site": "0xbae7c",
+        "value": "?",
+        "width": 16
+      },
+      {
+        "base_arg": 0,
+        "base_load": 312,
+        "field_offset": 911,
+        "kind": "store",
+        "site": "0xbae98",
+        "value": "0x0",
+        "width": 0
+      }
+    ],
+    "function": "wlc_phy_init",
+    "indirect": [
+      {
+        "base_arg": 0,
+        "candidate_name": "wlc_phy_init_lcnphy",
+        "candidate_target": "0xf2eee",
+        "confidence": "CONDITIONAL",
+        "field_offset": 40,
+        "operand": "call r13",
+        "provenance": "address-taken@field by wlc_phy_attach_lcnphy",
+        "site": "0xbad4c"
+      }
+    ],
+    "meta": {
+      "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+      "schema_version": 3
+    },
+    "mmio": [
+      {
+        "abs": null,
+        "access": "read",
+        "base": "*(a0 + 0x148)",
+        "io": "osl_readl",
+        "offset": 288,
+        "site": "0xbac44",
+        "value": "",
+        "width": 32
+      }
+    ],
+    "phy_ops": [
+      {
+        "class": "PHY",
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "pc": "0xbad85",
+        "reg": "0x18",
+        "value": "val=? mask=a3",
+        "window": "a0"
+      },
+      {
+        "class": "PHY",
+        "helper": "phy_reg_read",
+        "op": "READ",
+        "pc": "0xbad99",
+        "reg": "0x38",
+        "value": "val=? mask=a3",
+        "window": "a0"
+      }
+    ],
+    "register_tables": [],
+    "size": 738
+  },
+  "ac_path_verdict": {
+    "gate": "wlc_phy_init 0xbac6f mov r13,[rbx+0x28]; test r13,r13; je 0xbaecE",
+    "installer_proof": "wlc_phy_attach_acphy 0xa3001 mov qword ptr [rbx+0x28],0 (unconditional)",
+    "conclusion": "on rev42 AC, [phy+0x28]==0 -> the entire wlc_phy_init body is skipped at the band-init call site; indirect sites 0xbad4c (0x28) and 0xbabc7 (0x118, inside wlc_phy_anacore) are not executed on this path",
+    "indirect_0x28_candidates": "address_taken store_disp=0x28 lists family inits (htphy/lcnphy/abgphy/lpphy/sslpnphy/nphy/gphy); no acphy installer",
+    "indirect_0x118": "no installer found anywhere in .text (address_taken); UNRESOLVED"
+  }
+}

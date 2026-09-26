@@ -1,0 +1,184 @@
+{
+  "milestone": "M3.4D4 Phase 1",
+  "status": "ANALYSIS ONLY",
+  "path": "post-D3B continuous vendor execution (initial up)",
+  "note": "Each node lists address, caller, callees of interest, branch predicate, rev42 reachability, chanspec/band dependency, and access classes.",
+  "nodes": [
+    {
+      "id": "wlc_init",
+      "addr": "0x3c46f",
+      "caller": "wl_init/wlc_up (external)",
+      "role": "up/init orchestrator",
+      "rev42_reachable": true,
+      "chanspec_dep": "computes default chanspec (r14d) before wlc_bmac_init",
+      "access": [],
+      "calls_of_interest": [
+        {"site": "0x3c6f1", "callee": "wlc_bmac_init", "args": "chanspec=r14d", "note": "D2A/D2B/D3 inside"},
+        {"site": "0x3ca27", "callee": "wlc_set_home_chanspec", "args": "chanspec=r14d"},
+        {"site": "0x3cde0", "callee": "wlc_phy_cal_perical", "args": "reason=6"}
+      ]
+    },
+    {
+      "id": "wlc_bmac_init",
+      "addr": "0x6828a",
+      "caller": "wlc_init",
+      "role": "D11/BMAC init (D2/D3 + tail)",
+      "rev42_reachable": true,
+      "access": ["D11 MMIO", "SHM", "OBJ", "DMA", "IRQ-source"],
+      "predicates": [
+        {"site": "0x682f0?", "predicate": "phyrev / phytype gating of phy_switch_radio (0x69594, phy_type==7 only, not AC)"}
+      ],
+      "calls_of_interest": [
+        {"site": "0x695d8", "callee": "sub_6656c", "args": "chanspec, dl=0"},
+        {"site": "0x6833b", "callee": "wlc_phy_chanspec_radio_set", "note": "first channel-dependent HW write"},
+        {"site": "0x6834b", "callee": "wlc_phy_cal_init", "note": "AC: callback sub_8e77a (ret stub) -> effective no-op"}
+      ],
+      "indirect_unresolved": [
+        {"site": "0x69229", "operand": "call [rax+8]", "loop": "hw+0x20..0x50 objects", "candidate": "wlc_ol_down [CONDITIONAL]"},
+        {"site": "0x6923d", "operand": "call [rax+0xA0]", "status": "UNRESOLVED"},
+        {"site": "0x6924a", "operand": "call [rax+0xD8]", "candidate": "wlc_lcnphy_set_tx_pwr_ctrl [CONDITIONAL]"},
+        {"site": "0x69260/0x6926d", "operand": "call [rax+0xA0/0xD8] on [hw+0x38]", "gate": "phyrev==4 -> NOT AC"}
+      ]
+    },
+    {
+      "id": "sub_6656c",
+      "addr": "0x6656c",
+      "caller": "wlc_bmac_init @0x695d8; wlc_bmac_set_chanspec @0x67bd0",
+      "role": "band init / bsinitvals applier + AC PHY init entry",
+      "rev42_reachable": true,
+      "chanspec_dep": "chanspec arg (r12w)",
+      "access": ["D11 MMIO", "SHM", "PHY indirect (via wlc_phy_init)"],
+      "calls_of_interest": [
+        {"site": "0x669bd", "callee": "sub_60f67", "args": "d11ac1bsinitvals42", "note": "D3B"},
+        {"site": "0x669df", "callee": "wlc_phy_init", "args": "pi=[dev+0xE8][+0x28], chanspec=r12w", "predicate": "r13b==0 (initial up) OR phyrev<=0x27; for rev42 initial up r13b==0 -> TAKEN"}
+      ]
+    },
+    {
+      "id": "wlc_phy_init",
+      "addr": "0xbabf5",
+      "caller": "sub_6656c @0x669df",
+      "role": "AC PHY/radio init entry (NOT a no-op)",
+      "rev42_reachable": true,
+      "chanspec_dep": "stores chanspec at pi+0x17e and calls wlc_phy_chanspec_shm_set",
+      "access": ["SHM", "D11 MMIO read", "PHY indirect", "RADIO"],
+      "predicates": [
+        {"site": "0xbac05", "predicate": "[pi+0x186] (init_in_progress) == 0"},
+        {"site": "0xbac6f/0xbac76", "predicate": "[pi+0x28] == 0 -> return; rev42 value = sub_b018f (non-null) -> CONTINUE"},
+        {"site": "0xbad0e", "predicate": "[pi+0x160]==0xb (AC)"},
+        {"site": "0xbad27/0xbad35", "predicate": "chipid in {0x4352,0x4360} -> [pi+0xf88]=0"}
+      ],
+      "calls_of_interest": [
+        {"site": "0xbac31", "callee": "wlc_phy_chanspec_shm_set"},
+        {"site": "0xbac44", "callee": "osl_readl", "mmio": "D11+0x120 (read)"},
+        {"site": "0xbac84", "callee": "wlc_phy_anacore", "args": "on=1"},
+        {"site": "0xbaca9", "callee": "wlapi_bmac_bw_set"},
+        {"site": "0xbad44", "callee": "wlc_phy_switch_radio", "args": "on=1", "note": "FIRST RADIO-ON"},
+        {"site": "0xbad4c", "callee": "sub_b018f", "note": "indirect via r13=[pi+0x28]; AC PHY init callback"},
+        {"site": "0xbad6f", "callee": "wlc_phy_do_dummy_tx"},
+        {"site": "0xbadb7", "callee": "wlc_phy_txpower_update_shm"},
+        {"site": "0xbadca", "callee": "wlc_phy_ant_rxdiv_set"}
+      ]
+    },
+    {
+      "id": "wlc_phy_anacore",
+      "addr": "0xbaad1",
+      "caller": "wlc_phy_init @0xbac84 (on=1); wlc_phy_attach @0xbed84 (on=1); wlc_bmac_radio_hw",
+      "role": "bandgap / analog core enable",
+      "rev42_reachable": true,
+      "predicates": [{"site": "0xbaaea", "predicate": "phytype==4/7/5/6/8 have explicit tables; AC (0xb) falls to [pi+0x118] callback or D11 0x3e6 fallback"}],
+      "access": ["D11 MMIO write"],
+      "first_op": "for AC: osl_writew(D11+0x3e6, on?0x0:0xf4) @0xbabee ([pi+0x118] is uninstalled for AC)"
+    },
+    {
+      "id": "wlc_phy_switch_radio",
+      "addr": "0xba302",
+      "caller": "wlc_phy_init @0xbad44 (ON); wlc_phy_attach @0xbf113 (OFF); wlc_bmac_radio_hw (ON/OFF); wlc_bmac_init/coredisable (OFF)",
+      "role": "phytype dispatch of radio switch",
+      "rev42_reachable": true,
+      "predicates": [{"site": "0xba395", "predicate": "phytype [pi+0x160]==0xb -> wlc_phy_switch_radio_acphy @0xba3a1"}],
+      "access": ["D11 MMIO read (0x120)"],
+      "calls_of_interest": [{"site": "0xba3a1", "callee": "wlc_phy_switch_radio_acphy", "args": "on=sil"}]
+    },
+    {
+      "id": "wlc_phy_switch_radio_acphy",
+      "addr": "0xaa782",
+      "caller": "wlc_phy_switch_radio @0xba3a1",
+      "role": "AC radio ON/OFF",
+      "rev42_reachable": true,
+      "predicates": [
+        {"site": "0xaa796", "predicate": "sil==0 -> 0xAB413 (OFF); sil!=0 -> ON"},
+        {"site": "0xaa7c0", "predicate": "[pi+0x16e]==1 -> long ON path; ==2 -> 0xaab42; else -> 0xaabf0"},
+        {"site": "0xab64e", "predicate": "chipid==0x4335 for some tail writes"}
+      ],
+      "access": ["PHY indirect", "RADIO", "delays", "bounded polls"],
+      "calls_of_interest": [
+        {"site": "0xaa7bb", "callee": "wlapi_suspend_mac_and_wait"},
+        {"site": "0xaa7d1", "callee": "sub_8fb39", "note": "82 PHY writes; first = phy_reg_mod(0x830,0x7,0x3) @0x8fb54"},
+        {"site": "0xaa80f", "callee": "mod_radio_reg", "note": "FIRST RADIO WRITE: 0x80b set 0x80"},
+        {"site": "0xaaab6", "callee": "read_radio_reg", "note": "PLL-lock bounded poll (0x80b bit0, <=101 iters)"},
+        {"site": "0xaab50", "callee": "sub_9027d", "note": "PHY PLL/clock regs", "gate": "[pi+0x16e]==2"},
+        {"site": "0xaab62", "callee": "write_radio_reg", "args": "0x60c=0x9e", "note": "RF PLL programming", "gate": "[pi+0x16e]==2"},
+        {"site": "0xaabf3", "callee": "sub_9fb72", "note": "radio/PHY trims"},
+        {"site": "0xab3d3", "callee": "sub_9591e", "note": "mandatory radio RX calibration (bounded poll)"},
+        {"site": "0xab3e6", "callee": "sub_a04c2"},
+        {"site": "0xab3f5", "callee": "sub_a7089", "note": "chanspec_radio_set + rfpll + tables"},
+        {"site": "0xab409", "callee": "wlapi_enable_mac"}
+      ]
+    },
+    {
+      "id": "sub_b018f",
+      "addr": "0xb018f",
+      "size_bytes": 709,
+      "installed_as": "pi+0x28 (pi_fptr.init) by wlc_phy_attach_acphy @0xa3005",
+      "caller": "wlc_phy_init @0xbad4c (via r13)",
+      "role": "AC PHY init callback (real AC init body)",
+      "rev42_reachable": true,
+      "chanspec_dep": "passes pi+0x17e (chanspec) to sub_a7089",
+      "access": ["PHY indirect", "RADIO (via sub_a7089)", "PMU/SI", "delays"],
+      "calls_of_interest": [
+        {"site": "0xb01dc", "callee": "phy_reg_mod", "args": "0x1b0 set 0x8000"},
+        {"site": "0xb022f/0xb025a", "callee": "si_pmu_regcontrol"},
+        {"site": "0xb0270", "callee": "si_gpiocontrol"},
+        {"site": "0xb0278", "callee": "wlc_phy_hirssi_elnabypass_init_acphy"},
+        {"site": "0xb0288", "callee": "sub_a04c2"},
+        {"site": "0xb02a9", "callee": "sub_a7089", "args": "chanspec=pi+0x17e"},
+        {"site": "0xb02fb..0xb042a", "callee": "phy_reg_write", "note": "18 PHY writes 0x33a..0x349, 0x16e/0x16f/0x170"},
+        {"site": "0xb0448", "callee": "sub_affa9"}
+      ]
+    },
+    {
+      "id": "wlc_set_home_chanspec",
+      "addr": "0x39e94",
+      "caller": "wlc_init @0x3ca27",
+      "role": "set home chanspec",
+      "rev42_reachable": true,
+      "chanspec_dep": "yes"
+    },
+    {
+      "id": "wlc_phy_cal_perical",
+      "addr": "0xb57d3",
+      "caller": "wlc_init @0x3cde0 (reason 6); wlc_phy_watchdog; wlc_full_phy_cal",
+      "role": "periodic/initial calibration dispatcher",
+      "rev42_reachable": true,
+      "predicates": [{"site": "0xb5805", "predicate": "phytype==0xb (AC)"}, {"site": "0xb5b38", "predicate": "[pi+0xf89]==2"}],
+      "calls_of_interest": [{"site": "0xb5aac", "callee": "wlc_phy_cals_acphy", "note": "AC calibration"}]
+    },
+    {
+      "id": "wlc_phy_cals_acphy",
+      "addr": "0xb13b5",
+      "caller": "wlc_phy_cal_perical @0xb5aac",
+      "role": "AC calibration",
+      "rev42_reachable": true,
+      "chanspec_dep": "indirect (tables/cal use chanspec/bandwidth)",
+      "access": ["PHY indirect", "RADIO", "PHY_TABLE"],
+      "first_ops": {
+        "first_phy": "phy_reg_mod(0x160,0x7,mask=*(pi+0xa7)) @0x97d50 (via wlc_phy_rxcore_setstate_acphy)",
+        "first_table": "wlc_phy_table_write_acphy table 0xc @0xb156f",
+        "first_radio": "mod_radio_reg(0x8e5,0x4000) @0x9315d (via sub_9311b)"
+      }
+    }
+  ],
+  "legend": {
+    "access_classes": ["D11 MMIO", "SHM", "OBJ", "DMA", "IRQ-source", "PHY indirect", "RADIO", "PHY_TABLE", "PMU/SI", "delay", "poll", "calibration"]
+  }
+}

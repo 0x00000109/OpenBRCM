@@ -25,3 +25,7 @@ __pycache__/
 # editor
 *.swp
 *~
+
+# local cache telemetry / frozen snapshots (never part of project knowledge)
+.openbrcm-local/
+

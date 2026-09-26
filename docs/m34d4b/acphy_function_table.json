@@ -1,0 +1,183 @@
+{
+  "milestone": "M3.4D4B",
+  "function_table": {
+    "family": "acphy",
+    "vtable_installs_by_other_families": {
+      "-0x1": "wlc_scb_ratesel_rssi_enable",
+      "0x0": "wlc_ol_up",
+      "0x8": "wlc_scan_down",
+      "0x28": "wlc_phy_init_sslpnphy",
+      "0x30": "wlc_phy_cal_init_sslpnphy",
+      "0x38": "wlc_phy_chanspec_set_sslpnphy",
+      "0x40": "wlc_sslpnphy_txpower_recalc_target",
+      "0xe8": "wlc_phy_tpc_iovar_isenabled_lcn40phy",
+      "0x120": "wlc_lcnphy_write_table",
+      "0x128": "wlc_lcnphy_read_table",
+      "0x130": "wlc_lcnphy_calib_modes",
+      "0x50": "wlc_sslpnphy_get_tx_iqcc",
+      "0x60": "wlc_sslpnphy_set_tx_iqcc",
+      "0x70": "wlc_sslpnphy_get_tx_locc",
+      "0x90": "wlc_sslpnphy_get_radio_loft",
+      "0x98": "wlc_lcnphy_set_radio_loft",
+      "0xc0": "wlc_phy_detach_sslpnphy",
+      "0xd8": "wlc_lcnphy_set_tx_pwr_ctrl",
+      "0xf0": "wlc_lcnphy_set_tx_pwr_by_index",
+      "0xb8": "wlc_phy_rx_signal_power_lpphy",
+      "0x100": "wlc_phy_watchdog_sslpnphy"
+    },
+    "acphy_attach_installs": [
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "store_disp": 248,
+        "dst_name": "wlc_phy_btc_adjust_acphy",
+        "dst_addr": 628233,
+        "site": 667736
+      }
+    ],
+    "acphy_zeroed_slots": [
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "site": 667649,
+        "field_offset": 40,
+        "value": "0x0"
+      },
+      {
+        "writer": "wlc_phy_attach_acphy",
+        "site": 667657,
+        "field_offset": 48,
+        "value": "0x0"
+      }
+    ],
+    "generic_slot_names": {
+      "0x28": "init",
+      "0x30": "cal_init",
+      "0x38": "chanspec_set",
+      "0x40": "txpower_recalc",
+      "0xc0": "detach"
+    },
+    "unresolved_callbacks": {
+      "phy+0x110": {
+        "used_by": "wlc_phy_switch_radio (0xba532 call rax)",
+        "installer": "none in address_taken/field_sites",
+        "rev42_ac_reachable": false,
+        "note": "AC takes the explicit 0xba3a1 branch to wlc_phy_switch_radio_acphy, so +0x110 is not used for AC"
+      },
+      "phy+0x118": {
+        "used_by": "wlc_phy_anacore (0xbabc7 call rax)",
+        "installer": "none in .text",
+        "rev42_ac_reachable": true,
+        "note": "if null, anacore uses the D11+0x3e6 fallback write"
+      },
+      "phy+0x30": {
+        "used_by": "wlc_phy_cal_init (0xb1bc9 call rax)",
+        "installer": "zeroed by attach_acphy 0xa3009",
+        "rev42_ac_reachable": false
+      },
+      "phy+0x28": {
+        "used_by": "wlc_phy_init (0xbad4c call r13)",
+        "installer": "zeroed by attach_acphy 0xa3001",
+        "rev42_ac_reachable": false
+      }
+    },
+    "acphy_install_confirmed": {
+      "offset": 248,
+      "target": "wlc_phy_btc_adjust_acphy",
+      "provenance": "R_X86_64_32S relocation on imm32 of 'movq $imm,0xf8(%rbx)' at 0xa3052 (objdump -r: 0xa3059); ghidra DATA ref from 0x1a3052; re address_taken store_disp=0xF8"
+    },
+    "acphy_also_zeroed_slots": [
+      56,
+      64,
+      192,
+      200,
+      208,
+      256
+    ],
+    "ghidra_crosscheck": {
+      "phy+0x118": "no installer (confirmed by ghidra refs + re address_taken)",
+      "phy+0x110": "no installer (confirmed)",
+      "wlc_phy_init_data_refs": "none -> never installed as a callback",
+      "wlc_phy_cals_acphy": "referenced from wlc_phy_cal_perical / wlc_phy_init_test_acphy (not on attach path)"
+    },
+    "classification_scheme": "INSTALLED_EXACT | INTENTIONALLY_NULL | UNRESOLVED",
+    "fields": [
+      {
+        "offset": 40,
+        "name": "init",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed wlc_phy_attach_acphy 0xa3001; no DATA ref to wlc_phy_init; consumer wlc_phy_init 0xbad4c (je 0xbaecE, not taken)"
+      },
+      {
+        "offset": 48,
+        "name": "cal_init",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa3009; consumer wlc_phy_cal_init 0xb1bc9 (je, not taken)"
+      },
+      {
+        "offset": 56,
+        "name": "chanspec_set",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa3016"
+      },
+      {
+        "offset": 64,
+        "name": "txpower_recalc",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa301e"
+      },
+      {
+        "offset": 192,
+        "name": "detach",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa3031"
+      },
+      {
+        "offset": 200,
+        "name": "?",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa3047"
+      },
+      {
+        "offset": 208,
+        "name": "?",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa303c"
+      },
+      {
+        "offset": 256,
+        "name": "?",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "zeroed 0xa3026"
+      },
+      {
+        "offset": 248,
+        "name": "btc_adjust",
+        "class": "INSTALLED_EXACT",
+        "target": "wlc_phy_btc_adjust_acphy",
+        "installer": "wlc_phy_attach_acphy",
+        "instruction": "movq $imm,0xf8(%rbx) @0xa3052",
+        "relocation": "R_X86_64_32S wlc_phy_btc_adjust_acphy @0xa3059",
+        "ghidra_ref": "DATA ref from 0x1a3052",
+        "predicate": "none (unconditional)",
+        "rev42_reachable": true,
+        "consumer": "wlc_phy_watchdog @0xbc770"
+      },
+      {
+        "offset": 272,
+        "name": "radio_cb",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "object zero-filled (osl_memset) then no writer; consumer wlc_phy_switch_radio 0xba532; AC takes explicit 0xba3a1 branch"
+      },
+      {
+        "offset": 280,
+        "name": "anacore_cb",
+        "class": "INTENTIONALLY_NULL",
+        "evidence": "object zero-filled; no writer (ghidra refs + re address_taken); consumer wlc_phy_anacore 0xbabc7 -> D11 0x3e6 fallback"
+      }
+    ],
+    "counts": {
+      "installed_exact": 1,
+      "intentionally_null": 10,
+      "unresolved": 0
+    }
+  }
+}

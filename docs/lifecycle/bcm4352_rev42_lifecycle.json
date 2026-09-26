@@ -1,0 +1,146 @@
+{
+  "milestone": "M3.4 lifecycle reconstruction (BCM4352 rev42 AC)",
+  "status": "ANALYSIS ONLY",
+  "baseline": {
+    "re": "0c7cf87538b9391283f3f26f1ce36bf077b21ce4dccceb8f6a6433f94c8f3137",
+    "re_db": "44dae60d232b08bc8990e446220eaaf684d7fa180f728559114643f27f71c4af",
+    "schema": "v4",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "prior_commit": "e8946a1",
+    "corpora": ["wlc_hybrid.o_shipped", "wl.ko", "wl7-64.sys", "wl10-64.sys"]
+  },
+
+  "cp02_reconciliation": {
+    "contradiction": "D4C said CP-A3/radio_hw is BEFORE D2/D3, but also said CP-O2 has PSM running and DMA initialized (D3A0). These cannot both hold for the same vendor-time state.",
+    "resolution": "wlc_bmac_radio_hw is an RPC-dispatched function (WLRPC_WLC_BMAC_RADIO_HW_ID) with no in-corpus caller. It is NOT executed during the vendor Linux attach/init; therefore there is no vendor-time CP-O2 to order. The D4C 'CP-O2' state was an unjustified inference.",
+    "A_vendor_entry_state": "N/A / UNKNOWN (no vendor caller, no defined entry phase)",
+    "B_vendor_exit_state": "N/A / UNKNOWN",
+    "C_proposed_openbrcm_after_D3": "PSM running (D2A), DMA engines initialized (D3A0), MAC per initvals, then radio ON",
+    "D_vendor_faithful": false,
+    "D_note": "C is HYPOTHETICAL: the vendor does not invoke wlc_bmac_radio_hw in this corpus."
+  },
+
+  "external_caller": {
+    "found": false,
+    "searched": {
+      "re.db (wlc_hybrid.o_shipped)": "0 callers",
+      "ghidra refs": "none",
+      "readelf -r wl.ko": "no relocation to wlc_bmac_radio_hw",
+      "wl.ko radare2 axt": "none (analysis inconclusive for reloc'd calls)",
+      "wl.ko symbols": "LOCAL FUNC, unique, no alias",
+      "wl7-64.sys / wl10-64.sys": "string WLRPC_WLC_BMAC_RADIO_HW_ID present"
+    },
+    "layer": "offload / RPC layer (bcm_ol); RPC ID WLRPC_WLC_BMAC_RADIO_HW_ID",
+    "rpc_id_symbol": "WLRPC_WLC_BMAC_RADIO_HW_ID",
+    "conclusion": "wlc_bmac_radio_hw is an RPC-dispatch target, not a C-called attach/init function. Its caller is the RPC/offload layer (or the peer firmware), not present in the available corpora."
+  },
+
+  "api_contract": {
+    "signature": "wlc_bmac_radio_hw(void *hw, bool on, bool arg2)",
+    "arg0": "wlc_hw (sih @+0xb8, d11 @+0xd0, band @+0xe8, chip/common @+0x20)",
+    "arg1_on": "radio enable (1) / disable (0)",
+    "arg2": "skip wlc_phy_anacore when true (0x63e9e test r12b; jne 0x63eb8)",
+    "behavior_on1": "sih otp guard + PMU radio enable -> wlc_phy_anacore(1) -> wlc_phy_switch_radio(1) -> AC ON branch",
+    "callsites_in_corpus": 0,
+    "frequency": "unknown; RPC-driven",
+    "attach_time_call": false,
+    "init_time_call": false,
+    "band_change_call": false,
+    "suspend_resume_call": false,
+    "down_up_call": false
+  },
+
+  "lifecycle": [
+    {"id":"L01","phase":"PCI probe / module init","status":"UNKNOWN","evidence":"outside corpus (wl_pci_probe / wl_init in wl.ko .text); exact entry UNKNOWN"},
+    {"id":"L02","phase":"SI/BCMA attach","status":"KNOWN","evidence":"M2"},
+    {"id":"L03","phase":"SPROM/NVRAM parse","status":"KNOWN","evidence":"M2 / rev11 SPROM"},
+    {"id":"L04","phase":"PHY object attach wlc_phy_attach(on=0)","status":"KNOWN","evidence":"wlc_bmac_attach 0x6a138 -> wlc_phy_attach 0xbe426"},
+    {"id":"L05","phase":"band structure attach","status":"KNOWN","evidence":"same attach path"},
+    {"id":"L06","phase":"CP-A3 (end wlc_phy_attach, radio OFF)","status":"KNOWN","evidence":"d4b/d4c"},
+    {"id":"L07","phase":"dma_attach (allocation)","status":"KNOWN","evidence":"wlc_bmac_attach 0x6a3d6+ (after phy_attach)"},
+    {"id":"L08","phase":"wlc_init -> wlc_bmac_init","status":"KNOWN","evidence":"wl_init 0x184a60 -> wlc_init 0x3c46f -> wlc_bmac_init 0x6828a"},
+    {"id":"L09","phase":"chanspec/band set (wlc_phy_chanspec_radio_set)","status":"KNOWN","evidence":"wlc_bmac_init 0x6833b; default = wlc_default_chanspec"},
+    {"id":"L10","phase":"wlc_phy_cal_init (AC no-op)","status":"KNOWN","evidence":"0x6834b; +0x30 null"},
+    {"id":"L11","phase":"ucode upload / PSM start (D2A)","status":"KNOWN","evidence":"sub_607b0/sub_60c2f/wowlucode_start 0x684c4..0x68500; D2A proven"},
+    {"id":"L12","phase":"common initvals (D2B)","status":"KNOWN","evidence":"sub_60f67 0x6888a; D2B proven 610/113/497"},
+    {"id":"L13","phase":"D11 tail sub_67efd (D3A1)","status":"KNOWN","evidence":"0x68bab; D3A1 proven"},
+    {"id":"L14","phase":"DMA engines init + NVRAM/BTC SHM tail (D3A0)","status":"KNOWN","evidence":"macphyclk_set 0x690b1, sub_62b79 0x69461; D3A0 proven"},
+    {"id":"L15","phase":"switch_macfreq","status":"KNOWN","evidence":"0x695cb; D3A1 proven"},
+    {"id":"L16","phase":"band init: MHF + bsinitvals (D3B)","status":"KNOWN","evidence":"sub_6656c 0x695d8; D3B analysis"},
+    {"id":"L17","phase":"wlc_phy_init (inside sub_6656c)","status":"KNOWN","evidence":"AC no-op ([phy+0x28]==0)"},
+    {"id":"L18","phase":"wlc_up -> wlc_bmac_up_prep/hw_up/up_finish","status":"KNOWN","evidence":"wlc_up 0x3aac3"},
+    {"id":"L19","phase":"IRQ enable (wl_intrson)","status":"KNOWN","evidence":"wlc_bmac_up_finish -> wl_intrson"},
+    {"id":"L20","phase":"wlc_bmac_radio_hw(on=1) radio enable","status":"EXTERNAL_UNKNOWN","evidence":"RPC WLRPC_WLC_BMAC_RADIO_HW_ID; no in-corpus caller; position relative to L11-L19 NOT ORDERABLE"},
+    {"id":"L21","phase":"channel programming (runtime wlc_bmac_set_chanspec)","status":"KNOWN","evidence":"wlc_channel_set_chanspec 0x174239 -> wlc_bmac_set_chanspec 0x67918"},
+    {"id":"L22","phase":"RX/TX operational","status":"UNKNOWN","evidence":"not proven; requires L20 and L21"}
+  ],
+
+  "h_new": {
+    "statement": "OpenBRCM reached D2/D3/D3B without reproducing an earlier mandatory attach-level PHY/radio init performed by the vendor through wlc_bmac_radio_hw(on=1), leaving hardware/PSM incomplete and making D3B unsafe.",
+    "supported": false,
+    "evidence_for": ["radio-ON branch code exists and is large (242 PHY / 296 RADIO)",
+                      "D4C showed the branch is radio-ON only"],
+    "evidence_against": ["wlc_bmac_radio_hw has no caller in wlc_hybrid.o_shipped or wl.ko (re + Ghidra + readelf + symbol alias check)",
+                         "wlc_phy_init on=1 is AC-unreachable",
+                         "the only other on=1 site (wlc_bmac_radio_hw) is an RPC target, not a normal C path",
+                         "no relocation references wlc_bmac_radio_hw anywhere in the linked module"],
+    "missing_evidence": ["RPC/offload dispatcher object (bcm_ol) that maps WLRPC_WLC_BMAC_RADIO_HW_ID to the function",
+                         "peer firmware lifecycle"],
+    "conclusion": "H_NEW is NOT SUPPORTED by the available corpus. There is no vendor attach/init radio call to omit."
+  },
+
+  "persistent_state_category_E": {
+    "note": "No early radio-on is executed in-corpus, so no category-E state is produced by it.",
+    "category_A_transient": [], "category_B_until_core_reset": [],
+    "category_C_until_radio_reset": [], "category_D_overwritten": [],
+    "category_E_assumed_later": []
+  },
+
+  "required_before": {
+    "before_ucode_upload": "UNKNOWN (no evidence of dependency)",
+    "before_psm_start": "UNKNOWN",
+    "before_common_initvals": "UNKNOWN",
+    "before_DMA": "UNKNOWN",
+    "before_bsinitvals": "UNKNOWN",
+    "before_wlc_phy_init": "UNKNOWN",
+    "verdict": "no dependency evidence; ordering alone is not dependency"
+  },
+
+  "mac_dma_chronology": {
+    "CP-A3": {"EN_MAC": "not started (attach)", "PSM_RUN": false, "DMA": "allocated only (dma_attach), engines not initialized"},
+    "after_D2A": {"PSM_RUN": true},
+    "after_D3A0": {"DMA": "TX/RX engines initialized"},
+    "after_D3B": {"MAC": "per initvals", "PSM_RUN": true, "DMA": "initialized"},
+    "CP-O2": "N/A (not vendor-orderable)"
+  },
+
+  "cp02_reassessment": {
+    "vendor_reachable": false,
+    "bcm4352_reachable": "code-reachable if an on=1 call occurs; no call in corpus",
+    "naturally_quiescent": "unknown",
+    "observable": false,
+    "safe_to_stop": "unknown",
+    "teardown_possible": "unknown",
+    "useful_as_milestone": false,
+    "classification": "EXTERNAL-API CHECKPOINT / NOT ORDERABLE FROM CURRENT CORPUS"
+  },
+
+  "architecture": {
+    "model_A_current": {"supported": true, "note": "board -> D2 -> D3 -> (later PHY) is the in-corpus host lifecycle"},
+    "model_B_early_radio": {"supported": false, "note": "no vendor attach/init radio call exists to insert"},
+    "model_C": {"status": "n/a"},
+    "smallest_pre_D2_milestone": "NONE"
+  },
+
+  "oracle": {
+    "RE": ["call graph", "wlc_phy_init guard", "wlc_bmac_init order"],
+    "GHIDRA": ["decompile", "refs"],
+    "BOTH": ["wlc_bmac_radio_hw unreferenced"],
+    "ELF_RELOCATION": ["wl.ko reloc scan for wlc_bmac_radio_hw (none)", "wlc_init PLT32 caller wl_init"],
+    "CROSS_IMAGE": ["wl7/wl10 WLRPC_WLC_BMAC_RADIO_HW_ID string"],
+    "MANUAL": "0"
+  },
+  "tooling_gaps": [
+    "re cannot represent external/cross-binary/RPC-dispatch call edges; a fact as important as 'function is an RPC target with no in-object caller' has no DB representation."
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "milestone": "M3.4D4A",
+  "title": "BCM4352 rev42 AC-PHY wlc_phy_init decomposition",
+  "target": {
+    "chip": "BCM4352",
+    "d11_rev": 42,
+    "d11_rev_hex": "0x2a",
+    "phy_type": "AC / 0x0b",
+    "phy_rev": "0x2a",
+    "initial_band": 0
+  },
+  "tooling": {
+    "re_binary_sha256": "6b91079459fdd281729314f97ea1c177fac294b47fcce3ff98bc3874cd4cf4fc",
+    "re_db_sha256": "7812fec92c2e46fa3702e2560a1521eb5984fe73ca2c430c222bb4bc0d3f78f0",
+    "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "functions": 5095,
+    "calls": 51193,
+    "reloc_site_mismatches": 0,
+    "bootstrap": "PASS",
+    "queries": [
+      "re fn wlc_phy_init --asm",
+      "re switch wlc_phy_init --json",
+      "re card wlc_phy_init",
+      "re fn wlc_phy_chanspec_shm_set",
+      "re fn wlc_phy_anacore --asm",
+      "re fn wlc_phy_anacore_htphy",
+      "re fn wlapi_bmac_bw_set",
+      "re fn wlc_bmac_bw_set",
+      "re fn wlc_phy_switch_radio --asm",
+      "re switch wlc_phy_switch_radio --json",
+      "re fn wlc_phy_switch_radio_acphy",
+      "re fn wlc_phy_do_dummy_tx",
+      "re fn phy_reg_read --asm",
+      "re fn phy_reg_write --asm",
+      "re fn phy_reg_mod --asm",
+      "re fn wlc_phy_txpower_update_shm",
+      "re fn wlc_phy_ant_rxdiv_set",
+      "re fn wlapi_suspend_mac_and_wait",
+      "re fn wlc_bmac_suspend_mac_and_wait --asm",
+      "re fn wlapi_bmac_read_shm",
+      "re fn sub_b740d",
+      "nm -C wlc_hybrid.o_shipped (anacore/init symbols)"
+    ]
+  },
+  "entry": {
+    "vendor_caller": "wlc_bmac_init (0x6828a) at 0x695d8",
+    "band_arg": "rdx = 0 (band 0 initial up)",
+    "sub_6656c_pre_bs": {
+      "read_only": "osl_readw(D11+0x3e0) at 0x665c3",
+      "mhf": "sub_62766 (wlc_bmac_write_mhf) at 0x665d6 -> SHM 0x5e/0x60/0x62/0x78/0xd4",
+      "bsinitvals": "sub_60f67(d11ac1bsinitvals42) at 0x669bd (73 records)",
+      "stop_note": "no delay/poll/handshake between 0x669c2 and 0x669df"
+    },
+    "wlc_phy_init_call": "0x669df (band==0 -> always taken; phyrev>0x27 skip only on band!=0 path)"
+  },
+  "phases": [
+    {
+      "id": "D4.0",
+      "name": "entry / guards / chanspec SHM",
+      "entry_state": "MAC PSM running (MACCONTROL=0x44020402), PHY uninitialised, band initvals applied",
+      "operations": [
+        "cmp [pi+0x186],0 ; re-entry guard -> skip whole init if already set",
+        "mov [pi+0x17e],chanspec ; store chanspec",
+        "mov byte [pi+0x186],1 ; mark in-init",
+        "wlc_phy_chanspec_shm_set(pi,chanspec) -> wlapi_bmac_write_shm(dev, 0xa0, chanspec)",
+        "osl_readl([pi+0x148]+0x120) = D11 MACCONTROL read",
+        "cache [pi+0x19c] control bits; set [pi+0xc3c]=0"
+      ],
+      "writes": ["SHM 0xa0"],
+      "async": "none",
+      "wait_poll": "none",
+      "exit_state": "chanspec in SHM 0xa0; MACCONTROL sampled into pi->flags",
+      "next_dependency": "PHY/radio initialisation"
+    },
+    {
+      "id": "D4.1",
+      "name": "anacore (analog core)",
+      "entry_state": "as D4.0 exit",
+      "operations": [
+        "wlc_phy_anacore(pi, 1)",
+        "  phy type switch: 4/5/6/7/8 handled; AC (0x0b) -> generic branch",
+        "  generic: if [pi+0x118]!=0 -> call AC anacore fn ptr; else osl_writew(D11+0x3e6, en?0:0xf4)"
+      ],
+      "writes": ["D11 0x3e6 (PHY0) OR indirect AC anacore writes"],
+      "async": "analog power/clocks possibly changed",
+      "wait_poll": "none proven",
+      "exit_state": "first PHY-indirect operation performed",
+      "next_dependency": "BW/PHY reset, radio switch"
+    },
+    {
+      "id": "D4.2",
+      "name": "bandwidth set / PHY reset",
+      "entry_state": "as D4.1 exit",
+      "operations": [
+        "wlapi_bmac_bw_set(pi->wlc) -> wlc_bmac_bw_set (0x6607f)",
+        "  reads D11 0x120; wlc_bmac_bw_reset/wlc_bmac_phy_reset; wlc_phy_chanspec_get; may re-call wlc_phy_init (0x660ff)"
+      ],
+      "writes": ["D11 / PHY reset path"],
+      "async": "possible PHY reset",
+      "wait_poll": "inside wlc_bmac_bw_reset / phy_reset",
+      "exit_state": "bandwidth consistent",
+      "next_dependency": "radio switch"
+    },
+    {
+      "id": "D4.3",
+      "name": "AC/chip-specific tweaks",
+      "entry_state": "as D4.2 exit",
+      "operations": [
+        "if phytype==0x0b and (chipid==0x4352 or 0x4360): [pi+0x32d]=0, [pi+0xf88]=0",
+        "phytype==0x0b also clears [pi+0xc0c] bit0 under rev conditions"
+      ],
+      "writes": ["software flags only (no direct MMIO proven)"],
+      "async": "none proven",
+      "wait_poll": "none",
+      "exit_state": "band-specific flags set",
+      "next_dependency": "radio switch"
+    },
+    {
+      "id": "D4.4",
+      "name": "radio switch / radio init",
+      "entry_state": "as D4.3 exit",
+      "operations": [
+        "wlc_phy_switch_radio(pi,1) -> phytype 0x0b -> wlc_phy_switch_radio_acphy (0xaa782, size 4266)",
+        "  FIRST: wlapi_suspend_mac_and_wait -> wlc_bmac_suspend_mac_and_wait (0x63a04)",
+        "  many mod_radio_reg / read_radio_reg with osl_delay (e.g. 0xaa911, 0xaaaab)",
+        "  call [pi+0x28] (PHY-type-specific op) at 0xbad4c"
+      ],
+      "writes": ["radio window (indirect)", "D11 radio ctrl/data 0x3d8/0x3da (acphy)"],
+      "async": "radio/synth/PLL state",
+      "wait_poll": "MAC suspend handshake (MACINTSTATUS bit0), fixed osl_delay",
+      "exit_state": "radio switched on",
+      "next_dependency": "dummy TX, PHY table/txpower, ant"
+    },
+    {
+      "id": "D4.5",
+      "name": "dummy TX",
+      "entry_state": "as D4.4 exit",
+      "operations": [
+        "if phytype in {0x0b,0x0c}: wlc_phy_do_dummy_tx(pi,1,0) (0xba5af)",
+        "  wlapi_bmac_write_template_ram + many osl_writew (template/PHY regs)"
+      ],
+      "writes": ["template RAM", "D11 regs (osl_writew x many)"],
+      "async": "TX template state",
+      "wait_poll": "unknown",
+      "exit_state": "dummy TX done",
+      "next_dependency": "status reads / txpower / ant"
+    },
+    {
+      "id": "D4.6",
+      "name": "PHY status reads / txpower SHM / antenna",
+      "entry_state": "as D4.5 exit",
+      "operations": [
+        "if phytype==2: phy_reg_read(0x18)/phy_reg_read(0x38)",
+        "if phytype in {0,2}: wlc_phy_txpower_update_shm (SHM writes incl. rate offsets)",
+        "wlc_phy_ant_rxdiv_set(pi, [wlc+0x95]) -> may wlapi_suspend_mac_and_wait + phy_reg_mod + wlapi_bmac_mhf + SHM",
+        "if phytype in {4,7,0x0b}: sub_b740d (ACI/noisemode resets per PHY)",
+        "if phytype != 0x0a: wlapi_bmac_read_shm(dev, 0x92) ; store [pi+0xfa6]=2*val"
+      ],
+      "writes": ["SHM (txpower/rate)", "PHY indirect (phy_reg_mod)", "MHF"],
+      "async": "txpower/antenna state",
+      "wait_poll": "possible MAC suspend in ant_rxdiv_set",
+      "exit_state": "txpower/antenna configured; returns",
+      "next_dependency": "caller resumes band init (cwmin/cwmax/mhf/synthpu)"
+    }
+  ],
+  "callees": [
+    {"addr": "0xb5cf4", "name": "wlc_phy_chanspec_shm_set", "site": "0xbac31", "predicate": "always", "class": "SHM write", "reads": ["[pi+0x20] phyrev"], "writes": ["SHM 0xa0"], "poll": false, "delay": false},
+    {"addr": "0xbac44", "name": "osl_readl D11+0x120", "site": "0xbac44", "predicate": "always", "class": "direct read", "reads": ["D11 0x120 MACCONTROL"]},
+    {"addr": "0xbaad1", "name": "wlc_phy_anacore", "site": "0xbac84", "predicate": "always", "class": "PHY indirect / analog", "writes": ["[pi+0x118] fn OR D11 0x3e6"], "async": "analog/clock", "poll": false},
+    {"addr": "0x152a63", "name": "wlapi_bmac_bw_set", "site": "0xbaca9", "predicate": "[pi+0x17e]&0x3800 != [pi+0x182]", "class": "MAC/PHY reset", "callee": "wlc_bmac_bw_set (0x6607f)", "reads": ["D11 0x120"], "poll": "possibly"},
+    {"addr": "0xbacfa", "name": "wlc_phy_aci_sw_reset_nphy", "site": "0xbacfa", "predicate": "phytype==4", "class": "not taken for AC"},
+    {"addr": "0xbad09", "name": "wlc_phy_aci_sw_reset_htphy", "site": "0xbad09", "predicate": "phytype==7", "class": "not taken for AC"},
+    {"addr": "0xba302", "name": "wlc_phy_switch_radio", "site": "0xbad44", "predicate": "always", "class": "radio", "ac_callee": "wlc_phy_switch_radio_acphy (0xaa782)", "sync": "wlapi_suspend_mac_and_wait"},
+    {"addr": "0xbad4c", "name": "call [pi+0x28]", "site": "0xbad4c", "predicate": "always", "class": "PHY op indirect", "target": "UNKNOWN (struct offset 0x28; tooling gap)", "note": "loaded at 0xbac6f"},
+    {"addr": "0xba5af", "name": "wlc_phy_do_dummy_tx", "site": "0xbad6f", "predicate": "phytype in {0x0b,0x0c}", "class": "TX template + regs", "writes": ["template RAM", "D11 regs"], "iterations": "many osl_writew"},
+    {"addr": "0xb2f34", "name": "phy_reg_read", "site": "0xbad85/0xbad99", "predicate": "phytype==2", "class": "PHY indirect read", "reads": ["D11 0x3fc write; 0x3fe read"], "not_taken_for_ac": true},
+    {"addr": "0xb88b9", "name": "wlc_phy_txpower_update_shm", "site": "0xbadb7", "predicate": "phytype in {0,2}", "class": "SHM writes", "not_taken_for_ac": true},
+    {"addr": "0xb81c2", "name": "wlc_phy_ant_rxdiv_set", "site": "0xbadca", "predicate": "always (arg [wlc+0x95])", "class": "MAC suspend + PHY + SHM", "sync": "wlapi_suspend_mac_and_wait (0xb826a)", "size": 1518},
+    {"addr": "0xb740d", "name": "sub_b740d", "site": "0xbae55", "predicate": "phytype in {4,7,0x0b}", "class": "ACI/noise resets", "size": 1207, "calls": 28},
+    {"addr": "0x152ae4", "name": "wlapi_bmac_read_shm", "site": "0xbae6e", "predicate": "phytype != 0x0a", "class": "SHM read", "reads": ["SHM 0x92"], "note": "last op of wlc_phy_init"},
+    {"addr": "0xbae6e", "name": "wlapi_bmac_read_shm wrapper", "site": "0xbae6e", "predicate": "always", "class": "SHM read"}
+  ],
+  "sync_points": [
+    {
+      "id": "SYNC1",
+      "name": "wlc_bmac_suspend_mac_and_wait",
+      "addr": "0x63a04",
+      "reached_from": ["wlc_phy_switch_radio_acphy (0xaa7bb)", "wlc_phy_ant_rxdiv_set (0xb826a)"],
+      "mechanism": "wlc_bmac_mctrl(suspend); bounded osl_delay(10) loop (0x14441/10 ~ 8289 iters) polling MACINTSTATUS(0x128) bit0",
+      "device_gone_check": "MACCONTROL(0x120) and MACINTSTATUS(0x128) all-ones -> branch to 0x63add (wlc_phy_ant_rxdiv_set exit)",
+      "observable": "MI_MACSSPNDD bit (MACINTSTATUS bit0)",
+      "note": "internal to radio/antenna init; not an exit checkpoint"
+    },
+    {
+      "id": "SYNC2",
+      "name": "acphy radio osl_delay",
+      "addr": "0xaa911/0xaaaab/...",
+      "reached_from": ["wlc_phy_switch_radio_acphy"],
+      "mechanism": "fixed osl_delay after radio register writes",
+      "observable": "none deterministic (time-only)"
+    },
+    {
+      "id": "SYNC3",
+      "name": "phy_reg_read window",
+      "addr": "0xb2f34",
+      "reached_from": ["wlc_phy_init phytype==2", "many acphy helpers"],
+      "mechanism": "write D11 0x3fc (reg); read D11 0x3fe (data)",
+      "observable": "PHY register value"
+    },
+    {
+      "id": "SYNC4",
+      "name": "final SHM 0x92 read",
+      "addr": "0xbae6e",
+      "reached_from": ["wlc_phy_init end (phytype != 0x0a)"],
+      "mechanism": "wlapi_bmac_read_shm(dev, 0x92); store 2*val",
+      "observable": "SHM 0x92 value (BTC base source)"
+    }
+  ],
+  "checkpoints": [
+    {"id": "A", "after": "wlc_phy_chanspec_shm_set (D4.0)", "stable": false, "reason": "PHY/radio untouched; more init outstanding", "verdict": "INVALID"},
+    {"id": "B", "after": "wlc_phy_anacore (D4.1)", "stable": false, "reason": "analog core changed; BW/radio/synth not done", "verdict": "INVALID"},
+    {"id": "C", "after": "wlc_bmac_bw_set (D4.2)", "stable": false, "reason": "possible PHY reset; radio not switched", "verdict": "INVALID"},
+    {"id": "D", "after": "wlc_phy_switch_radio/acphy (D4.4)", "stable": false, "reason": "internal MAC suspend is released; dummy TX/txpower/ant/ACI still to run; synth/channel completion not proven", "verdict": "INVALID"},
+    {"id": "E", "after": "sub_b740d before final read_shm (D4.6)", "stable": false, "reason": "final SHM 0x92 read and the caller's post-PHY band tail remain", "verdict": "POSSIBLE-WEAK"},
+    {"id": "F", "after": "wlc_phy_init returns (0x669e4)", "stable": true, "reason": "PHY/radio/synth init complete; deterministic postcondition candidates (SHM writes/read; MAC resumed) ; vendor next op is MAC txant/cwmin", "verdict": "STRONG"},
+    {"id": "G", "after": "full sub_6656c band-init tail (0x66b3a)", "stable": true, "reason": "whole vendor band unit init complete", "verdict": "STRONG-LATE"}
+  ],
+  "earliest_strong_checkpoint": "F (after wlc_phy_init returns, 0x669e4)",
+  "unknowns": [
+    "call [pi+0x28] target (indirect through struct offset 0x28)",
+    "generic anacore fn ptr [pi+0x118] for AC",
+    "exact AC PHY table set written by switch_radio_acphy / anacore / dummy_tx",
+    "PLL lock poll presence/absence inside acphy radio init",
+    "whether wlc_phy_init performs calibration or only configuration",
+    "exact teardown obligations after a partial PHY init"
+  ]
+}

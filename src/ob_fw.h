@@ -230,6 +230,13 @@ int ob_fw_request_ucode(struct ob_hw *hw, const struct firmware **fw,
  * release_firmware(). Used by the isolated initvals_test_only path (M3.4D2B).
  */
 int ob_fw_request_initvals(struct ob_hw *hw, const struct firmware **fw);
+
+/*
+ * Acquire + size/FNV-validate the rev42 band-switch initvals table
+ * (bcm4352-d11ac1bsinitvals42.bin). The caller owns *fw and must
+ * release_firmware(). Used by the isolated bsinitvals_test_only path (M3.4D3B).
+ */
+int ob_fw_request_bsinitvals(struct ob_hw *hw, const struct firmware **fw);
 #endif /* __KERNEL__ */
 
 #endif /* _OB_FW_H_ */

@@ -317,3 +317,18 @@ kept successful so the bound device retains the state; only a reboot clears it.
 `MACINTMASK` stays 0 and the host BCMA/PCI IRQ route is never enabled. The four
 TX channels are `0x200` AC_BK, `0x240` AC_BE, `0x280` AC_VI, `0x2C0` AC_VO/CTL;
 FIFO0 RX is `0x220`.
+
+## M3.4D3B — DMA lifetime through band init
+
+The vendor enables/posts DMA inside the D3A1 tail (`T1 -> DMA -> T2`) and only
+then reaches `sub_6656c` (band init + `d11ac1bsinitvals42`). DMA therefore
+**must stay live while D3B executes**. D3A1 and D3B share a single extracted
+prefix, `ob_d3a1_run_prefix()`, which runs D2B -> `sub_67efd` -> T1 -> DMA
+bring-up -> T2 -> the D3A1 postcondition gate and returns with the D3A0 engines
+live. `ob_d3a1_test()` then tears down (unchanged behaviour); `ob_d3b_test()`
+runs MHF + bsinitvals42 first, then the mandatory verified `ob_d3a0_teardown()`
+(identical fail-closed guarantees: no free/unmap before every programmed engine
+was verified stopped; a reset failure is fatal and reboot-required).
+
+STOP boundary: after the `sub_60f67` applier return (`0x669c2`), before
+`wlc_phy_init` (`0x669df`). See `docs/m34d3b_band_init_test.md`.

@@ -108,6 +108,12 @@
 #define OB_D3A0_MCTL_SHM_EN	0x00000100u
 #define OB_D3A0_MCTL_DISCARD_PMQ 0x40000000u
 #define OB_D3A0_MCTL_INFRA	0x00020000u
+/* Vendor wlc_hw_deviceremoved(): (maccontrol & 0x404) must equal 0x400. */
+#define OB_D3A0_MCTL_IHR_EN	0x00000400u
+#define OB_D3A0_MCTL_PSM_JMP_0	0x00000004u
+#define OB_D3A0_DEV_PRESENT_MASK \
+	(OB_D3A0_MCTL_IHR_EN | OB_D3A0_MCTL_PSM_JMP_0)
+#define OB_D3A0_DEV_PRESENT_VAL	OB_D3A0_MCTL_IHR_EN
 
 /* SICF_MPCLKE (D11 core cflags bit4 == BCMA_IOCTL bit4) */
 #define OB_D3A0_IOCTL_MPCLKE	0x00000010u
@@ -258,6 +264,33 @@ static inline bool ob_d3a0_can_free(const struct ob_d3a0_lifecycle *lc)
 	return !ob_d3a0_hw_active(lc);
 }
 
+/*
+ * ---- device-lost fail-safe (pure, host-testable) ----
+ *
+ * A trusted direct D11 register (MACCONTROL, MACINTMASK, OBJADDR readback,
+ * DMA control/status) that unexpectedly reads all-ones means the D11 core /
+ * BCMA window / PCIe path is inaccessible. The state is MONOTONIC: once
+ * latched it is never cleared in the same module lifetime. We deliberately do
+ * NOT classify arbitrary 16/32-bit SHM data (OBJDATA words, table payloads) as
+ * device loss: only trusted direct-register reads.
+ */
+static inline bool ob_d3a0_mmio_is_all_ones(u32 val)
+{
+	return val == 0xffffffffu;
+}
+
+/* Vendor wlc_hw_deviceremoved(): device is present iff this holds. */
+static inline bool ob_d3a0_maccontrol_present(u32 mctrl)
+{
+	return (mctrl & OB_D3A0_DEV_PRESENT_MASK) == OB_D3A0_DEV_PRESENT_VAL;
+}
+
+/* Monotonic latch: false -> true only, never cleared. */
+static inline bool ob_d3a0_dev_lost_observe(bool latched, u32 direct_val)
+{
+	return latched || ob_d3a0_mmio_is_all_ones(direct_val);
+}
+
 /* Postcondition: MACCONTROL keeps PSM_RUN, clears EN_MAC/SHM_EN. */
 static inline bool ob_d3a0_maccontrol_ok(u32 mctrl)
 {
@@ -337,6 +370,17 @@ void ob_d3a0_remove(struct ob_hw *hw);
 int  ob_d3a0_bringup(struct ob_hw *hw);
 int  ob_d3a0_teardown(struct ob_hw *hw);
 bool ob_d3a0_fatal_is_latched(void);
+
+/*
+ * Device-lost fail-safe (central, monotonic). Once latched, hw->dev_lost is
+ * never cleared in the same module lifetime and NO further D11 MMIO write,
+ * DMA reset, SHM/OBJ access, interrupt write, free/unmap or retry is allowed;
+ * the module-wide fatal latch is set, the module is pinned and a reboot is
+ * required. Detection is limited to trusted direct-register all-ones reads.
+ */
+void ob_dev_lost_latch(struct ob_hw *hw, const char *where);
+bool ob_dev_lost_observe32(struct ob_hw *hw, const char *where, u32 val);
+bool ob_dev_lost_is_latched(const struct ob_hw *hw);
 #endif /* __KERNEL__ */
 
 #endif /* _OB_D3A0_H_ */

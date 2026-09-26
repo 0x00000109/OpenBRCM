@@ -1,0 +1,1261 @@
+{
+ "milestone": "M3.4D4D",
+ "path": "D3B -> wlc_phy_cal_perical",
+ "generated_from": "re.db (schema v5)",
+ "dev_lost_latch": "src/ob_d3a0.c ob_dev_lost_observe32: val==0xffffffff -> hw->dev_lost, monotonic",
+ "protection_vocab": [
+  "PROTECTED",
+  "NEEDS_OBSERVER",
+  "UNREACHABLE_AFTER_LATCH"
+ ],
+ "protection_status_note": "SUPERSEDED for protection status by docs/m34d4/dev_lost_phy_access_map.json (central access guard implemented in src/ob_guard.{c,h}). The per-function operation inventory below remains valid; the 'NEEDS_OBSERVER' protection labels are historical.",
+ "existing_protected_gates": [
+  {
+   "where": "ob_d3a0.c D3A0 quiesce intmask0",
+   "api": "ob_dev_lost_observe32"
+  },
+  {
+   "where": "ob_d3a1.c validate MACCONTROL/MACINTMASK/RX_STATUS0",
+   "api": "ob_dev_lost_observe32"
+  },
+  {
+   "where": "ob_d3b.c postcondition MACCONTROL/MACINTMASK/SHM[0x10,0x1c,0x94]",
+   "api": "ob_dev_lost_observe32"
+  }
+ ],
+ "functions": [
+  {
+   "function": "sub_6656c",
+   "addr": "0x6656c",
+   "size": 1490,
+   "desc": "band-init dispatcher (D3B entry)",
+   "direct_mmio": [
+    {
+     "site": "0x665c3",
+     "io": "osl_readw",
+     "width": 16,
+     "base": "*(a0 + 0xd0)",
+     "offset": 992,
+     "abs": null,
+     "access": "read",
+     "value": "",
+     "confidence": "CONDITIONAL"
+    }
+   ],
+   "phy_radio_table_ops": [],
+   "class_counts": {
+    "direct_mmio": 1,
+    "phy_radio_table": 0
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "sub_60f67",
+   "addr": "0x60f67",
+   "size": 103,
+   "desc": "bsinitvals applier (D3B)",
+   "direct_mmio": [
+    {
+     "site": "0x60f97",
+     "io": "osl_writew",
+     "width": 16,
+     "base": "*(a0 + 0xd0)",
+     "offset": 0,
+     "abs": null,
+     "access": "write",
+     "value": "?",
+     "confidence": "CONDITIONAL"
+    },
+    {
+     "site": "0x60fae",
+     "io": "osl_writel",
+     "width": 32,
+     "base": "*(a0 + 0xd0)",
+     "offset": 0,
+     "abs": null,
+     "access": "write",
+     "value": "?",
+     "confidence": "CONDITIONAL"
+    }
+   ],
+   "phy_radio_table_ops": [],
+   "class_counts": {
+    "direct_mmio": 2,
+    "phy_radio_table": 0
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_init",
+   "addr": "0xbabf5",
+   "size": 738,
+   "desc": "real AC PHY/radio init entry",
+   "direct_mmio": [
+    {
+     "site": "0xbac44",
+     "io": "osl_readl",
+     "width": 32,
+     "base": "*(a0 + 0x148)",
+     "offset": 288,
+     "abs": null,
+     "access": "read",
+     "value": "",
+     "confidence": "CONDITIONAL"
+    }
+   ],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xbad85",
+     "helper": "phy_reg_read",
+     "op": "READ",
+     "class": "PHY",
+     "reg": "0x18",
+     "value": "val=? mask=a3",
+     "mask": ""
+    },
+    {
+     "pc": "0xbad99",
+     "helper": "phy_reg_read",
+     "op": "READ",
+     "class": "PHY",
+     "reg": "0x38",
+     "value": "val=? mask=a3",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 1,
+    "phy_radio_table": 2
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_anacore",
+   "addr": "0xbaad1",
+   "size": 292,
+   "desc": "AC anacore ON",
+   "direct_mmio": [
+    {
+     "site": "0xbabee",
+     "io": "osl_writew",
+     "width": 16,
+     "base": "*(a0 + 0x148)",
+     "offset": 1996,
+     "abs": null,
+     "access": "write",
+     "value": "0xf4",
+     "confidence": "CONDITIONAL"
+    }
+   ],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xbab1c",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0xc mask=a3",
+     "mask": ""
+    },
+    {
+     "pc": "0xbab30",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0xa5",
+     "value": "val=0x7fff mask=a3",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 1,
+    "phy_radio_table": 2
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_switch_radio",
+   "addr": "0xba302",
+   "size": 586,
+   "desc": "radio wrapper",
+   "direct_mmio": [
+    {
+     "site": "0xba31d",
+     "io": "osl_readl",
+     "width": 32,
+     "base": "*(a0 + 0x148)",
+     "offset": 288,
+     "abs": null,
+     "access": "read",
+     "value": "",
+     "confidence": "CONDITIONAL"
+    }
+   ],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xba3d9",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0x6 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xba40e",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0xc mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xba43c",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0x6 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xba47c",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0xf mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xba4e5",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0x9 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xba514",
+     "helper": "phy_reg_write_array",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "&",
+     "value": "val=0x15 mask=?",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 1,
+    "phy_radio_table": 6
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_switch_radio_acphy",
+   "addr": "0xaa782",
+   "size": 4266,
+   "desc": "AC radio switch (first radio-ON)",
+   "direct_mmio": [],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xaa80f",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x80 mask=0x80",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa84d",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x10 mask=0x10",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa88b",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x8 mask=0x8",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa8c9",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x4 mask=0x4",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa907",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x2 mask=0x2",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa925",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x97f",
+     "value": "val=0x10 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa963",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x1 mask=0x1",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa9a1",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x100 mask=0x100",
+     "mask": ""
+    },
+    {
+     "pc": "0xaa9df",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x10 mask=0x10",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaa1d",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x20 mask=0x20",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaa5b",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x2000 mask=0x2000",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaa99",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x4000 mask=0x4000",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaabe",
+     "helper": "read_radio_reg",
+     "op": "READ",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaafd",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x4000 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaab38",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x80b",
+     "value": "val=0x2000 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaab62",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x60c",
+     "value": "val=0x9e mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaab7e",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x60c",
+     "value": "val=0xbe mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaab90",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x60c",
+     "value": "val=0x20be mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaba2",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x60c",
+     "value": "val=0x60be mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaabc4",
+     "helper": "read_radio_reg",
+     "op": "READ",
+     "class": "RADIO",
+     "reg": "0xb",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaabd5",
+     "helper": "read_radio_reg",
+     "op": "READ",
+     "class": "RADIO",
+     "reg": "0x20b",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaabeb",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x60c",
+     "value": "val=0xbe mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaac07",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x16b",
+     "value": "val=0x400 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaac20",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x175",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaacb9",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x40 mask=0x40",
+     "mask": ""
+    },
+    {
+     "pc": "0xaacf7",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x80 mask=0x80",
+     "mask": ""
+    },
+    {
+     "pc": "0xaad32",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ed",
+     "value": "val=0x600 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaad6d",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ed",
+     "value": "val=0x1800 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xaada2",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x15b",
+     "value": "val=0x1 mask=0x1",
+     "mask": ""
+    },
+    {
+     "pc": "0xaadba",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x75c",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaadc9",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x75d",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaadd8",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x75e",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaade7",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x75f",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaadf6",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x960",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaae05",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x961",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaae14",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x963",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaae6f",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x548",
+     "value": "val=0x1 mask=0x1",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaeb6",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x549",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaefd",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x54a",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaf44",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x54b",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xaaf8b",
+     "helper": "write_radio_reg",
+     "op": "WRITE",
+     "class": "RADIO",
+     "reg": "0x54c",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab000",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x40b",
+     "value": "val=0x1 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab08e",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x40b",
+     "value": "val=0x1 mask=0x1",
+     "mask": ""
+    },
+    {
+     "pc": "0xab100",
+     "helper": "read_radio_reg",
+     "op": "READ",
+     "class": "RADIO",
+     "reg": "0x40b",
+     "value": "val=0xb mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab17f",
+     "helper": "read_radio_reg",
+     "op": "READ",
+     "class": "RADIO",
+     "reg": "0x40b",
+     "value": "val=0x400 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab1aa",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x15b",
+     "value": "val=0x1 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab201",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x548",
+     "value": "val=0x1 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab23c",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x40 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab277",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x80 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab2ef",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x40b",
+     "value": "val=0x1 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab350",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x7",
+     "value": "val=0xf0 mask=0x4",
+     "mask": ""
+    },
+    {
+     "pc": "0xab365",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x171",
+     "value": "val=0x4 mask=0x4",
+     "mask": ""
+    },
+    {
+     "pc": "0xab377",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x171",
+     "value": "val=0x2 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab3a0",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x807",
+     "value": "val=0xf0 mask=0x4",
+     "mask": ""
+    },
+    {
+     "pc": "0xab3b7",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x971",
+     "value": "val=0x4 mask=0x4",
+     "mask": ""
+    },
+    {
+     "pc": "0xab3cb",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x971",
+     "value": "val=0x2 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab455",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x173e",
+     "value": "val=0x1c00 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab492",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1739",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab4cf",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x173a",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab50f",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1725",
+     "value": "val=0x1fff mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab54c",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1729",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab58c",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1721",
+     "value": "val=0xffff mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab5c9",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1728",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab609",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x1720",
+     "value": "val=0x3ff mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab61d",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x408",
+     "value": "val=0x2 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab62c",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x417",
+     "value": "val=0x0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab63e",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x416",
+     "value": "val=0x1 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xab666",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x97f",
+     "value": "val=0x10 mask=0x10",
+     "mask": ""
+    },
+    {
+     "pc": "0xab6a1",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x1 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab6dc",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x2 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab717",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x100 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab752",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x40 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab78d",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x80 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab7c8",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8ea",
+     "value": "val=0x10 mask=0x0",
+     "mask": ""
+    },
+    {
+     "pc": "0xab81b",
+     "helper": "mod_radio_reg",
+     "op": "RMW",
+     "class": "RADIO",
+     "reg": "0x8f2",
+     "value": "val=0x200 mask=0x0",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 0,
+    "phy_radio_table": 75
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "sub_b018f",
+   "addr": "0xb018f",
+   "size": 710,
+   "desc": "AC PHY init callback (pi_fptr+0x28)",
+   "direct_mmio": [],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xb01dc",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x1b0",
+     "value": "val=0x8000 mask=0x8000",
+     "mask": ""
+    },
+    {
+     "pc": "0xb01e6",
+     "helper": "phy_reg_read",
+     "op": "READ",
+     "class": "PHY",
+     "reg": "0x0",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb02fb",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33a",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb030b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33b",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb031b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33e",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb032b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33f",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb033b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x342",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb034b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x343",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb035b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x346",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb036b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x347",
+     "value": "val=0x43f mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb037b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33c",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb038b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x33d",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb039b",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x340",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb03ab",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x341",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb03bb",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x344",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb03cb",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x345",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb03db",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x348",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb03eb",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x349",
+     "value": "val=0x3c0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb0406",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x16e",
+     "value": "val=0x13 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb0418",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x16f",
+     "value": "val=0x7d0 mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb042a",
+     "helper": "phy_reg_write",
+     "op": "WRITE",
+     "class": "PHY",
+     "reg": "0x170",
+     "value": "val=0x7d0 mask=?",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 0,
+    "phy_radio_table": 21
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_set_home_chanspec",
+   "addr": "0x39e94",
+   "size": 171,
+   "desc": "initial chanspec apply",
+   "direct_mmio": [],
+   "phy_radio_table_ops": [],
+   "class_counts": {
+    "direct_mmio": 0,
+    "phy_radio_table": 0
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_cal_perical",
+   "addr": "0xb57d3",
+   "size": 903,
+   "desc": "periodic cal dispatch (reason 6)",
+   "direct_mmio": [],
+   "phy_radio_table_ops": [],
+   "class_counts": {
+    "direct_mmio": 0,
+    "phy_radio_table": 0
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  },
+  {
+   "function": "wlc_phy_cals_acphy",
+   "addr": "0xb13b5",
+   "size": 1260,
+   "desc": "first AC calibration",
+   "direct_mmio": [],
+   "phy_radio_table_ops": [
+    {
+     "pc": "0xb1531",
+     "helper": "phy_reg_read",
+     "op": "READ",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb154b",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=0x2 mask=0x2",
+     "mask": ""
+    },
+    {
+     "pc": "0xb156f",
+     "helper": "wlc_phy_table_write_acphy",
+     "op": "WRITE",
+     "class": "PHY_TABLE",
+     "reg": "0xc",
+     "value": "val=0x1 mask=0x5f",
+     "mask": ""
+    },
+    {
+     "pc": "0xb158c",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=0x2 mask=0x2",
+     "mask": ""
+    },
+    {
+     "pc": "0xb17d4",
+     "helper": "phy_reg_read",
+     "op": "READ",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=? mask=?",
+     "mask": ""
+    },
+    {
+     "pc": "0xb17ee",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=0x2 mask=0x2",
+     "mask": ""
+    },
+    {
+     "pc": "0xb1812",
+     "helper": "wlc_phy_table_write_acphy",
+     "op": "WRITE",
+     "class": "PHY_TABLE",
+     "reg": "0xc",
+     "value": "val=0x1 mask=0x5f",
+     "mask": ""
+    },
+    {
+     "pc": "0xb182f",
+     "helper": "phy_reg_mod",
+     "op": "RMW",
+     "class": "PHY",
+     "reg": "0x19e",
+     "value": "val=0x2 mask=0x2",
+     "mask": ""
+    }
+   ],
+   "class_counts": {
+    "direct_mmio": 0,
+    "phy_radio_table": 8
+   },
+   "protection": "NEEDS_OBSERVER (no D4 implementation; only D3A0/D3A1/D3B existing gates are latched)"
+  }
+ ]
+}

@@ -29,6 +29,36 @@ disassembling anything. See [AGENTS.md §7](../AGENTS.md).
 (see the tooling workspace `.gitignore`). Its `meta.sha256` records the sha256
 of the vendor blob that was indexed.
 
+### 1.1 Tier-2: Ghidra headless augmentation
+
+`re`/`re.db` is the first and authoritative tier, but a few questions are
+statically hard for a single linear pass. The **second tier** is Ghidra
+headless (decompiler + reference manager + CFG-aware value flow), used only for
+those residual facts: indirect/vtable call targets, interprocedural constant
+flow, struct-field aliasing, and loop/engine-array base resolution.
+
+| Item | Path |
+|---|---|
+| Ghidra root | `/home/kartashoff/projects/ghidra` (12.1.3) |
+| headless | `support/analyzeHeadless` |
+| wrapper (this repo) | `scripts/ghidra_headless.sh` |
+| reusable scripts | `scripts/ghidra/*.java` (`Decompile`, `Refs`, `Vtable`) |
+| scratch project | `/tmp/openbrcm_ghidra` (generated; not committed) |
+
+```sh
+scripts/ghidra_headless.sh Refs.java wlc_phy_btc_adjust_acphy wlc_phy_init
+scripts/ghidra_headless.sh Vtable.java dma64proc
+scripts/ghidra_headless.sh Decompile.java wlc_phy_anacore wlc_phy_switch_radio
+```
+
+Rules: (a) query `re` first; (b) if a fact stays PARTIAL/CONDITIONAL/UNRESOLVED,
+use Ghidra; (c) manual `objdump`/`readelf`/`r2` only if both cannot answer, or to
+settle a conflict between them — and record why. Ghidra import under-segments
+this ET_REL blob, so treat Ghidra *negative* results with care and cross-check
+against `re`. Record any fact that neither tier can express as a tooling gap
+(§9). The wrapper is read-only with respect to hardware and Git; it imports the
+canonical vendor blob, which is never committed.
+
 ## 2. Verify the index matches the blob
 
 The bootstrap script performs this check. Manually:
@@ -112,7 +142,39 @@ When invoking the binary directly (only from the tooling workspace), pass
 | reachability from an entry | `re reach <fn> --db re.db` |
 | per-function value provenance | `re fn <fn> --values --db re.db` |
 | stage pipelines (4–8) | `re stage4` … `re stage8 --db re.db` |
+| whole-blob MMIO search | `re mmio [--offset 0xOFF] [--fn F] [--access read\|write] --db re.db` |
+| whole-blob immediate search | `re imm 0xV --db re.db` |
+| struct-field writers | `re field-writers --field 0xOFF [--base-load 0xLOAD] [--arg N] --db re.db` |
+| indirect call/branch targets + candidates | `re indirect [fn] [--field 0xOFF] [--installer SUBSTR] [--family SUBSTR] --db re.db` |
+| register-program tables (initvals family) | `re table <name\|0xADDR>` · `re regtables [--consumer FN]` |
+| constant arguments reaching a callee | `re const --callee FN` |
+| normalized PHY/radio ops | `re phyops [fn] [--class PHY\|RADIO\|PHY_TABLE]` |
+| per-function JSON evidence packet | `re dump <fn> --json` |
+| bounded one-target evidence packet | `re packet --fn <name\|0xADDR> [--callers] [--callees] [--fields] [--mmio] [--phy] [--radio] [--tables] [--branches] [--indirect] [--constants] [--provenance]` |
+| regression self-check | `re regress --db re.db` |
 | verifier | `re verify --db re.db` |
+
+`re db build` now also populates the v5 tables (`mmio_sites`, `imm_sites`,
+`field_sites`, `indirect_targets`, `const_props`, `phy_ops`, `reg_tables`,
+`reg_table_ops`) via the in-tree `re_support` module. v4 adds provenance
+`confidence` (`mmio_sites`, `field_sites`) and `confidence,candidates`
+(`const_props`): relocated immediates are exposed as symbols (never literal
+zero) and a linearly-ambiguous value is `CONDITIONAL` with a candidate set,
+never `EXACT`. **v5** (tooling commit `f5d03da`, store-vs-read follow-up
+`cf9738e`) adds base-aware indirect
+resolution — `indirect_targets` carries `base_arg`, `base_load`, `field_offset`,
+`installer`, `family`, and candidates come from the object constructor's
+relocation-covered function-pointer stores (`field_sites`) at the exact
+`(base_arg, base_load, field)` triple, not from field-offset-only
+`address_taken`; `EXACT` only when a single constructor candidate matches.
+v5 also demotes spurious mid-instruction discovered fragments so a container's
+size is not clamped (e.g. `sub_b018f` = 0x2c6, not 0x2d), and classifies
+store-vs-read with iced operand access (`cmp` memory reads are no longer
+stores). `re regress` must PASS (reproduces the 610/113/497 common-initvals and
+73/39/34 bsinitvals shapes, sub_67efd 0x530/0x540, switch_macfreq 0x62e/0x630,
+DMA/MAC access facts, the `phy+0xF8` relocation fixture, the `dma_attach`
+non-EXACT fixture, the AC `wlc_phy_attach_acphy` pi-fptr table, `sub_b018f`
+size, and the `0x16e` store-vs-read fixture).
 
 Machine-readable evidence: append `--json` (e.g. `re fn <fn> --json`,
 `re switch <fn> --json`). Use that output in evidence packets.
@@ -186,6 +248,59 @@ Each record: `{ "claim": ..., "command": "re ... --json", "result": {...},
 "gate": "verify_edges PASS" }`. The milestone document cites the packet and the
 `re` commands used. Do not paste raw disassembly as the primary evidence.
 
+## 8.1 Current-context index and `re packet` (token efficiency)
+
+`docs/current-context.json` is a **generated compact index**, not a source of
+truth. It is produced deterministically by `scripts/generate-current-context.py`
+from `docs/state/current-state.json` (the small hand-maintained machine-readable
+state), `docs/artifact-ledger.json` and the binary/tooling identity. It names the
+current milestone, the active blocker, proven facts, superseded claims, the
+relevant call path, tooling paths and the exact evidence files, and stays within
+8 KiB. Authoritative evidence is never moved into it.
+
+```sh
+scripts/generate-current-context.py            # regenerate (deterministic)
+scripts/generate-current-context.py --check    # non-zero if stale
+scripts/generate-current-context.py --validate # integrity only
+scripts/generate-current-context.py --scan-links <md files>
+```
+
+`--check` fails when `integrity.sources_hash` (companion + ledger + blob
+identity + re.db schema) or the binary identity changed. `--validate` resolves
+every referenced artifact path, rejects duplicate fact IDs, rejects a `PROVEN`
+fact whose ledger `record` is `SUPERSEDED`, requires the current milestone in
+`agent-state.md`/`milestones.md`, and requires a supported `re.db` schema. A
+source conflict fails generation rather than being silently resolved.
+
+`re packet` is an **additive** subcommand that emits one bounded, deterministic,
+machine-readable evidence packet for a single function/address, composed only
+from the existing re.db tables (plus the same linear branch pass `re switch`
+uses). It carries the index confidence/provenance verbatim and never upgrades
+it. Every list is wrapped as `{total, shown, truncated, items}` so truncation is
+explicit.
+
+```sh
+scripts/re.sh packet --fn wlc_phy_switch_radio_acphy                 # all sections
+scripts/re.sh packet --fn sub_67efd --mmio --branches --max-sites 20 # selective
+scripts/re.sh packet --addr 0x6923d --indirect --max-sites 10        # by address
+```
+
+Flags: `--callers --callees --fields --mmio --phy --radio --tables --branches
+--indirect --constants --provenance`, bounded by `--max-callers --max-callees
+--max-sites --max-branches` (defaults 30/40/40/30). With no section flag every
+section is included. It does not replace `fn`/`card`/`dump`; use `packet` for a
+compact blocker-scoped question and the older commands for full dumps.
+
+## 8.2 Prompt-cache telemetry (local, out-of-band)
+
+`re packet` keeps RE evidence bounded; the cache layer keeps the *request prefix*
+stable so repeated turns hit the DeepSeek prompt cache. See
+[`cache/cache-architecture.md`](cache/cache-architecture.md) and
+[`cache/cache-telemetry.md`](cache/cache-telemetry.md). Capture is
+`.opencode/plugins/openbrcm-cache.ts`; local log `.openbrcm-local/cache-telemetry.jsonl`
+(gitignored); report `scripts/cache-report.py`. It is optimization metadata and
+never a source of truth or a CI gate.
+
 ## 9. Filing tooling gaps
 
 If `re`/`re.db` cannot answer a question and manual `objdump`/`readelf`/`r2` was
@@ -253,3 +368,106 @@ is recorded in the milestone document:
     subcommand that resolves section-relative data relocations and prints the
     targeted strings, i.e. the exact step `srom_var_table.py` performs now.
 
+
+Tooling gaps filed during the M3.4D4B value-provenance closure (analysis only;
+see `docs/m34d4b/d4b_value_provenance_closure.md`):
+
+- **D4B-G1 — `re field-writers` store-vs-read misclassification.**
+  `0xab3d8` is `cmp byte ptr [r12+32Dh],0` (a read), yet `re field-writers
+  --field 0x32d` reports it as a store. **RESOLVED (2026-09, `cf9738e`):**
+  `analyze_facts` now uses iced `InstructionInfoFactory`/`UsedMemory` access;
+  a `field_sites` store row is emitted only when the memory operand is
+  actually written. Regression fixture: `wlc_phy_switch_radio_acphy` has 0
+  stores to `0x16e` (the `cmpb` sites are reads).
+- **D4B-G2 — path-sensitive reachability.** `re` reports a function's callees
+  but not *which* callees execute for a given argument/branch. Determining that
+  `wlc_phy_attach` takes the **radio-OFF** branch of
+  `wlc_phy_switch_radio_acphy` (so `sub_9591e`/`sub_a4adc` are not executed on
+  the initial attach path) required manual control-flow over `re --asm` +
+  Ghidra. Desired: a `re path-reach <fn> --arg <n>=<v>` or branch-predicate
+  annotation on call edges.
+
+Tooling gaps filed during the M3.4D4D tooling-gap closure (analysis only; see
+`docs/m34d4/tooling_gap_closure.md`):
+
+- **V5-G1 — multi-level pointer provenance.** The local tracker collapses
+  `**(base+off)` (`mov 0x20(%rbx),%rdi; mov (%rdi),%rax; call *0xa0(%rax)`) to
+  `base_load=0`, so vtable-dispatched sites (`wlc_bmac_init @0x6923d/0x6924a`)
+  match unrelated field constructors. Desired: preserve the parent load chain
+  so `(base_arg, base_load, field)` is exact for nested dereference.
+- **V5-G2 — vtable / ops-table resolution.** `call *(*(obj)+slot)` where the
+  ops table is runtime-assembled (no static reloc at the slot) cannot be
+  resolved by `re` or Ghidra. Desired: `re indirect --vtable` that binds an
+  object's constructor and follows store-installed ops tables where possible;
+  otherwise report `UNRESOLVED:runtime-vtable` distinctly from
+  `UNRESOLVED:no-installer`.
+- **V5-G3 — heap-object base provenance.** `wlc_phy_attach` allocates `pi`
+  (`osl_malloc`+`osl_memset`) and stores `pi+0x16e` (`mov %al,0x16e(%rbx)`),
+  but `re field-writers --field 0x16e` does not index it because the allocator
+  return is `V::Unk` and `rbx` loses the base. Desired: track a returned
+  allocation as an anonymous object base (`ret_of(osl_malloc)`), or at least
+  surface the store with `base=rbx/unknown`.
+
+Tooling gap filed during the M3.4 lifecycle reconstruction (analysis only; see
+`docs/lifecycle/bcm4352_rev42_lifecycle.md`):
+
+- **L-C1 — external / cross-binary / RPC-dispatch call edges.** `re`/`re.db`
+  models only in-object call edges. `wlc_bmac_radio_hw` is an RPC-dispatched
+  target (`WLRPC_WLC_BMAC_RADIO_HW_ID`) with no in-object caller; this fact has
+  no DB representation. A future `external_symbols` / `cross_image_calls`
+  table (external symbol/API, candidate caller, normalized function identity,
+  confidence/provenance) would prevent re-deriving it by four-tool
+  cross-checking. Not implemented (not required for this analysis).
+
+Tooling gap filed during the M3.4D4A reachability recovery (analysis only; see
+`docs/m34d4/d4a_reachability_recovery.md`):
+
+- **D4A-G1 — `re switch` does not print jump-table targets.** For
+  `wlc_phy_cal_perical` the reason-argument jump table (case 4/5/6 → AC
+  calibration) had to be mapped with the Ghidra decompiler. Desired:
+  `re switch <fn> --targets` listing each indirect jump-table target.
+
+Tooling gap filed during the M3.4D4 `pi+0x8bf` provenance recovery (analysis
+only; see `docs/m34d4/pi_8bf_provenance.md`):
+
+- **T8 — incrementing-pointer store coverage. RESOLVED (2026-09, iced/test
+  `aa67a95`).** `re field-writers`/`re fields` observed only the first
+  iteration's offset for a store whose base register is advanced inside a loop
+  (`mov %dl,0x8be(%r15)` + `inc %r15` + `cmp $8,%r13` / `jne`), so the second
+  effective writer (`+0x8bf = 0x1a`) was invisible and required manual
+  `objdump`.
+  - **Method (general; no address/offset/function/chip hardcoding).**
+    `analyze_facts` now detects bottom-tested natural loops (backward branch),
+    parses a constant guard (`cmp <reg>, <imm|const-reg>` + `jcc`), identifies
+    registers advanced only by constant self-adjusts (`add/sub/inc/dec` of a
+    constant, `lea reg,[reg+disp]`), and re-executes the loop body for the
+    provable trip count, emitting one field site per iteration with the evolved
+    object-relative offset. A loop-local value domain resolves a store's source
+    from a local constant frame array (`lea reg,[rbp+disp]` + immediate stores,
+    last-write-before-load) and follows compiler register spills/restores around
+    calls (`mov [rbp-x],reg` … `mov reg,[rbp-x]`), so per-iteration values are
+    recovered where statically provable.
+  - **Confidence model.** `EXACT` only when: the loop is bottom-tested and
+    branch-free apart from the back-edge; the guard counter has a constant
+    initial value and constant step with an exact trip count ≤ 64; the base
+    register is written inside the loop only by constant self-adjusts and has a
+    single reaching definition in the loop-entry basic block (`entry_block_writes
+    == 1`). Otherwise no induction row is emitted (no false `EXACT`). Unbounded
+    loops, runtime-variable stride/iteration count, branch-dependent increments,
+    pointer reassignment/escape, and ambiguous merged base identities are
+    rejected.
+  - **Result.** `re field-writers --field 0x8bf` → `0xaa364  sub_a7089  store
+    a0  width=8  value=0x1a`; `re packet --fn sub_a7089 --fields` →
+    `+0x8be=0x19, +0x8bf=0x1a (induction, EXACT, base_load=0x138)`. Ghidra
+    `Decompile FUN_001a7089` independently agrees (`local_78={0x19,0x1a}`,
+    `*(char*)(lVar17+0x8be)=cVar13; lVar17++` while `lVar16!=8`).
+  - **Coverage/fixtures.** `re regress` asserts the fixture
+    (`T8 induction +0x8be=0x19` / `+0x8bf=0x1a`); `scripts/verify_induction.py`
+    (iced/test) assembles and indexes 1 positive + 6 negative synthetic loops
+    (unbounded; runtime stride; runtime trip count; branch-dependent increment;
+    pointer reassignment; ambiguous merged base) and requires the positives to
+    be `EXACT` and the negatives to produce zero induction rows.
+  - **Affected facts.** Only `docs/m34d4/pi_8bf_provenance.*` (derivation now
+    tool-native; value/provenance conclusion unchanged). The prior
+    relocation/dataflow and indirect-resolution false-positive fixes are
+    unchanged (`re regress` PASS, `re verify --strict` PASS).

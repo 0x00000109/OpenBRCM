@@ -3,6 +3,25 @@
 Authoritative handoff. Read with `AGENTS.md`. Repository + Git history are the
 source of truth; this file records the live working-tree state on top of HEAD.
 
+## Persistence index
+- **Startup first-read:** [`docs/current-context.json`](current-context.json) —
+  the generated compact index (current milestone, active blocker, proven facts,
+  superseded claims, call path, tooling paths, exact evidence). Verify freshness
+  with `scripts/generate-current-context.py --check`, regenerate with
+  `scripts/generate-current-context.py` (never hand-edit). Its hand-maintained
+  source is [`docs/state/current-state.json`](state/current-state.json).
+- Read [`artifact-ledger.md`](artifact-ledger.md) **before re-deriving any
+  fact**: it indexes every recent milestone/report by commit + path and lists
+  superseded facts.
+- **Unmerged work:** HEAD is on branch `m34d3b-band-init-test`, **18 commits
+  ahead of `origin/main`**; the branch was pushed at `db151c8` and the D4D
+  tooling-closure commit is one ahead. The D3B implementation +
+  D4/D4B/D4C/lifecycle/D4A/D4D chain is **not on `main`**. Latest: **D4D
+  tooling-gap closure + Phases 3-7** — see
+  [`m34d4/tooling_gap_closure.md`](m34d4/tooling_gap_closure.md).
+- `re.db` is generated/gitignored (schema v4, current sha256 in the ledger);
+  rebuild before analysis if stale.
+
 ## Target hardware
 - Broadcom BCM4352 PCI ID `14e4:43b1`
 - ASUS PCE-AC56 subsystem `1043:85ba`, chip revision 3
@@ -25,6 +44,13 @@ source of truth; this file records the live working-tree state on top of HEAD.
   `openbrcm-re` skill and the project plugins via `.opencode/opencode.json`.
 - Rule: query `re.db`/`re` before manual `objdump`/`readelf`/`r2`/`grep`
   (`AGENTS.md` §7).
+- Tier-2 augmentation: **Ghidra 12.1.3 headless** at
+  `/home/kartashoff/projects/ghidra` via `scripts/ghidra_headless.sh` and
+  `scripts/ghidra/*.java` (`Decompile`, `Refs`, `Vtable`) for indirect/vtable
+  targets, interprocedural constants, struct-field aliasing and loop/engine-array
+  bases that `re` leaves PARTIAL/CONDITIONAL/UNRESOLVED; use it before manual
+  disassembly and cross-check Ghidra *negatives* against `re` (it under-segments
+  this ET_REL blob). See `docs/re-tooling.md` §1.1.
 
 ## Commit state (IMPORTANT)
 - `main` = `5f6c3d2b64ecf8c7c4beaf9d0c61607d27431551` (**PR #13 merged**,
@@ -168,13 +194,291 @@ Stated exactly:
   PROVEN` (isolated `d11_tail_test_only=1` vendor post-common / pre-PHY tail;
   reuses the proven D3A0 DMA lifecycle in its vendor position; STOPS before
   `sub_6656c`; candidate `42d74b8`, module `6ba2d853…`; normal unload + DMA
-  teardown proven)
-- M3.4D3B = `ANALYSIS ONLY` / NOT IMPLEMENTED / NOT HARDWARE PROVEN (band init
-  / `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`; `D3B
-  IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
+  teardown proven; **postcondition erratum 2026-09: the `tsf_cfpstart`
+  (`0x18c`) equality gate was invalid and is removed/replaced by
+  write-accounting + diagnostics; the rest of the D3A1 proof stands**)
+- M3.4D3B = `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / `HARDWARE ATTEMPTED` /
+  NOT HARDWARE PROVEN / **platform CRASH** (isolated `bsinitvals_test_only=1`
+  band init + `d11ac1bsinitvals42`; design `docs/m34d3b_band_init.md`;
+  implementation `docs/m34d3b_band_init_test.md`; post-mortem
+  `docs/m34d3b/d3b_crash_postmortem.md`). **Attempt 1 (`5fa5e5b`) failed the
+  pre-D3B `tsf_cfpstart` postcondition (fixed). Attempt 2 (corrected
+  `2917ca9`/`88971029…`) applied all 73 bsinitvals records, then every post-D3B
+  D11 read returned `0xffffffff`; the platform reset with an AMD data-fabric
+  sync flood during `ob_d3a0_teardown()`. Not proven; `HARDWARE RETEST: NO`.**
+  **BOUNDARY RETIRED:** STOP-before-`wlc_phy_init` is **not vendor-stable**
+  (vendor `sub_6656c` goes straight from `sub_60f67` `0x669bd` to `wlc_phy_init`
+  `0x669df`; upstream `brcms_b_bsinit` identical). D3B is retired as a standalone
+  milestone; proposed successor **M3.4D3+4** (band init + minimal D4 prefix
+  through `wlc_phy_init`). Device-lost fail-safe `hw->dev_lost` (monotonic,
+  no MMIO/free/retry after a trusted all-ones direct read) is `IMPLEMENTED` /
+  `STATIC TESTED`; see `docs/m34d3b/d3b_crash_postmortem.md` Parts A/B.
+  `D3B IMPLEMENTATION GO: YES` — MHF1..MHF5 all PROVEN; final vector
   `{0x0100, 0x0000, 0x0000, 0x0000, 0x0080}`; MHF3 PROVEN by the SPROM-evidence
   capture)
-- M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN
+- M3.4D4A (AC-PHY `wlc_phy_init` decomposition) = **`ANALYSIS ONLY`**
+  (2026-09): phases D4.0..D4.6, callee table, first-op trace, sync points;
+  `docs/m34d4/wlc_phy_init_rev42_flow.json` +
+  `docs/m34d4/d4a_decomposition.md`. Earliest vendor-stable checkpoint = after
+  `wlc_phy_init` returns (CP-F). Unknown-blocker write values remain ->
+  **`D4 IMPLEMENTATION GO: NO`**. `dev_lost` BAR-MMIO invariant re-audited: holds.
+- **RE TOOLING D4 ACCELERATION** (`re` v4, `re.db` schema v4, in
+  `iced/test/binary_analyzer`): `re mmio`, `re imm`, `re field-writers`,
+  `re indirect`, `re table`, `re regtables`, `re const`, `re phyops`,
+  `re dump --json`, `re regress`. v4 fixes two false-positive classes:
+  relocation-covered immediates are symbolic (never literal zero; `phy+0xF8`
+  → `&wlc_phy_btc_adjust_acphy`) and linearly-ambiguous values are
+  `CONDITIONAL` with a candidate set (`dma_attach` has 0 `EXACT`). `re regress`
+  **PASS**. `IMPLEMENTED` / `STATIC TESTED`.
+- **M3.4D4B value-provenance closure + CP-A3 proof** = **`ANALYSIS ONLY`**
+  (commit follows `83e542b`): the three "UNKNOWN executed write values" are
+  **not executed on the initial attach path** — `wlc_phy_attach` enters the
+  **radio-OFF** branch of `wlc_phy_switch_radio_acphy`
+  (`wlc_phy_switch_radio(phy,0)`), while `sub_9591e`/`sub_a4adc` live only in
+  the **radio-ON** branch (`phy+0x32d` gate). `sub_a4adc` is
+  `rx_farrow_tbl*`-table-driven; `sub_9591e` is a static-descriptor radio
+  calibration loop; `si_pmu_otp_power` is a conditional RMW. Executed attach
+  write set = **12 PHY writes + 8 radio RMWs**, all `STATIC`, **UNKNOWN = 0**;
+  AC skips the NPHY `0x3d8` block. **CP-A3 = `LOGICALLY STABLE / NOT DIRECTLY
+  OBSERVABLE`** (radio OFF, PSM not running); operational state needs the later
+  radio-ON checkpoint. `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`.
+  `docs/m34d4b/d4b_value_provenance_closure.md`.
+- **M3.4D4C radio-OFF attach -> first operational AC state** = **`ANALYSIS
+  ONLY`** (commit follows `84f9073`): the only AC-reachable
+  `wlc_phy_switch_radio(on=1)` site is **`wlc_bmac_radio_hw @0x63ec8`**, a
+  `LOCAL` function with **no in-blob caller** (the hw-layer radio API; re +
+  Ghidra + objdump + ELF agree); `wlc_phy_init @0xbad44` is on=1 but
+  AC-unreachable (`[phy+0x28]==0`). **CP-A3 is temporally BEFORE D2/D3**
+  (attach vs `wlc_bmac_init`). Counts: whole family 272 PHY / 304 RADIO / 8
+  TABLE; **attach `on=0` = 12 PHY / 8 RADIO / 0 TABLE**; first radio-ON = 242
+  PHY / 296 RADIO / 8 TABLE. Channel first required at `wlc_bmac_init @0x6833b`
+  (`wlc_default_chanspec` provenance). First operational checkpoint = **CP-O2**
+  (`wlc_bmac_radio_hw` return). `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO:
+  NO`. Report `docs/m34d4b/d4c_radio_on_transition.md`.
+  **"186 PHY / 301 RADIO" is whole-family/radio-ON-inclusive — NOT the attach
+  scope.**
+- **M3.4 lifecycle reconstruction** = **`ANALYSIS ONLY`** (commit follows
+  `e8946a1`): `wlc_bmac_radio_hw` is an **RPC-dispatched** function
+  (`WLRPC_WLC_BMAC_RADIO_HW_ID`; present in wl7/wl10 strings) with **no caller
+  in `wlc_hybrid.o_shipped` or `wl.ko`** (re + Ghidra + readelf + unique LOCAL
+  symbol). It is **not executed** by the vendor Linux attach/init → **no
+  vendor-time CP-O2**; the D4C CP-O2 state (PSM running / DMA initialized) is
+  **withdrawn**. **H_NEW NOT SUPPORTED** (no vendor early-radio call exists to
+  omit). **MODEL A** (board → D2 → D3 → later PHY) is the evidence-supported
+  lifecycle; **no pre-D2 milestone required**; "186/301" never the attach
+  scope. `docs/lifecycle/bcm4352_rev42_lifecycle.{md,json}`; erratum in
+  `docs/m34d4b/d4c_radio_on_transition.md`. `D4 IMPLEMENTATION GO: NO`;
+  `HARDWARE TEST GO: NO`.
+- **M3.4D4A actual rev42 PHY-init reachability** = **`ANALYSIS ONLY`** (commit
+  follows `00f22d8`) — **SUPERSEDED by D4D (reachability correction); retained
+  for history**: `wlc_bmac_radio_hw` =
+  `OUT_OF_BAND_RPC_NOT_PART_OF_LOCAL_INIT`. **`wlc_phy_init` is a no-op for AC**
+  (`[pi+0x28]==0`; only `wlc_phy_chanspec_shm_set`). Real post-D3B work =
+  **`wlc_phy_cal_perical(pi,6)` from `wlc_init @0x3cde0`** (after
+  `wlc_bmac_init`) -> case 4/5/6 -> `wlc_phy_cals_acphy` (first calibration,
+  synchronous). First PHY write `phy_reg_mod(0x160,0x7) @0x97d50`; first radio
+  write `mod_radio_reg(0x8e5,0x4000) @0x9315d`. `[pi+0x28]`/`[pi+0x118]` =
+  `INTENTIONALLY_NULL`; **0 unresolved indirects**. D3B: H1 **REJECTED**, H2
+  PLAUSIBLE/UNKNOWN, H3 WEAKENED, H4 PLAUSIBLE. Smallest unit = `D3B +
+  wlc_bmac_init remainder + wlc_set_home_chanspec + wlc_phy_cal_perical`.
+  `docs/m34d4/d4a_reachability_recovery.md`,
+  `docs/m34d4/wlc_phy_init_bcm4352_reachable.json`. `D4 IMPLEMENTATION GO: NO`;
+  `HARDWARE TEST GO: NO`.
+- **M3.4D4A v2** (tool re-run) = **`ANALYSIS ONLY`** — **SUPERSEDED by D4D**:
+  `[phy+0x28]` is **proven
+  zero for rev42 AC** (`wlc_phy_attach_acphy` `0xa3001`), so the `wlc_phy_init`
+  body is skipped at band init (`je 0xbaecE`); `[phy+0x118]` `UNRESOLVED` but
+  unreachable. `wlc_phy_init` is **not** the AC PHY-init point; scope must be
+  re-derived from `wlc_phy_attach_acphy`. CP-F stable but not an AC PHY-init
+  checkpoint. `D4 GO: NO`. Artifacts `docs/m34d4/*_v2.json`,
+  `docs/m34d4/d4_checkpoint_analysis_v2.md`.
+- **M3.4D4B — AC-PHY init lineage** = **`ANALYSIS ONLY`** (2026-09, tool-first) —
+  **SUPERSEDED in part by D4D** (the `+0x28`/`+0x30` "zeroed" claim is wrong):
+  `wlc_phy_attach_acphy` is software/board/capability only (0 MMIO writes, 11
+  `phy_reg_read`, 1 callback `btc_adjust@+0xF8`); it zeroes `+0x28`/`+0x30`, so
+  `wlc_phy_init`/`wlc_phy_cal_init` are no-ops for rev42 AC. Real AC init is in
+  the caller `wlc_phy_attach` at probe: `wlc_phy_anacore` (first write, D11
+  `0x3e6`) → direct `0x3d8/0x3f6` writes → `wlc_phy_switch_radio` →
+  `wlc_phy_switch_radio_acphy` (62 literal radio ops + delays + enable-MAC).
+  Earliest checkpoint **CP-A0** (after `wlc_phy_attach_acphy` returns,
+  pre-hardware); first "PHY initialised" **CP-A3** (after `wlc_phy_attach`
+  returns). Unknown runtime-derived write values ⇒ `D4 GO: NO`,
+  `HARDWARE TEST GO: NO`. Artifacts `docs/m34d4b/*`.
+- **M3.4D4D post-D3B operational PHY/radio timeline** = **`ANALYSIS ONLY`**
+  (correction of D4A/D4B/D4C/D4A-v2): the `pi_fptr` slots installed by
+  `wlc_phy_attach_acphy` are **relocation-covered `imm32`**, NOT NULL:
+  `pi+0x28`=**`sub_b018f`** (AC PHY init callback), `+0x30`=`sub_8e77a`,
+  `+0x38`=`sub_a7089`, `+0x40`=`sub_9949f`, `+0xc0`=`sub_97e2b`,
+  `+0xc8`=`sub_92e67`, `+0xd0`=`sub_99528`, `+0x100`=`sub_9737d`,
+  `+0xf8`=`wlc_phy_btc_adjust_acphy`; only `+0x110`/`+0x118` uninstalled.
+  Therefore **`wlc_phy_init` is the real AC PHY/radio init entry**, reached
+  from **`sub_6656c @0x669df`** on the initial-up path (`wlc_bmac_init` passes
+  `dl=0`, so the `phyrev>0x27` skip is not taken). **First vendor-executed
+  radio-ON = `wlc_phy_init @0xbad44 → wlc_phy_switch_radio(ON=1) →
+  wlc_phy_switch_radio_acphy(ON=1)`** (`sub_b018f` runs at `0xbad4c` right
+  after). First radio write `mod_radio_reg(0x80b,0x80,0x80) @0xaa80f`; first
+  PHY write `phy_reg_mod(0x830,0x7,0x3) @0x8fb54`; first PHY-table
+  `wlc_phy_table_write_acphy(table 3) @0xaa2ab`; first PLL/synth `UNKNOWN`
+  (runtime `pi+0x16e` branch). `wlc_phy_cal_perical(pi,6)`/`wlc_phy_cals_acphy`
+  still follows from `wlc_init`. `wlc_bmac_init` reachable indirect
+  `[rax+0xA0]`/`[rax+0xD8]` `UNRESOLVED`; dev_lost not wired for the new D11
+  reads; **EARLIEST STRONG CHECKPOINT = NONE** (best candidate CP-F = WEAK).
+  `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`. Artifacts
+  `docs/m34d4/post_d3b_operational_timeline.md`, `operational_callgraph.json`,
+  `radio_on_transition.json`, `initial_chanspec_provenance.json`,
+  `calibration_path.json`, `operational_checkpoint_analysis.md`,
+  `evidence_post_d3b_reachability.json`.
+- **M3.4D4D tooling-gap closure + Phases 3-7** = **`ANALYSIS ONLY`** +
+  tooling `IMPLEMENTED`/`STATIC TESTED` (iced/test **`f5d03da`**, re v5,
+  `re.db` schema v5; store-vs-read follow-up **`cf9738e`**). Two `re` defects fixed: (1) **base-aware indirect
+  resolution** — `indirect_targets` carries `base_arg/base_load/field_offset/
+  installer/family`; candidates come from constructor reloc stores at the exact
+  triple; the AC pi table (`+0x28`=`sub_b018f` … `+0xf8`=`wlc_phy_btc_adjust_acphy`,
+  `+0x110`/`+0x118` null) is a `re regress` fixture; `wlc_phy_init` no longer
+  reports only `wlc_phy_init_lpphy`; (2) **discovered-fragment sizes** — 620
+  mid-instruction/contained false entries demoted; `sub_b018f` = `0x2c6` (was
+  `0x2d`); (3) store-vs-read via iced operand access (`cmp` no longer a store).
+  All gates PASS (`re regress`, `re verify --strict`, `verify_edges`,
+  `verify_decode`, `verify_tables`); calls unchanged `51193`.
+  **Phases 3-7:** `wlc_bmac_init @0x6923d [rax+0xa0]` / `0x6924a [rax+0xd8]` =
+  **RESOLVED runtime ops-table dispatch** through `*(*(wlc_hw+0x20))` = `di[0]`
+  (FIFO0 `dma_info` from `dma_attach`, word0 = `di->ops` = `dma64proc`):
+  `+0xa0` = `dma64_rxinit` (`sub_f897`), `+0xd8` = `dma64_rxfill` (`sub_f14d`),
+  both `EXACT` (blocker `d4.indirect.wlc_bmac_init.vtable` CLOSED);
+  `0x69260/0x6926d` gated `phyrev==4` (NOT rev42).
+  `pi+0x16e` is **`(radio_reg 0x3da >> 4) & 0xff`**, stored by
+  `wlc_phy_attach @0xbeff8` (AC path) → **HARDWARE-derived, not zero** (the
+  `{0,1,2}` "writers" were `cmp` reads). `pi+0x20+0xa7` =
+  `COMPUTED_RUNTIME`; `(*(pi+0x138))+0x8be/0x8bf` are **resolved**
+  (`value_provenance.json` corrected): the incrementing-pointer loop
+  `sub_a7089 @0xaa364` writes the constant `{0x19,0x1a}` → `+0x8be=0x19`,
+  `+0x8bf=0x1a` (read `0xaa2b0`); deterministic, not `UNKNOWN`; **Farrow arrays
+  = 8 static `.data` tables** (4428 B each). First PLL/synth selector is that
+  hardware value → **rev42 branch UNKNOWN** (sequences A/B and bounded lock
+  polls recovered). dev_lost latch **not wired** to the new path. **No STRONG
+  checkpoint; `D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`.** Artifacts
+  `docs/m34d4/tooling_gap_closure.{md,json}`,
+  `docs/m34d4/indirect_ops_table_resolution.{md,json}`,
+  `docs/m34d4/pi_8bf_provenance.{md,json}`,
+  `indirect_resolution.json`, `value_provenance.json`, `pll_synth_path.md`,
+  `dev_lost_access_map.json`, `operational_checkpoint_analysis.md`.
+- **T8 — incrementing-pointer store coverage** = tooling `IMPLEMENTED` /
+  `STATIC TESTED` (iced/test `aa67a95`; no OpenBRCM runtime change, no
+  hardware). Canonical `re` now detects bottom-tested bounded loops with
+  constant pointer induction and enumerates the effective object-relative
+  offsets with per-iteration values where provable (loop re-execution with a
+  frame-array + register-spill aware value domain). `re field-writers --field
+  0x8bf` → `0xaa364 sub_a7089 store a0 width=8 value=0x1a`; `re packet --fn
+  sub_a7089 --fields` → `+0x8be=0x19, +0x8bf=0x1a (induction, EXACT,
+  base_load=0x138)` — no manual `objdump` required. The `pi+0x8bf` value (0x1a)
+  and its provenance are unchanged; only the derivation is now tool-native.
+  No schema change; `re regress`/`re verify --strict` + `verify_edges`/
+  `verify_tables`/`verify_decode` PASS; 1 positive + 6 negative fixtures
+  (`scripts/verify_induction.py`) PASS; Ghidra `FUN_001a7089` agrees. Prior
+  relocation/dataflow/indirect false-positive fixes remain intact.
+  `docs/re-tooling.md` §9, `docs/m34d4/pi_8bf_provenance.*`.
+- **DEV-LOST-PHY-PATH — central device-loss access guard** = safety
+  infrastructure `IMPLEMENTED` / `STATIC TESTED` (blocker
+  `D4-BLOCKER-DEV-LOST-PHY-PATH` resolved; no hardware, no MMIO, no PHY
+  implementation). New `src/ob_guard.{c,h}` centralizes every D11 / PHY-indirect
+  / radio / SHM-OBJ / ChipCommon / AXI access: once `hw->dev_lost` is latched,
+  reads return a dead sentinel without MMIO and writes are suppressed
+  (`struct ob_hw::dev_lost` remains the single monotonic latch). All raw
+  `bcma_read*/write*` in the driver was routed through the guarded primitives
+  (`ob_d11_*`, `ob_axi_*`, `ob_cc_*`), the trusted detector
+  (`ob_d11_read32_trusted`) latches on a direct all-ones read and is wired into
+  the D3B/D3A1 postconditions, and core/host reset+bring-up
+  (`ob_si_powerup`, `ob_ucode_prepare`, `ob_d3a0_core_contain`) is gated on
+  `dev_lost`. Tests: `tests/host/ob_guard_test.c` (cases 1–12 + negatives) and
+  the centralization audit `tests/host/test_device_lost_guard.py`; `make
+  modules` and `make hosttest` PASS. All-ones detection is limited to trusted
+  direct reads (SHM/OBJDATA payloads are never classified as loss). Artifacts:
+  `docs/m34d4/dev_lost_phy_access_map.json`, `docs/m34d4/dev_lost_phy_guard.md`.
+  **`D4 IMPLEMENTATION GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
+- **D4D-PLL-SELECTOR — `pi+0x16e` PLL/synth selector provenance** = **`ANALYSIS
+  COMPLETE` / `HARDWARE_REQUIRED`** (no hardware, no MMIO, no driver change).
+  The blocker `d4.pll_synth.rev42.branch` (task alias
+  `D4-BLOCKER-PLL-SYNTH-REV42-SELECTOR`) is resolved: `pi+0x16e` is not a
+  "radio revision" but the **2069 radio revision class = `radio_rev >> 4`**,
+  decoded in `wlc_phy_attach @0xbeff8` (AC path) from **radio reg 0 bits[11:4]**
+  (radio indirect pair `pi+0x148+0x3d8` latch / `+0x3da` data; reg 1 = radio id
+  `0x2069`). First-radio-ON `wlc_phy_switch_radio_acphy`: selector 1 (rev
+  16..31) = **sequence A** (`0x80b`), 2 (rev 32..47) = **sequence B** (`0x60c`),
+  else skip; both converge at `sub_9fb72` (2069 rev jump table
+  `prefregs_2069_rev*`). Single AC writer + no NVRAM/SPROM `radiorev` override ⇒
+  the numeric rev is **HARDWARE_REQUIRED**; **classification C, no guessed
+  default**. A read-only probe (2× `0x3d8` latch write + 2× `0x3da` read) is
+  designed but **NOT implemented/executed**. Adjacent harvest: reusable
+  [`radio_identity_map.json`](m34d4/radio_identity_map.json),
+  [`pll_decision_matrix.json`](m34d4/pll_decision_matrix.json),
+  [`checkpoint_candidates.json`](m34d4/checkpoint_candidates.json); tooling gaps
+  filed (R-G1..R-G4, no tooling change). New blocker `d4.pll_branch.hw_probe`.
+  Artifacts `docs/m34d4/pll_selector_provenance.{json,md}`. **`D4 IMPLEMENTATION
+  GO: NO`; `HARDWARE TEST GO: NO`** (unchanged).
+- **D4-BLOCKER-PLL-BRANCH-HW-PROBE — isolated BCM2069 radio identity probe** =
+  `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **frozen candidate** / **NOT
+  HARDWARE PROVEN / NOT EXECUTED** (no hardware, no MMIO). New additive
+  isolated mode `radio_id_probe_only=1` (`src/ob_radio.{c,h}`, ob_core dispatch
+  via `ob_isolated_mode_select7`): minimum proven core prep (host up + D11 core
+  enable + FAST clock + SICF_MPCLKE) then exactly the proven vendor radio read
+  (selector write `0x3d8=0/1` + 16-bit read `0x3da`), decode radio reg 0/1, and
+  STOP before PLL/radio/PHY/cal/channel/DMA/IRQ/mac80211. **Probe class =
+  `READ_WITH_NONDESTRUCTIVE_SELECTOR_WRITE`.** Earliest safe point = the D11-side
+  core bring-up only; ucode/PSM/initvals/D3A1/DMA/D3B/bsinitvals/PHY init are
+  NOT required (vendor reads radio regs in `wlc_phy_attach`, before all of them;
+  `wlc_bmac_core_phypll_ctl` is a proven no-op for rev42). dev_lost-safe
+  (PRE/POST trusted MACCONTROL sentinel; zero MMIO after latch; module pinned;
+  reboot). Offline decoder `scripts/decode_radio_probe.py` (no LLM; rejects
+  malformed/missing/conflicting/candidate-mismatch/impossible/fault) plus
+  `scripts/radio_probe_audit.py` (all dangerous categories zero; D11 reads=5,
+  D11 writes=2 selector, radio reads=2, PHY/PLL/cal/DMA/IRQ/SHM=0). Frozen
+  candidate module `openbrcm.ko` sha256
+  `706b3407fc164b2a87e3f7e879f6bdc99d2180f84a1d8431635033be6106dc8d`,
+  srcversion `C15A62FF7BAA84106E75F43`, signer `Broadcom Driver MOK`; human
+  one-shot procedure in `docs/m34d4/radio_probe_design.md` §9. Artifacts
+  `docs/m34d4/radio_probe_design.md`, `radio_probe_contract.json`,
+  `radio_probe_decoder.md`. Scoped `HARDWARE TEST GO: YES` for this isolated
+  candidate only (owner approval); **global `D4 IMPLEMENTATION GO: NO`**. The
+  blocker `d4.pll_branch.hw_probe` stays OPEN until a decoded capture exists.
+  **Operational harness ready** (`IMPLEMENTED` / `STATIC TESTED`): the existing
+  `scripts/runtime-test.sh` gained `--mode radio_id_probe_only` (real + `--dry-run`
+  + offline `--evaluate-log <mode> <file> [--marker m]`) with all ten clean-PASS
+  markers, fault signatures (incl. `radio-probe: FAIL`), automatic full-dmesg/
+  journal/focused-radio capture under `/tmp` (no kernel-log clear; marker
+  isolation), automatic offline decode (`CAPTURE CLEAN / DECODE FAILED` on
+  failure, blocker NOT proven), and rmmod only after a verified clean PASS.
+  The PML/PLL-reset-omission open question is closed for diagnostics: the radio
+  read is bounded (no polling), so omission yields only (A) a valid read or (B)
+  a bounded invalid result, and the decoder now rejects an out-of-domain BCM2069
+  revision as ambiguous. Driver source UNCHANGED (frozen module still `706b3407…`).
+- **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
+  (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
+  never a source of truth) + `scripts/generate-current-context.py`
+  (`--check`/`--validate`/`--scan-links`) over the machine-readable
+  `docs/state/current-state.json`, the artifact ledger and the binary/tooling
+  identity; the additive `re packet` command (iced/test) for bounded one-target
+  evidence; and `AGENTS.md` §8-§11 (PROVEN-fact immutability, one-blocker
+  = one task, token-efficient startup, delta-only output). Tests
+  `tests/host/test_current_context.py`, `tests/host/test_re_packet.py`.
+  No hardware, no runtime C change.
+- **DeepSeek prompt-cache optimization + telemetry** = `IMPLEMENTED` /
+  `STATIC TESTED` (2026-09): `docs/cache/deepseek-cache-contract.md` (verified
+  official facts), `docs/cache/cache-architecture.md` (STABLE PREFIX / DYNAMIC
+  TAIL, frozen session snapshot, ONE BLOCKER = ONE CACHE EPOCH),
+  `docs/cache/cache-telemetry.md`; local-only capture
+  `.opencode/plugins/openbrcm-cache.ts` → `.openbrcm-local/cache-telemetry.jsonl`
+  (gitignored; no prompt/secret content; never a CI gate); per-session FROZEN
+  agent-state injection in `.opencode/plugins/openbrcm-guard.ts`;
+  `scripts/cache_telemetry.py` + `scripts/cache-report.py` (fragmentation
+  detector) + bounded `scripts/deepseek-cache-benchmark.py`; tests
+  `tests/host/test_cache_telemetry.py`, `tests/host/test_cache_plugin.py`.
+  Provider `deepseek/deepseek-flash` via `@ai-sdk/openai-compatible`. No
+  hardware, no MMIO, no runtime C change. Live benchmark **NOT RUN**
+  (`DEEPSEEK_API_KEY` absent). **Known limitation:** `docs/agent-state.md` is
+  still duplicated (opencode `instructions` + frozen plugin injection) and is
+  re-read per request by the `instructions` path; migrating it fully to the
+  frozen snapshot is a deferred follow-up (observe via telemetry first).
+- M3.4D4 (AC PHY bring-up) = NOT STARTED / NOT HARDWARE PROVEN / `D4 GO: NO`
 
 The hardware-proven milestones are narrow (see below); the later
 PHY/radio/channel stages remain **unproven**.
@@ -358,6 +662,49 @@ the already-read, CRC-validated 234-word rev11 image (`sprom_evidence_only=1`,
 **MHF3 = `0x0000`**. Evidence: `docs/m34d3b/d3b_sprom_capture.json`,
 `docs/m34d3b_sprom_evidence.md`.
 
+**D3B band-init implementation** (`m34d3b-band-init-test`, from `main` @
+`06d60d6`): `IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` /
+NOT HARDWARE PROVEN**.
+Isolated mode `bsinitvals_test_only=1` runs the proven D2A/D2B core and the
+exact D3A1 vendor prefix with the D3A0 DMA engines **left live** (new reusable
+`ob_d3a1_run_prefix()`), then the exact `sub_6656c` slice (read-only
+`D11+0x3e0`; MHF1..5 via `sub_62766` -> SHM `0x5e/0x60/0x62/0x78/0xd4`;
+`d11ac1bsinitvals42` 73 records / 39 x w2 + 34 x w4), validates the
+deterministic postconditions and performs the mandatory verified D3A0 teardown;
+it STOPS before `wlc_phy_init`/PHY/radio. MHF values are derived from the
+rev11 board fields (`ob_si_read_mac` decode: `boardtype`/`boardflags`/`aa2g`/
+`aa5g`/`antswitch` -> `antsel_type` -> vector), not board-hard-coded. Files
+`src/ob_d3b.{c,h}`; proof `docs/m34d3b_band_init_test.md`.
+
+**2026-09 hardware attempt (frozen candidate `5fa5e5b`, module
+`3a10aff9…`):** D2A PASS -> D2B PASS -> T1 PASS -> 4 TX DMA channels
+programmed/validated -> FIFO0 RX programmed/validated IDLE -> DMA bring-up PASS
+-> T2 complete -> `switch_macfreq` complete; then the shared
+`ob_d3a1_validate()` failed **only** on the pre-D3B `tsf_cfpstart` gate
+(`rb=0x3c000000`, expected `0x02000000`). Mandatory teardown then PASSed
+(RX/TX0..TX3 reset PASS, all engines stopped, rings released). **No bsinitvals
+record was applied.** Root cause: `0x18c` is a write-only CFP-start
+programming register (readable value at `0x604/0x606`); the equality gate was
+invalid and is removed (write-accounting + diagnostics; `tsf_cfprep` equality
+retained). Evidence `docs/m34d3a1_vendor_tail_test.md` §17. **Fixed retest
+candidate = `ffa2a548911007b58605df51150e24d422d6d957`, signed `openbrcm.ko`
+sha256 `889710295f2e1c1c80088d333c244220c32127fda7cbc8644cca67c09ab2e1ed`
+(NOT HARDWARE PROVEN; one D3B retest pending owner approval).**
+
+**2026-09 corrected hardware attempt (candidate `2917ca9` / runtime `ffa2a54`,
+module `88971029…`) — PLATFORM CRASH:** D2A PASS -> D2B 610 PASS -> D3A1 T1 PASS
+-> 4 TX DMA channels programmed/validated -> FIFO0 RX programmed/validated IDLE
+-> DMA bring-up PASS -> T2 PASS -> `switch_macfreq` -> D3A1 postconditions PASS
+-> D3B: MHF `{0x0100,0,0,0,0x0080}` written, `bsinitvals42 begin records=73`,
+`complete total=73 w16=39 w32=34`. ~4.84 s later **every post-D3B D11 read
+returned `0xffffffff`** (`mhfs=ffff…`, `SHM[0x10/0x1c/0x94]=ffffffff`,
+`MACCONTROL=ffffffff`, `MACINTMASK=ffffffff`). `validation FAIL ret=-5` ->
+`dma-test: quiesce begin`; **no later OpenBRCM line**; then 100% CPU / freeze /
+spontaneous reboot (no visible panic, pstore empty). Next boot:
+`x86/amd: Previous system reset reason [0x08000800]: an uncorrected error caused
+a data fabric sync flood event`. Full analysis:
+`docs/m34d3b/d3b_crash_postmortem.md`. **`HARDWARE RETEST: NO`.**
+
 ### Historical — M3.4D2B (isolated rev42 common-initvals test, PROVEN)
 - Tested candidate `f27286f6f7e817a58fd1ae6da311cc4281a10a0b`; module SHA256
   `1258290cb491ea551a9fb4c4e820ecf3450ae7c23957b41e5eeada14f1d98290`; base
@@ -430,6 +777,25 @@ M3.4D3A1 isolated `d11_tail_test_only=1` **HARDWARE RUNTIME PROVEN on BCM4352**
 (candidate `7265f9d`); M3.4D1 `fw_validate_only=1` runtime PASS.
 
 ## Last failure / reset event
+**2026-09 D3B corrected hardware attempt (candidate `2917ca9` / runtime `ffa2a54`,
+module `88971029…`) — platform-level crash:** the D3B slice applied all 73
+`d11ac1bsinitvals42` records (`73/39/34`); ~4.84 s later every post-D3B D11 read
+returned `0xffffffff`; validation failed and the driver entered
+`ob_d3a0_teardown()` (`dma-test: quiesce begin`), after which the platform reset
+with an AMD **data-fabric sync flood** (`0x08000800`). No later OpenBRCM line;
+no visible panic; pstore empty. Post-mortem:
+`docs/m34d3b/d3b_crash_postmortem.md`. **`HARDWARE RETEST: NO`. Do not retest
+until the all-ones mechanism and the teardown-on-device-loss interaction are
+bounded.**
+
+**2026-09 D3B attempt 1 (frozen candidate `5fa5e5b`):** the shared
+pre-D3B `ob_d3a1_validate()` failed **only** on the `tsf_cfpstart` (`0x18c`)
+postcondition (`rb=0x3c000000`, expected `0x02000000`). Mandatory verified
+teardown succeeded; no bsinitvals applied; no BUG/Oops/lockup/reset. Root cause
+was an invalid equality gate (write-only programming register), now fixed
+(write-accounting + diagnostics; `tsf_cfprep` equality retained). This did **not**
+reach PHY/radio. See `docs/m34d3a1_vendor_tail_test.md` §17.
+
 A test that used `fw_dryrun=1` believing it isolated hardware caused a long
 hang followed by a **hard system reset**. `fw_dryrun` is only a parser log
 option. `fw_validate_only` was introduced as the true isolated early-return
@@ -462,7 +828,7 @@ complete isolated lifecycle allocate/map → program → hardware validation →
 verified stop → release (`PASS - bring-up + teardown proven`, no kernel fault).
 Evidence: `docs/m34d3a0_dma_test.md`.
 
-**M3.4D3A1 is now HARDWARE RUNTIME PROVEN on BCM4352** (candidate `42d74b8`,
+**M3.4D3A1 is HARDWARE RUNTIME PROVEN on BCM4352** (candidate `42d74b8`,
 module `6ba2d853…`) on `m34d3a1-vendor-tail-test`; report
 `docs/m34d3a1_vendor_tail_test.md` §14.1 (recovered ordering/source evidence in
 `docs/m34d3a1_vendor_tail.md`). The one-shot isolated
@@ -470,10 +836,14 @@ module `6ba2d853…`) on `m34d3a1-vendor-tail-test`; report
 tail (`sub_67efd -> T1 -> DMA -> T2 -> switch_macfreq`) with the D3A0 DMA
 lifecycle in its vendor position, validated the postconditions, ran the
 verified DMA teardown, unloaded cleanly (`rmmod`), and **STOPPED before
-`sub_6656c`**. No BUG/Oops/lockup/reset. See `docs/d3a0_dma_test_design.md`,
-`docs/m34d3_bsinitvals.md` and `docs/m34d3a1_vendor_tail_test.md`.
+`sub_6656c`**. No BUG/Oops/lockup/reset. **2026-09 postcondition erratum:**
+the `tsf_cfpstart` (`0x18c`) equality gate was invalid and is removed; the rest
+of the proof stands (`docs/m34d3a1_vendor_tail_test.md` §17). See
+`docs/d3a0_dma_test_design.md`, `docs/m34d3_bsinitvals.md`.
 
-**Next action — D3B unblocked (`GO: YES`); D4 after.** M3.4D3B (band init /
+**Next action — D3B standalone RETIRED (boundary not vendor-stable); next
+milestone M3.4D3+4 (band init + minimal D4 prefix through `wlc_phy_init`);
+retest BLOCKED; device-lost fail-safe shipped.** M3.4D3B (band init /
 `d11ac1bsinitvals42`) is analyzed in
 [`docs/m34d3b_band_init.md`](m34d3b_band_init.md): boundary = `sub_6656c`
 entry (0x6656c) through the `sub_60f67` applier return (0x669c2), STOP before
@@ -489,9 +859,15 @@ MHF3 `0x0000` (hardware capture: `boardtype=0x85ba`, `boardflags & 0x8 = 0`,
 `antswitch=0` => `antsel_type=0`);
 MHF4 `0x0000` (4313-only site skipped);
 MHF5 `0x0080` (band phytype `0x0b != 7` => `stf+0x59=1`).
-No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES`. D4
-(AC PHY bring-up: `wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO)
-follows. Neither D3B nor D4 has code or hardware proof yet.
+No value/provenance/safety blocker remains; `D3B IMPLEMENTATION GO: YES` and the
+isolated `bsinitvals_test_only=1` implementation (`src/ob_d3b.{c,h}`) is
+`IMPLEMENTED` / `STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT
+HARDWARE PROVEN** (`docs/m34d3b_band_init_test.md`): the 2026-09 attempt
+reached DMA + `switch_macfreq` but stopped pre-D3B on the invalid
+`tsf_cfpstart` gate; the gate is fixed and **no bsinitvals was applied**. Next:
+the one-shot D3B **retest** (owner approval); then D4 (AC PHY bring-up:
+`wlc_phy_init` -> `wlc_phy_anacore`, first PHY-indirect MMIO), which has no code
+or hardware proof yet.
 
 ## M3.4D2B boundary and evidence (PROVEN)
 Executed sequence (candidate `f27286f`, module SHA256
@@ -523,21 +899,28 @@ SHOT**: do **not** repeat it and do not invent cleanup writes; after a
 FAIL/timeout/reset, recover logs and analyze before any further action.
 
 ## Exact STOP boundary
-Current (D3B MHF3 SPROM-evidence capture, static-only): the one-shot read-only
-`sprom_evidence_only=1` run is **DONE** (`HARDWARE RUNTIME PROVEN`); STOP after
-the evidence/docs commit; **no D3B implementation**, no further
-`insmod`/`rmmod`/`modprobe`, no hardware, no new D3B reverse engineering. The
-MHF3 input is resolved; D3B implementation awaits its own planning branch.
+Current (D3B band-init, attempts made + postcondition fix + boundary re-eval):
+the isolated `bsinitvals_test_only=1` implementation is `IMPLEMENTED` /
+`STATIC TESTED` / `SIGNED` / **`HARDWARE ATTEMPTED` / NOT HARDWARE PROVEN**;
+attempt 1 stopped at the pre-D3B `tsf_cfpstart` gate (fixed); attempt 2 applied
+all 73 bsinitvals records and then the platform crashed (AMD data-fabric sync
+flood) during `ob_d3a0_teardown()` after the D11 window returned `0xffffffff`.
+**`HARDWARE RETEST: NO`.** STOP — **no `insmod`/`rmmod`/`modprobe`, no
+hardware**. Two defects are now fixed/analysed: (A) the device-lost fail-safe is
+`IMPLEMENTED` / `STATIC TESTED`; (B) STOP-before-`wlc_phy_init` was re-evaluated
+and is **not vendor-stable**, so D3B standalone is retired. Retest requires the
+successor milestone (D3B + minimal D4 prefix through `wlc_phy_init`) to be
+analysed and host-tested first; see
+`docs/m34d3b/d3b_crash_postmortem.md` Parts A/B.
 
 Runtime STOP (last proven, M3.4D3A1): the isolated `d11_tail_test_only=1` path
 returns after the vendor tail through `wlc_bmac_switch_macfreq`, after the
 verified DMA teardown, and **before `sub_6656c`** / bsinitvals / PHY / radio /
 channel / mac80211.
 
-Next runtime STOP (D3B, **not implemented**): after the `sub_60f67` applier
-return (`0x669c2`) and **before `wlc_phy_init`** (`0x669df`), i.e. before
-`wlc_phy_anacore` and any PHY-indirect/radio window. `D3B IMPLEMENTATION GO:
-YES`, but D3B may only be implemented in a dedicated (planning-first) milestone.
+Next runtime STOP (proposed, M3.4D3+4): after `wlc_phy_init` returns
+(`0x669e4`), before the rest of the `sub_6656c` band-init tail — the first point
+at which the PHY has completed its own init. Not implemented; not proven.
 
 D2A/D2B historical STOP: neither earlier path reaches bsinitvals/`sub_6656c`/
 PHY/radio/channel/DMA/IRQ/mac80211.

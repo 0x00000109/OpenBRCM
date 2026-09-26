@@ -1,0 +1,85 @@
+{
+  "milestone": "M3.4D4",
+  "blocker": "d4.indirect.wlc_bmac_init.vtable",
+  "title": "wlc_bmac_init reachable indirect ops-table dispatch — resolved",
+  "status": "ANALYSIS ONLY",
+  "hardware": false,
+  "blob_sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+  "sites": [
+    {
+      "site": "0x6923d",
+      "operand": "call qword ptr [rax+0A0h]",
+      "base_register_expression": "rax = *(di[0]) = di[0]->ops",
+      "base_object": "di[0] = *(wlc_hw+0x20): the FIFO0 dma_info (combined TX_AC_BK_FIFO + RX_FIFO) allocated by dma_attach",
+      "table": "dma64proc",
+      "table_section": ".rodata",
+      "table_addr": "0x27d620",
+      "table_slot": "+0xa0",
+      "target_addr": "0xf897",
+      "candidate_name": "sub_f897",
+      "semantic_name": "dma64_rxinit (modern brcmsmac: dma_rxinit)",
+      "installer_writer": "dma_attach @0x1040c stores R_X86_64_32S dma64proc into the new object word0",
+      "confidence": "EXACT",
+      "branch_condition": "unconditional (wlc_bmac_init, before the phyrev==4 gate)",
+      "bcm4352_rev42_reachable": true,
+      "evidence": [
+        "re refs dma64proc -> dma_attach (0x10380) @0x1040b",
+        "re fn dma_attach --asm -> 0x10408: mov qword ptr [r13],0 with reloc R_X86_64_32S dma64proc (0x1040c)",
+        "re fn wlc_bmac_init --asm -> 0x69236 mov rdi,[rbx+20h]; 0x6923a mov rax,[rdi]; 0x6923d call qword ptr [rax+0A0h]",
+        "re ptrtable dma64proc -> +0xa0 [data] .text@0xf897",
+        "readelf -r -> 00000027d6c0 R_X86_64_64 .text + f897"
+      ],
+      "semantic_corroboration": "Modern brcmsmac brcms_b_init (main.c:3295) calls dma_rxinit(wlc_hw->di[RX_FIFO]) with RX_FIFO==0; the vendor sequence at 0x69236/0x6923d is identical."
+    },
+    {
+      "site": "0x6924a",
+      "operand": "call qword ptr [rax+0D8h]",
+      "base_register_expression": "rax = *(di[0]) = di[0]->ops",
+      "base_object": "di[0] = *(wlc_hw+0x20): the FIFO0 dma_info (combined TX_AC_BK_FIFO + RX_FIFO) allocated by dma_attach",
+      "table": "dma64proc",
+      "table_section": ".rodata",
+      "table_addr": "0x27d620",
+      "table_slot": "+0xd8",
+      "target_addr": "0xf14d",
+      "candidate_name": "sub_f14d",
+      "semantic_name": "dma64_rxfill (modern brcmsmac: dma_rxfill)",
+      "installer_writer": "same dma64proc table; slot R_X86_64_64",
+      "confidence": "EXACT",
+      "branch_condition": "unconditional (wlc_bmac_init, before the phyrev==4 gate)",
+      "bcm4352_rev42_reachable": true,
+      "evidence": [
+        "re fn wlc_bmac_init --asm -> 0x69243 mov rdi,[rbx+20h]; 0x69247 mov rax,[rdi]; 0x6924a call qword ptr [rax+0D8h]",
+        "re ptrtable dma64proc -> +0xd8 [data] .text@0xf14d",
+        "readelf -r -> 00000027d6f8 R_X86_64_64 .text + f14d"
+      ],
+      "semantic_corroboration": "Modern brcmsmac brcms_b_init (main.c:3296) calls dma_rxfill(wlc_hw->di[RX_FIFO]) immediately after dma_rxinit; sub_f14d calls osl_pktget/osl_dma_map and posts buffers."
+    }
+  ],
+  "object_construction": {
+    "field": "wlc_hw + 0x20 = di[0]",
+    "writer": "wlc_hw_set_di @0x796a7 (mov [rdi+rsi*8+0x20],rdx); called from wlc_bmac_attach @0x6a458 with rsi=0, rdx=first dma_attach return",
+    "allocator": "dma_attach @0x10380: osl_malloc(0x130), osl_memset",
+    "object_type": "struct dma_info (FIFO0: TX_AC_BK_FIFO + RX_FIFO combined channel)",
+    "ops_pointer": "object word0 (offset 0) = di->ops",
+    "table_selection": "dma_attach tests (si_core_sflags >> 12) & 1 == SISF_DMA64 (0x1000): set -> dma64proc; clear -> anonymous .rodata+0x27d7b0 table",
+    "table_selection_note": "Both candidate tables resolve +0xa0 and +0xd8 identically, so the slots are unambiguous regardless of the SISF_DMA64 outcome; BCM4352 D11 is DMA64.",
+    "table_population": "static const, R_X86_64_64 relocations in .rela.rodata (not memory-patched at runtime)",
+    "table_size": "400 bytes, 46 pointer slots"
+  },
+  "slots_context": {
+    "0x6921c": "loop over di[0..5]: di[i]->ops->fn(+0x08) = dma64_txinit (sub_f947)",
+    "0x6923d": "di[0]->ops->fn(+0xa0) = dma64_rxinit (sub_f897)",
+    "0x6924a": "di[0]->ops->fn(+0xd8) = dma64_rxfill (sub_f14d)",
+    "upstream": "brcmsmac main.c brcms_b_init: for (i<NFIFO) dma_txinit(di[i]); dma_rxinit(di[RX_FIFO]); dma_rxfill(di[RX_FIFO]); RX_FIFO==0"
+  },
+  "tooling": {
+    "re_used": true,
+    "ghidra_used": true,
+    "ghidra_result": "NEGATIVE — Decompile.java could not resolve the discovered functions sub_f897/sub_f14d (ET_REL under-segmentation); re + relocations authoritative",
+    "manual_used": true,
+    "manual_reason": "readelf -r to independently confirm the .rela.rodata slot relocations",
+    "tooling_changed": false,
+    "residual_gap": "V5-G1 (multi-level pointer provenance: **(base+off) collapses parent load to 0) + V5-G2 (automatic call-site -> runtime ops-table chain). Both remain filed; the facts are reachable via re refs + re ptrtable, so no tool change was required for this blocker."
+  },
+  "unresolved_edge": null
+}

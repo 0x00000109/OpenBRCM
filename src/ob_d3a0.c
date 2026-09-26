@@ -69,32 +69,32 @@ static struct ob_d3a0_fatal_record {
 
 static void ob_d3a0_write_shm16(struct ob_hw *hw, u16 off, u16 val)
 {
-	bcma_write32(hw->core, OB_UCODE_REG_OBJADDR,
+	ob_d11_write32(hw, OB_UCODE_REG_OBJADDR,
 		     OB_UCODE_OBJADDR_SHM_SEL | ((u32)off >> 2));
-	(void)bcma_read32(hw->core, OB_UCODE_REG_OBJADDR);
-	bcma_write16(hw->core, OB_UCODE_REG_OBJDATA + (off & 0x2), val);
+	(void)ob_d11_read32(hw, OB_UCODE_REG_OBJADDR);
+	ob_d11_write16(hw, OB_UCODE_REG_OBJDATA + (off & 0x2), val);
 }
 
 /* SICF_MPCLKE lives in the D11 core agent IO control (bit 4). */
 static void ob_d3a0_macphyclk_set(struct ob_hw *hw, bool on)
 {
-	u32 v = bcma_aread32(hw->core, BCMA_IOCTL);
+	u32 v = ob_axi_read32(hw, BCMA_IOCTL);
 
 	if (on)
 		v |= OB_D3A0_IOCTL_MPCLKE;
 	else
 		v &= ~OB_D3A0_IOCTL_MPCLKE;
-	bcma_awrite32(hw->core, BCMA_IOCTL, v);
-	(void)bcma_aread32(hw->core, BCMA_IOCTL);
+	ob_axi_write32(hw, BCMA_IOCTL, v);
+	(void)ob_axi_read32(hw, BCMA_IOCTL);
 }
 
 static u32 ob_d3a0_mctrl_update(struct ob_hw *hw, u32 mask, u32 val)
 {
-	u32 old = bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL);
+	u32 old = ob_d11_read32(hw, OB_D3A0_REG_MACCONTROL);
 	u32 new = (old & ~mask) | val;
 
-	bcma_write32(hw->core, OB_D3A0_REG_MACCONTROL, new);
-	return bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL);
+	ob_d11_write32(hw, OB_D3A0_REG_MACCONTROL, new);
+	return ob_d11_read32(hw, OB_D3A0_REG_MACCONTROL);
 }
 
 /* ---- fatal latch (fail-closed lifetime protection) --------------------- */
@@ -135,6 +135,41 @@ static void ob_d3a0_latch_fatal(struct ob_hw *hw)
 		 &ob_d3a0_fatal_rec.tx_ring[3]);
 }
 
+/* ---- device-lost fail-safe (central, monotonic) ------------------------ */
+
+bool ob_dev_lost_is_latched(const struct ob_hw *hw)
+{
+	return hw && hw->dev_lost;
+}
+
+void ob_dev_lost_latch(struct ob_hw *hw, const char *where)
+{
+	if (!hw || hw->dev_lost)
+		return;
+
+	hw->dev_lost = true;
+	/* Reuse the module-wide fail-closed path: no free, module pinned. */
+	hw->d3a0.lc.fatal = true;
+	hw->d3a0.lc.engines_stopped = false;
+	hw->d3a0.lc.free_allowed = false;
+	ob_d3a0_latch_fatal(hw);
+
+	dev_crit(hw->dev,
+		 "openbrcm: DEVICE LOST (%s) - D11/BCMA/PCIe inaccessible; no further D11 MMIO; DMA memory retained; reboot required\n",
+		 where ? where : "all-ones direct read");
+}
+
+bool ob_dev_lost_observe32(struct ob_hw *hw, const char *where, u32 val)
+{
+	if (!hw || hw->dev_lost)
+		return hw && hw->dev_lost;
+	if (ob_d3a0_mmio_is_all_ones(val)) {
+		ob_dev_lost_latch(hw, where);
+		return true;
+	}
+	return false;
+}
+
 /*
  * ---- pinned D11/clock/IRQ-source prerequisites for the DMA test ---------
  * (provenance-pinned register values; NOT the complete vendor prefix order)
@@ -147,8 +182,8 @@ static void ob_d3a0_latch_fatal(struct ob_hw *hw)
  */
 static int ob_d3a0_check_d2b_exit(struct ob_hw *hw)
 {
-	u32 mctrl = bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL);
-	u32 macintmask = bcma_read32(hw->core, OB_D3A0_REG_MACINTMASK);
+	u32 mctrl = ob_d11_read32(hw, OB_D3A0_REG_MACCONTROL);
+	u32 macintmask = ob_d11_read32(hw, OB_D3A0_REG_MACINTMASK);
 	u32 fs0 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE0);
 	u32 fs1 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE1);
 	u32 fs2 = ob_ucode_read_shm16(hw, OB_UCODE_SHM_FIFOSIZE2);
@@ -191,7 +226,7 @@ static int ob_d3a0_prefix(struct ob_hw *hw)
 			    OB_D3A0_SHM_MAXANTCNT_VAL);
 
 	/* INTRCVLAZY[0] = 1 << 24 */
-	bcma_write32(hw->core, OB_D3A0_REG_INTRCVLAZY0, OB_D3A0_INTRCVLAZY);
+	ob_d11_write32(hw, OB_D3A0_REG_INTRCVLAZY0, OB_D3A0_INTRCVLAZY);
 
 	/* MACCONTROL masked transition: set DISCARD_PMQ, keep PSM_RUN, no EN_MAC */
 	mctrl = ob_d3a0_mctrl_update(hw, OB_D3A0_MACCONTROL_MASK,
@@ -203,19 +238,19 @@ static int ob_d3a0_prefix(struct ob_hw *hw)
 	}
 
 	/* TSF clock preparation */
-	bcma_write32(hw->core, OB_D3A0_REG_TSF_CFPREP, OB_D3A0_TSF_CFPREP);
-	bcma_write32(hw->core, OB_D3A0_REG_TSF_CFPSTART, OB_D3A0_TSF_CFPSTART);
+	ob_d11_write32(hw, OB_D3A0_REG_TSF_CFPREP, OB_D3A0_TSF_CFPREP);
+	ob_d11_write32(hw, OB_D3A0_REG_TSF_CFPSTART, OB_D3A0_TSF_CFPSTART);
 
 	/* MACINTSTATUS W1C of the vendor bit, then per-FIFO source = I_RI */
-	bcma_write32(hw->core, OB_D3A0_REG_MACINTSTATUS, OB_D3A0_MI_GP1);
-	bcma_write32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK, OB_D3A0_I_RI);
+	ob_d11_write32(hw, OB_D3A0_REG_MACINTSTATUS, OB_D3A0_MI_GP1);
+	ob_d11_write32(hw, OB_D3A0_REG_INTCONTROL0_MASK, OB_D3A0_I_RI);
 	hw->d3a0.lc.irq_source = true;
 
 	/* MAC-PHY clock control enable (SICF_MPCLKE) */
 	ob_d3a0_macphyclk_set(hw, true);
 
 	/* MAC capabilities exposed to ucode via SHM (M_MACHW_VER/CAP) */
-	machwcap = bcma_read32(hw->core, OB_D3A0_REG_MACHWCAP);
+	machwcap = ob_d11_read32(hw, OB_D3A0_REG_MACHWCAP);
 	ob_d3a0_write_shm16(hw, OB_D3A0_SHM_MACHWVER,
 			    (u16)hw->core->id.rev);
 	ob_d3a0_write_shm16(hw, OB_D3A0_SHM_MACHWCAP_L,
@@ -224,7 +259,7 @@ static int ob_d3a0_prefix(struct ob_hw *hw)
 			    (u16)((machwcap >> 16) & 0xffff));
 
 	/* MACINTMASK must remain 0; the host route is never enabled. */
-	irq = bcma_read32(hw->core, OB_D3A0_REG_MACINTMASK);
+	irq = ob_d11_read32(hw, OB_D3A0_REG_MACINTMASK);
 	if (!ob_d3a0_host_irq_disabled(irq)) {
 		dev_err(hw->dev,
 			"dma-test: macintmask not 0 before DMA (%08x)\n", irq);
@@ -232,8 +267,8 @@ static int ob_d3a0_prefix(struct ob_hw *hw)
 	}
 	dev_info(hw->dev,
 		 "dma-test: irq-source configured intrcvlazy=%08x intmask0=%08x macintmask=%08x\n",
-		 bcma_read32(hw->core, OB_D3A0_REG_INTRCVLAZY0),
-		 bcma_read32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK),
+		 ob_d11_read32(hw, OB_D3A0_REG_INTRCVLAZY0),
+		 ob_d11_read32(hw, OB_D3A0_REG_INTCONTROL0_MASK),
 		 irq);
 	return 0;
 }
@@ -300,13 +335,13 @@ static int ob_d3a0_tx_program(struct ob_hw *hw, u32 ch, u32 *old_control)
 	u16 base = ob_d3a0_tx_base(ch);
 	u32 old, now;
 
-	bcma_write32(hw->core, base + OB_D3A0_D64_ADDRLOW,
+	ob_d11_write32(hw, base + OB_D3A0_D64_ADDRLOW,
 		     (u32)ring->desc_dma);
-	bcma_write32(hw->core, base + OB_D3A0_D64_ADDRHIGH, OB_DMA_PCIE_H32);
+	ob_d11_write32(hw, base + OB_D3A0_D64_ADDRHIGH, OB_DMA_PCIE_H32);
 
-	old = bcma_read32(hw->core, base + OB_D3A0_D64_CONTROL);
+	old = ob_d11_read32(hw, base + OB_D3A0_D64_CONTROL);
 	now = ob_d3a0_tx_control(old);
-	bcma_write32(hw->core, base + OB_D3A0_D64_CONTROL, now);
+	ob_d11_write32(hw, base + OB_D3A0_D64_CONTROL, now);
 
 	if (old_control)
 		*old_control = old;
@@ -373,17 +408,17 @@ static int ob_d3a0_rx_program(struct ob_hw *hw)
 	u32 control, lo, hi, status0, status1, ptr;
 
 	dma_wmb();
-	bcma_write32(hw->core, OB_D11_RX_ADDRLOW, ring_lo);
-	bcma_write32(hw->core, OB_D11_RX_ADDRHIGH, OB_DMA_PCIE_H32);
-	bcma_write32(hw->core, OB_D11_RX_PTR, OB_D3A0_RX_PTR);
-	bcma_write32(hw->core, OB_D11_RX_CONTROL, OB_D3A0_RX_CONTROL);
+	ob_d11_write32(hw, OB_D11_RX_ADDRLOW, ring_lo);
+	ob_d11_write32(hw, OB_D11_RX_ADDRHIGH, OB_DMA_PCIE_H32);
+	ob_d11_write32(hw, OB_D11_RX_PTR, OB_D3A0_RX_PTR);
+	ob_d11_write32(hw, OB_D11_RX_CONTROL, OB_D3A0_RX_CONTROL);
 
-	control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
-	lo = bcma_read32(hw->core, OB_D11_RX_ADDRLOW);
-	hi = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
-	ptr = bcma_read32(hw->core, OB_D11_RX_PTR);
-	status0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-	status1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+	control = ob_d11_read32(hw, OB_D11_RX_CONTROL);
+	lo = ob_d11_read32(hw, OB_D11_RX_ADDRLOW);
+	hi = ob_d11_read32(hw, OB_D11_RX_ADDRHIGH);
+	ptr = ob_d11_read32(hw, OB_D11_RX_PTR);
+	status0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
+	status1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
 
 	dev_info(hw->dev,
 		 "dma-test: RX programmed addrlow=%08x addrhigh=%08x ptr=%08x control=%08x status0=%08x status1=%08x (rb ptr_field=%05x)\n",
@@ -393,6 +428,8 @@ static int ob_d3a0_rx_program(struct ob_hw *hw)
 	if ((control & OB_D3A0_RC_RE) == 0 || lo != ring_lo ||
 	    hi != OB_DMA_PCIE_H32 || status0 == 0xffffffffu ||
 	    ob_d3a0_rx_disabled(status0) || (status1 & OB_D11_RS1_RE_MASK)) {
+		if (status0 == 0xffffffffu)
+			ob_dev_lost_latch(hw, "D3A0 RX program status0");
 		dev_err(hw->dev,
 			"dma-test: RX programming readback inconsistent\n");
 		return -EIO;
@@ -409,15 +446,17 @@ static int ob_d3a0_validate(struct ob_hw *hw, const u32 *tx_old)
 	for (ch = 0; ch < OB_D3A0_TX_CHANNELS; ch++) {
 		u16 base = ob_d3a0_tx_base(ch);
 		u32 ring_lo = (u32)hw->d3a0.tx[ch].desc_dma;
-		u32 control = bcma_read32(hw->core,
+		u32 control = ob_d11_read32(hw,
 					  base + OB_D3A0_D64_CONTROL);
-		u32 lo = bcma_read32(hw->core, base + OB_D3A0_D64_ADDRLOW);
-		u32 hi = bcma_read32(hw->core, base + OB_D3A0_D64_ADDRHIGH);
-		u32 s0 = bcma_read32(hw->core, base + OB_D3A0_D64_STATUS0);
+		u32 lo = ob_d11_read32(hw, base + OB_D3A0_D64_ADDRLOW);
+		u32 hi = ob_d11_read32(hw, base + OB_D3A0_D64_ADDRHIGH);
+		u32 s0 = ob_d11_read32(hw, base + OB_D3A0_D64_STATUS0);
 
 		if (!ob_d3a0_tx_control_ok(tx_old[ch], control) ||
 		    lo != ring_lo || hi != OB_DMA_PCIE_H32 ||
 		    s0 == 0xffffffffu || ob_d3a0_rx_disabled(s0)) {
+			if (s0 == 0xffffffffu)
+				ob_dev_lost_latch(hw, "D3A0 TX validate status0");
 			dev_err(hw->dev,
 				"dma-test: TX%u postcondition fail control=%08x lo=%08x hi=%08x status0=%08x\n",
 				ch, control, lo, hi, s0);
@@ -429,10 +468,10 @@ static int ob_d3a0_validate(struct ob_hw *hw, const u32 *tx_old)
 	}
 
 	{
-		u32 control = bcma_read32(hw->core, OB_D11_RX_CONTROL);
-		u32 hi = bcma_read32(hw->core, OB_D11_RX_ADDRHIGH);
-		u32 s0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
-		u32 s1 = bcma_read32(hw->core, OB_D11_RX_STATUS1);
+		u32 control = ob_d11_read32(hw, OB_D11_RX_CONTROL);
+		u32 hi = ob_d11_read32(hw, OB_D11_RX_ADDRHIGH);
+		u32 s0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
+		u32 s1 = ob_d11_read32(hw, OB_D11_RX_STATUS1);
 
 		if (control != OB_D3A0_RX_CONTROL ||
 		    hi != OB_DMA_PCIE_H32 || !ob_d3a0_rx_idle(s0) ||
@@ -447,29 +486,29 @@ static int ob_d3a0_validate(struct ob_hw *hw, const u32 *tx_old)
 			 control, hi, s0);
 	}
 
-	i = bcma_read32(hw->core, OB_D3A0_REG_MACINTMASK);
+	i = ob_d11_read32(hw, OB_D3A0_REG_MACINTMASK);
 	if (!ob_d3a0_host_irq_disabled(i)) {
 		dev_err(hw->dev, "dma-test: macintmask changed: %08x\n", i);
 		return -EIO;
 	}
-	if (bcma_read32(hw->core, OB_D3A0_REG_INTRCVLAZY0) !=
+	if (ob_d11_read32(hw, OB_D3A0_REG_INTRCVLAZY0) !=
 	    OB_D3A0_INTRCVLAZY) {
 		dev_err(hw->dev, "dma-test: intrcvlazy[0] mismatch\n");
 		return -EIO;
 	}
 	if (!ob_d3a0_irq_source_ok(
-		    bcma_read32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK))) {
+		    ob_d11_read32(hw, OB_D3A0_REG_INTCONTROL0_MASK))) {
 		dev_err(hw->dev, "dma-test: I_RI source missing\n");
 		return -EIO;
 	}
 	if (!ob_d3a0_maccontrol_ok(
-		    bcma_read32(hw->core, OB_D3A0_REG_MACCONTROL))) {
+		    ob_d11_read32(hw, OB_D3A0_REG_MACCONTROL))) {
 		dev_err(hw->dev, "dma-test: MACCONTROL postcondition fail\n");
 		return -EIO;
 	}
 	dev_info(hw->dev,
 		 "dma-test: bring-up validation PASS (macintmask=%08x intrcvlazy=%08x)\n",
-		 i, bcma_read32(hw->core, OB_D3A0_REG_INTRCVLAZY0));
+		 i, ob_d11_read32(hw, OB_D3A0_REG_INTRCVLAZY0));
 	return 0;
 }
 
@@ -480,10 +519,12 @@ static int ob_d3a0_tx_reset(struct ob_hw *hw, u32 ch)
 	u16 base = ob_d3a0_tx_base(ch);
 	u32 remaining, s0;
 
-	bcma_write32(hw->core, base + OB_D3A0_D64_CONTROL, OB_D3A0_XC_SE);
+	if (hw->dev_lost)
+		return -EIO;
+	ob_d11_write32(hw, base + OB_D3A0_D64_CONTROL, OB_D3A0_XC_SE);
 	remaining = OB_D3A0_RESET_TIMEOUT;
 	for (;;) {
-		s0 = bcma_read32(hw->core, base + OB_D3A0_D64_STATUS0);
+		s0 = ob_d11_read32(hw, base + OB_D3A0_D64_STATUS0);
 		if (ob_d3a0_tx_reset_settled(s0))
 			break;
 		if (ob_d3a0_poll_expired(remaining))
@@ -492,10 +533,10 @@ static int ob_d3a0_tx_reset(struct ob_hw *hw, u32 ch)
 		remaining -= OB_D3A0_RESET_STEP;
 	}
 
-	bcma_write32(hw->core, base + OB_D3A0_D64_CONTROL, 0);
+	ob_d11_write32(hw, base + OB_D3A0_D64_CONTROL, 0);
 	remaining = OB_D3A0_RESET_TIMEOUT;
 	for (;;) {
-		s0 = bcma_read32(hw->core, base + OB_D3A0_D64_STATUS0);
+		s0 = ob_d11_read32(hw, base + OB_D3A0_D64_STATUS0);
 		if (ob_d3a0_rx_disabled(s0))
 			return 0;
 		if (ob_d3a0_poll_expired(remaining)) {
@@ -511,10 +552,12 @@ static int ob_d3a0_rx_reset(struct ob_hw *hw)
 {
 	u32 remaining, s0;
 
-	bcma_write32(hw->core, OB_D11_RX_CONTROL, 0);
+	if (hw->dev_lost)
+		return -EIO;
+	ob_d11_write32(hw, OB_D11_RX_CONTROL, 0);
 	remaining = OB_D3A0_RESET_TIMEOUT;
 	for (;;) {
-		s0 = bcma_read32(hw->core, OB_D11_RX_STATUS0);
+		s0 = ob_d11_read32(hw, OB_D11_RX_STATUS0);
 		if (ob_d3a0_rx_disabled(s0))
 			return 0;
 		if (ob_d3a0_poll_expired(remaining))
@@ -531,6 +574,9 @@ static int ob_d3a0_rx_reset(struct ob_hw *hw)
  */
 static bool ob_d3a0_core_contain(struct ob_hw *hw)
 {
+	/* Device-loss guard: no core reset/disable after the latch. */
+	if (hw->dev_lost)
+		return false;
 	bcma_core_disable(hw->core, 0);
 	return !bcma_core_is_enabled(hw->core);
 }
@@ -539,13 +585,36 @@ static int ob_d3a0_quiesce(struct ob_hw *hw)
 {
 	struct ob_d3a0_lifecycle *lc = &hw->d3a0.lc;
 	bool all_ok = true;
-	u32 ch;
+	u32 ch, intmask0;
 
+	/*
+	 * Device-lost fail-safe: NEVER write an interrupt/DMA register after the
+	 * D11 window was observed all-ones. Latch fatal and retain everything.
+	 */
+	if (hw->dev_lost) {
+		dev_crit(hw->dev,
+			 "dma-test: refusing quiesce after device loss; DMA memory retained; reboot required\n");
+		lc->engines_stopped = false;
+		lc->free_allowed = false;
+		lc->fatal = true;
+		return -EIO;
+	}
+
+	/*
+	 * The first access is a read; an all-ones result means device loss and
+	 * must abort BEFORE the read-modify-write below (no garbage write).
+	 */
+	intmask0 = ob_d11_read32(hw, OB_D3A0_REG_INTCONTROL0_MASK);
+	if (ob_dev_lost_observe32(hw, "D3A0 quiesce intmask0", intmask0)) {
+		lc->engines_stopped = false;
+		lc->free_allowed = false;
+		lc->fatal = true;
+		return -EIO;
+	}
 	/* mask the per-FIFO source; MACINTMASK stays 0 (host route disabled) */
-	bcma_write32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK,
-		     bcma_read32(hw->core, OB_D3A0_REG_INTCONTROL0_MASK) &
-		     ~OB_D3A0_I_RI);
-	bcma_write32(hw->core, OB_D3A0_REG_MACINTMASK, 0);
+	ob_d11_write32(hw, OB_D3A0_REG_INTCONTROL0_MASK,
+		     intmask0 & ~OB_D3A0_I_RI);
+	ob_d11_write32(hw, OB_D3A0_REG_MACINTMASK, 0);
 
 	if (lc->rx == OB_D3A0_PROGRAMMED) {
 		if (ob_d3a0_rx_reset(hw) == 0)
@@ -651,6 +720,18 @@ static int ob_d3a0_free_mem(struct ob_hw *hw)
 
 int ob_d3a0_teardown(struct ob_hw *hw)
 {
+	/*
+	 * Device-lost fail-safe: no MMIO at all once the D11 window read
+	 * all-ones. Latch fatal, retain DMA memory, require reboot.
+	 */
+	if (hw->dev_lost) {
+		dev_crit(hw->dev,
+			 "dma-test: refusing teardown after device loss; DMA memory retained; reboot required\n");
+		hw->d3a0.lc.engines_stopped = false;
+		hw->d3a0.lc.free_allowed = false;
+		hw->d3a0.lc.fatal = true;
+		return -EIO;
+	}
 	dev_info(hw->dev, "dma-test: quiesce begin\n");
 	if (ob_d3a0_quiesce(hw))
 		return -EIO;	/* fatal set; never free */

@@ -269,9 +269,13 @@ states `STOPPED BEFORE sub_6656c / bsinitvals / PHY`.
   `intctrlregs[0].intmask & I_RI`; `EN_MAC == 0`; SICF_MPCLKE set.
 - SHM `M_MBURST_SIZE == 8`, `M_MAX_ANTCNT == 0x0a`, `M_MACHW_VER == phyrev`,
   `M_MACHW_CAP_L/H == machwcap` lo/hi.
-- **Exact** `tsf_cfprep == 0x80000000`, `tsf_cfpstart == 0x02000000`,
-  `scc_fastpwrup_dly ==` the chiprev-derived value, SCR `SRL == 7`,
-  SCR `LRL == 6`, SHM `SFBL == 3`, SHM `LFBL == 2`, `ifs_aifsn == 1`.
+- **Exact** `tsf_cfprep == 0x80000000`, `scc_fastpwrup_dly ==` the
+  chiprev-derived value, SCR `SRL == 7`, SCR `LRL == 6`, SHM `SFBL == 3`,
+  SHM `LFBL == 2`, `ifs_aifsn == 1`.
+- `tsf_cfpstart` (`0x18c`): **NO equality postcondition** (corrected 2026-09 —
+  see §17). It is a write-only CFP-start programming register; the mode
+  write-accounts the vendor-exact `0x18c = 0x02000000` write and logs
+  `0x18c`/`0x604`/`0x606` as diagnostics only.
 - **Masked** `ifs_ctl & ~0xfff == 0` (the vendor clears the high bits; the low
   12 bits are the pre-existing value).
 - SHM `0x78c/0x78e/0x790 ==` the derived MAC words **when the vendor gate
@@ -390,6 +394,10 @@ registers read back the programmed value; if the first hardware run shows them
 to be force/command registers that auto-clear, they will be downgraded to
 diagnostic-only. All other postconditions are static.
 
+**RESOLVED (2026-09, §17):** the `tsf_cfpstart` equality gate was **invalid**
+and has been removed/downgraded to write-accounting + diagnostics. `tsf_cfprep`
+equality was retained (read back exact on hardware).
+
 D11 `0x62e`/`0x630` stable readback is **not** vendor-proven; the first run
 logs the readback and classifies it as unproven (`tsf_frac_rb_proven=false`).
 No equality postcondition is placed on them.
@@ -431,3 +439,132 @@ sudo rmmod openbrcm
 
 # 5. if the fatal latch is ever observed, DO NOT rmmod freely: reboot.
 ```
+
+## 17. `tsf_cfpstart` (D11 0x18c) semantics — provenance record (2026-09)
+
+Trigger: the D3B hardware attempt on candidate `5fa5e5b` failed the pre-D3B
+`tsf_cfpstart` equality gate (`rb=0x3c000000`, expected `0x02000000`) in the
+shared `ob_d3a1_validate()`. This section answers the register-semantics
+questions with tool-first evidence before any code change.
+
+### 17.1 Exact D11 offset
+`0x18c` (`OB_D3A1_REG_TSF_CFPSTART`). brcmsmac `d11.h:159` `u32 tsf_cfpstart;
+/* 0x18c */`; b43 `b43.h:58` `B43_MMIO_TSF_CFP_START 0x18C`.
+
+### 17.2 Exact vendor write site
+`wlc_bmac_init` (`0x6828a`), instruction `0x6905e`/`0x69066`/`0x6906b`
+(`re fn wlc_bmac_init --asm`):
+
+```
+0006905e  lea rsi,[r12+18Ch]     ; r12 = D11 reg base
+00069066  mov edi,2000000h
+0006906b  call -> osl_writel     ; D11+0x18c = 0x02000000
+```
+
+Adjacent vendor writes: `0x188 = 0x80000000` (0x69059), `0x128 = 0x4000`
+(0x6907d), `0x24 = 0x10000` (0x6908c).
+
+### 17.3 Every vendor reference to `0x18c`
+Whole-blob `objdump` sweep of `0x18c(` operands; the only D11-MMIO sites are:
+
+| site | function | access |
+| :--- | :--- | :--- |
+| `0x6905e` | `wlc_bmac_init` | `osl_writel(D11+0x18c, 0x02000000)` |
+| `0x62feb` | `wlc_bmac_validate_chip_access` | `osl_writew(D11+0x18c, 0xaaaa)` |
+| `0x62ff8` | `wlc_bmac_validate_chip_access` | `osl_writel(D11+0x18c, 0xccccbbbb)` |
+| `0x63038` | `wlc_bmac_validate_chip_access` | `osl_writel(D11+0x18c, 0)` |
+
+The remaining `0x18c` operands are struct/stack offsets (`wlc_recover_tsf64`,
+`wlc_statsupd`, `wlc_BSSinit`, `-0x18c(%rbp)`, …), not D11 MMIO. **The vendor
+never reads D11+0x18c.**
+
+### 17.4 Stability — no; the vendor reads back at 0x604/0x606
+`wlc_bmac_validate_chip_access` (`re fn` MMIO view) writes a pattern to
+`0x18c` but validates the readback at `0x604`/`0x606`:
+
+```
+0x62feb  osl_writew(D11+0x18c, 0xaaaa)
+0x62ff8  osl_writel(D11+0x18c, 0xccccbbbb)
+0x63004  osl_readw (D11+0x604)  must == 0xbbbb
+0x6301d  osl_readw (D11+0x606)  must == 0xcccc
+0x63038  osl_writel(D11+0x18c, 0)
+0x63044  osl_readl (D11+0x120)
+```
+
+b43 `main.c:3510-3517` is byte-for-byte the same probe. So `0x18c` is the
+programming/command port; the readable CFP-start value is `0x604/0x606`.
+
+### 17.5 Vendor never validates `0x18c == 0x02000000`
+Correct. The only readback validation uses a different pattern and the
+`0x604/0x606` path. Therefore there is no vendor provenance for an equality
+postcondition on a direct `0x18c` read.
+
+### 17.6 Upstream symbolic names / semantics
+b43: `TSF_CFP_REP 0x188`, `TSF_CFP_START 0x18C`, `TSF_CFP_START_LOW 0x604`,
+`TSF_CFP_START_HIGH 0x606`. brcmsmac: `tsf_cfprep /*0x188*/`,
+`tsf_cfpstart /*0x18c*/`, `tsf_cfpstrt_l/h /*0x604/0x606*/`. Semantics: beacon
+interval is written as `bcnint_us = period << 10` into `tsf_cfpstart`, and
+`bcnint_us << CFPREP_CBI_SHIFT (6)` into `tsf_cfprep`; `validate_chip_access`
+clears `tsf_cfpstart` to 0. `D11REGOFFS(tsf_cfpstart)` is never read in
+brcmsmac.
+
+### 17.7 Decoding the observed value
+Written `0x02000000` = `0x8000 << 10` (a valid beacon-interval encoding).
+Observed `0x3c000000`: as `period << 10` it yields `period = 0xf0000`
+(983040) > `0xffff` — not a valid beacon period, so the read does **not**
+return the programmed field. As raw TSF ticks at ~44 MHz it is ~22.9 s, and
+`0x3c000000 - 0x02000000 = 0x3a000000` ≈ 22.1 s. The readback is therefore
+consistent with a live/updated CFP-start state, not a stored constant. Exact
+hardware encoding remains unproven.
+
+### 17.8 Stable bits/fields?
+None proven. Since `0x18c` has no documented readback, no field mask can be
+proven stable; the documented observable is the `0x604/0x606` pair.
+
+### 17.9 Classification
+For the **readback** question: **E) currently unresolved** (no documented
+readback). Functionally the register is a **write/programming port** whose
+documented observable is `0x604/0x606`. It is not a category-A stable config
+readback.
+
+### 17.10 Timing / elapsed activity
+The write happens in T1; the read happens after PSM start, DMA init, T2 and
+`switch_macfreq` (which reprograms the TSF clock fraction `0x62e/0x630`). A
+live TSF/CFP-derived value can legitimately change across that activity. The
+prior D3A1 run and the D3B attempt differ, so the value is not deterministic
+across runs.
+
+### 17.11 Was the previous D3A1 PASS hardware-proven?
+**No, not for this register.** The D3A1 tested candidate `42d74b8` already
+enforced the `tsf_cfpstart` equality (`ob_d3a1.c` lines 646-661) and the record
+(§14.1) claims it passed, but the record contains no raw `0x18c` readback and
+§15 itself flagged the readback as an assumption. The D3B attempt on the same
+prefix disproves determinism, so the earlier equality result cannot be treated
+as proof. Erratum recorded above; the gate is now removed.
+
+### 17.12 Strongest provenance-backed replacement
+**Write-accounting only** (plus diagnostics). There is no deterministic
+readback postcondition for `0x18c`; the vendor itself only checks that the
+write path works via `0x604/0x606`. The mode records that the vendor-exact
+`0x18c = 0x02000000` write was issued (`st->tsf_cfpstart_written`) and logs the
+raw reads; none gates PASS.
+
+### 17.13 Write value/order
+Unchanged: `bcma_write32(D11+0x188, 0x80000000)`, then
+`bcma_write32(D11+0x18c, 0x02000000)`, in the exact vendor position.
+
+### 17.14 Other postconditions audited for the same class
+| register | class | action |
+| :--- | :--- | :--- |
+| `0x18c` tsf_cfpstart | write-only programming port, live readback | equality removed -> write-account + diag |
+| `0x188` tsf_cfprep | config CBI field; read back exact on hardware | equality retained |
+| `0x120` MACCONTROL | control; vendor reads/validates | equality retained |
+| `0x12c` MACINTMASK | control; vendor reads | `== 0` retained |
+| `0x100` INTRCVLAZY, `0x24` intmask | config; set by attach | retained |
+| SHM `0x80/0x5c/0x16/0xc0/0xc2` | SHM stores | retained |
+| `0x6a8` fastpwrup, `0x688/0x69c` IFS, SCR SRL/LRL, SHM SFBL/LFBL | config | retained |
+| `0x62e/0x630` tsf_clk_frac | already diagnostic-only (`tsf_frac_rb_proven=false`) | unchanged |
+| DMA `0x220` RX CONTROL/ADDRHIGH/STATUS | engine config/status | retained (D3A0) |
+
+No other postcondition is an equality gate on a register the vendor never reads
+and that hardware can update.

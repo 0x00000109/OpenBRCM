@@ -154,6 +154,37 @@ for f in AGENTS.md docs/agent-state.md docs/re-tooling.md scripts/re.sh; do
 done
 if [ -x scripts/re.sh ]; then ok "re wrapper executable: scripts/re.sh"; else bad "scripts/re.sh not executable"; fi
 
+# --- 8b. current-context infra (Part A: generated compact index) -----------
+for f in docs/current-context.json docs/state/current-state.json scripts/generate-current-context.py; do
+	if [ -f "$f" ]; then ok "present: $f"; else bad "missing: $f"; fi
+done
+if [ -x scripts/generate-current-context.py ]; then
+	ok "current-context generator executable"
+else
+	bad "scripts/generate-current-context.py not executable"
+fi
+if [ -x "$RE_BIN" ] && "$RE_BIN" 2>&1 | grep -q 're packet'; then
+	ok "re advertises the additive 'packet' command"
+else
+	printf '  WARN  re does not advertise a packet command (rebuild iced/test?)\n'
+fi
+
+# --- 9. tier-2 Ghidra augmentation (informational; absence is not fatal) ----
+GHIDRA_HOME=${GHIDRA_HOME:-/home/kartashoff/projects/ghidra}
+if [ -x "$GHIDRA_HOME/support/analyzeHeadless" ]; then
+	ok "Ghidra headless present ($GHIDRA_HOME)"
+else
+	printf '  WARN  Ghidra headless not found at %s (tier-2 augmentation unavailable)\n' "$GHIDRA_HOME"
+fi
+for f in scripts/ghidra_headless.sh scripts/ghidra/Decompile.java scripts/ghidra/Refs.java scripts/ghidra/Vtable.java; do
+	if [ -f "$f" ]; then ok "present: $f"; else bad "missing: $f"; fi
+done
+if [ -x scripts/ghidra_headless.sh ]; then
+	ok "Ghidra wrapper executable: scripts/ghidra_headless.sh"
+else
+	bad "scripts/ghidra_headless.sh not executable"
+fi
+
 if [ "$fail" -eq 0 ]; then
 	echo "== RE bootstrap PASS =="
 else

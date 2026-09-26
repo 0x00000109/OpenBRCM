@@ -1,0 +1,79 @@
+{
+  "milestone": "M3.4D4B-ghidra",
+  "tool": {
+    "ghidra": "12.1.3",
+    "path": "/home/kartashoff/projects/ghidra",
+    "headless": true,
+    "java_scripts": true,
+    "pyghidra_available": true,
+    "import_analysis_secs": 41,
+    "insns_disassembled": 394354,
+    "re_insns": 574042
+  },
+  "address_map": "ghidra .text = re .text + 0x100000",
+  "changed_or_confirmed": [
+    {
+      "item": "phy+0x118 installer",
+      "old": "UNRESOLVED",
+      "new": "CONFIRMED absent (null -> D11 0x3e6 fallback)",
+      "evidence": "ghidra refs: no installer; operand scan 0 stores; re address_taken store_disp=0x118 none",
+      "changed": false
+    },
+    {
+      "item": "phy+0x110 installer",
+      "old": "not-taken conditional",
+      "new": "CONFIRMED absent",
+      "changed": false,
+      "evidence": "ghidra decomp else-branch; re address_taken store_disp=0x110 none"
+    },
+    {
+      "item": "phy+0x28/0x30 installers",
+      "old": "zeroed (re)",
+      "new": "CONFIRMED zeroed; wlc_phy_init has no DATA ref",
+      "changed": false,
+      "evidence": "ghidra refs to wlc_phy_init are CALL only"
+    },
+    {
+      "item": "phy+0xF8 install",
+      "old": "CONDITIONAL (re heuristic)",
+      "new": "CONFIRMED wlc_phy_btc_adjust_acphy, plus 0x38/0x40/0xC0/0xC8/0xD0/0x100 zeroed",
+      "changed": "method",
+      "evidence": "objdump -r: 0xa3059 R_X86_64_32S wlc_phy_btc_adjust_acphy on imm32 of movq $imm,0xf8(%rbx); ghidra DATA ref from 0x1a3052"
+    },
+    {
+      "item": "DMA TX bases 0x200/0x240/0x280/0x2c0",
+      "old": "GAP + const artifacts",
+      "new": "dev+{0x200,0x220,0x240,0x260}; rev>10 -> {0x240,0x280,0x2c0}",
+      "changed": true,
+      "evidence": "ghidra decompiler wlc_bmac_attach dma_attach(dev+0x200,...) etc.; re const 0x240/0x280/0x2c0 are linear-scan artifacts"
+    },
+    {
+      "item": "DMA engine vtable",
+      "old": "unknown to re as a call",
+      "new": "dma64proc+0x08 = sub_f947 (dma64_txinit); +0x10=sub_f64a; +0xa8=sub_f5ef",
+      "changed": true,
+      "evidence": "ghidra memory read of dma64proc; bmac_init 0x6921c di[i]->vfn(+0x08)"
+    },
+    {
+      "item": "interproc const-prop",
+      "old": "PARTIAL",
+      "new": "PARTIAL; DMA case resolved, AC runtime values remain",
+      "changed": "partial",
+      "evidence": "ghidra decomp"
+    },
+    {
+      "item": "radio ops",
+      "old": "62 literal ops",
+      "new": "unchanged (literal)",
+      "changed": false,
+      "evidence": "ghidra decomp"
+    },
+    {
+      "item": "AC init entry",
+      "old": "wlc_phy_attach at probe",
+      "new": "unchanged",
+      "changed": false,
+      "evidence": "ghidra refs"
+    }
+  ]
+}

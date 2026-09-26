@@ -15,6 +15,7 @@
 #   scripts/re.sh fn 0x67efd
 #   scripts/re.sh card sub_67efd
 #   scripts/re.sh switch 0x67efd
+#   scripts/re.sh packet --fn wlc_phy_switch_radio_acphy
 # Override the tooling root with RE_TOOLING_ROOT if the layout moves.
 
 set -eu

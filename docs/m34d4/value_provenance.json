@@ -1,0 +1,66 @@
+{
+  "milestone": "M3.4D4D",
+  "title": "PHASE 4 — executed value provenance (BCM4352 rev42 operational path)",
+  "values": [
+    {
+      "field": "pi+0x16e",
+      "identity": "radio-revision byte; = (radio_reg[0x3da] >> 4) & 0xff",
+      "writers": ["wlc_phy_attach @0xbeff8: mov %al,0x16e(%rbx), al=(edx>>0x14)&0xff (AC path, phytype==0xb); edx=(r13d<<16)|r14d; r13d,r14d = 16-bit reads of *(pi+0x148)+0x3da (= si_radio reg 0x3da) after writes to +0x3d8", "wlc_phy_periodic_cal_lpphy @0x10fb0a: 16-bit store (LPPHY only, not AC)"],
+      "initialization_order": "pi is memset-zero, then wlc_phy_attach decodes the radio chip revision from radio register 0x3da and stores the major revision byte to pi+0x16e; this runs before wlc_phy_init's first radio-ON",
+      "board_phyrev_chanspec_dependency": "HARDWARE (radio register 0x3da read); phytype 0xb selects the AC decode path",
+      "value_at_first_bringup_callsite": "UNKNOWN (hardware-derived; radio reg 0x3da bits 4..11). NOT statically determinable.",
+      "value_confidence": "UNKNOWN",
+      "consumers": ["wlc_phy_switch_radio_acphy @0xaa7c0 branch: ==1 -> PLL seq A, ==2 -> PLL seq B, else skip"],
+      "classification": "HARDWARE_RMW (radio revision decode)"
+    },
+    {
+      "field": "pi+0x20 + 0xa7",
+      "identity": "AC PHY rxcore state (byte); set from the wlc_phy_rxcore_setstate_acphy state argument",
+      "writers": ["wlc_phy_rxcore_setstate_acphy @0x97cfa: mov %sil,0xa7(%rax), rax=*(pi+0x20)"],
+      "initialization_order": "written by the callee immediately before the read (same function)",
+      "board_phyrev_chanspec_dependency": "arg-derived",
+      "value_at_first_bringup_callsite": "UNKNOWN (runtime rxcore state argument at the first cal)",
+      "consumers": ["phy_reg_mod(0x160, 0x7, mask=*(*(pi+0x20)+0xa7)) @0x97d49/0x97d50 in wlc_phy_rxcore_setstate_acphy"],
+      "classification": "COMPUTED_RUNTIME"
+    },
+    {
+      "field": "(*(pi+0x138))+0x8be",
+      "identity": "AC PHY per-chain STF/temp-throttle value byte 0 of the 2-byte array at +0x8be; NOT pi+0x8be directly (base is *(pi+0x138), a 0x920 heap sub-object)",
+      "writers": ["sub_a7089 @0xaa364: mov %dl,0x8be(%r15) with `inc %r15` (loop iteration 0), from stack array arr1[0]=0x19"],
+      "initialization_order": "sub-object osl_memset(0,0x920) at wlc_phy_attach_acphy; producer loop writes 0x19 before the consumer read (later invocation)",
+      "board_phyrev_chanspec_dependency": "producer gated on chanspec low byte == 0x0d (channel 13); value itself is a constant",
+      "value_at_first_bringup_callsite": "0x19 (deterministic constant)",
+      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(*(pi+0x138)+0x8be), len 0x20) @0xaa289/0xaa2ab"],
+      "classification": "DETERMINISTIC_CONSTANT"
+    },
+    {
+      "field": "(*(pi+0x138))+0x8bf",
+      "identity": "AC PHY per-chain STF/temp-throttle value byte 1 of the 2-byte array at +0x8be; NOT pi+0x8bf directly (base is *(pi+0x138), a 0x920 heap sub-object) — RESOLVED M3.4D4 (D4-BLOCKER-PI-8BF)",
+      "writers": ["sub_a7089 @0xaa364: mov %dl,0x8be(%r15) with `inc %r15` (loop iteration 1) -> effective address base+0x8bf, from stack array arr1[1]=0x1a"],
+      "initialization_order": "sub-object osl_memset(0,0x920) at wlc_phy_attach_acphy; producer loop writes 0x1a before the consumer read (later invocation)",
+      "board_phyrev_chanspec_dependency": "producer gated on chanspec low byte == 0x0d (channel 13); value itself is a constant",
+      "value_at_first_bringup_callsite": "0x1a (26) — whenever the read executes, because the read is gated on the producer having run",
+      "consumers": ["wlc_phy_table_write_acphy(table 0x3, val=*(*(pi+0x138)+0x8bf), len 0x20) @0xaa2b0/0xaa2ce"],
+      "classification": "DETERMINISTIC_CONSTANT",
+      "evidence": ["docs/m34d4/pi_8bf_provenance.md", "docs/m34d4/pi_8bf_provenance.json"]
+    },
+    {
+      "field": "Farrow coefficient arrays",
+      "identity": "static coefficient tables in .data (4428 bytes each): rx_farrow_tbl, rx_farrow_tbl_rev3, rx_farrow_tbl_40_rev3, tx_farrow_dac1_tbl, tx_farrow_dac1_tbl_rev3, tx_farrow_dac1_tbl_40_rev3, tx_farrow_dac2_tbl, tx_farrow_dac3_tbl",
+      "writers": ["none (static initialized .data)"],
+      "initialization_order": "link-time constants",
+      "board_phyrev_chanspec_dependency": "table SELECTION is runtime (chip id `acphychipid` (.bss) + phyrev/rev3 + rodata tables); coefficient VALUES are static",
+      "value_at_first_bringup_callsite": "static table contents; selected index/data runtime",
+      "consumers": ["sub_a4adc (table-driven radio/PHY calibration writes)"],
+      "classification": "STATIC_TABLE (selection COMPUTED_RUNTIME)"
+    }
+  ],
+  "summary": {
+    "proven_at_callsite": ["(*(pi+0x138))+0x8be = 0x19", "(*(pi+0x138))+0x8bf = 0x1a (D4-BLOCKER-PI-8BF, M3.4D4)"],
+    "hardware_derived": ["pi+0x16e (radio reg 0x3da bits 4..11)"],
+    "computed_runtime": ["pi+0x20+0xa7"],
+    "static_table": ["Farrow coefficient arrays (8 tables)"],
+    "unknown_executed_write_values_remain": true,
+    "note": "The earlier apparent set of pi+0x16e writers {0,1,2} were `cmpb` READS misclassified as stores; the real store is wlc_phy_attach's radio-revision decode (hardware) plus one LPPHY 16-bit store. (pi+0x8be/0x8bf) were previously 'no store / COMPUTED_RUNTIME'; they are actually written by the incrementing-pointer loop sub_a7089 @0xaa364 from the constant stack array {0x19,0x1a} -> +0x8be=0x19, +0x8bf=0x1a (see pi_8bf_provenance.md)."
+  }
+}

@@ -30,6 +30,31 @@ Manual disassembly is permitted only when (a) `re`/`re.db` cannot answer the
 question, or (b) it is independent verification. File any missing fact as a
 tooling gap in `docs/re-tooling.md` §9.
 
+## Start here: the compact current-context index
+
+Read `docs/current-context.json` **before** loading milestone history. It is a
+generated compact index over `docs/state/current-state.json`, the artifact
+ledger and the binary/tooling identity: current milestone, active blocker,
+proven facts, superseded claims, the relevant call path and exact evidence
+files. Verify freshness and regenerate with the generator (never hand-edit it):
+
+```sh
+scripts/generate-current-context.py --check        # stale? (non-zero = stale)
+scripts/generate-current-context.py                # regenerate
+scripts/generate-current-context.py --validate     # integrity only
+```
+
+Do not recursively read the whole `docs/` tree; follow the references the index
+names. For one target question, prefer the bounded packet over broad queries:
+
+```sh
+scripts/re.sh packet --fn <name|0xADDR>            # compact JSON evidence
+scripts/re.sh packet --fn <fn> --callers --indirect --max-sites 20
+```
+
+Its output is machine-readable, deterministic and carries `total`/`shown`/
+`truncated` so nothing is silently dropped.
+
 ## Workflow
 
 ```

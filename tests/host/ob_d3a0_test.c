@@ -300,6 +300,45 @@ static void test_mode_inclusion(void)
 	    ob_isolated_mode_skips_teardown(OB_ISOLATED_DMA_TEST), 0);
 }
 
+static void test_device_lost(void)
+{
+	struct ob_d3a0_lifecycle lc;
+
+	/* trusted direct all-ones detection */
+	chk("all-ones is lost", ob_d3a0_mmio_is_all_ones(0xffffffffu), 1);
+	chk("zero not lost", ob_d3a0_mmio_is_all_ones(0x00000000u), 0);
+	chk("nearly all-ones not lost", ob_d3a0_mmio_is_all_ones(0xfffffffeu),
+	    0);
+	chk("live maccontrol not lost", ob_d3a0_mmio_is_all_ones(0x44020402u),
+	    0);
+
+	/* vendor wlc_hw_deviceremoved predicate: (mctrl & 0x404) == 0x400 */
+	chk("present expected", ob_d3a0_maccontrol_present(0x44020402u), 1);
+	chk("present infra", ob_d3a0_maccontrol_present(0x04020402u), 1);
+	chk("absent all-ones", ob_d3a0_maccontrol_present(0xffffffffu), 0);
+	chk("absent zero", ob_d3a0_maccontrol_present(0u), 0);
+	chk("absent psm_jmp", ob_d3a0_maccontrol_present(0x00000400u), 1);
+	chk("absent no ihr", ob_d3a0_maccontrol_present(0x00000004u), 0);
+
+	/* monotonic latch: false -> true only; idempotent */
+	chk("observe live stays false", ob_d3a0_dev_lost_observe(0, 1u), 0);
+	chk("observe all-ones latches", ob_d3a0_dev_lost_observe(0, 0xffffffffu),
+	    1);
+	chk("latched never clears (live value)",
+	    ob_d3a0_dev_lost_observe(1, 0u), 1);
+	chk("latched stays latched",
+	    ob_d3a0_dev_lost_observe(1, 0x44020402u), 1);
+
+	/* a latched device can never authorize a free, even if flags look ok */
+	memset(&lc, 0, sizeof(lc));
+	lc.fatal = true;
+	lc.engines_stopped = true;
+	lc.free_allowed = true;
+	chk("lost/fatal cannot free", ob_d3a0_can_free(&lc), 0);
+	lc.fatal = false;
+	chk("same flags without fatal can free", ob_d3a0_can_free(&lc), 1);
+}
+
 int main(void)
 {
 	test_tx_reg_map();
@@ -314,6 +353,7 @@ int main(void)
 	test_fatal_scenarios();
 	test_rx_descriptors();
 	test_mode_inclusion();
+	test_device_lost();
 
 	if (failures) {
 		printf("ob_d3a0_test: %d FAILURES\n", failures);

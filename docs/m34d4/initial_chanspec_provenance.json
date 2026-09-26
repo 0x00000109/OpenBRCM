@@ -1,0 +1,37 @@
+{
+  "milestone": "M3.4D4 Phase 3",
+  "status": "ANALYSIS ONLY",
+  "question": "Provenance of the initial band / channel / bandwidth / sideband / default chanspec for the BCM4352 ASUS PCE-AC56 board",
+  "entry": {
+    "site": "wlc_init 0x3c6ee/0x3c6f1",
+    "formula": "chanspec = r14d; wlc_bmac_init(wlc->hw, chanspec, 0, 0)",
+    "selection": "r14d is the current/validated chanspec; wlc_default_chanspec(wlc->pub, 1) is called at 0x3c5b7 when the current chanspec is invalid or band-mismatched, and again at 0x3c602 as fallback"
+  },
+  "wlc_default_chanspec": {
+    "addr": "0x702a0",
+    "calls": [
+      "wlc_create_chspec 0x702bc",
+      "wlc_next_chanspec 0x702cb",
+      "wlc_phy_chanspec_band_firstch 0x702ee (fallback if next_chanspec returns 0xff and band_lock)"
+    ],
+    "semantics": "pick the first valid channel for the current band from the regulatory/locale channel set; fallback to the band's first channel from a static channel table"
+  },
+  "provenance": [
+    {"input": "initial band", "class": "COMPUTED_RUNTIME", "detail": "wlc->band is selected at attach (wlc_attach / wlc_bandlock); band availability derives from SPROM aa2g/aa5g and NVRAM country", "supporting_inputs": ["SPROM aa2g/aa5g (BOARD_DERIVED)", "NVRAM ccode/country (NVRAM)"]},
+    {"input": "channel", "class": "COMPUTED_RUNTIME", "detail": "wlc_create_chspec -> wlc_channel_locale_flags + wlc_valid_chanspec_db; wlc_next_chanspec iterates the valid set; wlc_phy_chanspec_band_firstch walks a static channel table (relocated global array) using phytype/phyrev and band", "supporting_inputs": ["STATIC_TABLE channel list", "NVRAM country/locale", "PHYREV_DERIVED (phytype/phyrev)"]},
+    {"input": "bandwidth", "class": "STATIC_TABLE", "detail": "band-first builds a 20 MHz chanspec (or 0xD800 form); no 40 MHz sideband by default on the initial default"},
+    {"input": "sideband", "class": "STATIC_TABLE", "detail": "40 MHz sideband bits are part of the chanspec encoding; not set by the 20 MHz default"},
+    {"input": "default chanspec", "class": "COMPUTED_RUNTIME", "detail": "wlc_default_chanspec(wlc->band,1) result; not a hardcoded channel"},
+    {"input": "NVRAM/SPROM influence", "class": "NVRAM_SPROM", "detail": "country code (locale) and band-enable flags; no guessed default channel"}
+  ],
+  "no_guessed_default": true,
+  "re_commands": [
+    "re fn wlc_default_chanspec --asm",
+    "re card wlc_default_chanspec",
+    "re card wlc_create_chspec",
+    "re card wlc_next_chanspec",
+    "re fn wlc_phy_chanspec_band_firstch --asm",
+    "re fn wlc_init --asm"
+  ],
+  "open": "The exact runtime band (2.4 vs 5 GHz) and first channel on this board are not fixed at analysis time; they are COMPUTED_RUNTIME from SPROM/NVRAM/regulatory state. This is causal input to the radio-ON PLL path, not a constant."
+}
