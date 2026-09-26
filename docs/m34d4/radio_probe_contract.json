@@ -120,13 +120,66 @@
       "impossible extraction (declared decode disagrees with reg0/reg1)",
       "explicit dev_lost / FAIL result",
       "all-ones register pair",
-      "unexpected radio id"
+      "unexpected radio id",
+      "ambiguous BCM2069 revision outside the recovered revision domain"
     ],
     "output_fields": [
       "reg0_raw", "reg1_raw", "radio_id", "radio_rev", "revision_class",
       "pll_branch", "pre_access", "post_access", "candidate", "module_sha256",
       "kernel", "provenance", "state_transition"
     ]
+  },
+
+  "runtime_harness": {
+    "script": "scripts/runtime-test.sh",
+    "mode": "radio_id_probe_only",
+    "real_command": "sudo scripts/runtime-test.sh --mode radio_id_probe_only --candidate <exact-commit> ./openbrcm.ko",
+    "dry_run_command": "scripts/runtime-test.sh --mode radio_id_probe_only --dry-run ./openbrcm.ko",
+    "preconditions_refused": [
+      "HEAD != --candidate",
+      "module missing",
+      "openbrcm already loaded",
+      "expected parameter missing (insmod always uses <mode>=1)",
+      "signer/vermagic/preconditions checked by the harness"
+    ],
+    "current_run_isolation": "kernel log NOT cleared; a unique '[openbrcm-test] marker <stamp>' is written; the current run is the slice from that marker (isolate_run/awk)",
+    "clean_pass_markers": [
+      "radio-probe: BEGIN",
+      "radio-probe: pre_access=",
+      "radio-probe: reg0_raw=",
+      "radio-probe: reg1_raw=",
+      "radio-probe: radiorev=",
+      "radio-probe: revision_class=",
+      "radio-probe: pll_branch=",
+      "radio-probe: post_access=",
+      "radio-probe: PASS",
+      "radio-probe: STOPPED BEFORE PLL/RADIO INIT"
+    ],
+    "fatal_markers": "FATAL, DEVICE LOST/dev_lost, radio-probe: FAIL, reboot-required, RESET TIMEOUT, unverified quiesce/NOT verified, BUG, Oops, WARNING, Call Trace, DMA-API, AER, lockup/hung task, sync flood, machine check",
+    "rmmod_policy": "automatic rmmod ONLY after deterministic clean PASS (all 10 markers, pre/post_access not all-ones) AND insmod rc==0; any fault -> REBOOT REQUIRED, module left loaded, no rmmod/unbind/retry",
+    "capture_files": [
+      "/tmp/openbrcm-runtime-<stamp>.log (full dmesg)",
+      "/tmp/openbrcm-journal-<stamp>.log (journalctl -k)",
+      "/tmp/openbrcm-runtime-<stamp>.run.log (current-run slice)",
+      "/tmp/openbrcm-radio-<stamp>.log (focused radio-probe lines)",
+      "/tmp/openbrcm-radio-<stamp>.json (decoded)"
+    ],
+    "decoder_automatic": true,
+    "decoder_hardware_influence": "none (read-only over the capture)",
+    "decode_failure_behavior": "CAPTURE CLEAN / DECODE FAILED; blocker stays OPEN (exit 4 after the safe rmmod)"
+  },
+
+  "pml_pll_reset_omission": {
+    "question": "the vendor wlc_bmac_phy_reset (PMU/PLL reset) step is omitted from the minimal probe",
+    "boundedness": "the radio read is two 16-bit window accesses with no polling, no self-modifying sequence and no unbounded loop; omission can therefore yield at worst a bounded invalid value, never a hang/fault",
+    "outcomes": [
+      "A: valid radio identity read",
+      "B: bounded invalid/unsupported probe result (all-ones pair, unexpected id, or out-of-domain revision) -> decoder rejects"
+    ],
+    "silent_acceptance_guard": "scripts/decode_radio_probe.py rejects a BCM2069 revision outside the recovered revision domain, so a stuck/unclocked window cannot be silently accepted as a valid revision",
+    "revision_domain": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 254],
+    "reset_not_added": true,
+    "proof": "docs/m34d4/radio_probe_design.md §11"
   },
 
   "checkpoint_candidates_refined": true,

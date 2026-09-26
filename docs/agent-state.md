@@ -440,6 +440,17 @@ Stated exactly:
   `radio_probe_decoder.md`. Scoped `HARDWARE TEST GO: YES` for this isolated
   candidate only (owner approval); **global `D4 IMPLEMENTATION GO: NO`**. The
   blocker `d4.pll_branch.hw_probe` stays OPEN until a decoded capture exists.
+  **Operational harness ready** (`IMPLEMENTED` / `STATIC TESTED`): the existing
+  `scripts/runtime-test.sh` gained `--mode radio_id_probe_only` (real + `--dry-run`
+  + offline `--evaluate-log <mode> <file> [--marker m]`) with all ten clean-PASS
+  markers, fault signatures (incl. `radio-probe: FAIL`), automatic full-dmesg/
+  journal/focused-radio capture under `/tmp` (no kernel-log clear; marker
+  isolation), automatic offline decode (`CAPTURE CLEAN / DECODE FAILED` on
+  failure, blocker NOT proven), and rmmod only after a verified clean PASS.
+  The PML/PLL-reset-omission open question is closed for diagnostics: the radio
+  read is bounded (no polling), so omission yields only (A) a valid read or (B)
+  a bounded invalid result, and the decoder now rejects an out-of-domain BCM2069
+  revision as ambiguous. Driver source UNCHANGED (frozen module still `706b3407…`).
 - **Token-efficiency infrastructure** = `IMPLEMENTED` / `STATIC TESTED`
   (2026-09): `docs/current-context.json` (generated compact index ≤8 KiB;
   never a source of truth) + `scripts/generate-current-context.py`

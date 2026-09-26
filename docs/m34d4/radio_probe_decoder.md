@@ -40,7 +40,11 @@ Exit status: `0` accepted, `1` rejected (reason on stderr), `2` usage error.
   independently recomputed one (tamper/consistency guard);
 - explicit dev_lost / `FAIL` result (including any `DEVICE LOST` line);
 - all-ones register pair;
-- unexpected radio id (AC accepts `0x2069` / `0x030B`).
+- unexpected radio id (AC accepts `0x2069` / `0x030B`);
+- **ambiguous BCM2069 revision** outside the recovered domain
+  `{0,1,2} ∪ [3..38] ∪ {254}` — this is the PML/PLL-reset-omission guard: a
+  stuck/unclocked radio window cannot be silently accepted as a valid revision
+  (and the PLL blocker is never closed from it).
 
 ## Output
 

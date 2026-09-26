@@ -47,6 +47,13 @@ REQUIRED_KEYS = (
     "pll_branch",
 )
 
+# Recovered BCM2069 revision domain (docs/m34d4/radio_identity_map.json):
+# the vendor rev jump table indexes R-3 over [0,0x23] (R in 3..38) plus the
+# special revs {0,1,2,254}. A BCM2069 read whose revision byte is outside this
+# domain is treated as AMBIGUOUS and rejected, so the PML/PLL-reset omission
+# cannot silently turn a stuck/invalid radio window into a "valid" revision.
+KNOWN_2069_REVS = frozenset({0, 1, 2, 254} | set(range(3, 39)))
+
 # Fields whose duplicate lines must agree (conflict => reject).
 CONFLICT_KEYS = REQUIRED_KEYS + ("pre_access", "post_access", "candidate",
                                  "module", "module_sha256")
@@ -203,6 +210,16 @@ def build_artifact(fields, kernel_lines, expect_candidate=None,
     if dec["all_ones_pair"]:
         raise DecodeError("invalid observation: all-ones register pair")
 
+    # PML/PLL-reset-omission guard: a BCM2069 revision outside the recovered
+    # domain is ambiguous (the window may be unclocked/stuck) and must never be
+    # accepted as a valid revision that closes the PLL blocker.
+    if dec["id_is_2069"] and dec["radio_rev"] not in KNOWN_2069_REVS:
+        raise DecodeError(
+            "ambiguous revision 0x%02x not in the recovered BCM2069 revision "
+            "domain (PML/PLL-reset omission cannot be distinguished); "
+            "blocker NOT closed" % dec["radio_rev"]
+        )
+
     candidate = fields.get("candidate")
     module_sha = fields.get("module_sha256")
     if expect_candidate and candidate and candidate != expect_candidate:
@@ -259,6 +276,10 @@ def build_artifact(fields, kernel_lines, expect_candidate=None,
                           "radio_rev=reg0&0xff; revision_class=(reg0>>4)&0xff",
             "branch_mapping": "class 1 -> sequence A, class 2 -> sequence B, "
                               "else SKIP (2069 only)",
+            "revision_domain": sorted(KNOWN_2069_REVS),
+            "ambiguous_policy": "a BCM2069 revision outside revision_domain is "
+                                "rejected (PML/PLL-reset omission cannot be "
+                                "distinguished from a stuck/invalid window)",
             "evidence": [
                 "docs/m34d4/pll_selector_provenance.json",
                 "docs/m34d4/radio_identity_map.json",

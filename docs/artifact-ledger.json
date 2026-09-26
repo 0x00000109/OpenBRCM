@@ -4,12 +4,12 @@
   "repos": {
     "openbrcm": {
       "path": "/media/kartashoff/Storage/opensource/driver/OpenBRCM",
-      "head": "185408d64a3b373c9dda9e9055ac74f89abecd9b",
+      "head": "b33480b81d40480c4233c895b3b1fc1fb00b1b49",
       "branch": "m34d3b-band-init-test",
-      "ahead_of_origin_main": 29,
-      "ahead_of_origin_branch": 2,
+      "ahead_of_origin_main": 30,
+      "ahead_of_origin_branch": 3,
       "main": "06d60d610f4e1cba1f20a188453c8f3ba69357fb",
-      "note": "snapshot before the freeze-record commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR + D4D-RADIO-PROBE chain is UNMERGED relative to main"
+      "note": "snapshot before the D4D-RADIO-PROBE-HARNESS commit; the D3B-implementation + D4/D4B/D4C/lifecycle/D4A/D4D + CONTEXT-INFRA + CACHE-OPT + T8 + DEV-LOST-GUARD + D4D-PLL-SELECTOR + D4D-RADIO-PROBE chain is UNMERGED relative to main"
     },
     "re_tooling": {
       "path": "/media/kartashoff/Storage/opensource/iced/test",
@@ -504,6 +504,32 @@
           "decodes reg0/reg1 with the exact wlc_phy_attach @0xbeff8 expressions; emits radio_probe_capture JSON",
           "rejects malformed / missing / duplicate-conflict / candidate mismatch / module mismatch / impossible extraction / dev_lost-FAIL / all-ones pair / unexpected radio id",
           "prepared (not applied) state transition: d4.pll_branch.hw_probe OPEN->CLOSED; d4.pll_synth.rev42.branch HARDWARE_REQUIRED->PROVEN_A|B|SKIP"
+      ]
+  },
+  {
+      "id": "D4D-RADIO-PROBE-HARNESS",
+      "milestone": "D4-BLOCKER-PLL-BRANCH-HW-PROBE — operational runtime harness",
+      "subject": "radio_id_probe_only integration into scripts/runtime-test.sh + offline evaluate-log",
+      "status": "IMPLEMENTED / STATIC TESTED",
+      "merged": false,
+      "branch": "m34d3b-band-init-test",
+      "repo": "openbrcm",
+      "commit": "b33480b81d40480c4233c895b3b1fc1fb00b1b49",
+      "artifacts": [
+          "scripts/runtime-test.sh",
+          "tests/host/test_runtime_test_cli.py",
+          "docs/m34d4/radio_probe_design.md",
+          "docs/m34d4/radio_probe_contract.json",
+          "docs/m34d4/radio_probe_decoder.md"
+      ],
+      "key_facts": [
+          "runtime-test.sh gained --mode radio_id_probe_only (real + --dry-run + --evaluate-log <mode> <file> [--marker m]); every older mode unchanged",
+          "ten clean-PASS markers enforced; radio-probe: FAIL added to the fault signatures",
+          "auto capture to /tmp (full dmesg + journalctl -k + focused radio log), no kernel-log clear, marker isolation; paths printed at end",
+          "automatic offline decode; failure -> CAPTURE CLEAN / DECODE FAILED (blocker NOT proven)",
+          "rmmod only after verified clean PASS + insmod rc==0; any fault -> REBOOT REQUIRED, no rmmod/unbind/retry",
+          "PML/PLL-reset omission audit: bounded read -> only valid or bounded-invalid; decoder rejects out-of-domain BCM2069 revision as ambiguous",
+          "driver source UNCHANGED; frozen openbrcm.ko sha256 still 706b3407...06dc8d"
       ]
   }
   ],

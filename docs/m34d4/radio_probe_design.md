@@ -128,48 +128,103 @@ All dangerous categories are zero except the unavoidable selector/address write.
 ## 9. Part P — HUMAN ONE-SHOT PROCEDURE (do not run from an agent)
 
 STOP: an agent must not execute any of these commands. Run only with explicit
-owner approval, on the target host, once.
+owner approval, on the target host, once. **Do not clear the kernel log** — the
+harness writes a unique marker and isolates the current run from it, so
+historical messages can never be misclassified.
+
+### Preferred: the deterministic harness
 
 ```sh
-# 0. target kernel + candidate
-uname -r                                   # expect 7.0.0-34-generic
-CAND=<candidate commit>
-KO=$(git -C <repo> rev-parse ${CAND}:openbrcm.ko 2>/dev/null || true)
-sha256sum openbrcm.ko                       # must equal <module sha256>
+# dry run first (no hardware; emits exactly one isolated insmod)
+scripts/runtime-test.sh --mode radio_id_probe_only --dry-run ./openbrcm.ko
 
-# 1. preflight: not already loaded, deps present
-lsmod | grep -w openbrcm || echo "not loaded"
-modinfo -F signer openbrcm.ko               # signer present
-modinfo -F vermagic openbrcm.ko
-
-# 2. marker so the capture window is unambiguous
-dmesg -C || true
-
-# 3. exactly ONE isolated load (no other mode parameter)
-sudo insmod ./openbrcm.ko radio_id_probe_only=1; echo "insmod rc=$?"
-
-# 4. immediate full capture (before any cleanup)
-sudo dmesg -w >/tmp/radio_probe.dmesg 2>&1 &  # or capture after the next step
-sudo dmesg | tail -60
-sudo journalctl -k -n 200 --no-pager >/tmp/radio_probe.journal
-
-# 5. focused lines
-grep -E 'radio-probe:|openbrcm:|BUG:|Oops|WARNING|Call Trace|AER|DMA-API|watchdog|soft lockup|hard LOCKUP|DEVICE LOST' \
-     /tmp/radio_probe.dmesg
-
-# 6. decode (offline, no LLM)
-python3 scripts/decode_radio_probe.py --log /tmp/radio_probe.dmesg \
-        --json /tmp/radio_probe_capture.json; echo "decode rc=$?"
+# real one-shot (owner approval)
+sudo scripts/runtime-test.sh --mode radio_id_probe_only \
+     --candidate 185408d64a3b373c9dda9e9055ac74f89abecd9b ./openbrcm.ko
+echo "harness rc=$?"
 ```
 
-**Clean PASS** (log shows `radio-probe: PASS` and `STOPPED BEFORE PLL/RADIO
-INIT`, decode rc=0): a verified `rmmod openbrcm` is permitted.
+The harness:
+- refuses if `HEAD != --candidate`, the module is missing, `openbrcm` is already
+  loaded, or the expected parameter/preconditions are invalid;
+- issues exactly `insmod ./openbrcm.ko "radio_id_probe_only=1"` (never bare);
+- does **not** clear dmesg; writes `[openbrcm-test] marker <stamp>` and captures
+  full dmesg `/tmp/openbrcm-runtime-<stamp>.log`, journal
+  `/tmp/openbrcm-journal-<stamp>.log`, current-run slice
+  `/tmp/openbrcm-runtime-<stamp>.run.log`, focused radio log
+  `/tmp/openbrcm-radio-<stamp>.log`, and decoded JSON
+  `/tmp/openbrcm-radio-<stamp>.json` (paths printed at the end);
+- runs the offline decoder automatically (read-only; it never influences
+  hardware);
+- `rmmod openbrcm` **only** after a deterministic clean PASS (all ten markers,
+  `pre_access`/`post_access` not all-ones) and `insmod rc=0`.
 
-**ANY of** `DEVICE LOST`, `BUG`, `Oops`, a test-attributable `WARNING`, a
-`Call Trace`, `AER`, a DMA-API fault, `lockup`/`hang`, an accessibility failure,
-or an unverified teardown ⇒ **DO NOT `rmmod`, DO NOT unbind, DO NOT retry;
-capture the logs and reboot.**
+Exit status: `0` clean PASS + decode ok; `3` fault → **REBOOT REQUIRED**, module
+left loaded, no rmmod/unbind/retry; `4` incomplete or `CAPTURE CLEAN / DECODE
+FAILED` (blocker NOT proven) after a safe rmmod.
+
+### Manual fallback (same semantics)
+
+```sh
+uname -r                                    # expect 7.0.0-34-generic
+sha256sum openbrcm.ko                       # must equal 706b3407…06dc8d
+modinfo -F signer openbrcm.ko               # Broadcom Driver MOK
+lsmod | grep -w openbrcm || echo "not loaded"
+# marker (do NOT clear dmesg)
+logger -t openbrcm-test "[openbrcm-test] marker manual-$$"
+sudo insmod ./openbrcm.ko radio_id_probe_only=1; echo "insmod rc=$?"
+sudo dmesg >/tmp/radio_probe.dmesg
+sudo journalctl -k -n 4000 --no-pager >/tmp/radio_probe.journal
+grep -aE 'radio-probe:|openbrcm:|BUG:|Oops|WARNING|Call Trace|AER|DMA-API|DEVICE LOST' /tmp/radio_probe.dmesg
+python3 scripts/decode_radio_probe.py --log /tmp/radio_probe.dmesg --json /tmp/radio_probe_capture.json
+```
+
+**Clean PASS** (all markers + decode rc=0): a verified `rmmod openbrcm` is
+permitted. **ANY of** `DEVICE LOST`/`dev_lost`, `radio-probe: FAIL`, `BUG`,
+`Oops`, a test-attributable `WARNING`, a `Call Trace`, `AER`, a DMA-API fault,
+`lockup`/`hang`, an accessibility failure, or an unverified teardown ⇒ **DO NOT
+`rmmod`, DO NOT unbind, DO NOT retry; capture the logs and reboot.**
 
 ## 10. Frozen candidate
 
 See `radio_probe_contract.json→build_identity` and the ledger record.
+
+## 11. PML/PLL-reset omission audit (existing open question only)
+
+The probe omits the vendor `wlc_bmac_phy_reset` (PMU/PLL) step that
+`wlc_bmac_corereset` runs before the radio read. This section audits **only**
+whether that omission is safe for diagnostic classification.
+
+- **Boundedness.** The radio read is two 16-bit D11-window accesses (one
+  selector write + one data read per register) with no polling, no
+  self-modifying sequence and no unbounded loop. A non-responsive/unclocked
+  radio interface therefore cannot hang or fault the access; it can only yield
+  a bounded value.
+- **Outcomes.** Omission can result only in **(A)** a valid radio identity read,
+  or **(B)** a bounded invalid/unsupported result. (B) is caught by: the all-ones
+  pair check, the accepted-id check (`{0x2069, 0x030B}`), the live pre/post
+  accessibility sentinels, and the **revision-domain** check below.
+- **Silent-acceptance guard.** A BCM2069 read is accepted only if its revision
+  byte is inside the recovered domain
+  `{0,1,2} ∪ [3..38] ∪ {254}` (`radio_identity_map.json`). Any other revision is
+  **rejected as ambiguous** by `scripts/decode_radio_probe.py`
+  (`KNOWN_2069_REVS`), so a stuck/unclocked window cannot be silently accepted
+  as a valid revision, and the blocker is never closed from an ambiguous value.
+- **Reset not added.** The reset is deliberately **not** added; the probe stays
+  minimal. `wlc_bmac_core_phypll_ctl` is already a proven no-op for rev42. A
+  valid capture therefore additionally confirms that the PMU/PLL reset is not a
+  prerequisite for reading the radio identity on this board.
+
+Residual limitation (stated honestly): a stuck window that coincidentally
+returns `reg1 == 0x2069` **and** an in-domain `reg0` revision cannot be excluded
+by a single two-read observation without extra reads; adding reads would change
+the frozen hardware sequence, which this task must not do. The domain criterion
+removes the practical silent-acceptance path and never weakens the safety gates.
+
+## 12. Harness integration
+
+`scripts/runtime-test.sh --mode radio_id_probe_only` implements the success /
+fatal rules and capture list above; `--evaluate-log <mode> <file> [--marker m]`
+classifies an existing capture offline (used by the host tests). Every older
+mode is unchanged (same `success_marker`/`owns_dma` semantics and exit codes).
+

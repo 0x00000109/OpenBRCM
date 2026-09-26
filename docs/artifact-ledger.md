@@ -68,6 +68,7 @@ Generated 2026-09-25. Repository of record:
 | D4D-RADIO-IDENTITY | radio/PHY identity model (adjacent harvest) | (this commit) | ANALYSIS ONLY | `docs/m34d4/radio_identity_map.json` |
 | D4D-RADIO-PROBE | isolated BCM2069 radio identity probe `radio_id_probe_only=1` (frozen candidate, NOT executed) | (this commit) | IMPLEMENTED / STATIC TESTED / SIGNED / NOT HARDWARE PROVEN | `src/ob_radio.{c,h}`, `tests/host/ob_radio_test.c`, `tests/kunit/ob_radio_kunit.c`, `scripts/radio_probe_audit.py`, `docs/m34d4/radio_probe_design.md`, `docs/m34d4/radio_probe_contract.json` |
 | D4D-RADIO-PROBE-DECODER | deterministic offline radio-probe capture decoder | (this commit) | IMPLEMENTED / STATIC TESTED | `scripts/decode_radio_probe.py`, `tests/host/test_radio_probe_decoder.py`, `docs/m34d4/radio_probe_decoder.md` |
+| D4D-RADIO-PROBE-HARNESS | `radio_id_probe_only` operational harness (runtime-test + evaluate-log) | (this commit) | IMPLEMENTED / STATIC TESTED | `scripts/runtime-test.sh`, `tests/host/test_runtime_test_cli.py`, `docs/m34d4/radio_probe_design.md` |
 
 ## 4. Required knowledge → persistent location
 

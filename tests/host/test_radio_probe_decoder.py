@@ -141,6 +141,24 @@ class DecoderTest(unittest.TestCase):
         with self.assertRaises(drp.DecodeError):
             parse_and_build(good_log(0x0010, 0x1234))
 
+    def test_accept_rev254_in_domain(self):
+        # 0xfe (254) is the special rev; class 15 -> SKIP, accepted
+        art = parse_and_build(good_log(0x00fe, 0x2069))
+        self.assertEqual(art["decoded"]["radio_rev"], 0xFE)
+        self.assertEqual(art["decoded"]["pll_branch"], "SKIP")
+
+    def test_reject_ambiguous_revision_out_of_domain(self):
+        # 0xff is NOT in the recovered BCM2069 domain -> ambiguous, rejected,
+        # so the PLL blocker cannot be closed by a stuck/invalid window.
+        with self.assertRaises(drp.DecodeError) as ctx:
+            parse_and_build(good_log(0x00ff, 0x2069))
+        self.assertIn("ambiguous", str(ctx.exception))
+
+    def test_reject_ambiguous_does_not_emit_artifact(self):
+        # a rejected capture must not yield any state_transition / closure
+        with self.assertRaises(drp.DecodeError):
+            parse_and_build(good_log(0x00ff, 0x2069))
+
     def test_reject_candidate_mismatch(self):
         text = good_log(0x0010, 0x2069, candidate="aa" * 32)
         with self.assertRaises(drp.DecodeError):
