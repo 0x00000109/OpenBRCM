@@ -1,0 +1,29 @@
+{
+  "schema": "openbrcm-bcm4352-contract-engine-oracles/v1",
+  "source_class": "MANUALLY_AUTHORED_EXPECTED_VALUES",
+  "purpose": "Independent host-only semantic oracles; values are not target runtime observations.",
+  "rmw_vectors": [
+    {"id": "masked-merge-zero-mask", "old": 1, "mask": 0, "value": 1, "width_bits": 16, "mode": "MASKED_MERGE", "expected": 1},
+    {"id": "clear-value-zero-mask", "old": 1, "mask": 0, "value": 1, "width_bits": 16, "mode": "CLEAR_VALUE_THEN_MASKED_INSERT", "expected": 0},
+    {"id": "clear-mask-then-or", "old": 255, "mask": 15, "value": 3, "width_bits": 8, "mode": "CLEAR_MASK_THEN_OR", "expected": 243},
+    {"id": "preserve-unrelated-32", "old": 305419896, "mask": 255, "value": 86, "width_bits": 32, "mode": "MASKED_MERGE", "expected": 305419862}
+  ],
+  "table14_offset33": {
+    "table_id": 20,
+    "offset": 51,
+    "element_count": 1,
+    "element_width_bits": 48,
+    "payload_encoding": "PACKED_16BIT_WORDS",
+    "payload_word_width_bits": 16,
+    "payload_word_order": [0, 1, 2],
+    "accepted_words_0_and_1": [59392, 132],
+    "unknown_word_2_symbol": "TABLE14_OFFSET33_WORD2",
+    "element_integer_packing": "UNPROVEN",
+    "expected_simulation_words_with_fixture_word2_4660": [59392, 132, 4660]
+  },
+  "trace_difference": {
+    "left": [{"kind": "WRITE", "register": "0x10", "value": 1}],
+    "right": [{"kind": "WRITE", "register": "0x10", "value": 2}],
+    "first_difference_index": 0
+  }
+}

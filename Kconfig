@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# OpenBRCM — in-tree integration snippet (for a future staging submission).
+# Copy this file to drivers/net/wireless/broadcom/openbrcm/Kconfig.
+
+config OPENBRCM
+	tristate "OpenBRCM clean-room Broadcom 43xx SoftMAC WLAN driver"
+	depends on MAC80211 && BCMA
+	select FW_LOADER
+	help
+	  OpenBRCM is a clean-room SoftMAC driver for Broadcom 43xx PCIe
+	  wireless controllers, built on mac80211/cfg80211. It is derived
+	  solely from the OpenBRCM reverse-engineering specification and
+	  publicly documented silicon behaviour.
+
+	  If you choose to build a module, the driver will be called
+	  openbrcm.ko.
+
+config OPENBRCM_DEBUG
+	bool "OpenBRCM verbose debugging"
+	depends on OPENBRCM
+	help
+	  Enable extra register/bring-up logging.

@@ -1,0 +1,22 @@
+{
+  "schema": "openbrcm-bcm4352-through-crs-contract-hash-baseline/v1",
+  "captured_before_contract-engine-hardening": true,
+  "contracts": {
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-skip-txchain-0.json": "1cce5a4cf5366e1e2bc5b7a1db64a0b50dfd7a4cad91b046fb42c7597ca218f2",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-skip-txchain-1.json": "611610f0a5c276174532b99f9399bbf89199c459ff57ac923606d7e513c63f38",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-skip-txchain-2.json": "1a5d6acf599e8ae59ac0ead84d3397d5462989ef745df1a7d7693cab0ccaa4e5",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-skip-txchain-3.json": "2cf9a9d6133689ab85fbd60ebb9e14a7eed185b75ae3129d1b5b49273f77f7c4",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-write-txchain-0.json": "18e0c4d4eaef2aad5eebb83638f0f693a21cf778cefaa012fa09ce4073bf52e4",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-write-txchain-1.json": "202a970cc131ad5691219d7d8a8edc315b11fbf02a4b33e861fb7b2c09fd52d7",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-write-txchain-2.json": "d894f3c427e91a13a39523b8c0c216c2ccef97d0b437f7e35ff4f94806909221",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-eq2-pdgain5g-write-txchain-3.json": "ee693c36b2f4df44ae6bb2955521db236eeb418a2b36a3b5e63d3ae4cdbcb15b",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-skip-txchain-0.json": "3375a22740f15be74bb465404d9e226d904b5de79c03e0d13454a609437ceab9",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-skip-txchain-1.json": "9ae401b73f01c1ccf695df3dccbb143240740a86c78da38451dfaae9ce4803e3",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-skip-txchain-2.json": "1f2bc93d4993aa4a7b2d8427228ad27f037382f056a8495d4762178c0ac12de2",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-skip-txchain-3.json": "cec16f9a4e611be60cf251e7eec1d21ad13015d30b93c30c2d6833a6f7a44e71",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-write-txchain-0.json": "ba04a607f9dc622fc018b96c95d95e025fdb8f672884823153ee878f945af6b7",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-write-txchain-1.json": "6d32059eab38fcd78af5d8fd9c9a11bd79516f38439c246c3aa674662b595f05",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-write-txchain-2.json": "c1c0ef0e5e2a62f9d63ce17d4be03bb76049bee847c77bd3853b4a882ffb7043",
+    "artifacts/contracts/bcm4352-through-crs-param-extpagain-ne2-pdgain5g-write-txchain-3.json": "7333c98e7dde1ecc78736e0e1c3a8a33e4f28fcd329e49a6d0fc1930f64201e2"
+  }
+}

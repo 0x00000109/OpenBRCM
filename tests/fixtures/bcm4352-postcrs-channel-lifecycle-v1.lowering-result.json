@@ -1,0 +1,393 @@
+{
+  "channel_ready_proven": false,
+  "evidence_contract_valid": true,
+  "first_failure": {
+    "operation_id": "postcrs-004",
+    "operation_type": "CONFIGURATION_FORK",
+    "reason": "8b0 selector and ZERO/NONZERO fork are typed; accepted software arm transformations remain reference-only and are not executable"
+  },
+  "first_unlowerable_operation": "postcrs-004",
+  "full_event_lowering_allowed": false,
+  "fully_lowered_event_operation_count": 3,
+  "hardware_ready": false,
+  "lowered_control_flow_node_count": 1,
+  "lowered_operation_count": 4,
+  "provenance": {
+    "path": "artifacts/contracts/bcm4352-postcrs-channel-lifecycle-v1.json",
+    "sha256": "ed75db10580173161bfe297ee43689698b21395975b4eeed140a5327c3f6a6f8"
+  },
+  "required_snapshots": [
+    "CURRENT_PHY_CHANSPEC",
+    "PHY[0x0070] & 0xe000"
+  ],
+  "required_symbols": [
+    "CURRENT_PHY_CHANSPEC",
+    "PHY[0x0070] & 0xe000",
+    "REQUESTED_CHANSPEC",
+    "STORED_CHANSPEC",
+    "TABLE14_OFFSET33_WORD2",
+    "nested+0x8b0"
+  ],
+  "status": "LOWERED_SUPPORTED_PREFIX",
+  "supported_prefix_available": true,
+  "synthetic_runtime_dependency_count": 2,
+  "typed_ir": {
+    "completion": {
+      "hardware_ready": false,
+      "readiness_postcondition": null,
+      "status": "PARTIAL_WITH_EXACT_GAP",
+      "structurally_complete": false
+    },
+    "control_flow": {
+      "edges": [
+        {
+          "from": "postcrs-001",
+          "to": "postcrs-002"
+        },
+        {
+          "from": "postcrs-002",
+          "to": "postcrs-003"
+        },
+        {
+          "from": "postcrs-003",
+          "to": "postcrs-004"
+        },
+        {
+          "arm": "ZERO",
+          "from": "postcrs-004",
+          "to": "postcrs-004-zero-arm-reference"
+        },
+        {
+          "from": "postcrs-004-zero-arm-reference",
+          "to": "postcrs-004-rejoin"
+        },
+        {
+          "arm": "NONZERO",
+          "from": "postcrs-004",
+          "to": "postcrs-004-nonzero-arm-reference"
+        },
+        {
+          "from": "postcrs-004-nonzero-arm-reference",
+          "to": "postcrs-004-rejoin"
+        }
+      ],
+      "entry": "postcrs-001",
+      "exit": "postcrs-004-rejoin"
+    },
+    "declared_scope": {
+      "entry": "CRS wrapper return @0xa5fad",
+      "exit": "0x90b2e"
+    },
+    "lowering_status": "LOWERED_SUPPORTED_PREFIX",
+    "operations": [
+      {
+        "id": "postcrs-001",
+        "kind": "SOFTWARE_STATE",
+        "provenance": {
+          "class": "PROVEN",
+          "source": "bcm4352-post-crs-runtime-parameterized.json"
+        },
+        "source_function": "sub_a7089",
+        "source_site": "0xaa496",
+        "state_field": "nested+0x8a8",
+        "value": 0
+      },
+      {
+        "callee": "sub_92efb",
+        "effect_scope": "SOFTWARE_ONLY_PROVEN",
+        "id": "postcrs-002",
+        "kind": "CALL_BOUNDARY",
+        "provenance": {
+          "class": "PROVEN",
+          "source": "bcm4352-post-crs-runtime-parameterized.json"
+        },
+        "source_function": "sub_a7089",
+        "source_site": "0xaa4e2"
+      },
+      {
+        "callee": "sub_909fd",
+        "effect_scope": "SOFTWARE_ONLY_PROVEN",
+        "id": "postcrs-003",
+        "kind": "CALL_BOUNDARY",
+        "provenance": {
+          "class": "PROVEN",
+          "source": "bcm4352-post-crs-runtime-parameterized.json"
+        },
+        "source_function": "sub_a7089",
+        "source_site": "0xaa4f2"
+      },
+      {
+        "arm_coverage": "PROVEN_EXHAUSTIVE",
+        "arms": [
+          {
+            "id": "ZERO",
+            "operations": [
+              {
+                "boundary": "software transformation reference ends at sub_909fd @0x90b2e; not expanded into executable typed state operations",
+                "id": "postcrs-004-zero-arm-reference",
+                "kind": "REFERENCE_BLOCK",
+                "provenance": {
+                  "class": "ACCEPTED_FACT_BIN",
+                  "sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059",
+                  "source": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json"
+                },
+                "reference": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json#zero_arm",
+                "reference_sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059",
+                "source_function": "sub_909fd",
+                "source_site": "0x90a2e -> 0x90a6a"
+              }
+            ],
+            "when": {
+              "left": {
+                "symbol": "nested+0x8b0"
+              },
+              "op": "EQ",
+              "right": {
+                "const": {
+                  "signed": false,
+                  "value": 0,
+                  "value_type": "u32",
+                  "width_bits": 32
+                }
+              }
+            }
+          },
+          {
+            "id": "NONZERO",
+            "operations": [
+              {
+                "boundary": "software transformation reference ends at sub_909fd @0x90b2e; not expanded into executable typed state operations",
+                "id": "postcrs-004-nonzero-arm-reference",
+                "kind": "REFERENCE_BLOCK",
+                "provenance": {
+                  "class": "ACCEPTED_FACT_BIN",
+                  "sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059",
+                  "source": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json"
+                },
+                "reference": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json#nonzero_arm",
+                "reference_sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059",
+                "source_function": "sub_909fd",
+                "source_site": "0x90a6a"
+              }
+            ],
+            "when": {
+              "left": {
+                "symbol": "nested+0x8b0"
+              },
+              "op": "NE",
+              "right": {
+                "const": {
+                  "signed": false,
+                  "value": 0,
+                  "value_type": "u32",
+                  "width_bits": 32
+                }
+              }
+            }
+          }
+        ],
+        "id": "postcrs-004",
+        "kind": "BRANCH",
+        "provenance": {
+          "class": "PROVEN",
+          "sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059",
+          "source": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json"
+        },
+        "rejoin": "postcrs-004-rejoin",
+        "rejoin_site": "0x90b2e",
+        "source_function": "sub_909fd",
+        "source_site": "0x90a27"
+      },
+      {
+        "id": "postcrs-004-rejoin",
+        "kind": "UNKNOWN_BOUNDARY",
+        "provenance": {
+          "class": "EVIDENCE_CONTRACT",
+          "source": "artifacts/contracts/bcm4352-postcrs-channel-lifecycle-v1.json"
+        },
+        "reason": "8b0 selector and ZERO/NONZERO fork are typed; accepted software arm transformations remain reference-only and are not executable",
+        "source_function": "sub_909fd",
+        "source_site": "0x90b2e"
+      }
+    ],
+    "schema": "openbrcm-bcm4352-typed-event-ir/v1",
+    "symbols": [
+      {
+        "classification": "HISTORICAL_SEMANTIC_UNKNOWN",
+        "id": "TABLE14_OFFSET33_WORD2",
+        "known_value": null,
+        "provenance": "HISTORICAL_SEMANTIC_UNKNOWN",
+        "required_input_policy": "SYNTHETIC_ONLY",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u16",
+        "width_bits": 16
+      },
+      {
+        "classification": "EXTERNAL_CONFIGURATION",
+        "id": "nested+0x8b0",
+        "known_value": null,
+        "provenance": "EXTERNAL_CONFIGURATION",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u32",
+        "width_bits": 32
+      },
+      {
+        "classification": "RUNTIME_HARDWARE_SAMPLE",
+        "id": "PHY[0x0070] & 0xe000",
+        "known_value": null,
+        "provenance": "RUNTIME_HARDWARE_SAMPLE",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u16",
+        "width_bits": 16
+      },
+      {
+        "classification": "EXTERNAL_CONFIGURATION",
+        "id": "REQUESTED_CHANSPEC",
+        "known_value": null,
+        "provenance": "caller-selected request; do not substitute controlled fixture",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u16",
+        "width_bits": 16
+      },
+      {
+        "classification": "CONTROLLED_TEST_INPUT",
+        "id": "CONTROLLED_FIXTURE_CHANSPEC",
+        "known_value": 4097,
+        "provenance": "test input only",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": false,
+        "value_type": "u16",
+        "width_bits": 16
+      },
+      {
+        "classification": "DETERMINISTIC_SOFTWARE_STATE",
+        "id": "STORED_CHANSPEC",
+        "known_value": null,
+        "provenance": "DETERMINISTIC_SOFTWARE_STATE",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u16",
+        "width_bits": 16
+      },
+      {
+        "classification": "RUNTIME_HARDWARE_SAMPLE",
+        "id": "CURRENT_PHY_CHANSPEC",
+        "known_value": null,
+        "provenance": "read from PHY software state at caller; exact selected value unknown",
+        "required_input_policy": "REQUIRED",
+        "signed": false,
+        "unknown": true,
+        "value_type": "u16",
+        "width_bits": 16
+      }
+    ],
+    "target": {
+      "chip": "BCM4352",
+      "chip_revision": 3,
+      "d11_revision": 42,
+      "phy": "ACPHY",
+      "phy_revision": 1,
+      "radio": "BCM2069",
+      "radio_revision": 4
+    }
+  },
+  "unlowered_operations": [
+    {
+      "operation_id": "postcrs-004",
+      "operation_type": "CONFIGURATION_FORK",
+      "reason": "8b0 selector and ZERO/NONZERO fork are typed; accepted software arm transformations remain reference-only and are not executable"
+    },
+    {
+      "operation_id": "postcrs-005",
+      "operation_type": "TABLE_READS",
+      "reason": "unsupported aggregate or unresolved helper operation: TABLE_READS"
+    },
+    {
+      "operation_id": "postcrs-006",
+      "operation_type": "REFERENCED_CONTRACT_BLOCK",
+      "reason": "referenced block is not hash-admitted and expanded to compatible typed operations"
+    },
+    {
+      "operation_id": "postcrs-007",
+      "operation_type": "CONDITIONAL_CALL",
+      "reason": "branch arms are missing or incomplete"
+    },
+    {
+      "operation_id": "postcrs-008",
+      "operation_type": "ORDERED_RADIO_ROW_STREAM",
+      "reason": "aggregate row stream lacks admitted individual register identities; refusing synthetic expansion"
+    },
+    {
+      "operation_id": "postcrs-009",
+      "operation_type": "SYMBOLIC_CALLBACK_BLOCK",
+      "reason": "unsupported aggregate or unresolved helper operation: SYMBOLIC_CALLBACK_BLOCK"
+    },
+    {
+      "operation_id": "postcrs-010",
+      "operation_type": "CONDITIONAL_HELPER",
+      "reason": "unsupported aggregate or unresolved helper operation: CONDITIONAL_HELPER"
+    },
+    {
+      "operation_id": "postcrs-011",
+      "operation_type": "CALLBACK_RETURN",
+      "reason": "control boundary is not yet represented by admitted typed control-flow edges"
+    },
+    {
+      "operation_id": "postcrs-012",
+      "operation_type": "EARLY_RETURN",
+      "reason": "control boundary is not yet represented by admitted typed control-flow edges"
+    },
+    {
+      "operation_id": "postcrs-013",
+      "operation_type": "BMAC_RETURN",
+      "reason": "control boundary is not yet represented by admitted typed control-flow edges"
+    }
+  ],
+  "unresolved_reference_count": 5,
+  "unresolved_references": [
+    {
+      "boundary": "accepted post-CRS fragments and caller chronology; consumed without copying through-CRS events",
+      "path": "artifacts/contracts/bcm4352-post-crs-runtime-parameterized.json",
+      "reason": "source contract does not pin this reference SHA-256"
+    },
+    {
+      "boundary": "post-dummy selected reset-tree detail and runtime/discarded inventory",
+      "path": "artifacts/contracts/bcm4352-post-dummy-aci-selected.json",
+      "reason": "source contract does not pin this reference SHA-256"
+    },
+    {
+      "boundary": "conditional callback and first row-derived write",
+      "path": "artifacts/contracts/bcm4352-channel-commit-candidate.json",
+      "reason": "source contract does not pin this reference SHA-256"
+    },
+    {
+      "arm": "zero_arm",
+      "path": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json",
+      "reason": "accepted arm transformation is reference-only and not executable typed state",
+      "sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059"
+    },
+    {
+      "arm": "nonzero_arm",
+      "path": "artifacts/contracts/bcm4352-post-crs-config-axis-8b0.json",
+      "reason": "accepted arm transformation is reference-only and not executable typed state",
+      "sha256": "504ac2959b2d737b58232a50d8913abdb872e09fadc384b6660768cc60136059"
+    }
+  ],
+  "unresolved_symbols": [
+    "CURRENT_PHY_CHANSPEC",
+    "PHY[0x0070] & 0xe000",
+    "REQUESTED_CHANSPEC",
+    "STORED_CHANSPEC",
+    "TABLE14_OFFSET33_WORD2",
+    "nested+0x8b0"
+  ]
+}

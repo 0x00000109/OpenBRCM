@@ -1,0 +1,35 @@
+{
+  "source": {
+    "binary": "old/amd64/lib/wlc_hybrid.o_shipped",
+    "sha256": "352a6e349f74c69b78e76f68c63752c99b8f6b22dc942af531b754211d7f4743",
+    "table_symbol": "prefregs_2069_rev4",
+    "table_address": "0x140ba0",
+    "table_size": "0x64",
+    "apply_helper": "wlc_phy_init_radio_prefregs_allbands",
+    "apply_helper_address": "0xb623e",
+    "selector_address": "0x9fcaf"
+  },
+  "entry_width_bytes": 4,
+  "register_width_bits": 16,
+  "value_width_bits": 16,
+  "write_mode": "direct",
+  "delay_between_entries_us": 0,
+  "poll_between_entries": false,
+  "entries": [
+    ["0x063a", "0x0000"], ["0x063d", "0x000f"],
+    ["0x0645", "0x3000"], ["0x0646", "0x0303"],
+    ["0x0647", "0x36e2"], ["0x0649", "0x6000"],
+    ["0x064a", "0x0003"], ["0x065e", "0x0ff4"],
+    ["0x0666", "0x0b2d"], ["0x0667", "0x03ff"],
+    ["0x0115", "0x3337"], ["0x0117", "0x1337"],
+    ["0x0718", "0x7777"], ["0x071c", "0x1000"],
+    ["0x0726", "0x0100"], ["0x0727", "0x0002"],
+    ["0x0761", "0x0100"], ["0x0407", "0x8382"],
+    ["0x055e", "0x0020"], ["0x0885", "0x0700"],
+    ["0x08e9", "0x01ce"], ["0x08ea", "0x00ff"],
+    ["0x08ec", "0x06ff"], ["0x0972", "0x0600"]
+  ],
+  "terminator": ["0xffff", "0x0000"],
+  "entry_count": 24,
+  "external_crosscheck": "PASS"
+}

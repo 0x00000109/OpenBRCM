@@ -1,0 +1,77 @@
+# build artefacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+.*.cmd
+.*.d
+*.symvers
+*.order
+Module.symvers
+modules.order
+.tmp_versions/
+*.ko.*
+*.o.d
+build/
+tools/step-ledger/target/
+
+# host tests binaries
+tests/host/ob_*_test
+tools/txprefix-capture/test_contract
+tools/txprefix-capture/test_supervisor
+
+# python analysis tooling
+__pycache__/
+*.pyc
+
+# generated documentation datasets (regenerate: scripts/dify/build_all.py).
+# Not canonical sources; they embed whole-repository content, so docs-check.sh
+# excludes this tree from its negative scans ($DOC_SCAN).
+docs/dify-export/
+
+# generated probe/trace artifacts (re-run the corresponding scripts/)
+artifacts/
+
+# local Binary Ninja working database; never a repository input
+*.bndb
+
+# local build/run logs
+*.log
+
+# editor
+*.swp
+*~
+
+# local cache telemetry / frozen snapshots (never part of project knowledge)
+.openbrcm-local/
+
+# ---------------------------------------------------------------------------
+# M0 baseline freeze scope (2026-10-27). See docs/m0-baseline-freeze-20261027.md
+# for the rationale and the pinned input identities. These paths are local
+# bench inputs, duplicates of the analysis archive, or generated indexes; none
+# of them is a build input.
+# ---------------------------------------------------------------------------
+
+# Third-party / vendor material kept on this bench and NOT redistributed by
+# this repository (clean-room posture; see docs/provenance.md and
+# docs/re-binary-crossmap.md for the pinned vendor identities).
+old/
+docs/old/
+43xx/
+external/
+bin/
+src.tar.bz2
+
+# Duplicate copy of the REA analysis archive (canonical archive lives in the
+# broadcom-rea-analysis-v2 tree; this checkout keeps a stale partial subset).
+audit/
+
+# Generated navigation indexes (regenerate on demand; they embed whole-tree
+# state and would be stale the moment the tree is committed).
+project_structure.txt
+docs/research/source-catalog/
+
+# Agent-local tool state.
+.agents/
+.codex/
