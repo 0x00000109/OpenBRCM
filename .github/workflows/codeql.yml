@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: GPL-2.0-only
+name: CodeQL
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  security-events: write
+  packages: read
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: c-cpp
+            build-mode: manual
+          - language: python
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Linux Kernel build tools
+        if: matrix.build-mode == 'manual'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc bc bison flex libssl-dev libelf-dev
+
+      # The runner kernel may not match the driver ABI. Prepare the same
+      # pinned kernel tree used by the repository's existing build workflow.
+      - name: Fetch and prepare Linux 7.2 headers
+        if: matrix.build-mode == 'manual'
+        run: |
+          set -euo pipefail
+          BASE="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.tar"
+          mkdir -p /tmp/openbrcm-kernel
+          if curl -fsSL "${BASE}.xz" -o /tmp/openbrcm-kernel.tar.xz; then
+            echo "f9fef3d14c0df53819026f4be74459835c2a0b0dcbf5b5bbd9ea19f0829402b3  /tmp/openbrcm-kernel.tar.xz" | sha256sum --check
+            tar -xJf /tmp/openbrcm-kernel.tar.xz -C /tmp/openbrcm-kernel --strip-components=1
+          else
+            curl -fsSL "${BASE}.gz" -o /tmp/openbrcm-kernel.tar.gz
+            echo "c2c76a0edd2dfc31704a9cc78cd6924bbfcb60a09498b4e137e6ccf04bd975b9  /tmp/openbrcm-kernel.tar.gz" | sha256sum --check
+            tar -xzf /tmp/openbrcm-kernel.tar.gz -C /tmp/openbrcm-kernel --strip-components=1
+          fi
+          cd /tmp/openbrcm-kernel
+          make defconfig
+          scripts/config --enable BCMA --enable BCMA_POSSIBLE --enable MAC80211 --enable CFG80211 --enable FW_LOADER
+          make olddefconfig
+          make modules_prepare -j"$(nproc)"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # The out-of-tree Makefile builds the driver module. tests/kunit
+      # mirrors are integration-only and have no standalone Makefile here.
+      - name: Build C components for CodeQL
+        if: matrix.build-mode == 'manual'
+        run: |
+          set -euo pipefail
+          test -d /tmp/openbrcm-kernel
+          make -j"$(nproc)" KDIR=/tmp/openbrcm-kernel KBUILD_MODPOST_WARN=1 modules
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
