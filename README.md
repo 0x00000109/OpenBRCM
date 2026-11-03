@@ -1,7 +1,7 @@
 # OpenBRCM
 
 OpenBRCM is an open-source, clean-room Linux driver designed to replace the
-proprietary wl.ko for Broadcom BCM4352/BCM4360 PCIe Wi-Fi chips. Built for
+proprietary wl.ko for [Broadcom](https://github.com/Broadcom) BCM4352/BCM4360 PCIe Wi-Fi chips. Built for
 modern kernels (6.x/7.x), it integrates directly with mac80211/cfg80211 and
 includes verified chan_tuning calibration tables, SPROM rev11 decoding, and
 reliable PHY 0x371–0x376 register programming.
