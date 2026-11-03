@@ -106,6 +106,7 @@ tests/kunit/   KUnit suites for a KUnit-enabled kernel
 tests/host/    host-side unit tests
 .github/       CI workflows, including CodeQL
 ```
+I would like to express my gratitude to the developers of the [b43-ac-wip](https://github.com/aleferri/b43-ac-wip) project. Thanks to the data they provided, I was able to significantly speed up the PHY calibration process.
 
 ## License
 
